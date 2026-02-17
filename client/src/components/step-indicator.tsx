@@ -4,9 +4,10 @@ import { Check } from "lucide-react";
 interface StepIndicatorProps {
   currentStep: number;
   totalSteps: number;
+  onStepClick?: (step: number) => void;
 }
 
-export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
+export function StepIndicator({ currentStep, totalSteps, onStepClick }: StepIndicatorProps) {
   return (
     <div className="flex items-center justify-center gap-3 mb-10">
       {Array.from({ length: totalSteps }).map((_, i) => {
@@ -16,9 +17,11 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
 
         return (
           <div key={i} className="flex items-center gap-3">
-            <motion.div
+            <motion.button
               layout
-              className={`relative flex items-center justify-center rounded-full transition-all duration-300 ${
+              onClick={() => onStepClick?.(stepNum)}
+              data-testid={`button-step-${stepNum}`}
+              className={`relative flex items-center justify-center rounded-full transition-all duration-300 cursor-pointer ${
                 isActive
                   ? "w-10 h-10 bg-foreground text-background"
                   : isCompleted
@@ -31,7 +34,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
               ) : (
                 <span className="text-sm font-semibold">{stepNum}</span>
               )}
-            </motion.div>
+            </motion.button>
             {i < totalSteps - 1 && (
               <div
                 className={`w-8 sm:w-12 h-px transition-colors duration-300 ${
