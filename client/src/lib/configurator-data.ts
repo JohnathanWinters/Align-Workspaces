@@ -26,34 +26,34 @@ export const initialState: ConfiguratorState = {
 };
 
 export const environments: { value: Environment; label: string; icon: string }[] = [
-  { value: "restaurant", label: "Restaurant", icon: "UtensilsCrossed" },
-  { value: "office", label: "Office", icon: "Building2" },
   { value: "nature", label: "Nature", icon: "TreePine" },
-  { value: "workvan", label: "Work Van", icon: "Truck" },
-  { value: "urban", label: "Urban", icon: "Building" },
+  { value: "office", label: "Office", icon: "Building2" },
+  { value: "restaurant", label: "Restaurant", icon: "UtensilsCrossed" },
   { value: "suburban", label: "Suburban", icon: "Home" },
+  { value: "urban", label: "Urban", icon: "Building" },
+  { value: "workvan", label: "Work Van", icon: "Truck" },
 ];
 
 export const brandMessages: { value: BrandMessage; label: string; description: string }[] = [
   { value: "assured", label: "Assured", description: "Calm authority, grounded posture, steady gaze. Neutral lighting with balanced composition." },
-  { value: "empathy", label: "Empathy", description: "Softer lighting, open posture, gentle expression. Warm tones that invite connection." },
   { value: "confidence", label: "Confidence", description: "Strong posture, direct eye contact, bold framing. Clean lighting with purposeful angles." },
+  { value: "empathy", label: "Empathy", description: "Softer lighting, open posture, gentle expression. Warm tones that invite connection." },
   { value: "motivation", label: "Motivation", description: "Dynamic energy, forward-leaning pose, bright expression. Vibrant lighting with movement." },
 ];
 
 export const emotionalImpacts: { value: EmotionalImpact; label: string; description: string }[] = [
-  { value: "cozy", label: "Cozy", description: "Warm tones, golden hour lighting, intimate framing" },
   { value: "bright", label: "Bright", description: "Airy, clean, natural light, fresh and open feeling" },
-  { value: "powerful", label: "Powerful", description: "Bold contrast, dramatic shadows, commanding presence" },
   { value: "cinematic", label: "Cinematic", description: "Dramatic storytelling, film-like color grading, depth" },
+  { value: "cozy", label: "Cozy", description: "Warm tones, golden hour lighting, intimate framing" },
+  { value: "powerful", label: "Powerful", description: "Bold contrast, dramatic shadows, commanding presence" },
 ];
 
 export const shootIntents: { value: ShootIntent; label: string }[] = [
-  { value: "website", label: "Website" },
-  { value: "social-media", label: "Social Media" },
   { value: "marketing", label: "Marketing Campaign" },
   { value: "personal-brand", label: "Personal Brand" },
+  { value: "social-media", label: "Social Media" },
   { value: "team", label: "Team or Company" },
+  { value: "website", label: "Website" },
 ];
 
 export const environmentImages: Record<string, string> = {
