@@ -76,7 +76,10 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                disabled={(date) => date < new Date()}
+                disabled={(date) => {
+                  const day = date.getDay();
+                  return date < new Date() || (day !== 5 && day !== 6);
+                }}
                 className="rounded-md border border-border"
                 data-testid="calendar-date-picker"
               />
