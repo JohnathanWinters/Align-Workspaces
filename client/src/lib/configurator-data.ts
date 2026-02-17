@@ -57,7 +57,7 @@ export const shootIntents: { value: ShootIntent; label: string }[] = [
 ];
 
 export const environmentImages: Record<string, string> = {
-  restaurant: "/images/env-restaurant.jpg",
+  restaurant: "/images/env-restaurant.png",
   office: "/images/env-office.png",
   nature: "/images/env-nature.png",
   workvan: "/images/env-workvan.png",
