@@ -58,10 +58,10 @@ export const shootIntents: { value: ShootIntent; label: string }[] = [
 
 export const environmentImages: Record<string, string> = {
   restaurant: "/images/env-restaurant.jpg",
-  office: "/images/env-office.jpg",
-  nature: "/images/env-nature.jpg",
-  workvan: "/images/env-workvan.jpg",
-  urban: "/images/env-urban.jpg",
+  office: "/images/env-office.png",
+  nature: "/images/env-nature.png",
+  workvan: "/images/env-workvan.png",
+  urban: "/images/env-urban.png",
   suburban: "/images/env-suburban.jpg",
 };
 
