@@ -7,7 +7,7 @@ interface ImageGalleryProps {
   emotionalImpact: EmotionalImpact | null;
 }
 
-const filterStyles: Record<EmotionalImpact, string> = {
+const filterStyles: Record<string, string> = {
   cozy: "brightness(1.05) saturate(1.2) sepia(0.2)",
   bright: "brightness(1.15) saturate(0.9) contrast(0.95)",
   powerful: "brightness(0.9) saturate(1.1) contrast(1.3)",
@@ -15,8 +15,8 @@ const filterStyles: Record<EmotionalImpact, string> = {
 };
 
 export function ImageGallery({ environment, emotionalImpact }: ImageGalleryProps) {
-  const imageSrc = environment ? environmentImages[environment] : null;
-  const filter = emotionalImpact ? filterStyles[emotionalImpact] : "none";
+  const imageSrc = environment && environment !== "other" ? environmentImages[environment] ?? null : null;
+  const filter = emotionalImpact && emotionalImpact !== "other" ? filterStyles[emotionalImpact] ?? "none" : "none";
 
   return (
     <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted" data-testid="image-gallery">
@@ -46,7 +46,7 @@ export function ImageGallery({ environment, emotionalImpact }: ImageGalleryProps
                 </svg>
               </div>
               <p className="text-muted-foreground text-sm">
-                Select an environment to preview your shoot
+                {environment === "other" ? "Custom environment selected" : "Select an environment to preview your shoot"}
               </p>
             </div>
           </motion.div>

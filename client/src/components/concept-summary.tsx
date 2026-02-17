@@ -2,9 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { ConfiguratorState } from "@/lib/configurator-data";
 import {
   generateBrandDescription,
-  environments,
-  brandMessages,
-  emotionalImpacts,
+  getDisplayLabel,
   calculatePricing,
 } from "@/lib/configurator-data";
 
@@ -13,15 +11,9 @@ interface ConceptSummaryProps {
 }
 
 export function ConceptSummary({ state }: ConceptSummaryProps) {
-  const envLabel = state.environment
-    ? environments.find((e) => e.value === state.environment)?.label ?? null
-    : null;
-  const msgLabel = state.brandMessage
-    ? brandMessages.find((m) => m.value === state.brandMessage)?.label ?? null
-    : null;
-  const impLabel = state.emotionalImpact
-    ? emotionalImpacts.find((i) => i.value === state.emotionalImpact)?.label ?? null
-    : null;
+  const envLabel = getDisplayLabel("environment", state);
+  const msgLabel = getDisplayLabel("brandMessage", state);
+  const impLabel = getDisplayLabel("emotionalImpact", state);
   const description = generateBrandDescription(state);
   const pricing = calculatePricing(state);
 

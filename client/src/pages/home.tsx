@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { HeroSection } from "@/components/hero-section";
 import { StepIndicator } from "@/components/step-indicator";
 import { OptionCard } from "@/components/option-card";
@@ -20,13 +21,10 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
+  PenLine,
 } from "lucide-react";
 import type {
   ConfiguratorState,
-  Environment,
-  BrandMessage,
-  EmotionalImpact,
-  ShootIntent,
 } from "@/lib/configurator-data";
 import {
   environments,
@@ -34,6 +32,8 @@ import {
   emotionalImpacts,
   shootIntents,
   calculatePricing,
+  initialState,
+  getDisplayLabel,
 } from "@/lib/configurator-data";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -48,12 +48,7 @@ const iconMap: Record<string, React.ReactNode> = {
 export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isBooked, setIsBooked] = useState(false);
-  const [state, setState] = useState<ConfiguratorState>({
-    environment: null,
-    brandMessage: null,
-    emotionalImpact: null,
-    shootIntent: null,
-  });
+  const [state, setState] = useState<ConfiguratorState>({ ...initialState });
 
   const configuratorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -67,12 +62,16 @@ export default function HomePage() {
       preferredDate: string;
     }) => {
       const pricing = calculatePricing(state);
+      const envValue = state.environment === "other" ? state.environmentCustom || "other" : state.environment;
+      const msgValue = state.brandMessage === "other" ? state.brandMessageCustom || "other" : state.brandMessage;
+      const impValue = state.emotionalImpact === "other" ? state.emotionalImpactCustom || "other" : state.emotionalImpact;
+      const intentValue = state.shootIntent === "other" ? state.shootIntentCustom || "other" : state.shootIntent;
       return apiRequest("POST", "/api/leads", {
         ...data,
-        environment: state.environment,
-        brandMessage: state.brandMessage,
-        emotionalImpact: state.emotionalImpact,
-        shootIntent: state.shootIntent,
+        environment: envValue,
+        brandMessage: msgValue,
+        emotionalImpact: impValue,
+        shootIntent: intentValue,
         estimatedMin: pricing.min,
         estimatedMax: pricing.max,
       });
@@ -102,10 +101,14 @@ export default function HomePage() {
 
   function canProceed(): boolean {
     switch (currentStep) {
-      case 1: return !!state.environment;
-      case 2: return !!state.brandMessage;
-      case 3: return !!state.emotionalImpact;
-      case 4: return !!state.shootIntent;
+      case 1:
+        return !!state.environment && (state.environment !== "other" || state.environmentCustom.trim().length > 0);
+      case 2:
+        return !!state.brandMessage && (state.brandMessage !== "other" || state.brandMessageCustom.trim().length > 0);
+      case 3:
+        return !!state.emotionalImpact && (state.emotionalImpact !== "other" || state.emotionalImpactCustom.trim().length > 0);
+      case 4:
+        return !!state.shootIntent && (state.shootIntent !== "other" || state.shootIntentCustom.trim().length > 0);
       default: return false;
     }
   }
@@ -148,7 +151,7 @@ export default function HomePage() {
             onClick={() => {
               setIsBooked(false);
               setCurrentStep(0);
-              setState({ environment: null, brandMessage: null, emotionalImpact: null, shootIntent: null });
+              setState({ ...initialState });
             }}
             data-testid="button-start-over"
           >
@@ -197,12 +200,27 @@ export default function HomePage() {
                               key={env.value}
                               label={env.label}
                               isSelected={state.environment === env.value}
-                              onClick={() => setState({ ...state, environment: env.value })}
+                              onClick={() => setState({ ...state, environment: env.value, environmentCustom: "" })}
                               icon={iconMap[env.icon]}
                               testId={`option-env-${env.value}`}
                             />
                           ))}
+                          <OptionCard
+                            label="Other"
+                            isSelected={state.environment === "other"}
+                            onClick={() => setState({ ...state, environment: "other" })}
+                            icon={<PenLine className="w-5 h-5" />}
+                            testId="option-env-other"
+                          />
                         </div>
+                        {state.environment === "other" && (
+                          <OtherInput
+                            value={state.environmentCustom}
+                            onChange={(v) => setState({ ...state, environmentCustom: v })}
+                            placeholder="Describe your ideal location..."
+                            testId="input-env-custom"
+                          />
+                        )}
                       </StepContent>
                     )}
 
@@ -218,11 +236,26 @@ export default function HomePage() {
                               label={msg.label}
                               description={msg.description}
                               isSelected={state.brandMessage === msg.value}
-                              onClick={() => setState({ ...state, brandMessage: msg.value })}
+                              onClick={() => setState({ ...state, brandMessage: msg.value, brandMessageCustom: "" })}
                               testId={`option-msg-${msg.value}`}
                             />
                           ))}
+                          <OptionCard
+                            label="Other"
+                            isSelected={state.brandMessage === "other"}
+                            onClick={() => setState({ ...state, brandMessage: "other" })}
+                            icon={<PenLine className="w-5 h-5" />}
+                            testId="option-msg-other"
+                          />
                         </div>
+                        {state.brandMessage === "other" && (
+                          <OtherInput
+                            value={state.brandMessageCustom}
+                            onChange={(v) => setState({ ...state, brandMessageCustom: v })}
+                            placeholder="Describe your brand message..."
+                            testId="input-msg-custom"
+                          />
+                        )}
                       </StepContent>
                     )}
 
@@ -238,11 +271,26 @@ export default function HomePage() {
                               label={imp.label}
                               description={imp.description}
                               isSelected={state.emotionalImpact === imp.value}
-                              onClick={() => setState({ ...state, emotionalImpact: imp.value })}
+                              onClick={() => setState({ ...state, emotionalImpact: imp.value, emotionalImpactCustom: "" })}
                               testId={`option-imp-${imp.value}`}
                             />
                           ))}
+                          <OptionCard
+                            label="Other"
+                            isSelected={state.emotionalImpact === "other"}
+                            onClick={() => setState({ ...state, emotionalImpact: "other" })}
+                            icon={<PenLine className="w-5 h-5" />}
+                            testId="option-imp-other"
+                          />
                         </div>
+                        {state.emotionalImpact === "other" && (
+                          <OtherInput
+                            value={state.emotionalImpactCustom}
+                            onChange={(v) => setState({ ...state, emotionalImpactCustom: v })}
+                            placeholder="Describe the feeling..."
+                            testId="input-imp-custom"
+                          />
+                        )}
                       </StepContent>
                     )}
 
@@ -257,11 +305,26 @@ export default function HomePage() {
                               key={intent.value}
                               label={intent.label}
                               isSelected={state.shootIntent === intent.value}
-                              onClick={() => setState({ ...state, shootIntent: intent.value })}
+                              onClick={() => setState({ ...state, shootIntent: intent.value, shootIntentCustom: "" })}
                               testId={`option-intent-${intent.value}`}
                             />
                           ))}
+                          <OptionCard
+                            label="Other"
+                            isSelected={state.shootIntent === "other"}
+                            onClick={() => setState({ ...state, shootIntent: "other" })}
+                            icon={<PenLine className="w-5 h-5" />}
+                            testId="option-intent-other"
+                          />
                         </div>
+                        {state.shootIntent === "other" && (
+                          <OtherInput
+                            value={state.shootIntentCustom}
+                            onChange={(v) => setState({ ...state, shootIntentCustom: v })}
+                            placeholder="What is this shoot for?"
+                            testId="input-intent-custom"
+                          />
+                        )}
                       </StepContent>
                     )}
 
@@ -334,5 +397,40 @@ function StepContent({
       <p className="text-muted-foreground text-sm sm:text-base mb-8">{subtitle}</p>
       {children}
     </div>
+  );
+}
+
+function OtherInput({
+  value,
+  onChange,
+  placeholder,
+  testId,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  testId: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="mt-4"
+    >
+      <Input
+        value={value}
+        onChange={(e) => {
+          if (e.target.value.length <= 30) {
+            onChange(e.target.value);
+          }
+        }}
+        placeholder={placeholder}
+        maxLength={30}
+        data-testid={testId}
+        autoFocus
+      />
+      <p className="text-xs text-muted-foreground mt-1.5 text-right">{value.length}/30</p>
+    </motion.div>
   );
 }

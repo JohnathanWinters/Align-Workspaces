@@ -1,14 +1,29 @@
-export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban";
-export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation";
-export type EmotionalImpact = "cozy" | "bright" | "powerful" | "cinematic";
-export type ShootIntent = "website" | "social-media" | "marketing" | "personal-brand" | "team";
+export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "other";
+export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation" | "other";
+export type EmotionalImpact = "cozy" | "bright" | "powerful" | "cinematic" | "other";
+export type ShootIntent = "website" | "social-media" | "marketing" | "personal-brand" | "team" | "other";
 
 export interface ConfiguratorState {
   environment: Environment | null;
+  environmentCustom: string;
   brandMessage: BrandMessage | null;
+  brandMessageCustom: string;
   emotionalImpact: EmotionalImpact | null;
+  emotionalImpactCustom: string;
   shootIntent: ShootIntent | null;
+  shootIntentCustom: string;
 }
+
+export const initialState: ConfiguratorState = {
+  environment: null,
+  environmentCustom: "",
+  brandMessage: null,
+  brandMessageCustom: "",
+  emotionalImpact: null,
+  emotionalImpactCustom: "",
+  shootIntent: null,
+  shootIntentCustom: "",
+};
 
 export const environments: { value: Environment; label: string; icon: string }[] = [
   { value: "restaurant", label: "Restaurant", icon: "UtensilsCrossed" },
@@ -41,7 +56,7 @@ export const shootIntents: { value: ShootIntent; label: string }[] = [
   { value: "team", label: "Team or Company" },
 ];
 
-export const environmentImages: Record<Environment, string> = {
+export const environmentImages: Record<string, string> = {
   restaurant: "/images/env-restaurant.jpg",
   office: "/images/env-office.jpg",
   nature: "/images/env-nature.jpg",
@@ -50,33 +65,63 @@ export const environmentImages: Record<Environment, string> = {
   suburban: "/images/env-suburban.jpg",
 };
 
+export function getDisplayLabel(
+  step: "environment" | "brandMessage" | "emotionalImpact" | "shootIntent",
+  state: ConfiguratorState
+): string | null {
+  const value = state[step];
+  if (!value) return null;
+  if (value === "other") {
+    const customKey = `${step}Custom` as keyof ConfiguratorState;
+    const custom = state[customKey] as string;
+    return custom ? custom : "Other";
+  }
+  switch (step) {
+    case "environment":
+      return environments.find((e) => e.value === value)?.label ?? null;
+    case "brandMessage":
+      return brandMessages.find((m) => m.value === value)?.label ?? null;
+    case "emotionalImpact":
+      return emotionalImpacts.find((i) => i.value === value)?.label ?? null;
+    case "shootIntent":
+      return shootIntents.find((s) => s.value === value)?.label ?? null;
+  }
+}
+
 export function generateBrandDescription(state: ConfiguratorState): string {
   if (!state.environment || !state.brandMessage || !state.emotionalImpact) return "";
 
-  const envLabels: Record<Environment, string> = {
+  const envLabels: Record<string, string> = {
     restaurant: "culinary",
     office: "corporate",
     nature: "natural",
     workvan: "field-based",
     urban: "urban",
     suburban: "community-centered",
+    other: state.environmentCustom || "unique",
   };
 
-  const messageLabels: Record<BrandMessage, string> = {
+  const messageLabels: Record<string, string> = {
     assured: "composed and authoritative",
     empathy: "warm and approachable",
     confidence: "confident and decisive",
     motivation: "energetic and inspiring",
+    other: state.brandMessageCustom || "distinctive",
   };
 
-  const impactLabels: Record<EmotionalImpact, string> = {
+  const impactLabels: Record<string, string> = {
     cozy: "warm and inviting",
     bright: "fresh and professional",
     powerful: "bold and commanding",
     cinematic: "cinematic and memorable",
+    other: state.emotionalImpactCustom || "personalized",
   };
 
-  return `A ${impactLabels[state.emotionalImpact]} ${envLabels[state.environment]} branding shoot designed to position you as a ${messageLabels[state.brandMessage]} professional.`;
+  const env = envLabels[state.environment] ?? "unique";
+  const msg = messageLabels[state.brandMessage] ?? "distinctive";
+  const imp = impactLabels[state.emotionalImpact] ?? "personalized";
+
+  return `A ${imp} ${env} branding shoot designed to position you as a ${msg} professional.`;
 }
 
 export function calculatePricing(state: ConfiguratorState): { min: number; max: number } {
