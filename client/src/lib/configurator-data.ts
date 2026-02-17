@@ -128,9 +128,9 @@ export function calculatePricing(state: ConfiguratorState): { min: number; max: 
   let min = 180;
   let max = 210;
 
-  if (state.emotionalImpact === "cinematic" || state.emotionalImpact === "powerful") {
-    min += 50;
-    max += 75;
+  if (state.emotionalImpact && state.emotionalImpact !== "other") {
+    min += 0;
+    max += 0;
   }
 
   if (state.shootIntent === "marketing" || state.shootIntent === "team") {
