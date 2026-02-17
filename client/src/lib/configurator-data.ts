@@ -125,8 +125,8 @@ export function generateBrandDescription(state: ConfiguratorState): string {
 }
 
 export function calculatePricing(state: ConfiguratorState): { min: number; max: number } {
-  let min = 200;
-  let max = 200;
+  let min = 180;
+  let max = 210;
 
   if (state.emotionalImpact === "cinematic" || state.emotionalImpact === "powerful") {
     min += 50;
