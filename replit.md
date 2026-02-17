@@ -1,0 +1,117 @@
+# Brand Vision Studio
+
+## Overview
+
+Brand Vision Studio is a premium, mobile-first interactive website that helps professionals design a personal branding photoshoot. Users are guided through a 3-step configurator (environment, brand message, emotional impact) that updates a visual gallery and live concept summary in real time. The final goal is to capture lead information and a preferred shoot date via a booking form.
+
+The app follows a monorepo structure with a React frontend (`client/`), an Express backend (`server/`), and shared code (`shared/`) for database schemas and types.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend (client/)
+- **Framework**: React with TypeScript, bundled by Vite
+- **Routing**: Wouter (lightweight client-side router) — single page app with home page and 404
+- **State Management**: Local React state for the configurator flow; TanStack React Query for server data fetching/mutations
+- **UI Components**: shadcn/ui (new-york style) built on Radix UI primitives with Tailwind CSS
+- **Animations**: Framer Motion for transitions, hover effects, and step animations
+- **Forms**: React Hook Form with Zod validation via @hookform/resolvers
+- **Styling**: Tailwind CSS with CSS custom properties for theming. Warm neutral color palette (beige/white tones). Two fonts loaded from Google Fonts: Plus Jakarta Sans (sans-serif) and Playfair Display (serif)
+- **Path aliases**: `@/` maps to `client/src/`, `@shared/` maps to `shared/`
+
+### Key Frontend Components
+- `HeroSection` — Landing hero with CTA to start the configurator
+- `StepIndicator` — Visual progress through 3 configurator steps
+- `OptionCard` — Clickable selection cards for each configurator option
+- `ImageGallery` — Dynamic image preview that updates based on environment/emotional impact selections
+- `ConceptSummary` — Live summary panel showing current selections and pricing
+- `BookingForm` — Lead capture form with calendar date picker
+
+### Configurator Data Model (client/src/lib/configurator-data.ts)
+The configurator state tracks four selections:
+1. **Environment**: restaurant, office, nature, workvan, urban, suburban
+2. **Brand Message**: assured, empathy, confidence, motivation
+3. **Emotional Impact**: cozy, bright, powerful, cinematic
+4. **Shoot Intent**: website, social-media, marketing, personal-brand, team
+
+Pricing is calculated dynamically based on selections.
+
+### Backend (server/)
+- **Framework**: Express 5 on Node.js with TypeScript (run via tsx)
+- **API**: RESTful JSON API under `/api/` prefix
+- **Endpoints**:
+  - `POST /api/leads` — Create a new lead/booking (validated with Zod)
+  - `GET /api/leads` — Retrieve all leads
+- **Dev Server**: Vite middleware is used in development for HMR; in production, static files are served from `dist/public`
+
+### Database
+- **Database**: PostgreSQL (required — `DATABASE_URL` environment variable)
+- **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
+- **Schema** (`shared/schema.ts`): Single `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), and timestamps
+- **Migrations**: Drizzle Kit with `db:push` command for schema sync
+
+### Build System
+- **Development**: `tsx server/index.ts` runs the Express server with Vite middleware
+- **Production Build**: Custom build script (`script/build.ts`) that runs Vite for the client and esbuild for the server, outputting to `dist/`
+- **Server Bundle**: esbuild bundles server code with select dependencies inlined (allowlisted) to reduce cold start syscalls; other deps are kept external
+
+### Project Structure
+```
+client/           # React frontend
+  src/
+    components/   # App-specific components
+      ui/         # shadcn/ui component library
+    hooks/        # Custom React hooks
+    lib/          # Utilities, configurator data, query client
+    pages/        # Page components (home, not-found)
+server/           # Express backend
+  index.ts        # Entry point, middleware setup
+  routes.ts       # API route definitions
+  storage.ts      # Database storage layer (implements IStorage interface)
+  db.ts           # Drizzle database connection
+  vite.ts         # Vite dev server integration
+  static.ts       # Production static file serving
+shared/           # Shared between client and server
+  schema.ts       # Drizzle table definitions and Zod schemas
+migrations/       # Drizzle migration files
+attached_assets/  # Project requirements and reference docs
+```
+
+### Design Patterns
+- **Storage Interface**: `IStorage` interface in `server/storage.ts` abstracts database operations, making it swappable
+- **Schema Sharing**: Database schema and validation types are shared between frontend and backend via `shared/schema.ts`
+- **Validation**: Zod schemas derived from Drizzle table definitions ensure consistent validation across the stack
+
+## External Dependencies
+
+### Database
+- **PostgreSQL** — Primary data store, connected via `DATABASE_URL` environment variable
+- **connect-pg-simple** — PostgreSQL session store (available but sessions not currently implemented)
+
+### Key NPM Packages
+- **drizzle-orm** + **drizzle-kit** — Database ORM and migration tooling
+- **express** v5 — HTTP server framework
+- **@tanstack/react-query** — Async state management for API calls
+- **framer-motion** — Animation library for UI transitions
+- **react-hook-form** + **zod** — Form handling and validation
+- **wouter** — Lightweight client-side routing
+- **shadcn/ui ecosystem** — Radix UI primitives, Tailwind CSS, class-variance-authority, clsx, tailwind-merge
+- **react-day-picker** — Calendar component for date selection
+- **vaul** — Drawer component
+- **recharts** — Charting library (available via shadcn chart component)
+- **embla-carousel-react** — Carousel component
+
+### Replit-Specific
+- **@replit/vite-plugin-runtime-error-modal** — Runtime error overlay in development
+- **@replit/vite-plugin-cartographer** — Dev tooling (dev only)
+- **@replit/vite-plugin-dev-banner** — Development banner (dev only)
+
+### Fonts (External CDN)
+- **Plus Jakarta Sans** — Primary sans-serif font
+- **Playfair Display** — Serif font for headings
+
+### Static Assets
+- Images are expected at `/images/` path (hero background, environment previews) — these need to be placed in `client/public/images/`

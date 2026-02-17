@@ -1,0 +1,80 @@
+import { Button } from "@/components/ui/button";
+import { ArrowDown } from "lucide-react";
+import { motion } from "framer-motion";
+
+interface HeroSectionProps {
+  onStart: () => void;
+}
+
+export function HeroSection({ onStart }: HeroSectionProps) {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/hero-bg.jpg)" }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+
+      <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-white/70 text-sm tracking-[0.2em] uppercase mb-6 font-medium"
+        >
+          Brand Vision Studio
+        </motion.p>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.15 }}
+          className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
+        >
+          Aligning Your Vision
+          <br />
+          With Photography
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
+        >
+          Build the image your clients already expect to see.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.45 }}
+        >
+          <Button
+            onClick={onStart}
+            size="lg"
+            data-testid="button-start-configurator"
+            className="text-base px-8 bg-white text-black border-white/20 no-default-hover-elevate"
+          >
+            Start Building Your Shoot
+          </Button>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2"
+        >
+          <button
+            onClick={onStart}
+            data-testid="button-scroll-down"
+            className="text-white/50 transition-colors"
+          >
+            <ArrowDown className="w-6 h-6 animate-bounce" />
+          </button>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
