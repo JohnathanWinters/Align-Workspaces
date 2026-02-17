@@ -80,23 +80,23 @@ export function generateBrandDescription(state: ConfiguratorState): string {
 }
 
 export function calculatePricing(state: ConfiguratorState): { min: number; max: number } {
-  let base = 450;
-  let range = 450;
+  let min = 150;
+  let max = 250;
 
   if (state.environment === "nature" || state.environment === "urban") {
-    base += 50;
-    range += 50;
+    min += 25;
+    max += 50;
   }
 
   if (state.emotionalImpact === "cinematic" || state.emotionalImpact === "powerful") {
-    base += 100;
-    range += 100;
+    min += 50;
+    max += 75;
   }
 
   if (state.shootIntent === "marketing" || state.shootIntent === "team") {
-    base += 150;
-    range += 100;
+    min += 75;
+    max += 100;
   }
 
-  return { min: base, max: base + range };
+  return { min, max };
 }
