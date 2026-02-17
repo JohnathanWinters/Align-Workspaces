@@ -1,7 +1,7 @@
 export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "other";
 export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation" | "other";
 export type EmotionalImpact = "cozy" | "bright" | "powerful" | "cinematic" | "other";
-export type ShootIntent = "website" | "social-media" | "marketing" | "personal-brand" | "team" | "other";
+export type ShootIntent = "commercial" | "social-media" | "team" | "other";
 
 export interface ConfiguratorState {
   environment: Environment | null;
@@ -49,11 +49,9 @@ export const emotionalImpacts: { value: EmotionalImpact; label: string; descript
 ];
 
 export const shootIntents: { value: ShootIntent; label: string }[] = [
-  { value: "marketing", label: "Marketing Campaign" },
-  { value: "personal-brand", label: "Personal Brand" },
+  { value: "commercial", label: "Commercial" },
   { value: "social-media", label: "Social Media" },
   { value: "team", label: "Team or Company" },
-  { value: "website", label: "Website" },
 ];
 
 export const environmentImages: Record<string, string> = {
@@ -133,7 +131,7 @@ export function calculatePricing(state: ConfiguratorState): { min: number; max: 
     max += 0;
   }
 
-  if (state.shootIntent === "marketing" || state.shootIntent === "team") {
+  if (state.shootIntent === "commercial" || state.shootIntent === "team") {
     min += 75;
     max += 100;
   }
