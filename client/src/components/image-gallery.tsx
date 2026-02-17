@@ -23,7 +23,7 @@ export function ImageGallery({ environment, emotionalImpact }: ImageGalleryProps
       <AnimatePresence mode="wait">
         {imageSrc ? (
           <motion.img
-            key={`${environment}-${emotionalImpact}`}
+            key={environment}
             src={imageSrc}
             alt={`${environment} environment preview`}
             initial={{ opacity: 0, scale: 1.05 }}
