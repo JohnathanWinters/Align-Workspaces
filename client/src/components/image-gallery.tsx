@@ -16,7 +16,7 @@ const filterStyles: Record<string, string> = {
 
 export function ImageGallery({ environment, emotionalImpact }: ImageGalleryProps) {
   const imageSrc = environment && environment !== "other" ? environmentImages[environment] ?? null : null;
-  const filter = emotionalImpact && emotionalImpact !== "other" ? filterStyles[emotionalImpact] ?? "none" : "none";
+  const filter = "none";
 
   return (
     <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden bg-muted" data-testid="image-gallery">
