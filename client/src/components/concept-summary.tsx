@@ -14,13 +14,13 @@ interface ConceptSummaryProps {
 
 export function ConceptSummary({ state }: ConceptSummaryProps) {
   const envLabel = state.environment
-    ? environments.find((e) => e.value === state.environment)?.label
+    ? environments.find((e) => e.value === state.environment)?.label ?? null
     : null;
   const msgLabel = state.brandMessage
-    ? brandMessages.find((m) => m.value === state.brandMessage)?.label
+    ? brandMessages.find((m) => m.value === state.brandMessage)?.label ?? null
     : null;
   const impLabel = state.emotionalImpact
-    ? emotionalImpacts.find((i) => i.value === state.emotionalImpact)?.label
+    ? emotionalImpacts.find((i) => i.value === state.emotionalImpact)?.label ?? null
     : null;
   const description = generateBrandDescription(state);
   const pricing = calculatePricing(state);
