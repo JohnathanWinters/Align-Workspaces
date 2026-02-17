@@ -125,13 +125,8 @@ export function generateBrandDescription(state: ConfiguratorState): string {
 }
 
 export function calculatePricing(state: ConfiguratorState): { min: number; max: number } {
-  let min = 150;
-  let max = 250;
-
-  if (state.environment === "nature" || state.environment === "urban") {
-    min += 25;
-    max += 50;
-  }
+  let min = 200;
+  let max = 200;
 
   if (state.emotionalImpact === "cinematic" || state.emotionalImpact === "powerful") {
     min += 50;
