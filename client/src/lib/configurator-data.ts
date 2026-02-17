@@ -62,7 +62,7 @@ export const environmentImages: Record<string, string> = {
   nature: "/images/env-nature.png",
   workvan: "/images/env-workvan.png",
   urban: "/images/env-urban.png",
-  suburban: "/images/env-suburban.jpg",
+  suburban: "/images/env-suburban.png",
 };
 
 export function getDisplayLabel(
