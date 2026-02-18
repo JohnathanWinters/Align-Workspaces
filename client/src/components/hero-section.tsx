@@ -17,20 +17,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
       <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+        <div className="max-w-6xl mx-auto flex items-center justify-center">
           <p className="font-serif text-lg text-white">Brand Vision Studio</p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link href="/portfolio">
-              <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-portfolio-nav">
-                Portfolio
-              </Button>
-            </Link>
-            <Link href="/about">
-              <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-about-nav">
-                About Us
-              </Button>
-            </Link>
-          </div>
         </div>
       </nav>
 
