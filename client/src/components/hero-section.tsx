@@ -74,7 +74,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
-          className="flex flex-col items-center gap-3"
+          className="relative flex flex-col items-center gap-3"
         >
           <Button
             onClick={onStart}
@@ -94,55 +94,55 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             <MessageCircle className="w-4 h-4 mr-2" />
             Contact Us First
           </Button>
-        </motion.div>
 
-        <AnimatePresence>
-          {showContact && (
-            <motion.div
-              initial={{ opacity: 0, y: 16, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-              className="mt-5 mx-auto max-w-sm rounded-md border border-white/20 bg-black/60 backdrop-blur-md p-5"
-              data-testid="contact-box"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-white font-medium text-sm">Reach out to us</p>
-                <button
-                  onClick={() => setShowContact(false)}
-                  data-testid="button-close-contact"
-                  className="text-white/50 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex flex-col gap-3">
-                <a
-                  href="mailto:ArmandoRamirezRomero89@gmail.com"
-                  data-testid="link-email-contact"
-                  className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
-                >
-                  <Mail className="w-5 h-5 text-white/70 shrink-0" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium">Email Us</p>
-                    <p className="text-xs text-white/60">ArmandoRamirezRomero89@gmail.com</p>
-                  </div>
-                </a>
-                <a
-                  href="tel:+15551234567"
-                  data-testid="link-call-contact"
-                  className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
-                >
-                  <Phone className="w-5 h-5 text-white/70 shrink-0" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium">Call Us</p>
-                    <p className="text-xs text-white/60">(555) 123-4567</p>
-                  </div>
-                </a>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <AnimatePresence>
+            {showContact && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                className="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-[calc(100vw-3rem)] max-w-sm rounded-md border border-white/20 bg-black/70 backdrop-blur-md p-5 z-30"
+                data-testid="contact-box"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-white font-medium text-sm">Reach out to us</p>
+                  <button
+                    onClick={() => setShowContact(false)}
+                    data-testid="button-close-contact"
+                    className="text-white/50 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <a
+                    href="mailto:ArmandoRamirezRomero89@gmail.com"
+                    data-testid="link-email-contact"
+                    className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
+                  >
+                    <Mail className="w-5 h-5 text-white/70 shrink-0" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium">Email Us</p>
+                      <p className="text-xs text-white/60">ArmandoRamirezRomero89@gmail.com</p>
+                    </div>
+                  </a>
+                  <a
+                    href="tel:+15551234567"
+                    data-testid="link-call-contact"
+                    className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
+                  >
+                    <Phone className="w-5 h-5 text-white/70 shrink-0" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium">Call Us</p>
+                      <p className="text-xs text-white/60">(555) 123-4567</p>
+                    </div>
+                  </a>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         <motion.div
           style={{ opacity: hintOpacity, y: hintY }}
