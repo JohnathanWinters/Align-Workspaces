@@ -26,10 +26,10 @@ export function PhotographersSection() {
             Behind the Lens
           </p>
           <h2 className="font-serif text-3xl sm:text-4xl mb-4" data-testid="text-photographers-heading">
-            Meet the Photographer
+            Meet the Team
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-photographers-desc">
-            The creative vision behind every session.
+            Helping you align your vision with your photograph
           </p>
         </motion.div>
 
