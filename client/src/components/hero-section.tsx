@@ -25,9 +25,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                 Portfolio
               </Button>
             </Link>
-            <Link href="/photographers">
-              <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-photographers-nav">
-                Photographers
+            <Link href="/about">
+              <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-about-nav">
+                About Us
               </Button>
             </Link>
           </div>

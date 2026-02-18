@@ -189,8 +189,8 @@ export default function HomePage() {
                   <Link href="/portfolio">
                     <Button variant="ghost" data-testid="link-portfolio-header">Portfolio</Button>
                   </Link>
-                  <Link href="/photographers">
-                    <Button variant="ghost" data-testid="link-photographers-header">Photographers</Button>
+                  <Link href="/about">
+                    <Button variant="ghost" data-testid="link-about-header">About Us</Button>
                   </Link>
                 </div>
               </div>
