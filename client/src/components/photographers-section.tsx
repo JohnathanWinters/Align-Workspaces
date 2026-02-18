@@ -1,0 +1,77 @@
+import { motion } from "framer-motion";
+import { Camera } from "lucide-react";
+import { Card } from "@/components/ui/card";
+
+const photographers = [
+  {
+    name: "Armando Ramirez Romero",
+    role: "Founder / Photographer",
+    image: "/images/photographer-armando.png",
+    bio: "With a passion for capturing authentic moments, Armando founded Brand Vision Studio to help professionals tell their story through powerful imagery. His eye for detail and ability to bring out each client's unique personality make every session a one-of-a-kind experience.",
+  },
+];
+
+export function PhotographersSection() {
+  return (
+    <section className="py-20 px-6 bg-foreground/[0.02]" data-testid="section-photographers">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
+            Behind the Lens
+          </p>
+          <h2 className="font-serif text-3xl sm:text-4xl mb-4" data-testid="text-photographers-heading">
+            Meet the Photographer
+          </h2>
+          <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-photographers-desc">
+            The creative vision behind every session.
+          </p>
+        </motion.div>
+
+        <div className="flex justify-center">
+          {photographers.map((photographer, index) => (
+            <motion.div
+              key={photographer.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.15 }}
+              className="max-w-sm w-full"
+            >
+              <Card className="overflow-visible p-0" data-testid={`card-photographer-${index}`}>
+                <div className="aspect-square overflow-hidden rounded-t-md">
+                  <img
+                    src={photographer.image}
+                    alt={photographer.name}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                    data-testid={`img-photographer-${index}`}
+                  />
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Camera className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-role-${index}`}>
+                      {photographer.role}
+                    </p>
+                  </div>
+                  <h3 className="font-serif text-xl mb-2" data-testid={`text-photographer-name-${index}`}>
+                    {photographer.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-photographer-bio-${index}`}>
+                    {photographer.bio}
+                  </p>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -11,6 +11,7 @@ import { ConceptSummary } from "@/components/concept-summary";
 import { BookingForm } from "@/components/booking-form";
 import { PortfolioGallery } from "@/components/portfolio-gallery";
 import { PortfolioSection } from "@/components/portfolio-section";
+import { PhotographersSection } from "@/components/photographers-section";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -173,6 +174,7 @@ export default function HomePage() {
         <>
           <HeroSection onStart={handleStart} />
           <PortfolioSection />
+          <PhotographersSection />
         </>
       )}
 
