@@ -41,7 +41,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.6 }}
           className="text-white/70 text-sm tracking-[0.2em] uppercase mb-6 font-medium"
         >
-          Brand Vision Studio
+          Professional Portrait Studio
         </motion.p>
 
         <motion.h1
@@ -50,9 +50,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.8, delay: 0.15 }}
           className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
         >
-          We Bring Your
+          Portraits That
           <br />
-          Brand to Life
+          Define Your Brand
         </motion.h1>
 
         <motion.p
@@ -61,7 +61,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
         >
-          You have a vision for your brand. We capture it through photography that shows the world who you really are.
+          Design your perfect professional portrait in minutes. We guide you through every detail so your photos capture exactly who you are.
         </motion.p>
 
         <motion.div
@@ -75,7 +75,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             data-testid="button-start-configurator"
             className="text-base px-8 bg-white text-black border-white/20"
           >
-            Design Your Session
+            Design Your Portrait
           </Button>
         </motion.div>
 

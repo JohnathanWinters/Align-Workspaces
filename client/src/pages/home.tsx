@@ -149,8 +149,8 @@ export default function HomePage() {
             You're All Set
           </h2>
           <p className="text-muted-foreground leading-relaxed mb-8">
-            Your branding shoot has been booked. We'll reach out shortly to finalize
-            the details and make sure everything is perfectly aligned with your vision.
+            Your portrait session has been booked. We'll reach out shortly to finalize
+            the details and make sure your portraits turn out exactly as you envision.
           </p>
           <Button
             variant="outline"
@@ -208,8 +208,8 @@ export default function HomePage() {
                   >
                     {currentStep === 1 && (
                       <StepContent
-                        title="Where Should Your Clients See You?"
-                        subtitle="Your environment tells your story before you say a word."
+                        title="Where Should We Shoot Your Portrait?"
+                        subtitle="The right setting makes your portrait tell your story."
                       >
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {environments.map((env) => (
@@ -243,8 +243,8 @@ export default function HomePage() {
 
                     {currentStep === 2 && (
                       <StepContent
-                        title="What Do You Want to Communicate?"
-                        subtitle="The way you present yourself shapes how clients trust you."
+                        title="What Should Your Portrait Say About You?"
+                        subtitle="Great portraits communicate who you are without a single word."
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {brandMessages.map((msg) => (
@@ -278,8 +278,8 @@ export default function HomePage() {
 
                     {currentStep === 3 && (
                       <StepContent
-                        title="How Should Clients Feel When They Meet You?"
-                        subtitle="Emotion drives every buying decision."
+                        title="What Mood Should Your Portrait Capture?"
+                        subtitle="The right feeling in your portrait connects with people instantly."
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {emotionalImpacts.map((imp) => (
@@ -348,8 +348,8 @@ export default function HomePage() {
 
                     {currentStep === 5 && (
                       <StepContent
-                        title="Here Are Some Clients Who Have Used Your Selections!"
-                        subtitle="See real results from shoots with similar choices."
+                        title="Portraits With Similar Selections"
+                        subtitle="See how other clients' portraits turned out with choices like yours."
                       >
                         <PortfolioGallery
                           environment={state.environment === "other" ? state.environmentCustom : (state.environment || "")}
