@@ -154,6 +154,13 @@ export default function HomePage() {
     }, 100);
   }
 
+  function handleContact() {
+    setCurrentStep(6);
+    setTimeout(() => {
+      configuratorRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }
+
   function canProceed(): boolean {
     switch (currentStep) {
       case 1:
@@ -223,7 +230,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       {currentStep === 0 && (
         <>
-          <HeroSection onStart={handleStart} />
+          <HeroSection onStart={handleStart} onContact={handleContact} />
         </>
       )}
 

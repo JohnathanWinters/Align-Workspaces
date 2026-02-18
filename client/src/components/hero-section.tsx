@@ -1,15 +1,42 @@
 import { Button } from "@/components/ui/button";
-import { ArrowDown } from "lucide-react";
-import { motion } from "framer-motion";
-import { Link } from "wouter";
+import { ArrowDown, MessageCircle } from "lucide-react";
+import { motion, useMotionValue, useTransform, useAnimation } from "framer-motion";
+import { useState, useCallback } from "react";
 
 interface HeroSectionProps {
   onStart: () => void;
+  onContact: () => void;
 }
 
-export function HeroSection({ onStart }: HeroSectionProps) {
+export function HeroSection({ onStart, onContact }: HeroSectionProps) {
+  const y = useMotionValue(0);
+  const opacity = useTransform(y, [-60, 0, 60], [0.6, 1, 0.6]);
+  const scale = useTransform(y, [-60, 0, 60], [0.98, 1, 0.98]);
+  const hintOpacity = useTransform(y, [-30, -10, 0, 10, 30], [1, 0.5, 0, 0.5, 1]);
+  const hintY = useTransform(y, [-60, 0, 60], [-8, 0, 8]);
+  const [hintText, setHintText] = useState("");
+  const hintControls = useAnimation();
+
+  const handleDragEnd = useCallback(() => {
+    setHintText("");
+  }, []);
+
+  const handleDrag = useCallback((_: any, info: { offset: { y: number } }) => {
+    if (Math.abs(info.offset.y) > 15) {
+      setHintText("Tap the button below to get started");
+    }
+  }, []);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <motion.section
+      className="relative min-h-screen flex items-center justify-center overflow-hidden touch-pan-x"
+      style={{ opacity, scale }}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={0.15}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+    >
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "url(/images/hero-bg-bright.png)" }}
@@ -47,6 +74,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
+          className="flex flex-col items-center gap-3"
         >
           <Button
             onClick={onStart}
@@ -56,23 +84,42 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           >
             Start Designing Your Shoot
           </Button>
+          <Button
+            onClick={onContact}
+            variant="outline"
+            size="lg"
+            data-testid="button-contact-direct"
+            className="text-base px-8 text-white border-white/30 bg-white/10 backdrop-blur-sm"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Contact Me First
+          </Button>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 1.2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2"
+          style={{ opacity: hintOpacity, y: hintY }}
+          className="mt-6 pointer-events-none"
         >
-          <button
-            onClick={onStart}
-            data-testid="button-scroll-down"
-            className="text-white/50 transition-colors"
-          >
-            <ArrowDown className="w-6 h-6 animate-bounce" />
-          </button>
+          <p className="text-white/60 text-xs transition-opacity duration-300" data-testid="text-scroll-hint">
+            {hintText}
+          </p>
         </motion.div>
       </div>
-    </section>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 1.2 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10"
+      >
+        <button
+          onClick={onStart}
+          data-testid="button-scroll-down"
+          className="text-white/50 transition-colors"
+        >
+          <ArrowDown className="w-6 h-6 animate-bounce" />
+        </button>
+      </motion.div>
+    </motion.section>
   );
 }
