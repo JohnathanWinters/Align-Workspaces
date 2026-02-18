@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 
 interface HeroSectionProps {
   onStart: () => void;
@@ -14,6 +15,17 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         style={{ backgroundImage: "url(/images/hero-bg.jpg)" }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+
+      <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <p className="font-serif text-lg text-white">Brand Vision Studio</p>
+          <Link href="/portfolio">
+            <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-portfolio-nav">
+              Portfolio
+            </Button>
+          </Link>
+        </div>
+      </nav>
 
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
         <motion.p

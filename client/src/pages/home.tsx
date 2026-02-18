@@ -10,8 +10,10 @@ import { ImageGallery } from "@/components/image-gallery";
 import { ConceptSummary } from "@/components/concept-summary";
 import { BookingForm } from "@/components/booking-form";
 import { PortfolioGallery } from "@/components/portfolio-gallery";
+import { PortfolioSection } from "@/components/portfolio-section";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import {
   UtensilsCrossed,
   Building2,
@@ -167,7 +169,12 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {currentStep === 0 && <HeroSection onStart={handleStart} />}
+      {currentStep === 0 && (
+        <>
+          <HeroSection onStart={handleStart} />
+          <PortfolioSection />
+        </>
+      )}
 
       {currentStep > 0 && (
         <div ref={configuratorRef} className="min-h-screen">
@@ -176,7 +183,9 @@ export default function HomePage() {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="font-serif text-lg">Brand Vision Studio</p>
                 <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
-                <div className="w-24" />
+                <Link href="/portfolio">
+                  <Button variant="ghost" data-testid="link-portfolio-header">Portfolio</Button>
+                </Link>
               </div>
             </div>
           </header>
