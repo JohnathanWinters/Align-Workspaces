@@ -61,7 +61,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
         >
-          Design your perfect professional portrait in minutes. We guide you through every detail so your photos capture exactly who you are.
+          Design a photoshoot that reflects where you work, who you are, and the emotional impact you want to leave behind.
         </motion.p>
 
         <motion.div
