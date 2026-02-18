@@ -48,10 +48,10 @@ export const emotionalImpacts: { value: EmotionalImpact; label: string; descript
   { value: "powerful", label: "Powerful", description: "Bold contrast, dramatic shadows, commanding presence" },
 ];
 
-export const shootIntents: { value: ShootIntent; label: string }[] = [
-  { value: "commercial", label: "Commercial" },
-  { value: "social-media", label: "Social Media" },
-  { value: "team", label: "Team or Company" },
+export const shootIntents: { value: ShootIntent; label: string; description: string }[] = [
+  { value: "commercial", label: "Commercial", description: "For use in ad campaigns and marketing" },
+  { value: "social-media", label: "Social Media", description: "For your website(s) and social media platforms. Non ad campaign usage." },
+  { value: "team", label: "Team or Company", description: "For team photoshoots" },
 ];
 
 export const environmentImages: Record<string, string> = {

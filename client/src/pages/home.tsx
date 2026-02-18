@@ -321,6 +321,7 @@ export default function HomePage() {
                             <OptionCard
                               key={intent.value}
                               label={intent.label}
+                              description={intent.description}
                               isSelected={state.shootIntent === intent.value}
                               onClick={() => setState({ ...state, shootIntent: intent.value, shootIntentCustom: "" })}
                               testId={`option-intent-${intent.value}`}
