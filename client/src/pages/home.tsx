@@ -173,8 +173,6 @@ export default function HomePage() {
       {currentStep === 0 && (
         <>
           <HeroSection onStart={handleStart} />
-          <PortfolioSection />
-          <PhotographersSection />
         </>
       )}
 
