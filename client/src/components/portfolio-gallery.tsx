@@ -37,12 +37,12 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
 
   if (!photos || photos.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12" data-testid="portfolio-empty">
         <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
           <ImageOff className="w-6 h-6 text-muted-foreground" />
         </div>
-        <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
-          We don't have matching portfolio shots for this exact combination yet, but your shoot will be the first! Continue to the next step to book.
+        <p className="text-base leading-relaxed max-w-sm mx-auto">
+          Your choice is very unique! Since we can't show you any sample photos your photoshoot gets a <span className="font-semibold">25% discount!</span>
         </p>
       </div>
     );
