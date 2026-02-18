@@ -81,7 +81,7 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
             src={photo.imageUrl}
             alt="Portfolio photo full view"
             className="max-w-full max-h-full object-contain rounded-md"
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setLightboxOpen(false)}
           />
         </div>
       )}
