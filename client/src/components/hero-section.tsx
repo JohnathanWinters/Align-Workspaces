@@ -50,9 +50,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.8, delay: 0.15 }}
           className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
         >
-          Bring Your Brand
+          We Bring Your
           <br />
-          Vision to Life
+          Brand to Life
         </motion.h1>
 
         <motion.p
@@ -61,7 +61,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
         >
-          We turn the way you see yourself and your business into photography that tells your story.
+          You have a vision for your brand. We capture it through photography that shows the world who you really are.
         </motion.p>
 
         <motion.div
