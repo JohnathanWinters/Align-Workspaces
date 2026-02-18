@@ -15,7 +15,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft } from "lucide-react";
+import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft, Users } from "lucide-react";
+import { SiSlack } from "react-icons/si";
 import { useState } from "react";
 
 const bookingSchema = z.object({
@@ -106,6 +107,33 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Want more guidance before committing? Share your info and the photographer will reach out to you.
                   </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-5" data-testid="section-community">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-md bg-foreground/5 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5 text-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-base mb-1" data-testid="text-community-heading">Join Our Community</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                    Connect with other professionals and stay up to date on sessions, tips, and behind-the-scenes content.
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <a
+                      href="https://slack.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="link-slack"
+                    >
+                      <Button variant="outline" size="sm">
+                        <SiSlack className="w-4 h-4 mr-2" />
+                        Slack
+                      </Button>
+                    </a>
+                  </div>
                 </div>
               </div>
             </Card>
