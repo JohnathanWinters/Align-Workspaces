@@ -19,11 +19,18 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <p className="font-serif text-lg text-white">Brand Vision Studio</p>
-          <Link href="/portfolio">
-            <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-portfolio-nav">
-              Portfolio
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href="/portfolio">
+              <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-portfolio-nav">
+                Portfolio
+              </Button>
+            </Link>
+            <Link href="/photographers">
+              <Button variant="outline" className="text-white border-white/30 bg-white/10 backdrop-blur-sm" data-testid="link-photographers-nav">
+                Photographers
+              </Button>
+            </Link>
+          </div>
         </div>
       </nav>
 

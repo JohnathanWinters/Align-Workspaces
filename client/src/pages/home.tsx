@@ -185,9 +185,14 @@ export default function HomePage() {
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="font-serif text-lg">Brand Vision Studio</p>
                 <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
-                <Link href="/portfolio">
-                  <Button variant="ghost" data-testid="link-portfolio-header">Portfolio</Button>
-                </Link>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link href="/portfolio">
+                    <Button variant="ghost" data-testid="link-portfolio-header">Portfolio</Button>
+                  </Link>
+                  <Link href="/photographers">
+                    <Button variant="ghost" data-testid="link-photographers-header">Photographers</Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </header>
