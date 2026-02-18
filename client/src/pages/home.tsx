@@ -330,8 +330,8 @@ export default function HomePage() {
 
                     {currentStep === 5 && (
                       <StepContent
-                        title="Lock In Your Session"
-                        subtitle="Choose a date and share your details."
+                        title="Let's Make It Happen"
+                        subtitle="Choose how you'd like to move forward."
                       >
                         <BookingForm
                           onSubmit={(data) => bookMutation.mutate(data)}
