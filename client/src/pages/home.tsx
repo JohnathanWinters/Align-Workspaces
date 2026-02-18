@@ -181,7 +181,7 @@ export default function HomePage() {
           <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
-                <p className="font-serif text-lg">Brand Vision Studio</p>
+                <p className="font-serif text-lg cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Brand Vision Studio</p>
                 <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
                 <div className="flex items-center gap-2 flex-wrap">
                   <Link href="/portfolio">
