@@ -35,15 +35,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       </nav>
 
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-white/70 text-sm tracking-[0.2em] uppercase mb-6 font-medium"
-        >
-          Professional Photos
-        </motion.p>
-
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
