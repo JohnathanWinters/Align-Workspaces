@@ -15,7 +15,7 @@ export interface ConfiguratorState {
 }
 
 export const initialState: ConfiguratorState = {
-  environment: null,
+  environment: "office",
   environmentCustom: "",
   brandMessage: null,
   brandMessageCustom: "",
