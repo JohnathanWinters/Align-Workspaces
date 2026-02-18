@@ -2,8 +2,58 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useState } from "react";
 import type { PortfolioPhoto } from "@shared/schema";
+
+function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number }) {
+  const [showTags, setShowTags] = useState(false);
+
+  const allTags = [
+    ...photo.environments,
+    ...photo.brandMessages,
+    ...photo.emotionalImpacts,
+  ];
+
+  function handleInteraction() {
+    setShowTags(true);
+    setTimeout(() => setShowTags(false), 2000);
+  }
+
+  return (
+    <motion.div
+      key={photo.id}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="aspect-[3/4] rounded-md overflow-hidden relative cursor-pointer"
+      onMouseEnter={handleInteraction}
+      onTouchStart={handleInteraction}
+      data-testid={`portfolio-preview-card-${index}`}
+    >
+      <img
+        src={photo.imageUrl}
+        alt="Portfolio photo"
+        className="w-full h-full object-cover"
+        data-testid={`portfolio-preview-${index}`}
+      />
+      <div
+        className={`absolute inset-0 bg-black/50 flex items-end p-3 transition-opacity duration-300 ${showTags ? "opacity-100" : "opacity-0"}`}
+        data-testid={`portfolio-preview-tags-${index}`}
+      >
+        <div className="flex flex-wrap gap-1.5">
+          {allTags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs capitalize bg-white/20 text-white border-white/20">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export function PortfolioSection() {
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
@@ -51,21 +101,7 @@ export function PortfolioSection() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {displayPhotos.map((photo, index) => (
-            <motion.div
-              key={photo.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="aspect-[3/4] rounded-md overflow-hidden"
-            >
-              <img
-                src={photo.imageUrl}
-                alt="Portfolio photo"
-                className="w-full h-full object-cover"
-                data-testid={`portfolio-preview-${index}`}
-              />
-            </motion.div>
+            <PortfolioCard key={photo.id} photo={photo} index={index} />
           ))}
         </div>
 
