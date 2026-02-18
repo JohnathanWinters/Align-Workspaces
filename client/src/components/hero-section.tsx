@@ -71,6 +71,21 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </motion.p>
 
           <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+            className="mb-6"
+          >
+            <button
+              onClick={onStart}
+              data-testid="button-scroll-down"
+              className="text-white/50 transition-colors"
+            >
+              <ArrowDown className="w-6 h-6 animate-bounce" />
+            </button>
+          </motion.div>
+
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
@@ -106,20 +121,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 1.2 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10"
-        >
-          <button
-            onClick={onStart}
-            data-testid="button-scroll-down"
-            className="text-white/50 transition-colors"
-          >
-            <ArrowDown className="w-6 h-6 animate-bounce" />
-          </button>
-        </motion.div>
       </motion.section>
 
       <AnimatePresence>
