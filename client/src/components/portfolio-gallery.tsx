@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import type { PortfolioPhoto } from "@shared/schema";
-import { ImageOff } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface PortfolioGalleryProps {
   environment: string;
@@ -10,7 +10,7 @@ interface PortfolioGalleryProps {
 }
 
 export function PortfolioGallery({ environment, brandMessage, emotionalImpact }: PortfolioGalleryProps) {
-  const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
+  const { data: matchedPhotos, isLoading: matchedLoading } = useQuery<PortfolioPhoto[]>({
     queryKey: ["/api/portfolio-photos", environment, brandMessage, emotionalImpact],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -25,7 +25,19 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
     enabled: !!environment && !!brandMessage && !!emotionalImpact,
   });
 
-  if (isLoading) {
+  const hasMatches = matchedPhotos && matchedPhotos.length > 0;
+
+  const { data: allPhotos, isLoading: allLoading } = useQuery<PortfolioPhoto[]>({
+    queryKey: ["/api/portfolio-photos"],
+    queryFn: async () => {
+      const res = await fetch("/api/portfolio-photos");
+      if (!res.ok) throw new Error("Failed to fetch photos");
+      return res.json();
+    },
+    enabled: !matchedLoading && !hasMatches,
+  });
+
+  if (matchedLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[1, 2, 3].map((i) => (
@@ -35,19 +47,45 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
     );
   }
 
-  if (!photos || photos.length === 0) {
+  if (hasMatches) {
     return (
-      <div className="text-center py-12" data-testid="portfolio-empty">
-        <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
-          <ImageOff className="w-6 h-6 text-muted-foreground" />
-        </div>
-        <p className="text-base leading-relaxed max-w-sm mx-auto">
-          Your choice is very unique! Since we can't show you any sample photos your photoshoot gets a <span className="font-semibold">25% discount!</span>
-        </p>
+      <div data-testid="portfolio-matched">
+        <PhotoGrid photos={matchedPhotos} />
       </div>
     );
   }
 
+  return (
+    <div data-testid="portfolio-unique">
+      <div className="text-center mb-8">
+        <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
+          <Sparkles className="w-6 h-6 text-muted-foreground" />
+        </div>
+        <h3 className="font-serif text-xl mb-2" data-testid="text-unique-heading">Your choice is unique!</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+          Since we can't show you any sample photos your photoshoot gets a <span className="font-semibold">25% discount!</span>
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground mb-4" data-testid="text-portfolio-fallback">Here are some photos from our portfolio.</p>
+        {allLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="aspect-[3/4] rounded-md bg-foreground/5 animate-pulse" />
+            ))}
+          </div>
+        ) : allPhotos && allPhotos.length > 0 ? (
+          <PhotoGrid photos={allPhotos} />
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-6">Portfolio photos coming soon.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PhotoGrid({ photos }: { photos: PortfolioPhoto[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="portfolio-grid">
       {photos.map((photo, index) => (

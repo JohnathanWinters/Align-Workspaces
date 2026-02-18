@@ -404,8 +404,8 @@ export default function HomePage() {
 
                     {currentStep === 5 && (
                       <StepContent
-                        title="Portraits With Similar Selections"
-                        subtitle="See how other clients' portraits turned out with choices like yours."
+                        title="Your Portrait Preview"
+                        subtitle="Based on your selections, here's what to expect."
                       >
                         <PortfolioGallery
                           environment={state.environment === "other" ? state.environmentCustom : (state.environment || "")}
