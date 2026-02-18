@@ -92,7 +92,7 @@ export function HeroSection({ onStart, onContact }: HeroSectionProps) {
             className="text-base px-8 text-white border-white/30 bg-white/10 backdrop-blur-sm"
           >
             <MessageCircle className="w-4 h-4 mr-2" />
-            Contact Me First
+            Contact Us First
           </Button>
         </motion.div>
 
