@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft, Users } from "lucide-react";
-import { SiSlack } from "react-icons/si";
+import { SiSlack, SiInstagram } from "react-icons/si";
 import { useState } from "react";
 
 const bookingSchema = z.object({
@@ -131,6 +131,17 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
                       <Button variant="outline" size="sm">
                         <SiSlack className="w-4 h-4 mr-2" />
                         Slack
+                      </Button>
+                    </a>
+                    <a
+                      href="https://www.instagram.com/armando.ramirez.romero/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="link-instagram"
+                    >
+                      <Button variant="outline" size="sm">
+                        <SiInstagram className="w-4 h-4 mr-2" />
+                        Instagram
                       </Button>
                     </a>
                   </div>
