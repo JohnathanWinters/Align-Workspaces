@@ -12,7 +12,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/hero-bg.jpg)" }}
+        style={{ backgroundImage: "url(/images/hero-bg-new.png)" }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
@@ -50,9 +50,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.8, delay: 0.15 }}
           className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
         >
-          Aligning Your Vision
+          Bring Your Brand
           <br />
-          With Photography
+          Vision to Life
         </motion.h1>
 
         <motion.p
@@ -61,7 +61,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
         >
-          Build the image your clients already expect to see.
+          We turn the way you see yourself and your business into photography that tells your story.
         </motion.p>
 
         <motion.div
@@ -73,9 +73,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             onClick={onStart}
             size="lg"
             data-testid="button-start-configurator"
-            className="text-base px-8 bg-white text-black border-white/20 no-default-hover-elevate"
+            className="text-base px-8 bg-white text-black border-white/20"
           >
-            Start Building Your Shoot
+            Design Your Session
           </Button>
         </motion.div>
 
