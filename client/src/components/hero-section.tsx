@@ -52,7 +52,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         >
           Portraits That
           <br />
-          Define You
+          Reflect Who You Are
         </motion.h1>
 
         <motion.p
