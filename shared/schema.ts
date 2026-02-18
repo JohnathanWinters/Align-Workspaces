@@ -26,3 +26,20 @@ export const insertLeadSchema = createInsertSchema(leads).omit({
 
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type Lead = typeof leads.$inferSelect;
+
+export const portfolioPhotos = pgTable("portfolio_photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  imageUrl: text("image_url").notNull(),
+  environments: text("environments").array().notNull(),
+  brandMessages: text("brand_messages").array().notNull(),
+  emotionalImpacts: text("emotional_impacts").array().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPortfolioPhotoSchema = createInsertSchema(portfolioPhotos).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPortfolioPhoto = z.infer<typeof insertPortfolioPhotoSchema>;
+export type PortfolioPhoto = typeof portfolioPhotos.$inferSelect;

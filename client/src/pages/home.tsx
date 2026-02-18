@@ -9,6 +9,7 @@ import { OptionCard } from "@/components/option-card";
 import { ImageGallery } from "@/components/image-gallery";
 import { ConceptSummary } from "@/components/concept-summary";
 import { BookingForm } from "@/components/booking-form";
+import { PortfolioGallery } from "@/components/portfolio-gallery";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -109,12 +110,14 @@ export default function HomePage() {
         return !!state.emotionalImpact && (state.emotionalImpact !== "other" || state.emotionalImpactCustom.trim().length > 0);
       case 4:
         return !!state.shootIntent && (state.shootIntent !== "other" || state.shootIntentCustom.trim().length > 0);
+      case 5:
+        return true;
       default: return false;
     }
   }
 
   function nextStep() {
-    if (canProceed() && currentStep < 5) {
+    if (canProceed() && currentStep < 6) {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: configuratorRef.current?.offsetTop ?? 0, behavior: "smooth" });
     }
@@ -172,7 +175,7 @@ export default function HomePage() {
             <div className="max-w-6xl mx-auto px-4 py-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="font-serif text-lg">Brand Vision Studio</p>
-                <StepIndicator currentStep={currentStep} totalSteps={5} onStepClick={(step) => setCurrentStep(step)} />
+                <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
                 <div className="w-24" />
               </div>
             </div>
@@ -330,6 +333,19 @@ export default function HomePage() {
 
                     {currentStep === 5 && (
                       <StepContent
+                        title="Here Are Some Clients Who Have Used Your Selections!"
+                        subtitle="See real results from shoots with similar choices."
+                      >
+                        <PortfolioGallery
+                          environment={state.environment === "other" ? state.environmentCustom : (state.environment || "")}
+                          brandMessage={state.brandMessage === "other" ? state.brandMessageCustom : (state.brandMessage || "")}
+                          emotionalImpact={state.emotionalImpact === "other" ? state.emotionalImpactCustom : (state.emotionalImpact || "")}
+                        />
+                      </StepContent>
+                    )}
+
+                    {currentStep === 6 && (
+                      <StepContent
                         title="Let's Make It Happen"
                         subtitle="Choose how you'd like to move forward."
                       >
@@ -341,7 +357,7 @@ export default function HomePage() {
                     )}
                   </motion.div>
 
-                  {currentStep < 5 && (
+                  {currentStep < 6 && (
                     <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
                       <Button
                         variant="ghost"
