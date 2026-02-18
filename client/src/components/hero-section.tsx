@@ -28,20 +28,21 @@ export function HeroSection({ onStart, onContact }: HeroSectionProps) {
   }, []);
 
   return (
-    <motion.section
-      className="relative min-h-screen flex items-center justify-center overflow-hidden touch-pan-x"
-      style={{ opacity, scale }}
-      drag="y"
-      dragConstraints={{ top: 0, bottom: 0 }}
-      dragElastic={0.15}
-      onDrag={handleDrag}
-      onDragEnd={handleDragEnd}
-    >
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/hero-bg-bright.png)" }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+    <div className="relative min-h-screen bg-[#1a1a1a]">
+      <motion.section
+        className="relative min-h-screen flex items-center justify-center overflow-hidden touch-pan-x"
+        style={{ opacity, scale }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.15}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url(/images/hero-bg-bright.png)" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
       <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-center">
@@ -121,5 +122,6 @@ export function HeroSection({ onStart, onContact }: HeroSectionProps) {
         </button>
       </motion.div>
     </motion.section>
+    </div>
   );
 }

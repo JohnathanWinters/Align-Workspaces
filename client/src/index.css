@@ -170,8 +170,8 @@
     @apply border-border;
   }
 
-  html {
-    background-color: #1a1a1a;
+  html, body {
+    overscroll-behavior: none;
   }
 
   body {
