@@ -43,132 +43,142 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
-      <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
-        <div className="max-w-6xl mx-auto flex items-center justify-center">
-          <p className="font-serif text-lg text-white">Brand Vision Studio</p>
+        <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
+          <div className="max-w-6xl mx-auto flex items-center justify-center">
+            <p className="font-serif text-lg text-white">Brand Vision Studio</p>
+          </div>
+        </nav>
+
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
+          >
+            Portraits That
+            <br />
+            Reflect Who You Are
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
+          >
+            Design a photoshoot that reflects your work, who you are, and the emotional impact you want to leave behind.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="flex flex-col items-center gap-3"
+          >
+            <Button
+              onClick={onStart}
+              size="lg"
+              data-testid="button-start-configurator"
+              className="text-base px-8 bg-white text-black border-white/20"
+            >
+              Start Designing Your Shoot
+            </Button>
+            <Button
+              onClick={() => setShowContact(true)}
+              variant="outline"
+              size="lg"
+              data-testid="button-contact-direct"
+              className="text-base px-8 text-white border-white/30 bg-white/10 backdrop-blur-sm"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Contact Us First
+            </Button>
+          </motion.div>
+
+          <motion.div
+            style={{ opacity: hintOpacity, y: hintY }}
+            className="mt-6 pointer-events-none"
+          >
+            <p className="text-white/60 text-xs transition-opacity duration-300" data-testid="text-scroll-hint">
+              {hintText}
+            </p>
+          </motion.div>
         </div>
-      </nav>
-
-      <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.15 }}
-          className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
-        >
-          Portraits That
-          <br />
-          Reflect Who You Are
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
-        >
-          Design a photoshoot that reflects your work, who you are, and the emotional impact you want to leave behind.
-        </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.45 }}
-          className="relative flex flex-col items-center gap-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.2 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10"
         >
-          <Button
+          <button
             onClick={onStart}
-            size="lg"
-            data-testid="button-start-configurator"
-            className="text-base px-8 bg-white text-black border-white/20"
+            data-testid="button-scroll-down"
+            className="text-white/50 transition-colors"
           >
-            Start Designing Your Shoot
-          </Button>
-          <Button
-            onClick={() => setShowContact(true)}
-            variant="outline"
-            size="lg"
-            data-testid="button-contact-direct"
-            className="text-base px-8 text-white border-white/30 bg-white/10 backdrop-blur-sm"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Contact Us First
-          </Button>
-
-          <AnimatePresence>
-            {showContact && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ duration: 0.25 }}
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-3rem)] max-w-sm rounded-md border border-white/20 bg-black/70 backdrop-blur-md p-5 z-30"
-                data-testid="contact-box"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-white font-medium text-sm">Reach out to us</p>
-                  <button
-                    onClick={() => setShowContact(false)}
-                    data-testid="button-close-contact"
-                    className="text-white/50 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <a
-                    href="mailto:ArmandoRamirezRomero89@gmail.com"
-                    data-testid="link-email-contact"
-                    className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
-                  >
-                    <Mail className="w-5 h-5 text-white/70 shrink-0" />
-                    <div className="text-left">
-                      <p className="text-sm font-medium">Email Us</p>
-                      <p className="text-xs text-white/60">ArmandoRamirezRomero89@gmail.com</p>
-                    </div>
-                  </a>
-                  <a
-                    href="tel:+15551234567"
-                    data-testid="link-call-contact"
-                    className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
-                  >
-                    <Phone className="w-5 h-5 text-white/70 shrink-0" />
-                    <div className="text-left">
-                      <p className="text-sm font-medium">Call Us</p>
-                      <p className="text-xs text-white/60">(555) 123-4567</p>
-                    </div>
-                  </a>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <ArrowDown className="w-6 h-6 animate-bounce" />
+          </button>
         </motion.div>
+      </motion.section>
 
-        <motion.div
-          style={{ opacity: hintOpacity, y: hintY }}
-          className="mt-6 pointer-events-none"
-        >
-          <p className="text-white/60 text-xs transition-opacity duration-300" data-testid="text-scroll-hint">
-            {hintText}
-          </p>
-        </motion.div>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1.2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10"
-      >
-        <button
-          onClick={onStart}
-          data-testid="button-scroll-down"
-          className="text-white/50 transition-colors"
-        >
-          <ArrowDown className="w-6 h-6 animate-bounce" />
-        </button>
-      </motion.div>
-    </motion.section>
+      <AnimatePresence>
+        {showContact && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-[9998]"
+              onClick={() => setShowContact(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+              className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-3rem)] max-w-sm rounded-md border border-white/20 bg-black/80 backdrop-blur-xl p-5"
+              data-testid="contact-box"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-white font-medium text-sm">Reach out to us</p>
+                <button
+                  onClick={() => setShowContact(false)}
+                  data-testid="button-close-contact"
+                  className="text-white/50 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                <a
+                  href="mailto:ArmandoRamirezRomero89@gmail.com"
+                  data-testid="link-email-contact"
+                  className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
+                >
+                  <Mail className="w-5 h-5 text-white/70 shrink-0" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Email Us</p>
+                    <p className="text-xs text-white/60">ArmandoRamirezRomero89@gmail.com</p>
+                  </div>
+                </a>
+                <a
+                  href="tel:+15551234567"
+                  data-testid="link-call-contact"
+                  className="flex items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 py-3 text-white transition-colors hover:bg-white/20"
+                >
+                  <Phone className="w-5 h-5 text-white/70 shrink-0" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium">Call Us</p>
+                    <p className="text-xs text-white/60">(555) 123-4567</p>
+                  </div>
+                </a>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
