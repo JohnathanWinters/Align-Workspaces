@@ -75,7 +75,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             data-testid="button-start-configurator"
             className="text-base px-8 bg-white text-black border-white/20"
           >
-            Design Your Portrait
+            Start in 60 Seconds
           </Button>
         </motion.div>
 
