@@ -37,6 +37,10 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
         src={photo.imageUrl}
         alt="Portfolio photo"
         className="w-full h-full object-cover"
+        loading="eager"
+        decoding="async"
+        style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         data-testid={`portfolio-preview-${index}`}
       />
       <div
