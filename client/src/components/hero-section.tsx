@@ -102,7 +102,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.25 }}
-                className="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-[calc(100vw-3rem)] max-w-sm rounded-md border border-white/20 bg-black/70 backdrop-blur-md p-5 z-30"
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-3rem)] max-w-sm rounded-md border border-white/20 bg-black/70 backdrop-blur-md p-5 z-30"
                 data-testid="contact-box"
               >
                 <div className="flex items-center justify-between mb-4">
