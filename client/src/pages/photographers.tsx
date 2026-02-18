@@ -9,7 +9,7 @@ const photographers = [
     name: "Armando Ramirez Romero",
     role: "Founder / Photographer",
     image: "/images/photographer-armando.jpg",
-    bio: "With a passion for capturing authentic moments, Armando founded Brand Vision Studio to help professionals tell their story through powerful imagery. His eye for detail and ability to bring out each client's unique personality make every session a one-of-a-kind experience.",
+    bio: "With over 9 years of experience behind the lens, Armando founded Brand Vision Studio to help professionals tell their story through compelling imagery. He's committed to building a new, more intuitive way for clients to navigate the photography process\u2014from concept to final delivery.",
   },
 ];
 
