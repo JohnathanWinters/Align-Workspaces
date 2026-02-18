@@ -75,7 +75,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             data-testid="button-start-configurator"
             className="text-base px-8 bg-white text-black border-white/20"
           >
-            Share Your Vision
+            Start Designing Your Shoot
           </Button>
         </motion.div>
 
