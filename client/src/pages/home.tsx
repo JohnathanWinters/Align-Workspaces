@@ -229,12 +229,11 @@ export default function HomePage() {
 
       {currentStep > 0 && (
         <div ref={configuratorRef} className="min-h-screen">
-          <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-            <div className="max-w-6xl mx-auto px-4 py-4">
+          <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+            <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="font-serif text-lg cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Brand Vision Studio</p>
-                <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="hidden lg:flex items-center gap-2 flex-wrap">
                   <Link href="/portfolio">
                     <Button variant="ghost" data-testid="link-portfolio-header">Portfolio</Button>
                   </Link>
@@ -243,8 +242,14 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
+              <div className="mt-3 lg:hidden">
+                <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
+              </div>
             </div>
           </header>
+          <div className="hidden lg:block max-w-6xl mx-auto px-4 pt-6">
+            <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
+          </div>
 
           <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
