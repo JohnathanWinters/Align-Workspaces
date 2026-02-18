@@ -41,7 +41,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 0.6 }}
           className="text-white/70 text-sm tracking-[0.2em] uppercase mb-6 font-medium"
         >
-          Professional Portrait Studio
+          Professional Photos
         </motion.p>
 
         <motion.h1
