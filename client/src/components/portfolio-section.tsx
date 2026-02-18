@@ -4,11 +4,12 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { PortfolioPhoto } from "@shared/schema";
 
 function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number }) {
   const [showTags, setShowTags] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const allTags = [
     ...photo.environments,
@@ -16,10 +17,17 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
     ...photo.emotionalImpacts,
   ];
 
-  function handleInteraction() {
-    setShowTags(true);
-    setTimeout(() => setShowTags(false), 2000);
-  }
+  const handleMouseEnter = useCallback(() => {
+    timerRef.current = setTimeout(() => setShowTags(true), 2000);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setShowTags(false);
+  }, []);
 
   return (
     <motion.div
@@ -29,8 +37,10 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="aspect-[3/4] rounded-md overflow-hidden relative cursor-pointer"
-      onMouseEnter={handleInteraction}
-      onTouchStart={handleInteraction}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleMouseEnter}
+      onTouchEnd={handleMouseLeave}
       data-testid={`portfolio-preview-card-${index}`}
     >
       <img
@@ -44,7 +54,7 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
         data-testid={`portfolio-preview-${index}`}
       />
       <div
-        className={`absolute inset-0 bg-black/50 flex items-end p-3 transition-opacity duration-300 ${showTags ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-black/50 flex items-end p-3 ${showTags ? "opacity-100 transition-opacity duration-300" : "opacity-0 transition-none"}`}
         data-testid={`portfolio-preview-tags-${index}`}
       >
         <div className="flex flex-wrap gap-1.5">
