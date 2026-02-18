@@ -18,7 +18,7 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
   ];
 
   const handleMouseEnter = useCallback(() => {
-    timerRef.current = setTimeout(() => setShowTags(true), 2000);
+    timerRef.current = setTimeout(() => setShowTags(true), 1000);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -29,20 +29,24 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
     setShowTags(false);
   }, []);
 
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   return (
-    <motion.div
-      key={photo.id}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="aspect-[3/4] rounded-md overflow-hidden relative cursor-pointer"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handleMouseEnter}
-      onTouchEnd={handleMouseLeave}
-      data-testid={`portfolio-preview-card-${index}`}
-    >
+    <>
+      <motion.div
+        key={photo.id}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        className="aspect-[3/4] rounded-md overflow-hidden relative cursor-pointer"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleMouseEnter}
+        onTouchEnd={handleMouseLeave}
+        onClick={() => setLightboxOpen(true)}
+        data-testid={`portfolio-preview-card-${index}`}
+      >
       <img
         src={photo.imageUrl}
         alt="Portfolio photo"
@@ -66,6 +70,22 @@ function PortfolioCard({ photo, index }: { photo: PortfolioPhoto; index: number 
         </div>
       </div>
     </motion.div>
+
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightboxOpen(false)}
+          data-testid={`lightbox-preview-${index}`}
+        >
+          <img
+            src={photo.imageUrl}
+            alt="Portfolio photo full view"
+            className="max-w-full max-h-full object-contain rounded-md"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   );
 }
 
