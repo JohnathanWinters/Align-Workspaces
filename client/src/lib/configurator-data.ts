@@ -1,3 +1,5 @@
+import { calculatePricing as calcPricing } from "@shared/pricing";
+
 export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "other";
 export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation" | "other";
 export type EmotionalImpact = "cozy" | "bright" | "powerful" | "cinematic" | "other";
@@ -123,21 +125,5 @@ export function generateBrandDescription(state: ConfiguratorState): string {
 }
 
 export function calculatePricing(state: ConfiguratorState): { min: number; max: number } {
-  let min = 200;
-  let max = 300;
-
-  if (state.emotionalImpact && state.emotionalImpact !== "other") {
-    min += 0;
-    max += 0;
-  }
-
-  if (state.shootIntent === "commercial") {
-    min += 200;
-    max += 500;
-  } else if (state.shootIntent === "team") {
-    min += 150;
-    max += 300;
-  }
-
-  return { min, max };
+  return calcPricing(state.shootIntent);
 }

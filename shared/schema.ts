@@ -16,6 +16,7 @@ export const leads = pgTable("leads", {
   notes: text("notes"),
   estimatedMin: integer("estimated_min").notNull(),
   estimatedMax: integer("estimated_max").notNull(),
+  paymentStatus: text("payment_status").default("none"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

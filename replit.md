@@ -2,7 +2,7 @@
 
 ## Overview
 
-Brand Vision Studio is a premium, mobile-first interactive website that helps professionals design a personal branding photoshoot. Users are guided through a 3-step configurator (environment, brand message, emotional impact) that updates a visual gallery and live concept summary in real time. The final goal is to capture lead information and a preferred shoot date via a booking form.
+Brand Vision Studio is a premium, mobile-first interactive website that helps professionals design a personal portrait photoshoot. Users are guided through a 6-step configurator (environment, brand message, emotional impact, shoot intent, concept summary, booking) that updates a visual gallery and live concept summary in real time. The final goal is to capture lead information via a booking form, with locked-date bookings requiring a 50% Stripe downpayment.
 
 The app follows a monorepo structure with a React frontend (`client/`), an Express backend (`server/`), and shared code (`shared/`) for database schemas and types.
 
@@ -45,12 +45,18 @@ Pricing is calculated dynamically based on selections.
 - **Endpoints**:
   - `POST /api/leads` — Create a new lead/booking (validated with Zod)
   - `GET /api/leads` — Retrieve all leads
+  - `POST /api/checkout` — Create a Stripe checkout session for 50% downpayment (pricing calculated server-side)
+  - `POST /api/stripe/webhook` — Stripe webhook handler (registered before express.json middleware)
+  - `GET /api/stripe/publishable-key` — Returns Stripe publishable key
+- **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
+- **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
 - **Dev Server**: Vite middleware is used in development for HMR; in production, static files are served from `dist/public`
 
 ### Database
 - **Database**: PostgreSQL (required — `DATABASE_URL` environment variable)
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
-- **Schema** (`shared/schema.ts`): Single `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), and timestamps
+- **Schema** (`shared/schema.ts`): Single `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps
+- **Shared Pricing** (`shared/pricing.ts`): Server-authoritative pricing logic used by both frontend and backend
 - **Migrations**: Drizzle Kit with `db:push` command for schema sync
 
 ### Build System

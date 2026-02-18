@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft, Users } from "lucide-react";
+import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft, Users, CreditCard } from "lucide-react";
 import { SiSlack, SiInstagram } from "react-icons/si";
 import { useState } from "react";
 
@@ -38,10 +38,13 @@ type BookingMode = null | "lock-date" | "questions";
 
 interface BookingFormProps {
   onSubmit: (data: BookingFormValues & { preferredDate: string }) => void;
+  onCheckout: (data: BookingFormValues & { preferredDate: string }) => void;
   isPending: boolean;
+  isCheckoutPending: boolean;
+  pricing: { min: number; max: number };
 }
 
-export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
+export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending, pricing }: BookingFormProps) {
   const [mode, setMode] = useState<BookingMode>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
@@ -63,13 +66,11 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
     },
   });
 
-  function handleSubmit(values: BookingFormValues) {
-    if (mode === "lock-date" && !selectedDate) return;
-    onSubmit({
+  function handleBookingSubmit(values: BookingFormValues) {
+    if (!selectedDate) return;
+    onCheckout({
       ...values,
-      preferredDate: mode === "lock-date" && selectedDate
-        ? selectedDate.toISOString().split("T")[0]
-        : "TBD",
+      preferredDate: selectedDate.toISOString().split("T")[0],
     });
   }
 
@@ -83,6 +84,9 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
       preferredDate: "TBD",
     });
   }
+
+  const downpaymentMin = Math.round(pricing.min / 2);
+  const downpaymentMax = Math.round(pricing.max / 2);
 
   return (
     <motion.div
@@ -112,7 +116,7 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
                 <div>
                   <h3 className="font-medium text-base mb-1">Lock in a Date</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ready to go? Pick a date on the calendar and enter your details to secure your session.
+                    Ready to go? Pick a date, enter your details, and secure your session with a 50% downpayment.
                   </p>
                 </div>
               </div>
@@ -189,6 +193,7 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
               onClick={() => {
                 setMode(null);
                 form.reset();
+                questionsForm.reset();
                 setSelectedDate(undefined);
               }}
               className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6 hover-elevate rounded-md px-2 py-1 -ml-2"
@@ -199,25 +204,134 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
             </button>
 
             {mode === "lock-date" && (
-              <div className="mb-6 text-center">
-                <p className="text-sm text-muted-foreground mb-3">Shoots available Fridays & Saturdays</p>
-                <div className="flex justify-center">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => {
-                      const day = date.getDay();
-                      return date < new Date() || (day !== 5 && day !== 6);
-                    }}
-                    className="rounded-md border border-border"
-                    data-testid="calendar-date-picker"
-                  />
+              <>
+                <div className="mb-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">Shoots available Fridays & Saturdays</p>
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      disabled={(date) => {
+                        const day = date.getDay();
+                        return date < new Date() || (day !== 5 && day !== 6);
+                      }}
+                      className="rounded-md border border-border"
+                      data-testid="calendar-date-picker"
+                    />
+                  </div>
+                  {!selectedDate && form.formState.isSubmitted && (
+                    <p className="text-sm text-destructive mt-2">Please select a date</p>
+                  )}
                 </div>
-                {!selectedDate && form.formState.isSubmitted && (
-                  <p className="text-sm text-destructive mt-2">Please select a date</p>
-                )}
-              </div>
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleBookingSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Your full name"
+                                {...field}
+                                data-testid="input-name"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Your phone number"
+                                {...field}
+                                data-testid="input-phone"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="your@email.com"
+                              {...field}
+                              data-testid="input-email"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes (optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Anything else we should know about your vision?"
+                              className="resize-none"
+                              {...field}
+                              data-testid="input-notes"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="p-4 rounded-md bg-foreground/5 flex items-start gap-3">
+                      <CreditCard className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium mb-1">50% Downpayment Required</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          You'll be taken to a secure payment page to pay ${downpaymentMin}–${downpaymentMax} (50% of your session total). The remaining balance is due at the shoot.
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full"
+                      disabled={isCheckoutPending || !selectedDate}
+                      data-testid="button-book-shoot"
+                    >
+                      {isCheckoutPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Redirecting to payment...
+                        </>
+                      ) : (
+                        "Book Your Shoot"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </>
             )}
 
             {mode === "questions" && (
@@ -274,105 +388,6 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
                       </>
                     ) : (
                       "Send Question"
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            )}
-
-            {mode === "lock-date" && (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Your full name"
-                              {...field}
-                              data-testid="input-name"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Your phone number"
-                              {...field}
-                              data-testid="input-phone"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="your@email.com"
-                            {...field}
-                            data-testid="input-email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes (optional)</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Anything else we should know about your vision?"
-                            className="resize-none"
-                            {...field}
-                            data-testid="input-notes"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full"
-                    disabled={isPending || !selectedDate}
-                    data-testid="button-book-shoot"
-                  >
-                    {isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Book Your Shoot"
                     )}
                   </Button>
                 </form>

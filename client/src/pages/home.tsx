@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,42 @@ export default function HomePage() {
   const configuratorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (payment === "success") {
+      setIsBooked(true);
+      toast({
+        title: "Payment Received!",
+        description: "Your session is confirmed. We'll be in touch shortly.",
+      });
+      window.history.replaceState({}, "", "/");
+    } else if (payment === "cancelled") {
+      toast({
+        title: "Payment Cancelled",
+        description: "No worries — your booking wasn't charged. You can try again anytime.",
+      });
+      window.history.replaceState({}, "", "/");
+    }
+  }, []);
+
+  function getLeadData(data: { name: string; email: string; phone: string; notes?: string; preferredDate: string }) {
+    const pricing = calculatePricing(state);
+    const envValue = state.environment === "other" ? state.environmentCustom || "other" : state.environment;
+    const msgValue = state.brandMessage === "other" ? state.brandMessageCustom || "other" : state.brandMessage;
+    const impValue = state.emotionalImpact === "other" ? state.emotionalImpactCustom || "other" : state.emotionalImpact;
+    const intentValue = state.shootIntent === "other" ? state.shootIntentCustom || "other" : state.shootIntent;
+    return {
+      ...data,
+      environment: envValue,
+      brandMessage: msgValue,
+      emotionalImpact: impValue,
+      shootIntent: intentValue,
+      estimatedMin: pricing.min,
+      estimatedMax: pricing.max,
+    };
+  }
+
   const bookMutation = useMutation({
     mutationFn: async (data: {
       name: string;
@@ -65,32 +101,47 @@ export default function HomePage() {
       notes?: string;
       preferredDate: string;
     }) => {
-      const pricing = calculatePricing(state);
-      const envValue = state.environment === "other" ? state.environmentCustom || "other" : state.environment;
-      const msgValue = state.brandMessage === "other" ? state.brandMessageCustom || "other" : state.brandMessage;
-      const impValue = state.emotionalImpact === "other" ? state.emotionalImpactCustom || "other" : state.emotionalImpact;
-      const intentValue = state.shootIntent === "other" ? state.shootIntentCustom || "other" : state.shootIntent;
-      return apiRequest("POST", "/api/leads", {
-        ...data,
-        environment: envValue,
-        brandMessage: msgValue,
-        emotionalImpact: impValue,
-        shootIntent: intentValue,
-        estimatedMin: pricing.min,
-        estimatedMax: pricing.max,
-      });
+      return apiRequest("POST", "/api/leads", getLeadData(data));
     },
     onSuccess: () => {
       setIsBooked(true);
       toast({
-        title: "Shoot Booked!",
-        description: "We'll be in touch shortly to confirm your session.",
+        title: "Message Sent!",
+        description: "We'll be in touch shortly.",
       });
     },
     onError: () => {
       toast({
         title: "Something went wrong",
         description: "Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      email: string;
+      phone: string;
+      notes?: string;
+      preferredDate: string;
+    }) => {
+      const leadData = getLeadData(data);
+      const response = await apiRequest("POST", "/api/checkout", {
+        leadData,
+      });
+      return await response.json();
+    },
+    onSuccess: (data: { url: string }) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "We couldn't start the payment process. Please try again.",
         variant: "destructive",
       });
     },
@@ -366,7 +417,10 @@ export default function HomePage() {
                       >
                         <BookingForm
                           onSubmit={(data) => bookMutation.mutate(data)}
+                          onCheckout={(data) => checkoutMutation.mutate(data)}
                           isPending={bookMutation.isPending}
+                          isCheckoutPending={checkoutMutation.isPending}
+                          pricing={calculatePricing(state)}
                         />
                       </StepContent>
                     )}
