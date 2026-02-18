@@ -26,7 +26,13 @@ const bookingSchema = z.object({
   notes: z.string().optional(),
 });
 
+const questionsSchema = z.object({
+  contact: z.string().min(3, "Please enter your email or phone number"),
+  question: z.string().min(3, "Please enter your question"),
+});
+
 type BookingFormValues = z.infer<typeof bookingSchema>;
+type QuestionsFormValues = z.infer<typeof questionsSchema>;
 
 type BookingMode = null | "lock-date" | "questions";
 
@@ -49,6 +55,14 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
     },
   });
 
+  const questionsForm = useForm<QuestionsFormValues>({
+    resolver: zodResolver(questionsSchema),
+    defaultValues: {
+      contact: "",
+      question: "",
+    },
+  });
+
   function handleSubmit(values: BookingFormValues) {
     if (mode === "lock-date" && !selectedDate) return;
     onSubmit({
@@ -56,6 +70,17 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
       preferredDate: mode === "lock-date" && selectedDate
         ? selectedDate.toISOString().split("T")[0]
         : "TBD",
+    });
+  }
+
+  function handleQuestionsSubmit(values: QuestionsFormValues) {
+    const isEmail = values.contact.includes("@");
+    onSubmit({
+      name: "Question Inquiry",
+      email: isEmail ? values.contact : "noemail@placeholder.com",
+      phone: isEmail ? "" : values.contact,
+      notes: values.question,
+      preferredDate: "TBD",
     });
   }
 
@@ -196,27 +221,118 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
             )}
 
             {mode === "questions" && (
-              <div className="mb-6 p-4 rounded-md bg-foreground/5">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Share your contact details below and the photographer will get back to you to answer any questions and help plan your session.
-                </p>
-              </div>
+              <Form {...questionsForm}>
+                <form onSubmit={questionsForm.handleSubmit(handleQuestionsSubmit)} className="space-y-4">
+                  <FormField
+                    control={questionsForm.control}
+                    name="contact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email or Phone Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="your@email.com or (555) 123-4567"
+                            {...field}
+                            data-testid="input-question-contact"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={questionsForm.control}
+                    name="question"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Question</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="What would you like to know?"
+                            className="resize-none"
+                            {...field}
+                            data-testid="input-question-text"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={isPending}
+                    data-testid="button-send-question"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Question"
+                    )}
+                  </Button>
+                </form>
+              </Form>
             )}
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {mode === "lock-date" && (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Your full name"
+                              {...field}
+                              data-testid="input-name"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Your phone number"
+                              {...field}
+                              data-testid="input-phone"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Name</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Your full name"
+                            type="email"
+                            placeholder="your@email.com"
                             {...field}
-                            data-testid="input-name"
+                            data-testid="input-email"
                           />
                         </FormControl>
                         <FormMessage />
@@ -226,84 +342,42 @@ export function BookingForm({ onSubmit, isPending }: BookingFormProps) {
 
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel>Notes (optional)</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Your phone number"
+                          <Textarea
+                            placeholder="Anything else we should know about your vision?"
+                            className="resize-none"
                             {...field}
-                            data-testid="input-phone"
+                            data-testid="input-notes"
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="your@email.com"
-                          {...field}
-                          data-testid="input-email"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{mode === "questions" ? "Your Questions" : "Notes"} (optional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder={mode === "questions"
-                            ? "What would you like to know?"
-                            : "Anything else we should know about your vision?"
-                          }
-                          className="resize-none"
-                          {...field}
-                          data-testid="input-notes"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full"
-                  disabled={isPending || (mode === "lock-date" && !selectedDate)}
-                  data-testid="button-book-shoot"
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : mode === "lock-date" ? (
-                    "Book Your Shoot"
-                  ) : (
-                    "Get in Touch"
-                  )}
-                </Button>
-              </form>
-            </Form>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full"
+                    disabled={isPending || !selectedDate}
+                    data-testid="button-book-shoot"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Book Your Shoot"
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
