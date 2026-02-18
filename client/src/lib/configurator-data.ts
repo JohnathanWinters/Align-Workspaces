@@ -131,9 +131,12 @@ export function calculatePricing(state: ConfiguratorState): { min: number; max: 
     max += 0;
   }
 
-  if (state.shootIntent === "commercial" || state.shootIntent === "team") {
-    min += 75;
-    max += 100;
+  if (state.shootIntent === "commercial") {
+    min += 200;
+    max += 500;
+  } else if (state.shootIntent === "team") {
+    min += 150;
+    max += 300;
   }
 
   return { min, max };
