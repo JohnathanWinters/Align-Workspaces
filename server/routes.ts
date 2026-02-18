@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { sendBookingNotification } from "./gmail";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -13,6 +14,21 @@ export async function registerRoutes(
     try {
       const data = insertLeadSchema.parse(req.body);
       const lead = await storage.createLead(data);
+
+      sendBookingNotification({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        preferredDate: data.preferredDate,
+        notes: data.notes,
+        environment: data.environment,
+        brandMessage: data.brandMessage,
+        emotionalImpact: data.emotionalImpact,
+        shootIntent: data.shootIntent,
+        estimatedMin: data.estimatedMin,
+        estimatedMax: data.estimatedMax,
+      }).catch((err) => console.error("Failed to send booking email:", err));
+
       res.status(201).json(lead);
     } catch (error) {
       if (error instanceof ZodError) {
