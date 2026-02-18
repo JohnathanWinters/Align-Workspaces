@@ -66,6 +66,8 @@ export default function PhotographersPage() {
                     alt={photographer.name}
                     className="w-full h-full object-cover"
                     loading="eager"
+                    decoding="async"
+                    style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
                     data-testid={`img-photographer-page-${index}`}
                   />
                 </div>
