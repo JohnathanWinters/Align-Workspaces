@@ -2,7 +2,7 @@ import { calculatePricing as calcPricing } from "@shared/pricing";
 
 export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "kitchen" | "other";
 export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation" | "other";
-export type EmotionalImpact = "cozy" | "bright" | "powerful" | "cinematic" | "other";
+export type EmotionalImpact = "cozy" | "bright" | "cinematic" | "other";
 export type ShootIntent = "commercial" | "social-media" | "team" | "other";
 
 export interface ConfiguratorState {
@@ -48,7 +48,6 @@ export const emotionalImpacts: { value: EmotionalImpact; label: string; descript
   { value: "bright", label: "Bright", description: "Airy, clean, natural light, fresh and open feeling" },
   { value: "cinematic", label: "Cinematic", description: "Dramatic storytelling, film-like color grading, depth" },
   { value: "cozy", label: "Cozy", description: "Warm tones, golden hour lighting, intimate framing" },
-  { value: "powerful", label: "Powerful", description: "Bold contrast, dramatic shadows, commanding presence" },
 ];
 
 export const shootIntents: { value: ShootIntent; label: string; description: string }[] = [
