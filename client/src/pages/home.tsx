@@ -322,22 +322,7 @@ export default function HomePage() {
                               testId={`option-msg-${msg.value}`}
                             />
                           ))}
-                          <OptionCard
-                            label="Other"
-                            isSelected={state.brandMessage === "other"}
-                            onClick={() => setState({ ...state, brandMessage: "other" })}
-                            icon={<PenLine className="w-5 h-5" />}
-                            testId="option-msg-other"
-                          />
                         </div>
-                        {state.brandMessage === "other" && (
-                          <OtherInput
-                            value={state.brandMessageCustom}
-                            onChange={(v) => setState({ ...state, brandMessageCustom: v })}
-                            placeholder="Describe your brand message..."
-                            testId="input-msg-custom"
-                          />
-                        )}
                       </StepContent>
                     )}
 
@@ -357,22 +342,7 @@ export default function HomePage() {
                               testId={`option-imp-${imp.value}`}
                             />
                           ))}
-                          <OptionCard
-                            label="Other"
-                            isSelected={state.emotionalImpact === "other"}
-                            onClick={() => setState({ ...state, emotionalImpact: "other" })}
-                            icon={<PenLine className="w-5 h-5" />}
-                            testId="option-imp-other"
-                          />
                         </div>
-                        {state.emotionalImpact === "other" && (
-                          <OtherInput
-                            value={state.emotionalImpactCustom}
-                            onChange={(v) => setState({ ...state, emotionalImpactCustom: v })}
-                            placeholder="Describe the feeling..."
-                            testId="input-imp-custom"
-                          />
-                        )}
                         {(() => {
                           const moodImage = getMoodLitImage(state.environment, state.emotionalImpact);
                           const fallbackImage = state.environment ? environmentImages[state.environment] : null;
