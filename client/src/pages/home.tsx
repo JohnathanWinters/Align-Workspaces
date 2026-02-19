@@ -27,7 +27,12 @@ import {
   ArrowLeft,
   CheckCircle2,
   PenLine,
+  Shirt,
+  Palette,
+  Scissors,
+  AlertCircle,
 } from "lucide-react";
+import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
   ConfiguratorState,
 } from "@/lib/configurator-data";
@@ -445,6 +450,91 @@ export default function HomePage() {
                           brandMessage={state.brandMessage === "other" ? state.brandMessageCustom : (state.brandMessage || "")}
                           emotionalImpact={state.emotionalImpact === "other" ? state.emotionalImpactCustom : (state.emotionalImpact || "")}
                         />
+                        {(() => {
+                          const recs = getClothingRecommendations(
+                            state.environment === "other" ? null : state.environment,
+                            state.brandMessage === "other" ? null : state.brandMessage,
+                            state.emotionalImpact === "other" ? null : state.emotionalImpact
+                          );
+                          if (!recs) return null;
+                          return (
+                            <motion.div
+                              initial={{ opacity: 0, y: 15 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, delay: 0.2 }}
+                              className="mt-8 rounded-xl border border-[hsl(var(--border))] bg-white/80 backdrop-blur-sm overflow-hidden"
+                              data-testid="clothing-recommendations"
+                            >
+                              <div className="px-5 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                                <h3 className="font-semibold text-lg font-serif flex items-center gap-2">
+                                  <Shirt className="w-5 h-5 text-[hsl(var(--primary))]" />
+                                  What to Wear
+                                </h3>
+                                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                                  Recommended clothing based on your selections
+                                </p>
+                              </div>
+                              <div className="p-5 space-y-5">
+                                <div data-testid="rec-clothing-types">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Shirt className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Clothing</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {recs.clothing.map((item) => (
+                                      <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div data-testid="rec-fabrics">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Scissors className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Fabrics</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {recs.fabrics.map((item) => (
+                                      <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
+                                        {item}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div data-testid="rec-colors">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Palette className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Recommended Colors</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {recs.colors.map((color) => (
+                                      <span key={color} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
+                                        {color}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="text-sm text-[hsl(var(--foreground))] italic leading-relaxed" data-testid="rec-style-note">
+                                  {recs.styleNote}
+                                </div>
+
+                                {recs.fabricNote && (
+                                  <div className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed" data-testid="rec-fabric-note">
+                                    {recs.fabricNote}
+                                  </div>
+                                )}
+
+                                <div className="flex items-start gap-2 text-sm text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] rounded-lg p-3" data-testid="rec-avoid-note">
+                                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                  <span>{recs.avoidNote}</span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })()}
                       </StepContent>
                     )}
 
