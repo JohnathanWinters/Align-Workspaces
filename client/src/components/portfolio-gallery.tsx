@@ -262,9 +262,19 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
 
             {photo && (
               <div className="mt-auto pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Tap a color swatch to note it for your session. These tones guide wardrobe and backdrop recommendations.
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold">Emotion</h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    ...(photo.environments || []).map((v: string) => getLabel(v, environments)),
+                    ...(photo.brandMessages || []).map((v: string) => getLabel(v, brandMessages)),
+                    ...(photo.emotionalImpacts || []).map((v: string) => getLabel(v, emotionalImpacts)),
+                  ].map((tag, i) => (
+                    <span key={i} className="text-xs bg-muted text-foreground px-2 py-1 rounded-sm font-medium">{tag}</span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
