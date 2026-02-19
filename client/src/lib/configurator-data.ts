@@ -40,7 +40,7 @@ export const environments: { value: Environment; label: string; icon: string }[]
 export const brandMessages: { value: BrandMessage; label: string; description: string }[] = [
   { value: "assured", label: "Assured", description: "Calm authority, grounded posture, steady gaze. Neutral lighting with balanced composition." },
   { value: "confidence", label: "Confidence", description: "Strong posture, direct eye contact, bold framing. Clean lighting with purposeful angles." },
-  { value: "empathy", label: "Empathy", description: "Softer lighting, open posture, gentle expression. Warm tones that invite connection." },
+  { value: "empathy", label: "Warm", description: "Softer lighting, open posture, gentle expression. Warm tones that invite connection." },
   { value: "motivation", label: "Motivation", description: "Dynamic energy, forward-leaning pose, bright expression. Vibrant lighting with movement." },
 ];
 
