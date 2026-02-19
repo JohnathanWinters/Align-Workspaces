@@ -68,11 +68,47 @@ export const environmentImages: Record<string, string> = {
 };
 
 export const moodLitImages: Record<string, Record<string, string>> = {
+  kitchen: {
+    cozy: "/images/env-kitchen-cozy.png",
+    bright: "/images/env-kitchen-bright.png",
+    powerful: "/images/env-kitchen-powerful.png",
+    cinematic: "/images/env-kitchen-cinematic.png",
+  },
   nature: {
     cozy: "/images/env-nature-cozy.png",
     bright: "/images/env-nature-bright.png",
     powerful: "/images/env-nature-powerful.png",
     cinematic: "/images/env-nature-cinematic.png",
+  },
+  office: {
+    cozy: "/images/env-office-cozy.png",
+    bright: "/images/env-office-bright.png",
+    powerful: "/images/env-office-powerful.png",
+    cinematic: "/images/env-office-cinematic.png",
+  },
+  restaurant: {
+    cozy: "/images/env-restaurant-cozy.png",
+    bright: "/images/env-restaurant-bright.png",
+    powerful: "/images/env-restaurant-powerful.png",
+    cinematic: "/images/env-restaurant-cinematic.png",
+  },
+  suburban: {
+    cozy: "/images/env-suburban-cozy.png",
+    bright: "/images/env-suburban-bright.png",
+    powerful: "/images/env-suburban-powerful.png",
+    cinematic: "/images/env-suburban-cinematic.png",
+  },
+  urban: {
+    cozy: "/images/env-urban-cozy.png",
+    bright: "/images/env-urban-bright.png",
+    powerful: "/images/env-urban-powerful.png",
+    cinematic: "/images/env-urban-cinematic.png",
+  },
+  workvan: {
+    cozy: "/images/env-workvan-cozy.png",
+    bright: "/images/env-workvan-bright.png",
+    powerful: "/images/env-workvan-powerful.png",
+    cinematic: "/images/env-workvan-cinematic.png",
   },
 };
 
