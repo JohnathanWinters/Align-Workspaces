@@ -22,6 +22,7 @@ import {
   Truck,
   Building,
   Home,
+  ChefHat,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -41,6 +42,7 @@ import {
 } from "@/lib/configurator-data";
 
 const iconMap: Record<string, React.ReactNode> = {
+  ChefHat: <ChefHat className="w-5 h-5" />,
   UtensilsCrossed: <UtensilsCrossed className="w-5 h-5" />,
   Building2: <Building2 className="w-5 h-5" />,
   TreePine: <TreePine className="w-5 h-5" />,

@@ -1,6 +1,6 @@
 import { calculatePricing as calcPricing } from "@shared/pricing";
 
-export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "other";
+export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "kitchen" | "other";
 export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation" | "other";
 export type EmotionalImpact = "cozy" | "bright" | "powerful" | "cinematic" | "other";
 export type ShootIntent = "commercial" | "social-media" | "team" | "other";
@@ -28,6 +28,7 @@ export const initialState: ConfiguratorState = {
 };
 
 export const environments: { value: Environment; label: string; icon: string }[] = [
+  { value: "kitchen", label: "Kitchen", icon: "ChefHat" },
   { value: "nature", label: "Nature", icon: "TreePine" },
   { value: "office", label: "Office", icon: "Building2" },
   { value: "restaurant", label: "Restaurant", icon: "UtensilsCrossed" },
@@ -92,6 +93,7 @@ export function generateBrandDescription(state: ConfiguratorState): string {
   if (!state.environment || !state.brandMessage || !state.emotionalImpact) return "";
 
   const envLabels: Record<string, string> = {
+    kitchen: "culinary",
     restaurant: "culinary",
     office: "corporate",
     nature: "natural",
