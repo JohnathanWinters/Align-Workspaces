@@ -44,11 +44,11 @@ const environmentClothing: Record<string, { types: string[]; fabrics: string[]; 
 
 const brandMessageModifiers: Record<string, { preference: string; colors: string[] }> = {
   assured: {
-    preference: "Classic, timeless silhouettes with minimal detail",
-    colors: ["Navy", "Charcoal", "Deep olive", "Burgundy"],
+    preference: "Open, relaxed silhouettes that feel welcoming and approachable",
+    colors: ["Soft navy", "Warm gray", "Cream", "Muted olive"],
   },
   empathy: {
-    preference: "Softer cuts, open collars, and approachable silhouettes",
+    preference: "Softer cuts, open collars, and inviting silhouettes",
     colors: ["Warm cream", "Soft blue", "Earth tones", "Muted sage"],
   },
   confidence: {
@@ -56,7 +56,7 @@ const brandMessageModifiers: Record<string, { preference: string; colors: string
     colors: ["Black", "White", "Deep red", "Royal blue"],
   },
   motivation: {
-    preference: "Modern fits with a touch of energy and movement",
+    preference: "Modern, energetic fits that convey drive and ambition",
     colors: ["Bright white", "Coral", "Electric blue", "Teal"],
   },
 };

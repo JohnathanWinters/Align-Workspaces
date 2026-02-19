@@ -38,10 +38,10 @@ export const environments: { value: Environment; label: string; icon: string }[]
 ];
 
 export const brandMessages: { value: BrandMessage; label: string; description: string }[] = [
-  { value: "assured", label: "Assured", description: "Calm authority, grounded posture, steady gaze. Neutral lighting with balanced composition." },
-  { value: "confidence", label: "Confidence", description: "Strong posture, direct eye contact, bold framing. Clean lighting with purposeful angles." },
+  { value: "assured", label: "Welcoming", description: "Calm authority, grounded posture, steady gaze. Neutral lighting with balanced composition." },
+  { value: "confidence", label: "Confident", description: "Strong posture, direct eye contact, bold framing. Clean lighting with purposeful angles." },
   { value: "empathy", label: "Warm", description: "Softer lighting, open posture, gentle expression. Warm tones that invite connection." },
-  { value: "motivation", label: "Motivation", description: "Dynamic energy, forward-leaning pose, bright expression. Vibrant lighting with movement." },
+  { value: "motivation", label: "Motivated", description: "Dynamic energy, forward-leaning pose, bright expression. Vibrant lighting with movement." },
 ];
 
 export const emotionalImpacts: { value: EmotionalImpact; label: string; description: string }[] = [
@@ -154,10 +154,10 @@ export function generateBrandDescription(state: ConfiguratorState): string {
   };
 
   const messageLabels: Record<string, string> = {
-    assured: "composed and authoritative",
-    empathy: "warm and approachable",
+    assured: "welcoming and approachable",
+    empathy: "warm and inviting",
     confidence: "confident and decisive",
-    motivation: "energetic and inspiring",
+    motivation: "motivated and inspiring",
     other: state.brandMessageCustom || "distinctive",
   };
 
