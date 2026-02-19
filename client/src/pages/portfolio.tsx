@@ -1,15 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Palette, Eye } from "lucide-react";
+import { ArrowLeft, Palette, Eye, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState } from "react";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
+import { environments, brandMessages, emotionalImpacts } from "@/lib/configurator-data";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+function getLabel(value: string, list: { value: string; label: string }[]) {
+  return list.find((item) => item.value === value)?.label || value;
+}
+
+function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
+  const tags: string[] = [];
+  if (photo.environments?.length) tags.push(...photo.environments.map((v: string) => getLabel(v, environments)));
+  if (photo.brandMessages?.length) tags.push(...photo.brandMessages.map((v: string) => getLabel(v, brandMessages)));
+  if (photo.emotionalImpacts?.length) tags.push(...photo.emotionalImpacts.map((v: string) => getLabel(v, emotionalImpacts)));
+  if (!tags.length) return null;
+  return (
+    <div className="mb-2">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <Tag className="w-3 h-3 text-white/70" />
+        <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Keywords</p>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {tags.map((tag, i) => (
+          <span key={i} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm font-medium">{tag}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void }) {
   const palette = (photo.colorPalette as ColorSwatch[] | null) || [];
@@ -52,6 +78,8 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex-col justify-end p-3 transition-opacity duration-300 hidden md:flex opacity-0 group-hover:opacity-100"
         data-testid={`portfolio-full-overlay-${index}`}
       >
+        <PhotoTags photo={photo} />
+
         {palette.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 mb-2">
