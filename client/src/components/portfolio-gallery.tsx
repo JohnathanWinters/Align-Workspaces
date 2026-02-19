@@ -25,7 +25,7 @@ function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
     <div className="mb-2">
       <div className="flex items-center gap-1.5 mb-1.5">
         <Tag className="w-3 h-3 text-white/70" />
-        <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Keywords</p>
+        <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Emotion</p>
       </div>
       <div className="flex flex-wrap gap-1">
         {tags.map((tag, i) => (
