@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
-import { Sparkles, Palette, Eye } from "lucide-react";
+import { Sparkles, Palette, Eye, Tag } from "lucide-react";
+import { brandMessages, emotionalImpacts, environments } from "@/lib/configurator-data";
 import { useState } from "react";
 import { getRecommendedPalettes, type PaletteOption } from "@/lib/color-palettes";
 import {
