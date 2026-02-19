@@ -134,8 +134,23 @@ function PhotoCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; inde
         data-testid={`portfolio-photo-${photo.id}`}
       />
 
+      {palette.length > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 pt-6 md:hidden" data-testid={`palette-mobile-${photo.id}`}>
+          <div className="flex items-center gap-1.5">
+            {palette.map((swatch, i) => (
+              <div
+                key={i}
+                className="w-4 h-4 rounded-sm border border-white/20"
+                style={{ backgroundColor: swatch.hex }}
+                data-testid={`swatch-mobile-${photo.id}-${i}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex-col justify-end p-3 transition-opacity duration-300 hidden md:flex opacity-0 group-hover:opacity-100"
         data-testid={`palette-overlay-${photo.id}`}
       >
         {palette.length > 0 && (
