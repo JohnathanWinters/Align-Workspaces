@@ -1,9 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
-import { Sparkles, Palette } from "lucide-react";
+import { Sparkles, Palette, Eye } from "lucide-react";
 import { useState } from "react";
 import { getRecommendedPalette } from "@/lib/color-palettes";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PortfolioGalleryProps {
   environment: string;
@@ -12,6 +17,8 @@ interface PortfolioGalleryProps {
 }
 
 export function PortfolioGallery({ environment, brandMessage, emotionalImpact }: PortfolioGalleryProps) {
+  const [selectedPhoto, setSelectedPhoto] = useState<PortfolioPhoto | null>(null);
+
   const { data: matchedPhotos, isLoading: matchedLoading } = useQuery<PortfolioPhoto[]>({
     queryKey: ["/api/portfolio-photos", environment, brandMessage, emotionalImpact],
     queryFn: async () => {
@@ -54,8 +61,9 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
   if (hasMatches) {
     return (
       <div data-testid="portfolio-matched">
-        <PhotoGrid photos={matchedPhotos} />
+        <PhotoGrid photos={matchedPhotos} onPhotoClick={setSelectedPhoto} />
         <RecommendedPalette palette={recommendedPalette} />
+        <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
       </div>
     );
   }
@@ -81,47 +89,44 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
             ))}
           </div>
         ) : allPhotos && allPhotos.length > 0 ? (
-          <PhotoGrid photos={allPhotos} />
+          <PhotoGrid photos={allPhotos} onPhotoClick={setSelectedPhoto} />
         ) : (
           <p className="text-sm text-muted-foreground text-center py-6">Portfolio photos coming soon.</p>
         )}
       </div>
 
       <RecommendedPalette palette={recommendedPalette} />
+      <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
     </div>
   );
 }
 
-function PhotoGrid({ photos }: { photos: PortfolioPhoto[] }) {
+function PhotoGrid({ photos, onPhotoClick }: { photos: PortfolioPhoto[]; onPhotoClick: (photo: PortfolioPhoto) => void }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="portfolio-grid">
       {photos.map((photo, index) => (
-        <PhotoCard key={photo.id} photo={photo} index={index} />
+        <PhotoCard key={photo.id} photo={photo} index={index} onPhotoClick={onPhotoClick} />
       ))}
     </div>
   );
 }
 
-function PhotoCard({ photo, index }: { photo: PortfolioPhoto; index: number }) {
-  const [showPalette, setShowPalette] = useState(false);
+function PhotoCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void }) {
   const palette = (photo.colorPalette as ColorSwatch[] | null) || [];
 
   return (
     <motion.div
-      key={photo.id}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.12 }}
-      className="relative aspect-[3/4] rounded-md overflow-hidden group"
-      onMouseEnter={() => setShowPalette(true)}
-      onMouseLeave={() => setShowPalette(false)}
-      onClick={() => setShowPalette(!showPalette)}
+      className="relative aspect-[3/4] rounded-md overflow-hidden group cursor-pointer"
+      onClick={() => onPhotoClick(photo)}
       data-testid={`portfolio-photo-card-${photo.id}`}
     >
       <img
         src={photo.imageUrl}
         alt="Client portfolio photo"
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="eager"
         decoding="async"
         style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
@@ -130,9 +135,7 @@ function PhotoCard({ photo, index }: { photo: PortfolioPhoto; index: number }) {
       />
 
       <div
-        className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-3 transition-opacity duration-300 ${
-          showPalette ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         data-testid={`palette-overlay-${photo.id}`}
       >
         {palette.length > 0 && (
@@ -141,21 +144,89 @@ function PhotoCard({ photo, index }: { photo: PortfolioPhoto; index: number }) {
               <Palette className="w-3 h-3 text-white/70" />
               <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Color Palette</p>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex gap-1.5">
               {palette.map((swatch, i) => (
-                <div key={i} className="flex items-center gap-2" data-testid={`swatch-${photo.id}-${i}`}>
-                  <div
-                    className="w-4 h-4 rounded-sm shrink-0 border border-white/20"
-                    style={{ backgroundColor: swatch.hex }}
-                  />
-                  <span className="text-white text-[11px] leading-tight">{swatch.keyword}</span>
-                </div>
+                <div
+                  key={i}
+                  className="w-5 h-5 rounded-sm border border-white/20"
+                  style={{ backgroundColor: swatch.hex }}
+                  title={swatch.keyword}
+                  data-testid={`swatch-${photo.id}-${i}`}
+                />
               ))}
             </div>
           </div>
         )}
+
+        <div className="absolute top-3 right-3 flex items-center gap-1 text-white/70">
+          <Eye className="w-3.5 h-3.5" />
+          <span className="text-[10px] uppercase tracking-wider font-medium">View</span>
+        </div>
       </div>
     </motion.div>
+  );
+}
+
+function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClose: () => void }) {
+  const palette = photo ? (photo.colorPalette as ColorSwatch[] | null) || [] : [];
+
+  return (
+    <Dialog open={!!photo} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-4xl w-[95vw] p-0 gap-0 overflow-hidden border-none bg-black/95" data-testid="photo-lightbox" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">Photo Details</DialogTitle>
+        <div className="flex flex-col md:flex-row">
+          <div className="relative flex-1 min-h-[300px] md:min-h-[500px]">
+            {photo && (
+              <img
+                src={photo.imageUrl}
+                alt="Enlarged portfolio photo"
+                className="w-full h-full object-cover"
+                data-testid="lightbox-image"
+              />
+            )}
+          </div>
+
+          <div className="w-full md:w-72 bg-card p-5 flex flex-col gap-5" data-testid="lightbox-palette-panel">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Palette className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Color Palette</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Colors featured in this portrait
+              </p>
+            </div>
+
+            {palette.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {palette.map((swatch, i) => (
+                  <div key={i} className="flex items-center gap-3" data-testid={`lightbox-swatch-${i}`}>
+                    <div
+                      className="w-10 h-10 rounded-md shrink-0 border border-border"
+                      style={{ backgroundColor: swatch.hex }}
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium truncate">{swatch.keyword}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{swatch.hex}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No palette data available for this photo.</p>
+            )}
+
+            {photo && (
+              <div className="mt-auto pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Tap a color swatch to note it for your session. These tones guide wardrobe and backdrop recommendations.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
