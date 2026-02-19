@@ -56,9 +56,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             transition={{ duration: 0.8, delay: 0.15 }}
             className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
           >
-            Portraits That
+            Your Portrait is
             <br />
-            Reflect Who You Are
+            Your First Introduction
           </motion.h1>
 
           <motion.p
@@ -67,7 +67,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
           >
-            Design a photoshoot that reflects your work, who you are, and the emotional impact you want to leave behind.
+            Helping you design a photoshoot that aligns your work with your character and the emotional impact you want clients to feel.
           </motion.p>
 
           <motion.div
