@@ -67,6 +67,20 @@ export const environmentImages: Record<string, string> = {
   suburban: "/images/env-suburban.png",
 };
 
+export const moodLitImages: Record<string, Record<string, string>> = {
+  nature: {
+    cozy: "/images/env-nature-cozy.png",
+    bright: "/images/env-nature-bright.png",
+    powerful: "/images/env-nature-powerful.png",
+    cinematic: "/images/env-nature-cinematic.png",
+  },
+};
+
+export function getMoodLitImage(environment: string | null, emotionalImpact: string | null): string | null {
+  if (!environment || !emotionalImpact) return null;
+  return moodLitImages[environment]?.[emotionalImpact] ?? null;
+}
+
 export function getDisplayLabel(
   step: "environment" | "brandMessage" | "emotionalImpact" | "shootIntent",
   state: ConfiguratorState
