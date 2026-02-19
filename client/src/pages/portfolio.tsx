@@ -205,13 +205,13 @@ export default function PortfolioPage() {
           className="text-center mb-12"
         >
           <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
-            Portfolio
+            Our Work
           </p>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-portfolio-title">
-            Our Work
+            First Impressions
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-portfolio-desc">
-            Every session is designed to capture your unique brand story. Here's a look at what we've created with our clients.
+            Each of these sessions was designed around one question: How should clients feel before the first conversation begins?
           </p>
         </motion.div>
 
