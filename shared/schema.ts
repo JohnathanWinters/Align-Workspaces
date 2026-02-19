@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -28,16 +28,26 @@ export const insertLeadSchema = createInsertSchema(leads).omit({
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type Lead = typeof leads.$inferSelect;
 
+export const colorSwatchSchema = z.object({
+  hex: z.string(),
+  keyword: z.string(),
+});
+
+export type ColorSwatch = z.infer<typeof colorSwatchSchema>;
+
 export const portfolioPhotos = pgTable("portfolio_photos", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   imageUrl: text("image_url").notNull(),
   environments: text("environments").array().notNull(),
   brandMessages: text("brand_messages").array().notNull(),
   emotionalImpacts: text("emotional_impacts").array().notNull(),
+  colorPalette: jsonb("color_palette").$type<ColorSwatch[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertPortfolioPhotoSchema = createInsertSchema(portfolioPhotos).omit({
+export const insertPortfolioPhotoSchema = createInsertSchema(portfolioPhotos, {
+  colorPalette: z.array(colorSwatchSchema).optional(),
+}).omit({
   id: true,
   createdAt: true,
 });
