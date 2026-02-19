@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
 import { Sparkles, Palette, Eye } from "lucide-react";
 import { useState } from "react";
-import { getRecommendedPalette } from "@/lib/color-palettes";
+import { getRecommendedPalettes, type PaletteOption } from "@/lib/color-palettes";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +46,7 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
     enabled: !matchedLoading && !hasMatches,
   });
 
-  const recommendedPalette = getRecommendedPalette(environment, brandMessage, emotionalImpact);
+  const recommendedPalettes = getRecommendedPalettes(environment, brandMessage, emotionalImpact);
 
   if (matchedLoading) {
     return (
@@ -62,7 +62,7 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
     return (
       <div data-testid="portfolio-matched">
         <PhotoGrid photos={matchedPhotos} onPhotoClick={setSelectedPhoto} />
-        <RecommendedPalette palette={recommendedPalette} />
+        <RecommendedPalettes palettes={recommendedPalettes} />
         <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
       </div>
     );
@@ -95,7 +95,7 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
         )}
       </div>
 
-      <RecommendedPalette palette={recommendedPalette} />
+      <RecommendedPalettes palettes={recommendedPalettes} />
       <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
     </div>
   );
@@ -245,30 +245,41 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
   );
 }
 
-function RecommendedPalette({ palette }: { palette: ColorSwatch[] }) {
+function RecommendedPalettes({ palettes }: { palettes: PaletteOption[] }) {
   return (
-    <div className="mt-8 p-4 rounded-md border border-border bg-card" data-testid="recommended-palette">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="mt-8" data-testid="recommended-palette">
+      <div className="flex items-center gap-2 mb-2">
         <Palette className="w-4 h-4 text-muted-foreground" />
-        <p className="text-sm font-medium">Recommended Color Palette</p>
+        <p className="text-sm font-medium">Recommended Color Palettes</p>
       </div>
       <p className="text-xs text-muted-foreground mb-4">
-        Based on your selections, these colors will complement your shoot
+        Based on your selections, here are 3 palette options to complement your shoot
       </p>
-      <div className="flex gap-2 flex-wrap">
-        {palette.map((swatch, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {palettes.map((option, i) => (
           <div
             key={i}
-            className="flex flex-col items-center gap-1.5"
-            data-testid={`recommended-swatch-${i}`}
+            className="p-3 rounded-md border border-border bg-card"
+            data-testid={`recommended-palette-option-${i}`}
           >
-            <div
-              className="w-12 h-12 rounded-md border border-border"
-              style={{ backgroundColor: swatch.hex }}
-            />
-            <span className="text-[10px] text-muted-foreground text-center leading-tight max-w-[52px]">
-              {swatch.keyword}
-            </span>
+            <p className="text-xs font-medium mb-3 text-center">{option.name}</p>
+            <div className="flex justify-center gap-2">
+              {option.colors.map((swatch, j) => (
+                <div
+                  key={j}
+                  className="flex flex-col items-center gap-1.5"
+                  data-testid={`recommended-swatch-${i}-${j}`}
+                >
+                  <div
+                    className="w-10 h-10 rounded-md border border-border"
+                    style={{ backgroundColor: swatch.hex }}
+                  />
+                  <span className="text-[9px] text-muted-foreground text-center leading-tight max-w-[48px]">
+                    {swatch.keyword}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
