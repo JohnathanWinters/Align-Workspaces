@@ -160,15 +160,16 @@ function PhotoCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; inde
               <Palette className="w-3 h-3 text-white/70" />
               <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Color Palette</p>
             </div>
-            <div className="flex gap-1.5">
+            <div className="flex flex-col gap-1.5">
               {palette.map((swatch, i) => (
-                <div
-                  key={i}
-                  className="w-5 h-5 rounded-sm border border-white/20"
-                  style={{ backgroundColor: swatch.hex }}
-                  title={swatch.keyword}
-                  data-testid={`swatch-${photo.id}-${i}`}
-                />
+                <div key={i} className="flex items-center gap-2">
+                  <div
+                    className="w-5 h-5 rounded-sm border border-white/20 shrink-0"
+                    style={{ backgroundColor: swatch.hex }}
+                    data-testid={`swatch-${photo.id}-${i}`}
+                  />
+                  <span className="text-white/90 text-[11px] font-medium truncate">{swatch.keyword}</span>
+                </div>
               ))}
             </div>
           </div>
