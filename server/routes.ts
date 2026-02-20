@@ -462,6 +462,36 @@ export async function registerRoutes(
     }
   });
 
+  // Client: get favorites for a shoot
+  app.get("/api/shoots/:id/favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+      const favoriteIds = await storage.getFavorites(req.user.claims.sub, req.params.id);
+      res.json(favoriteIds);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  // Client: toggle favorite on an image
+  app.post("/api/shoots/:shootId/gallery/:imageId/favorite", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.shootId);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+
+      const image = await storage.getGalleryImageById(req.params.imageId);
+      if (!image || image.shootId !== shoot.id) return res.status(404).json({ message: "Image not found" });
+
+      const isFavorited = await storage.toggleFavorite(req.user.claims.sub, req.params.imageId);
+      res.json({ favorited: isFavorited });
+    } catch {
+      res.status(500).json({ message: "Failed to toggle favorite" });
+    }
+  });
+
   // Client: download single image
   app.get("/api/shoots/:shootId/gallery/:imageId/download", isAuthenticated, async (req: any, res) => {
     try {
