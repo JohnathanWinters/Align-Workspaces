@@ -76,7 +76,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
           >
-            Helping you design a photoshoot that aligns your work with your character and the emotional impact you want clients to feel.
+            Helping you design a photoshoot that aligns you work, character, and the impression you want your clients to feel.
           </motion.p>
 
           <motion.div
