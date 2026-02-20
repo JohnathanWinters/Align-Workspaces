@@ -37,7 +37,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       >
         <div
           className="absolute inset-0 bg-cover scale-[1.02]"
-          style={{ backgroundImage: "url(/images/hero-bg-bright.png)", backgroundPosition: "40% center", filter: "contrast(1.05) brightness(1.02) blur(0.4px)" }}
+          style={{ backgroundImage: "url(/images/hero-bg-bright.png)", backgroundPosition: "40% center", filter: "contrast(1.08) brightness(1.05) blur(0.8px)" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
