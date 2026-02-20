@@ -69,6 +69,11 @@ export const environmentImages: Record<string, string> = {
 };
 
 export const moodLitImages: Record<string, Record<string, string>> = {
+  gym: {
+    cozy: "/images/env-gym-cozy.png",
+    bright: "/images/env-gym-bright.png",
+    powerful: "/images/env-gym-powerful.png",
+  },
   kitchen: {
     cozy: "/images/env-kitchen-cozy.png",
     bright: "/images/env-kitchen-bright.png",
