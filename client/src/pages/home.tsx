@@ -69,7 +69,7 @@ export default function HomePage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    document.title = "Brand Vision Studio | Portrait Photographer in Miami for Therapists & Small Business Professionals";
+    document.title = "Align | Portrait Photographer in Miami for Therapists & Small Business Professionals";
   }, []);
 
   useEffect(() => {
@@ -251,7 +251,7 @@ export default function HomePage() {
           <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
-                <p className="font-serif text-lg cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Brand Vision Studio</p>
+                <p className="font-serif text-lg cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align</p>
                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                   <Link href="/portfolio">
                     <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Portfolio</Button>

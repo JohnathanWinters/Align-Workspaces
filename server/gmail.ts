@@ -68,7 +68,7 @@ export async function sendBookingNotification(data: BookingEmailData) {
   const subject = `New Booking: ${data.name} — ${data.preferredDate === "TBD" ? "Inquiry" : data.preferredDate}`;
 
   const body = [
-    `New booking submission from Brand Vision Studio`,
+    `New booking submission from Align`,
     ``,
     `--- Client Information ---`,
     `Name: ${data.name}`,

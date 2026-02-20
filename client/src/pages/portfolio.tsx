@@ -51,7 +51,7 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
     >
       <img
         src={photo.imageUrl}
-        alt="Personal branding portrait by Brand Vision Studio Miami"
+        alt="Personal branding portrait by Align Miami"
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="eager"
         decoding="async"
@@ -120,7 +120,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
             {photo && (
               <img
                 src={photo.imageUrl}
-                alt="Professional branding portrait detail - Brand Vision Studio Miami"
+                alt="Professional branding portrait detail - Align Miami"
                 className="w-full h-full object-cover"
                 data-testid="lightbox-image-full"
               />
@@ -185,7 +185,7 @@ export default function PortfolioPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<PortfolioPhoto | null>(null);
 
   useEffect(() => {
-    document.title = "Portfolio | Miami Personal Branding Photography | Brand Vision Studio";
+    document.title = "Portfolio | Miami Personal Branding Photography | Align";
   }, []);
 
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
@@ -198,7 +198,7 @@ export default function PortfolioPage() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <Link href="/">
-              <p className="font-serif text-lg cursor-pointer" data-testid="link-home-from-portfolio">Brand Vision Studio</p>
+              <p className="font-serif text-lg cursor-pointer" data-testid="link-home-from-portfolio">Align</p>
             </Link>
             <Link href="/">
               <Button variant="ghost" data-testid="button-back-home">

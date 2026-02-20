@@ -1,8 +1,8 @@
-# Brand Vision Studio
+# Align
 
 ## Overview
 
-Brand Vision Studio is a premium, mobile-first interactive website that helps professionals design a personal portrait photoshoot. Users are guided through a 6-step configurator (environment, brand message, emotional impact, shoot intent, concept summary, booking) that updates a visual gallery and live concept summary in real time. The final goal is to capture lead information via a booking form, with locked-date bookings requiring a 50% Stripe downpayment.
+Align is a premium, mobile-first interactive website that helps professionals design a personal portrait photoshoot. Tagline: "Build Portraits that reflect who you are." Users are guided through a 6-step configurator (environment, brand message, emotional impact, shoot intent, concept summary, booking) that updates a visual gallery and live concept summary in real time. The final goal is to capture lead information via a booking form, with locked-date bookings requiring a 50% Stripe downpayment.
 
 The app follows a monorepo structure with a React frontend (`client/`), an Express backend (`server/`), and shared code (`shared/`) for database schemas and types.
 

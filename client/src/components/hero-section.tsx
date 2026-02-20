@@ -43,7 +43,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
 
         <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <p className="font-serif text-lg text-white">Brand Vision Studio</p>
+            <p className="font-serif text-lg text-white">Align</p>
             <Link href="/portal">
               <button
                 data-testid="button-client-portal"

@@ -10,13 +10,13 @@ const photographers = [
     name: "Armando Ramirez Romero",
     role: "Founder / Photographer",
     image: "/images/photographer-armando.jpg",
-    bio: "With over 9 years of experience behind the lens, Armando founded Brand Vision Studio to help professionals tell their story through compelling imagery. He's committed to building a new, more intuitive way for clients to navigate the photography process\u2014from concept to final delivery.",
+    bio: "With over 9 years of experience behind the lens, Armando founded Align to help professionals tell their story through compelling imagery. He's committed to building a new, more intuitive way for clients to navigate the photography process\u2014from concept to final delivery.",
   },
 ];
 
 export default function PhotographersPage() {
   useEffect(() => {
-    document.title = "About Armando Ramirez | Miami Portrait Photographer | Brand Vision Studio";
+    document.title = "About Armando Ramirez | Miami Portrait Photographer | Align";
   }, []);
 
   return (
@@ -25,7 +25,7 @@ export default function PhotographersPage() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <Link href="/">
-              <p className="font-serif text-lg cursor-pointer" data-testid="link-home-from-photographers">Brand Vision Studio</p>
+              <p className="font-serif text-lg cursor-pointer" data-testid="link-home-from-photographers">Align</p>
             </Link>
             <Link href="/">
               <Button variant="ghost" data-testid="button-back-home-photographers">

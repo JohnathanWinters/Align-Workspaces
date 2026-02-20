@@ -266,7 +266,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
             {photo && (
               <img
                 src={photo.imageUrl}
-                alt="Professional branding portrait detail - Brand Vision Studio Miami"
+                alt="Professional branding portrait detail - Align Miami"
                 className="w-full h-full object-cover"
                 data-testid="lightbox-image"
               />
