@@ -357,18 +357,11 @@ export default function HomePage() {
                               className="mt-6 rounded-xl overflow-hidden shadow-lg"
                               data-testid="mood-lit-preview"
                             >
-                              <div className="relative">
-                                <img
-                                  src={displayImage}
-                                  alt={`Your ${state.environment} location with ${state.emotionalImpact} lighting`}
-                                  className="w-full h-48 sm:h-64 object-cover"
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                                  <p className="text-white text-sm font-medium">
-                                    {state.environment && state.environment.charAt(0).toUpperCase() + state.environment.slice(1)} — {state.emotionalImpact && state.emotionalImpact.charAt(0).toUpperCase() + state.emotionalImpact.slice(1)} Lighting
-                                  </p>
-                                </div>
-                              </div>
+                              <img
+                                src={displayImage}
+                                alt={`Your ${state.environment} location with ${state.emotionalImpact} lighting`}
+                                className="w-full h-48 sm:h-64 object-cover"
+                              />
                             </motion.div>
                           );
                         })()}
