@@ -262,7 +262,7 @@ export default function HomePage() {
 
           <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-              <div className="lg:col-span-7">
+              <div className={`${currentStep === 4 || currentStep === 5 || currentStep === 6 ? "lg:col-span-12 max-w-3xl mx-auto" : "lg:col-span-7"}`}>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentStep}
@@ -538,17 +538,16 @@ export default function HomePage() {
                 </AnimatePresence>
               </div>
 
-              <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 || currentStep === 5 ? "hidden lg:block" : ""}`}>
-                <div className="lg:sticky lg:top-24 space-y-6">
-                  {currentStep !== 4 && currentStep !== 6 && (
+              {currentStep !== 4 && currentStep !== 5 && currentStep !== 6 && (
+                <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 ? "hidden" : ""}`}>
+                  <div className="lg:sticky lg:top-24 space-y-6">
                     <ImageGallery
                       environment={state.environment}
                       emotionalImpact={state.emotionalImpact}
                     />
-                  )}
-                  {currentStep !== 4 && currentStep !== 1 && currentStep !== 6 && <ConceptSummary state={state} />}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {currentStep === 1 && (
