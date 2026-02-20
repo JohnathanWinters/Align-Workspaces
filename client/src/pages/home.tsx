@@ -399,8 +399,8 @@ export default function HomePage() {
                           <p className="text-xl font-semibold text-card-foreground">
                             ${calculatePricing(state).min.toLocaleString()} &ndash; ${calculatePricing(state).max.toLocaleString()}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1 italic">
-                            Pricing reflects potential venue rental expenses.
+                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                            Pricing varies based on venue rental costs and selected marketing usage rights.
                           </p>
                         </motion.div>
                       </StepContent>
