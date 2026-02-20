@@ -363,6 +363,9 @@ export default function HomePage() {
                       <Link href="/about">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-about-header">Our Vision</button>
                       </Link>
+                      <Link href="/portal">
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portal-header">Client Portal</button>
+                      </Link>
                     </div>
                   )}
                 </div>
