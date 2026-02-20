@@ -56,12 +56,12 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </div>
         </nav>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 pt-40">
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 pt-24">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.15 }}
-            className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6"
+            className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-tight mb-4"
           >
             Your Portrait is
             <br />
@@ -72,7 +72,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-white/80 text-lg sm:text-xl max-w-xl mx-auto leading-relaxed"
+            className="text-white/80 text-sm sm:text-base max-w-md mx-auto leading-relaxed"
           >
             Helping you design a photoshoot that aligns you work, character, and the impression you want your clients to feel.
           </motion.p>
