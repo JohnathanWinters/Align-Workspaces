@@ -175,7 +175,7 @@ function PhotoGrid({ photos, onPhotoClick }: { photos: PortfolioPhoto[]; onPhoto
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="portfolio-grid">
       {photos.slice(0, 6).map((photo, index) => (
-        <PhotoCard key={photo.id} photo={photo} index={index} onPhotoClick={onPhotoClick} className={index >= 3 ? "hidden sm:block" : ""} />
+        <PhotoCard key={photo.id} photo={photo} index={index} onPhotoClick={onPhotoClick} className={index >= 4 ? "hidden sm:block" : ""} />
       ))}
     </div>
   );
