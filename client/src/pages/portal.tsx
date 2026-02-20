@@ -673,7 +673,7 @@ function PortalContent() {
                           )}
                         </div>
                         <div className="flex flex-col gap-2.5 mt-3">
-                          {shoot.shootDate && (
+                          {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
                             <a
                               href={buildGoogleCalendarUrl(shoot)}
                               target="_blank"
