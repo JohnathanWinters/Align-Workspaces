@@ -144,9 +144,9 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
         <div className="w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
           <Sparkles className="w-6 h-6 text-muted-foreground" />
         </div>
-        <h3 className="font-serif text-xl mb-2" data-testid="text-unique-heading">Your choice is unique!</h3>
+        <h3 className="font-serif text-xl mb-2" data-testid="text-unique-heading">Your combination is custom-built.</h3>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-          Since we can't show you any sample photos your photoshoot gets a <span className="font-semibold">25% discount!</span>
+          We'll design this look specifically for you. <span className="font-semibold">Receive 25% off for pioneering this look!</span>
         </p>
       </div>
 
