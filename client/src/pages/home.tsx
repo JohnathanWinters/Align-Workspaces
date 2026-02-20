@@ -32,6 +32,8 @@ import {
   Palette,
   Scissors,
   AlertCircle,
+  Menu,
+  X,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
@@ -64,6 +66,7 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isBooked, setIsBooked] = useState(false);
   const [state, setState] = useState<ConfiguratorState>({ ...initialState });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const configuratorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -250,17 +253,39 @@ export default function HomePage() {
         <div ref={configuratorRef} className="min-h-screen">
           <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center justify-between gap-4">
                 <img src="/images/logo-black.png" alt="Align" className="h-5 cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo" />
-                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                  <Link href="/portfolio">
-                    <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Portfolio</Button>
-                  </Link>
-                  <Link href="/about">
-                    <Button variant="ghost" size="sm" data-testid="link-about-header">About Us</Button>
-                  </Link>
-                </div>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  data-testid="button-menu-toggle"
+                  className="p-2 rounded-md hover:bg-muted transition-colors"
+                >
+                  {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
               </div>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-col gap-1 pt-3 pb-1 border-t border-border mt-3">
+                      <Link href="/portfolio">
+                        <Button variant="ghost" className="w-full justify-start" data-testid="link-portfolio-header" onClick={() => setMenuOpen(false)}>Portfolio</Button>
+                      </Link>
+                      <Link href="/about">
+                        <Button variant="ghost" className="w-full justify-start" data-testid="link-about-header" onClick={() => setMenuOpen(false)}>About Us</Button>
+                      </Link>
+                      <Link href="/portal">
+                        <Button variant="ghost" className="w-full justify-start" data-testid="link-portal-header" onClick={() => setMenuOpen(false)}>Client Portal</Button>
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="mt-3 lg:hidden">
                 <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
               </div>
