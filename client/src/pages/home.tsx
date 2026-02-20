@@ -508,6 +508,8 @@ export default function HomePage() {
                         <StepContent
                           title="Bring it to Life"
                           subtitle="Transform your vision into a lasting first impression."
+                          centerTitle
+                          heroTitle
                         >
                           <BookingForm
                             onSubmit={(data) => bookMutation.mutate(data)}
@@ -622,16 +624,18 @@ function StepContent({
   subtitle,
   children,
   centerTitle,
+  heroTitle,
 }: {
   title: string;
   subtitle: string;
   children: React.ReactNode;
   centerTitle?: boolean;
+  heroTitle?: boolean;
 }) {
   return (
     <div>
-      <h2 className={`font-serif text-2xl sm:text-3xl mb-2 ${centerTitle ? "text-center" : ""}`}>{title}</h2>
-      <p className={`text-muted-foreground text-sm sm:text-base mb-8 ${centerTitle ? "text-center" : ""}`}>{subtitle}</p>
+      <h2 className={`font-serif mb-2 ${heroTitle ? "text-3xl sm:text-4xl font-bold" : "text-2xl sm:text-3xl"} ${centerTitle ? "text-center" : ""}`}>{title}</h2>
+      <p className={`text-sm sm:text-base mb-8 ${heroTitle ? "text-base sm:text-lg text-foreground/70" : "text-muted-foreground"} ${centerTitle ? "text-center" : ""}`}>{subtitle}</p>
       {children}
     </div>
   );
