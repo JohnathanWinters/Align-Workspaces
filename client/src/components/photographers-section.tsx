@@ -45,7 +45,7 @@ export function PhotographersSection() {
             >
               <Card className="overflow-visible p-0" data-testid={`card-photographer-${index}`}>
                 <div className="flex flex-row items-start gap-5 p-5">
-                  <div className="w-24 h-24 flex-shrink-0 rounded-md overflow-hidden">
+                  <div className="w-32 h-32 flex-shrink-0 rounded-md overflow-hidden">
                     <img
                       src={photographer.image}
                       alt={photographer.name}
