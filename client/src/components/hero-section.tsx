@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowDown, User } from "lucide-react";
+import { User } from "lucide-react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useState, useCallback } from "react";
 import { Link } from "wouter";
@@ -12,8 +12,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   const y = useMotionValue(0);
   const opacity = useTransform(y, [-60, 0, 60], [0.6, 1, 0.6]);
   const scale = useTransform(y, [-60, 0, 60], [0.98, 1, 0.98]);
-  const hintOpacity = useTransform(y, [-30, -10, 0, 10, 30], [1, 0.5, 0, 0.5, 1]);
-  const hintY = useTransform(y, [-60, 0, 60], [-8, 0, 8]);
   const [hintText, setHintText] = useState("");
 
   const handleDragEnd = useCallback(() => {
@@ -29,7 +27,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   return (
     <div className="relative min-h-screen bg-[#1a1a1a]">
       <motion.section
-        className="relative min-h-screen flex items-center justify-center overflow-hidden touch-pan-x"
+        className="relative min-h-screen flex flex-col overflow-hidden touch-pan-x"
         style={{ opacity, scale }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
@@ -58,7 +56,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </div>
         </nav>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 pt-40">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -67,38 +65,25 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           >
             Your Portrait is
             <br />
-            Your First Introduction
+            Your First Impression
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-white/80 text-lg sm:text-xl mb-10 max-w-xl mx-auto leading-relaxed"
+            className="text-white/80 text-lg sm:text-xl max-w-xl mx-auto leading-relaxed"
           >
             Helping you design a photoshoot that aligns you work, character, and the impression you want your clients to feel.
           </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
-            className="mb-6"
-          >
-            <button
-              onClick={onStart}
-              data-testid="button-scroll-down"
-              className="text-white/50 transition-colors"
-            >
-              <ArrowDown className="w-6 h-6 animate-bounce" />
-            </button>
-          </motion.div>
+          <div className="flex-1" />
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
-            className="flex flex-col items-center gap-3"
+            className="flex flex-col items-center gap-3 pb-12"
           >
             <Button
               onClick={onStart}
@@ -108,15 +93,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             >
               Start Designing Your Shoot
             </Button>
-          </motion.div>
-
-          <motion.div
-            style={{ opacity: hintOpacity, y: hintY }}
-            className="mt-6 pointer-events-none"
-          >
-            <p className="text-white/60 text-xs transition-opacity duration-300" data-testid="text-scroll-hint">
-              {hintText}
-            </p>
           </motion.div>
         </div>
 
