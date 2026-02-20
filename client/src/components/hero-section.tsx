@@ -36,8 +36,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         onDragEnd={handleDragEnd}
       >
         <div
-          className="absolute inset-0 bg-cover bg-center scale-[1.02]"
-          style={{ backgroundImage: "url(/images/hero-bg-bright.png)", filter: "contrast(1.05) brightness(1.02) blur(0.4px)" }}
+          className="absolute inset-0 bg-cover scale-[1.02]"
+          style={{ backgroundImage: "url(/images/hero-bg-bright.png)", backgroundPosition: "60% center", filter: "contrast(1.05) brightness(1.02) blur(0.4px)" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
@@ -56,7 +56,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </div>
         </nav>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 pt-24">
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 justify-end pb-32">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -77,13 +77,11 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             Helping you design a photoshoot that aligns you work, character, and the impression you want your clients to feel.
           </motion.p>
 
-          <div className="flex-1" />
-
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
-            className="flex flex-col items-center gap-3 pb-12"
+            className="flex flex-col items-center gap-3 mt-4"
           >
             <ArrowDown className="w-6 h-6 text-white/50 animate-bounce" />
             <Button
