@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,13 @@ import {
   CheckCircle,
   Loader2,
   User,
+  Download,
+  ChevronLeft,
+  Folder,
+  FolderOpen,
+  Images,
 } from "lucide-react";
-import type { Shoot } from "@shared/schema";
+import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 
 function getStatusColor(status: string | null) {
   switch (status) {
@@ -63,12 +69,208 @@ function formatDate(date: string | Date | null) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
+  const { data: images = [], isLoading: imagesLoading } = useQuery<GalleryImage[]>({
+    queryKey: ["/api/shoots", shoot.id, "gallery"],
+    queryFn: async () => {
+      const res = await fetch(`/api/shoots/${shoot.id}/gallery`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch gallery");
+      return res.json();
+    },
+    staleTime: 0,
+  });
+
+  const { data: folders = [], isLoading: foldersLoading } = useQuery<GalleryFolder[]>({
+    queryKey: ["/api/shoots", shoot.id, "folders"],
+    queryFn: async () => {
+      const res = await fetch(`/api/shoots/${shoot.id}/folders`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch folders");
+      return res.json();
+    },
+    staleTime: 0,
+  });
+
+  const isLoading = imagesLoading || foldersLoading;
+
+  const filteredImages = selectedFolder
+    ? images.filter((img) => img.folderId === selectedFolder)
+    : images.filter((img) => !img.folderId);
+
+  const rootImagesCount = images.filter((img) => !img.folderId).length;
+
+  const handleDownloadSingle = (imageId: string, filename: string) => {
+    const link = document.createElement("a");
+    link.href = `/api/shoots/${shoot.id}/gallery/${imageId}/download`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadAll = async () => {
+    setDownloadingAll(true);
+    try {
+      const res = await fetch(`/api/shoots/${shoot.id}/download-all`, { credentials: "include" });
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${shoot.title.replace(/[^a-zA-Z0-9]/g, "_")}_photos.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert("Failed to download photos. Please try again.");
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onBack}
+              data-testid="button-back-to-shoots"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div className="h-4 w-px bg-gray-200" />
+            <div>
+              <p className="font-serif text-lg text-gray-900" data-testid="text-shoot-gallery-title">{shoot.title}</p>
+              <p className="text-xs text-gray-500">{images.length} photos</p>
+            </div>
+          </div>
+          {images.length > 0 && (
+            <Button
+              onClick={handleDownloadAll}
+              disabled={downloadingAll}
+              data-testid="button-download-all"
+              className="bg-[#1a1a1a] text-white"
+            >
+              {downloadingAll ? (
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-1.5" />
+              )}
+              {downloadingAll ? "Preparing..." : "Download All"}
+            </Button>
+          )}
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : images.length === 0 ? (
+          <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Image className="w-10 h-10 text-gray-300 mb-3" />
+              <h3 className="font-serif text-lg text-gray-900 mb-1">No photos yet</h3>
+              <p className="text-gray-500 text-sm">Photos will appear here once they've been uploaded.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            {folders.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                <button
+                  onClick={() => setSelectedFolder(null)}
+                  data-testid="button-client-folder-root"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    selectedFolder === null
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  <Images className="w-3.5 h-3.5" />
+                  Unsorted ({rootImagesCount})
+                </button>
+                {folders.map((folder) => {
+                  const count = images.filter((img) => img.folderId === folder.id).length;
+                  const isSelected = selectedFolder === folder.id;
+                  return (
+                    <button
+                      key={folder.id}
+                      onClick={() => setSelectedFolder(folder.id)}
+                      data-testid={`button-client-folder-${folder.id}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        isSelected
+                          ? "bg-[#1a1a1a] text-white"
+                          : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                      }`}
+                    >
+                      {isSelected ? <FolderOpen className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />}
+                      {folder.name} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {filteredImages.map((image) => (
+                <div
+                  key={image.id}
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                  data-testid={`client-gallery-image-${image.id}`}
+                >
+                  <img
+                    src={image.imageUrl}
+                    alt={image.originalFilename || image.caption || "Photo"}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
+                    <p className="text-white text-xs truncate flex-1 mr-2">
+                      {image.originalFilename || "Photo"}
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => handleDownloadSingle(image.id, image.originalFilename || "photo.jpg")}
+                      data-testid={`button-download-image-${image.id}`}
+                      className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
+  const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
 
   const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
     queryKey: ["/api/shoots"],
+    staleTime: 0,
   });
+
+  if (selectedShoot) {
+    return (
+      <ShootGallery
+        shoot={selectedShoot}
+        onBack={() => setSelectedShoot(null)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
@@ -161,6 +363,7 @@ function PortalContent() {
                     <Card
                       className="bg-white hover:shadow-md transition-shadow cursor-pointer group"
                       data-testid={`card-shoot-${shoot.id}`}
+                      onClick={() => setSelectedShoot(shoot)}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
@@ -197,11 +400,10 @@ function PortalContent() {
                             </div>
                           )}
                         </div>
-                        {shoot.createdAt && (
-                          <p className="text-xs text-gray-400 mt-3">
-                            Created {formatDate(shoot.createdAt)}
-                          </p>
-                        )}
+                        <p className="text-xs text-gray-400 mt-3 flex items-center gap-1">
+                          <Images className="w-3 h-3" />
+                          Click to view gallery
+                        </p>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -240,7 +442,7 @@ export default function PortalPage() {
           </div>
           <h1 className="font-serif text-3xl text-white mb-3">Client Portal</h1>
           <p className="text-white/60 text-sm mb-8 leading-relaxed">
-            Sign in to view your photoshoot galleries, track your sessions, and start new shoots.
+            Sign in to view your photoshoot galleries, track your sessions, and download your photos.
           </p>
           <div className="flex flex-col gap-3">
             <a href="/api/login" data-testid="button-login">

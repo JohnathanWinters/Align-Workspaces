@@ -8,6 +8,35 @@ import { sendBookingNotification } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import archiver from "archiver";
+
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, uniqueSuffix + ext);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|gif|webp|heic|heif|tiff|bmp)$/i;
+    if (allowed.test(path.extname(file.originalname))) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  },
+});
 
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -290,10 +319,16 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: delete a shoot
+  // Admin: delete a shoot (also cleans up files on disk)
   app.delete("/api/admin/shoots/:id", isAdmin, async (req, res) => {
     try {
-      await storage.deleteShoot(req.params.id as string);
+      const shootId = req.params.id as string;
+      const images = await storage.getGalleryImages(shootId);
+      for (const img of images) {
+        const filePath = path.join(uploadDir, path.basename(img.imageUrl));
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+      await storage.deleteShoot(shootId);
       res.json({ success: true });
     } catch {
       res.status(500).json({ message: "Failed to delete shoot" });
@@ -320,13 +355,168 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: delete gallery image
+  // Admin: delete gallery image (also removes file from disk)
   app.delete("/api/admin/gallery/:id", isAdmin, async (req, res) => {
     try {
+      const image = await storage.getGalleryImageById(req.params.id as string);
+      if (image) {
+        const filePath = path.join(uploadDir, path.basename(image.imageUrl));
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
       await storage.deleteGalleryImage(req.params.id as string);
       res.json({ success: true });
     } catch {
       res.status(500).json({ message: "Failed to delete gallery image" });
+    }
+  });
+
+  // Admin: upload photos to a shoot
+  app.post("/api/admin/shoots/:id/upload", isAdmin, upload.array("photos", 50), async (req: any, res) => {
+    try {
+      const shootId = req.params.id as string;
+      const folderId = req.body.folderId || null;
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      const images = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const image = await storage.createGalleryImage({
+          shootId,
+          folderId: folderId || null,
+          imageUrl: `/uploads/${file.filename}`,
+          originalFilename: file.originalname,
+          sortOrder: i,
+        });
+        images.push(image);
+      }
+      res.status(201).json(images);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to upload photos" });
+    }
+  });
+
+  // Serve uploaded files
+  app.use("/uploads", (await import("express")).default.static(uploadDir));
+
+  // Admin: folder CRUD
+  app.get("/api/admin/shoots/:id/folders", isAdmin, async (req, res) => {
+    try {
+      const folders = await storage.getFolders(req.params.id as string);
+      res.json(folders);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch folders" });
+    }
+  });
+
+  app.post("/api/admin/folders", isAdmin, async (req, res) => {
+    try {
+      const folder = await storage.createFolder(req.body);
+      res.status(201).json(folder);
+    } catch {
+      res.status(500).json({ message: "Failed to create folder" });
+    }
+  });
+
+  app.patch("/api/admin/folders/:id", isAdmin, async (req, res) => {
+    try {
+      const folder = await storage.updateFolder(req.params.id as string, req.body);
+      res.json(folder);
+    } catch {
+      res.status(500).json({ message: "Failed to update folder" });
+    }
+  });
+
+  app.delete("/api/admin/folders/:id", isAdmin, async (req, res) => {
+    try {
+      const folderId = req.params.id as string;
+      const folder = await storage.getFolderById(folderId);
+      if (folder) {
+        const images = await storage.getGalleryImages(folder.shootId);
+        const folderImages = images.filter((img) => img.folderId === folderId);
+        for (const img of folderImages) {
+          const filePath = path.join(uploadDir, path.basename(img.imageUrl));
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        }
+      }
+      await storage.deleteFolder(folderId);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Failed to delete folder" });
+    }
+  });
+
+  // Client: get folders for a shoot
+  app.get("/api/shoots/:id/folders", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+      const folders = await storage.getFolders(req.params.id);
+      res.json(folders);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch folders" });
+    }
+  });
+
+  // Client: download single image
+  app.get("/api/shoots/:shootId/gallery/:imageId/download", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.shootId);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+
+      const image = await storage.getGalleryImageById(req.params.imageId);
+      if (!image || image.shootId !== shoot.id) return res.status(404).json({ message: "Image not found" });
+
+      const filePath = path.join(uploadDir, path.basename(image.imageUrl));
+      if (!fs.existsSync(filePath)) return res.status(404).json({ message: "File not found" });
+
+      const filename = image.originalFilename || path.basename(image.imageUrl);
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.sendFile(filePath);
+    } catch {
+      res.status(500).json({ message: "Failed to download image" });
+    }
+  });
+
+  // Client: download all images as zip
+  app.get("/api/shoots/:id/download-all", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+
+      const images = await storage.getGalleryImages(req.params.id);
+      const folders = await storage.getFolders(req.params.id);
+      if (images.length === 0) return res.status(404).json({ message: "No images to download" });
+
+      const folderMap = new Map(folders.map((f) => [f.id, f.name]));
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="${shoot.title.replace(/[^a-zA-Z0-9]/g, "_")}_photos.zip"`);
+
+      const archive = archiver("zip", { zlib: { level: 5 } });
+      archive.pipe(res);
+
+      for (const image of images) {
+        const filePath = path.join(uploadDir, path.basename(image.imageUrl));
+        if (fs.existsSync(filePath)) {
+          const filename = image.originalFilename || path.basename(image.imageUrl);
+          const folderName = image.folderId ? folderMap.get(image.folderId) || "Other" : "";
+          const archivePath = folderName ? `${folderName}/${filename}` : filename;
+          archive.file(filePath, { name: archivePath });
+        }
+      }
+
+      await archive.finalize();
+    } catch {
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to create download" });
+      }
     }
   });
 

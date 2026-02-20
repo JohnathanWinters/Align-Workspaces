@@ -1,6 +1,6 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type User, users } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users } from "@shared/schema";
 import { db } from "./db";
-import { sql, eq, desc } from "drizzle-orm";
+import { sql, eq, desc, and, isNull } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -15,8 +15,14 @@ export interface IStorage {
   deleteShoot(id: string): Promise<void>;
   getAllShoots(): Promise<Shoot[]>;
   getGalleryImages(shootId: string): Promise<GalleryImage[]>;
+  getGalleryImageById(id: string): Promise<GalleryImage | undefined>;
   createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
   deleteGalleryImage(id: string): Promise<void>;
+  getFolders(shootId: string): Promise<GalleryFolder[]>;
+  getFolderById(id: string): Promise<GalleryFolder | undefined>;
+  createFolder(folder: InsertGalleryFolder): Promise<GalleryFolder>;
+  updateFolder(id: string, data: Partial<InsertGalleryFolder>): Promise<GalleryFolder>;
+  deleteFolder(id: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
 }
 
@@ -73,12 +79,42 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getGalleryImageById(id: string): Promise<GalleryImage | undefined> {
+    const [result] = await db.select().from(galleryImages).where(eq(galleryImages.id, id));
+    return result;
+  }
+
   async deleteGalleryImage(id: string): Promise<void> {
     await db.delete(galleryImages).where(eq(galleryImages.id, id));
   }
 
+  async getFolders(shootId: string): Promise<GalleryFolder[]> {
+    return db.select().from(galleryFolders).where(eq(galleryFolders.shootId, shootId)).orderBy(galleryFolders.sortOrder);
+  }
+
+  async getFolderById(id: string): Promise<GalleryFolder | undefined> {
+    const [result] = await db.select().from(galleryFolders).where(eq(galleryFolders.id, id));
+    return result;
+  }
+
+  async createFolder(folder: InsertGalleryFolder): Promise<GalleryFolder> {
+    const [result] = await db.insert(galleryFolders).values(folder).returning();
+    return result;
+  }
+
+  async updateFolder(id: string, data: Partial<InsertGalleryFolder>): Promise<GalleryFolder> {
+    const [result] = await db.update(galleryFolders).set(data).where(eq(galleryFolders.id, id)).returning();
+    return result;
+  }
+
+  async deleteFolder(id: string): Promise<void> {
+    await db.delete(galleryImages).where(eq(galleryImages.folderId, id));
+    await db.delete(galleryFolders).where(eq(galleryFolders.id, id));
+  }
+
   async deleteShoot(id: string): Promise<void> {
     await db.delete(galleryImages).where(eq(galleryImages.shootId, id));
+    await db.delete(galleryFolders).where(eq(galleryFolders.shootId, id));
     await db.delete(shoots).where(eq(shoots.id, id));
   }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,9 +20,14 @@ import {
   Image,
   Save,
   X,
+  Upload,
+  FolderPlus,
+  Folder,
+  FolderOpen,
+  Images,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Shoot, User as UserType } from "@shared/schema";
+import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
 
 function adminFetch(url: string, token: string, options: RequestInit = {}) {
   return fetch(url, {
@@ -129,14 +134,349 @@ const emotionalImpacts = ["cozy", "bright", "powerful", "cinematic"];
 const shootIntents = ["website", "social-media", "marketing", "personal-brand", "team"];
 const statuses = ["draft", "scheduled", "in-progress", "completed"];
 
+function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: string; shootTitle: string; token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [folders, setFolders] = useState<GalleryFolder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editFolderName, setEditFolderName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadGallery = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [imagesRes, foldersRes] = await Promise.all([
+        adminFetch(`/api/admin/shoots/${shootId}/gallery`, token),
+        adminFetch(`/api/admin/shoots/${shootId}/folders`, token),
+      ]);
+      if (imagesRes.ok) setImages(await imagesRes.json());
+      if (foldersRes.ok) setFolders(await foldersRes.json());
+    } catch {
+      toast({ title: "Error", description: "Failed to load gallery", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [shootId, token]);
+
+  useEffect(() => { loadGallery(); }, [loadGallery]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append("photos", files[i]);
+      }
+      if (selectedFolder) {
+        formData.append("folderId", selectedFolder);
+      }
+      const res = await fetch(`/api/admin/shoots/${shootId}/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const newImages = await res.json();
+        toast({ title: "Uploaded", description: `${newImages.length} photo(s) uploaded` });
+        await loadGallery();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/gallery/${imageId}`, token, { method: "DELETE" });
+      if (res.ok) {
+        setImages((prev) => prev.filter((img) => img.id !== imageId));
+        toast({ title: "Deleted", description: "Photo removed" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to delete photo", variant: "destructive" });
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+      const res = await adminFetch("/api/admin/folders", token, {
+        method: "POST",
+        body: JSON.stringify({ shootId, name: newFolderName.trim(), sortOrder: folders.length }),
+      });
+      if (res.ok) {
+        const folder = await res.json();
+        setFolders((prev) => [...prev, folder]);
+        setNewFolderName("");
+        toast({ title: "Created", description: `Folder "${folder.name}" created` });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to create folder", variant: "destructive" });
+    }
+  };
+
+  const handleRenameFolder = async (folderId: string) => {
+    if (!editFolderName.trim()) return;
+    try {
+      const res = await adminFetch(`/api/admin/folders/${folderId}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ name: editFolderName.trim() }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setFolders((prev) => prev.map((f) => (f.id === folderId ? updated : f)));
+        setEditingFolderId(null);
+        setEditFolderName("");
+        toast({ title: "Updated", description: "Folder renamed" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to rename folder", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    if (!confirm("Delete this folder and all its photos?")) return;
+    try {
+      const res = await adminFetch(`/api/admin/folders/${folderId}`, token, { method: "DELETE" });
+      if (res.ok) {
+        setFolders((prev) => prev.filter((f) => f.id !== folderId));
+        setImages((prev) => prev.filter((img) => img.folderId !== folderId));
+        if (selectedFolder === folderId) setSelectedFolder(null);
+        toast({ title: "Deleted", description: "Folder and its photos removed" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to delete folder", variant: "destructive" });
+    }
+  };
+
+  const filteredImages = selectedFolder
+    ? images.filter((img) => img.folderId === selectedFolder)
+    : images.filter((img) => !img.folderId);
+
+  const allImagesCount = images.length;
+  const rootImagesCount = images.filter((img) => !img.folderId).length;
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+          <button
+            onClick={onBack}
+            data-testid="button-back-from-gallery"
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div className="h-4 w-px bg-gray-200" />
+          <div>
+            <p className="font-serif text-lg text-gray-900" data-testid="text-gallery-title">Gallery</p>
+            <p className="text-xs text-gray-500">{shootTitle} &middot; {allImagesCount} photos</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex items-center gap-2 flex-1">
+              <Input
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="New folder name..."
+                data-testid="input-new-folder"
+                className="max-w-xs"
+                onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+              />
+              <Button
+                size="sm"
+                onClick={handleCreateFolder}
+                disabled={!newFolderName.trim()}
+                data-testid="button-create-folder"
+                className="bg-[#1a1a1a] text-white"
+              >
+                <FolderPlus className="w-4 h-4 mr-1.5" />
+                Add Folder
+              </Button>
+            </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleUpload}
+                className="hidden"
+                data-testid="input-file-upload"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                data-testid="button-upload-photos"
+                className="bg-[#1a1a1a] text-white"
+              >
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-1.5" />
+                )}
+                {uploading ? "Uploading..." : "Upload Photos"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setSelectedFolder(null)}
+              data-testid="button-folder-root"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                selectedFolder === null
+                  ? "bg-[#1a1a1a] text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              <Images className="w-3.5 h-3.5" />
+              All Unsorted ({rootImagesCount})
+            </button>
+            {folders.map((folder) => {
+              const count = images.filter((img) => img.folderId === folder.id).length;
+              const isSelected = selectedFolder === folder.id;
+              const isEditing = editingFolderId === folder.id;
+              return (
+                <div key={folder.id} className="flex items-center gap-1">
+                  {isEditing ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={editFolderName}
+                        onChange={(e) => setEditFolderName(e.target.value)}
+                        className="h-8 w-32 text-sm"
+                        data-testid={`input-rename-folder-${folder.id}`}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleRenameFolder(folder.id);
+                          if (e.key === "Escape") { setEditingFolderId(null); setEditFolderName(""); }
+                        }}
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={() => handleRenameFolder(folder.id)} className="h-8 w-8 p-0" data-testid={`button-save-rename-${folder.id}`}>
+                        <Save className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEditingFolderId(null); setEditFolderName(""); }} className="h-8 w-8 p-0">
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setSelectedFolder(folder.id)}
+                        data-testid={`button-folder-${folder.id}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                          isSelected
+                            ? "bg-[#1a1a1a] text-white"
+                            : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                        }`}
+                      >
+                        {isSelected ? <FolderOpen className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />}
+                        {folder.name} ({count})
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setEditingFolderId(folder.id); setEditFolderName(folder.name); }}
+                        data-testid={`button-edit-folder-${folder.id}`}
+                        className="h-7 w-7 p-0 text-gray-400 hover:text-gray-700"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteFolder(folder.id)}
+                        data-testid={`button-delete-folder-${folder.id}`}
+                        className="h-7 w-7 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : filteredImages.length === 0 ? (
+            <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <Image className="w-10 h-10 text-gray-300 mb-3" />
+                <h3 className="font-serif text-lg text-gray-900 mb-1">
+                  {selectedFolder ? "No photos in this folder" : "No unsorted photos"}
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  Upload photos using the button above
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {filteredImages.map((image) => (
+                <div
+                  key={image.id}
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                  data-testid={`gallery-image-${image.id}`}
+                >
+                  <img
+                    src={image.imageUrl}
+                    alt={image.originalFilename || image.caption || "Gallery photo"}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
+                    <p className="text-white text-xs truncate flex-1 mr-2">
+                      {image.originalFilename || "Photo"}
+                    </p>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteImage(image.id)}
+                      data-testid={`button-delete-image-${image.id}`}
+                      className="h-7 w-7 p-0 shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </main>
+    </div>
+  );
+}
+
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
+  const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
   const [form, setForm] = useState<ShootFormData>(defaultShootForm);
   const [saving, setSaving] = useState(false);
 
@@ -242,11 +582,27 @@ function AdminDashboard({ token }: { token: string }) {
     setView("create");
   };
 
+  const openGallery = (shoot: Shoot) => {
+    setGalleryShoot(shoot);
+    setView("gallery");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
       </div>
+    );
+  }
+
+  if (view === "gallery" && galleryShoot) {
+    return (
+      <GalleryManager
+        shootId={galleryShoot.id}
+        shootTitle={galleryShoot.title}
+        token={token}
+        onBack={() => { setView("clients"); setGalleryShoot(null); }}
+      />
     );
   }
 
@@ -530,6 +886,16 @@ function AdminDashboard({ token }: { token: string }) {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openGallery(shoot)}
+                                  data-testid={`button-gallery-${shoot.id}`}
+                                  className="h-8 w-8 p-0 text-gray-500"
+                                  title="Manage Gallery"
+                                >
+                                  <Images className="w-3.5 h-3.5" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"

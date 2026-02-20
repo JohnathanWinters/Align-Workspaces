@@ -59,8 +59,17 @@ Pricing is calculated dynamically based on selections.
   - `PATCH/DELETE /api/admin/shoots/:id` — Update/delete shoots (admin only)
   - `GET /api/admin/shoots/:id/gallery` — Gallery images for shoot (admin only)
   - `POST /api/admin/gallery` — Add gallery image (admin only)
-  - `DELETE /api/admin/gallery/:id` — Delete gallery image (admin only)
-- **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete) and gallery images.
+  - `DELETE /api/admin/gallery/:id` — Delete gallery image and file (admin only)
+  - `POST /api/admin/shoots/:id/upload` — Upload photos to shoot (admin only, multipart/form-data)
+  - `GET /api/admin/shoots/:id/folders` — List folders for shoot (admin only)
+  - `POST /api/admin/folders` — Create folder (admin only)
+  - `PATCH /api/admin/folders/:id` — Rename folder (admin only)
+  - `DELETE /api/admin/folders/:id` — Delete folder and its photos (admin only)
+  - `GET /api/shoots/:id/folders` — Client: get folders for a shoot (authenticated, user-scoped)
+  - `GET /api/shoots/:shootId/gallery/:imageId/download` — Client: download single image (authenticated)
+  - `GET /api/shoots/:id/download-all` — Client: download all images as zip (authenticated)
+- **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete), gallery images with folder organization, and photo uploads.
+- **File Uploads**: Photos uploaded via multer to `uploads/` directory, served as static files at `/uploads/` path. Max 50MB per file, image types only.
 - **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
 - **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
 - **Dev Server**: Vite middleware is used in development for HMR; in production, static files are served from `dist/public`
@@ -68,7 +77,7 @@ Pricing is calculated dynamically based on selections.
 ### Database
 - **Database**: PostgreSQL (required — `DATABASE_URL` environment variable)
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
-- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions) and `gallery_images` table (photos per shoot). Auth tables (`users`, `sessions`) from Replit Auth integration.
+- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions), `gallery_folders` table (folder organization per shoot), and `gallery_images` table (photos per shoot with optional folderId and originalFilename). Auth tables (`users`, `sessions`) from Replit Auth integration.
 - **Shared Pricing** (`shared/pricing.ts`): Server-authoritative pricing logic used by both frontend and backend
 - **Migrations**: Drizzle Kit with `db:push` command for schema sync
 
