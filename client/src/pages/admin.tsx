@@ -865,30 +865,30 @@ function AdminDashboard({ token }: { token: string }) {
                 return (
                   <Card key={user.id} className="bg-white" data-testid={`card-client-${user.id}`}>
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            {user.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
-                            <AvatarFallback className="bg-gray-100 text-gray-500">
-                              <User className="w-5 h-5" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-base font-medium text-gray-900">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10 shrink-0">
+                          {user.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
+                          <AvatarFallback className="bg-gray-100 text-gray-500">
+                            <User className="w-5 h-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <CardTitle className="text-base font-medium text-gray-900 truncate">
                               {user.firstName} {user.lastName}
                             </CardTitle>
-                            <p className="text-xs text-gray-500">{user.email || "No email"}</p>
+                            <Button
+                              size="sm"
+                              onClick={() => startCreate(user)}
+                              data-testid={`button-add-shoot-${user.id}`}
+                              className="bg-[#1a1a1a] text-white shrink-0"
+                            >
+                              <Plus className="w-3.5 h-3.5 mr-1.5" />
+                              Add Shoot
+                            </Button>
                           </div>
+                          <p className="text-xs text-gray-500 truncate">{user.email || "No email"}</p>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => startCreate(user)}
-                          data-testid={`button-add-shoot-${user.id}`}
-                          className="bg-[#1a1a1a] text-white"
-                        >
-                          <Plus className="w-3.5 h-3.5 mr-1.5" />
-                          Add Shoot
-                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0">
