@@ -7,7 +7,7 @@ export function calculatePricing(shootIntent: string | null): { min: number; max
     max += 500;
   } else if (shootIntent === "team") {
     min += 150;
-    max += 300;
+    max += 1700;
   }
 
   return { min, max };
