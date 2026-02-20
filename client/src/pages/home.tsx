@@ -265,25 +265,45 @@ export default function HomePage() {
               </div>
               <AnimatePresence>
                 {menuOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    className="overflow-hidden"
-                  >
-                    <div className="flex flex-col gap-1 pt-3 pb-1 border-t border-border mt-3">
-                      <Link href="/portfolio">
-                        <Button variant="ghost" className="w-full justify-start" data-testid="link-portfolio-header" onClick={() => setMenuOpen(false)}>Portfolio</Button>
-                      </Link>
-                      <Link href="/about">
-                        <Button variant="ghost" className="w-full justify-start" data-testid="link-about-header" onClick={() => setMenuOpen(false)}>About Us</Button>
-                      </Link>
-                      <Link href="/portal">
-                        <Button variant="ghost" className="w-full justify-start" data-testid="link-portal-header" onClick={() => setMenuOpen(false)}>Client Portal</Button>
-                      </Link>
-                    </div>
-                  </motion.div>
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                      onClick={() => setMenuOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ x: "100%" }}
+                      animate={{ x: 0 }}
+                      exit={{ x: "100%" }}
+                      transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                      className="fixed top-0 right-0 bottom-0 w-72 bg-background shadow-2xl z-50 flex flex-col"
+                    >
+                      <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+                        <img src="/images/logo-black.png" alt="Align" className="h-5" />
+                        <button
+                          onClick={() => setMenuOpen(false)}
+                          data-testid="button-menu-close"
+                          className="p-2 rounded-md hover:bg-muted transition-colors"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <nav className="flex flex-col px-4 py-6 gap-1">
+                        <Link href="/portfolio">
+                          <Button variant="ghost" className="w-full justify-start text-base py-6" data-testid="link-portfolio-header" onClick={() => setMenuOpen(false)}>Portfolio</Button>
+                        </Link>
+                        <Link href="/about">
+                          <Button variant="ghost" className="w-full justify-start text-base py-6" data-testid="link-about-header" onClick={() => setMenuOpen(false)}>About Us</Button>
+                        </Link>
+                        <Link href="/portal">
+                          <Button variant="ghost" className="w-full justify-start text-base py-6" data-testid="link-portal-header" onClick={() => setMenuOpen(false)}>Client Portal</Button>
+                        </Link>
+                      </nav>
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
               <div className="mt-3 lg:hidden">
