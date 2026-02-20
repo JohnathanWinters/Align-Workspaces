@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowDown, User } from "lucide-react";
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import { useState, useCallback } from "react";
+import { User } from "lucide-react";
+import { motion } from "framer-motion";
 import { Link } from "wouter";
 
 interface HeroSectionProps {
@@ -9,97 +8,103 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onStart }: HeroSectionProps) {
-  const y = useMotionValue(0);
-  const opacity = useTransform(y, [-60, 0, 60], [0.6, 1, 0.6]);
-  const scale = useTransform(y, [-60, 0, 60], [0.98, 1, 0.98]);
-  const [hintText, setHintText] = useState("");
-
-  const handleDragEnd = useCallback(() => {
-    setHintText("");
-  }, []);
-
-  const handleDrag = useCallback((_: any, info: { offset: { y: number } }) => {
-    if (Math.abs(info.offset.y) > 15) {
-      setHintText("Tap the button below to get started");
-    }
-  }, []);
-
   return (
-    <div className="relative min-h-screen bg-[#1a1a1a]">
-      <motion.section
-        className="relative min-h-screen flex flex-col overflow-hidden touch-pan-x"
-        style={{ opacity, scale }}
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.15}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-      >
-        <nav className="relative z-20 px-6 py-5">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <p className="font-serif text-xl text-white cursor-pointer" data-testid="link-home-hero-logo">Align</p>
-            </div>
+    <section className="relative min-h-screen flex flex-col bg-[#0d0d0d]">
+      <nav className="relative z-20 px-6 py-6 sm:py-8">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="font-serif text-2xl tracking-wide text-white/90 cursor-pointer"
+            data-testid="link-home-hero-logo"
+          >
+            Align
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.4 }}
+          >
             <Link href="/portal">
               <button
                 data-testid="button-client-portal"
-                className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors border border-white/20 rounded-full px-4 py-2 backdrop-blur-sm bg-white/5 hover:bg-white/10"
+                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/50 hover:text-white transition-colors duration-300"
               >
-                <User className="w-4 h-4" />
+                <User className="w-3.5 h-3.5" />
                 Client Portal
               </button>
             </Link>
-          </div>
-        </nav>
+          </motion.div>
+        </div>
+      </nav>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center pt-6 sm:pt-10">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
-            className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-tight mb-4"
-          >
-            Your Portrait is
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2, delay: 0.3 }}
+          className="text-center max-w-2xl mx-auto"
+        >
+          <p className="text-[10px] sm:text-xs tracking-[0.35em] uppercase text-white/40 mb-6 sm:mb-8 font-light">
+            Portrait Photography &mdash; Miami
+          </p>
+
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
+            Your Portrait Is
             <br />
-            Your First Impression
-          </motion.h1>
+            <span className="italic font-normal">Your First</span>
+            <br />
+            Impression
+          </h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-white/80 text-sm sm:text-base max-w-md mx-auto leading-relaxed"
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="text-white/45 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-6 sm:mt-8 font-light"
           >
-            Helping you design a photoshoot that aligns you work, character, and the impression you want your clients to feel.
+            Design a photoshoot that aligns your work, character, and the impression you want your clients to feel.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.45 }}
-            className="flex flex-col items-center gap-3 mt-4"
+            transition={{ duration: 0.8, delay: 1.1 }}
+            className="mt-8 sm:mt-10"
           >
-            <ArrowDown className="w-6 h-6 text-white/50 animate-bounce" />
-            <Button
+            <button
               onClick={onStart}
-              size="lg"
               data-testid="button-start-configurator"
-              className="text-base px-8 bg-white text-black border-white/20"
+              className="group relative inline-flex items-center gap-3 text-sm tracking-widest uppercase text-white/80 hover:text-white transition-all duration-500"
             >
-              Start Designing Your Shoot
-            </Button>
+              <span className="h-px w-8 bg-white/30 group-hover:w-12 group-hover:bg-white/60 transition-all duration-500" />
+              Begin Your Session
+              <span className="h-px w-8 bg-white/30 group-hover:w-12 group-hover:bg-white/60 transition-all duration-500" />
+            </button>
           </motion.div>
-        </div>
+        </motion.div>
+      </div>
 
-        <div className="relative flex-1 mt-8 sm:mt-12">
+      <div className="relative w-full px-4 sm:px-8 pb-6 sm:pb-8 z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 1.4 }}
+          className="relative w-full max-w-5xl mx-auto aspect-[16/9] sm:aspect-[21/9] rounded-lg overflow-hidden"
+        >
           <div
-            className="absolute inset-0 bg-cover scale-[1.02]"
-            style={{ backgroundImage: "url(/images/hero-bg-bright.png)", backgroundPosition: "43% top", filter: "contrast(1.06) brightness(1.03) blur(0.5px)" }}
+            className="absolute inset-0 bg-cover"
+            style={{
+              backgroundImage: "url(/images/hero-bg-bright.png)",
+              backgroundPosition: "43% 30%",
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60" />
-        </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d]/80 via-transparent to-[#0d0d0d]/20" />
+        </motion.div>
+      </div>
 
-      </motion.section>
-    </div>
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0d0d0d] to-transparent z-0 pointer-events-none" />
+    </section>
   );
 }
