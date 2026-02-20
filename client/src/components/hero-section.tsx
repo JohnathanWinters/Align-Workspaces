@@ -38,7 +38,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             <Link href="/portal">
               <button
                 data-testid="button-client-portal"
-                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/90 hover:text-white border border-white/30 hover:border-white/60 rounded-full px-5 py-2.5 backdrop-blur-md bg-white/10 hover:bg-white/15 transition-all duration-300"
+                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
               >
                 <User className="w-3.5 h-3.5" />
                 Client Portal
