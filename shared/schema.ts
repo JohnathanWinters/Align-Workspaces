@@ -3,6 +3,8 @@ import { pgTable, text, varchar, integer, timestamp, jsonb } from "drizzle-orm/p
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export * from "./models/auth";
+
 export const leads = pgTable("leads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -54,3 +56,42 @@ export const insertPortfolioPhotoSchema = createInsertSchema(portfolioPhotos, {
 
 export type InsertPortfolioPhoto = z.infer<typeof insertPortfolioPhotoSchema>;
 export type PortfolioPhoto = typeof portfolioPhotos.$inferSelect;
+
+export const shoots = pgTable("shoots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  title: text("title").notNull(),
+  environment: text("environment"),
+  brandMessage: text("brand_message"),
+  emotionalImpact: text("emotional_impact"),
+  shootIntent: text("shoot_intent"),
+  status: text("status").default("draft"),
+  shootDate: text("shoot_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertShootSchema = createInsertSchema(shoots).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertShoot = z.infer<typeof insertShootSchema>;
+export type Shoot = typeof shoots.$inferSelect;
+
+export const galleryImages = pgTable("gallery_images", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shootId: varchar("shoot_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
+export type GalleryImage = typeof galleryImages.$inferSelect;

@@ -14,7 +14,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend (client/)
 - **Framework**: React with TypeScript, bundled by Vite
-- **Routing**: Wouter (lightweight client-side router) — single page app with home page and 404
+- **Routing**: Wouter (lightweight client-side router) — home, portfolio, about, portal (client portal) pages + 404
+- **Authentication**: Replit Auth (OIDC) via `server/replit_integrations/auth/` — login at `/api/login`, logout at `/api/logout`, user at `/api/auth/user`
 - **State Management**: Local React state for the configurator flow; TanStack React Query for server data fetching/mutations
 - **UI Components**: shadcn/ui (new-york style) built on Radix UI primitives with Tailwind CSS
 - **Animations**: Framer Motion for transitions, hover effects, and step animations
@@ -55,7 +56,7 @@ Pricing is calculated dynamically based on selections.
 ### Database
 - **Database**: PostgreSQL (required — `DATABASE_URL` environment variable)
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
-- **Schema** (`shared/schema.ts`): Single `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps
+- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions) and `gallery_images` table (photos per shoot). Auth tables (`users`, `sessions`) from Replit Auth integration.
 - **Shared Pricing** (`shared/pricing.ts`): Server-authoritative pricing logic used by both frontend and backend
 - **Migrations**: Drizzle Kit with `db:push` command for schema sync
 

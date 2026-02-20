@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ArrowDown, MessageCircle, Mail, Phone, X } from "lucide-react";
+import { ArrowDown, MessageCircle, Mail, Phone, X, User } from "lucide-react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
+import { Link } from "wouter";
 
 interface HeroSectionProps {
   onStart: () => void;
@@ -44,8 +45,17 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
         <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
-          <div className="max-w-6xl mx-auto flex items-center justify-center">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
             <p className="font-serif text-lg text-white">Brand Vision Studio</p>
+            <Link href="/portal">
+              <button
+                data-testid="button-client-portal"
+                className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors border border-white/20 rounded-full px-4 py-2 backdrop-blur-sm bg-white/5 hover:bg-white/10"
+              >
+                <User className="w-4 h-4" />
+                Client Portal
+              </button>
+            </Link>
           </div>
         </nav>
 

@@ -1,12 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
+import { isAuthenticated } from "./replit_integrations/auth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -163,6 +164,62 @@ export async function registerRoutes(
       } else {
         res.status(500).json({ message: "Failed to create checkout session" });
       }
+    }
+  });
+
+  app.get("/api/shoots", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const shoots = await storage.getShootsByUser(userId);
+      res.json(shoots);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch shoots" });
+    }
+  });
+
+  app.post("/api/shoots", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const data = insertShootSchema.parse({ ...req.body, userId });
+      const shoot = await storage.createShoot(data);
+      res.status(201).json(shoot);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: "Failed to create shoot" });
+      }
+    }
+  });
+
+  app.get("/api/shoots/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) {
+        return res.status(404).json({ message: "Shoot not found" });
+      }
+      if (shoot.userId !== req.user.claims.sub) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      res.json(shoot);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch shoot" });
+    }
+  });
+
+  app.get("/api/shoots/:id/gallery", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) {
+        return res.status(404).json({ message: "Shoot not found" });
+      }
+      if (shoot.userId !== req.user.claims.sub) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      const images = await storage.getGalleryImages(req.params.id);
+      res.json(images);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch gallery" });
     }
   });
 
