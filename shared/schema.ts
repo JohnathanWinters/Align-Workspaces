@@ -79,10 +79,28 @@ export const insertShootSchema = createInsertSchema(shoots).omit({
 export type InsertShoot = z.infer<typeof insertShootSchema>;
 export type Shoot = typeof shoots.$inferSelect;
 
+export const galleryFolders = pgTable("gallery_folders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shootId: varchar("shoot_id").notNull(),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertGalleryFolderSchema = createInsertSchema(galleryFolders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGalleryFolder = z.infer<typeof insertGalleryFolderSchema>;
+export type GalleryFolder = typeof galleryFolders.$inferSelect;
+
 export const galleryImages = pgTable("gallery_images", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   shootId: varchar("shoot_id").notNull(),
+  folderId: varchar("folder_id"),
   imageUrl: text("image_url").notNull(),
+  originalFilename: text("original_filename"),
   caption: text("caption"),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
