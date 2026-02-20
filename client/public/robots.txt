@@ -4,4 +4,4 @@ Disallow: /admin
 Disallow: /portal
 Disallow: /api/
 
-Sitemap: https://brandvisionstudio.com/sitemap.xml
+Sitemap: https://alignphotodesign.com/sitemap.xml
