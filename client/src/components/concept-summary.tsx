@@ -64,7 +64,7 @@ export function ConceptSummary({ state }: ConceptSummaryProps) {
               ${pricing.min.toLocaleString()} &ndash; ${pricing.max.toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground mt-1 italic">
-              Price variance is based on possible space rental cost.
+              Pricing reflects potential venue rental expenses.
             </p>
           </motion.div>
         )}
