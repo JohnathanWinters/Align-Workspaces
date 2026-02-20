@@ -3,12 +3,13 @@ import { ArrowLeft, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
+import armandoPhoto from "@assets/Studio_Session-005-12_1771589503580.jpg";
 
 const photographers = [
   {
     name: "Armando Ramirez Romero",
     role: "Founder / Photographer",
-    image: "/images/photographer-armando.jpg",
+    image: armandoPhoto,
     bio: "With over 9 years of experience behind the lens, Armando founded Brand Vision Studio to help professionals tell their story through compelling imagery. He's committed to building a new, more intuitive way for clients to navigate the photography process\u2014from concept to final delivery.",
   },
 ];
