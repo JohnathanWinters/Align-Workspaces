@@ -39,7 +39,6 @@ import {
   Loader2 as Loader2Icon,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
-import { brandMessageIcons, emotionalImpactIcons } from "@/components/posture-icons";
 import type {
   ConfiguratorState,
 } from "@/lib/configurator-data";
@@ -434,22 +433,17 @@ export default function HomePage() {
                         title="Presence"
                         subtitle="What should they understand about you instantly?"
                       >
-                        <div className="grid grid-cols-2 gap-3">
-                          {brandMessages.map((msg) => {
-                            const PostureIcon = brandMessageIcons[msg.value];
-                            return (
-                              <OptionCard
-                                key={msg.value}
-                                label={msg.label}
-                                description={msg.description}
-                                isSelected={state.brandMessage === msg.value}
-                                onClick={() => setState({ ...state, brandMessage: msg.value, brandMessageCustom: "" })}
-                                testId={`option-msg-${msg.value}`}
-                                icon={PostureIcon ? <PostureIcon className="w-16 h-16 sm:w-20 sm:h-20" /> : undefined}
-                                iconFocused
-                              />
-                            );
-                          })}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {brandMessages.map((msg) => (
+                            <OptionCard
+                              key={msg.value}
+                              label={msg.label}
+                              description={msg.description}
+                              isSelected={state.brandMessage === msg.value}
+                              onClick={() => setState({ ...state, brandMessage: msg.value, brandMessageCustom: "" })}
+                              testId={`option-msg-${msg.value}`}
+                            />
+                          ))}
                         </div>
                       </StepContent>
                     )}
@@ -459,22 +453,17 @@ export default function HomePage() {
                         title="Impact"
                         subtitle="How should clients feel when they see you?"
                       >
-                        <div className="grid grid-cols-3 gap-3">
-                          {emotionalImpacts.map((imp) => {
-                            const PostureIcon = emotionalImpactIcons[imp.value];
-                            return (
-                              <OptionCard
-                                key={imp.value}
-                                label={imp.label}
-                                description={imp.description}
-                                isSelected={state.emotionalImpact === imp.value}
-                                onClick={() => setState({ ...state, emotionalImpact: imp.value, emotionalImpactCustom: "" })}
-                                testId={`option-imp-${imp.value}`}
-                                icon={PostureIcon ? <PostureIcon className="w-16 h-16 sm:w-20 sm:h-20" /> : undefined}
-                                iconFocused
-                              />
-                            );
-                          })}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {emotionalImpacts.map((imp) => (
+                            <OptionCard
+                              key={imp.value}
+                              label={imp.label}
+                              description={imp.description}
+                              isSelected={state.emotionalImpact === imp.value}
+                              onClick={() => setState({ ...state, emotionalImpact: imp.value, emotionalImpactCustom: "" })}
+                              testId={`option-imp-${imp.value}`}
+                            />
+                          ))}
                         </div>
                         {(() => {
                           const moodImage = getMoodLitImage(state.environment, state.emotionalImpact);
