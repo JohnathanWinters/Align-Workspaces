@@ -198,7 +198,7 @@ export default function PortfolioPage() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <Link href="/">
-              <img src="/images/logo-black.png" alt="Align" className="h-7 cursor-pointer" data-testid="link-home-from-portfolio" />
+              <img src="/images/logo-black.png" alt="Align" className="h-5 cursor-pointer" data-testid="link-home-from-portfolio" />
             </Link>
             <Link href="/">
               <Button variant="ghost" data-testid="button-back-home">
