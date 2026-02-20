@@ -30,7 +30,7 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="eager"
         decoding="async"
-        style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
+        style={{ imageRendering: "auto" }}
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         data-testid={`portfolio-preview-${index}`}
       />

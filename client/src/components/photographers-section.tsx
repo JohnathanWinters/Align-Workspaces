@@ -51,7 +51,7 @@ export function PhotographersSection() {
                     className="w-full h-full object-cover"
                     loading="eager"
                     decoding="async"
-                    style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
+                    style={{ imageRendering: "auto" }}
                     data-testid={`img-photographer-${index}`}
                   />
                 </div>
