@@ -63,6 +63,9 @@ export function ConceptSummary({ state }: ConceptSummaryProps) {
             <p className="text-xl font-semibold text-card-foreground" data-testid="text-pricing">
               ${pricing.min.toLocaleString()} &ndash; ${pricing.max.toLocaleString()}
             </p>
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              Price variance is based on possible space rental cost.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
