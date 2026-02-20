@@ -31,7 +31,7 @@ export function ImageGallery({ environment, emotionalImpact }: ImageGalleryProps
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.5 }}
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ filter }}
+            style={{ filter: "blur(0.6px) contrast(1.03)" }}
           />
         ) : (
           <motion.div
