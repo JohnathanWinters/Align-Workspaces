@@ -22,8 +22,10 @@ import {
   ChevronLeft,
   Images,
   Heart,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
-import type { Shoot, GalleryImage } from "@shared/schema";
+import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 
 function getStatusColor(status: string | null) {
   switch (status) {
@@ -72,6 +74,7 @@ function formatDate(date: string | Date | null) {
 
 function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
 
   const { data: images = [], isLoading: imagesLoading } = useQuery<GalleryImage[]>({
@@ -79,6 +82,16 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
     queryFn: async () => {
       const res = await fetch(`/api/shoots/${shoot.id}/gallery`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch gallery");
+      return res.json();
+    },
+    staleTime: 0,
+  });
+
+  const { data: folders = [], isLoading: foldersLoading } = useQuery<GalleryFolder[]>({
+    queryKey: ["/api/shoots", shoot.id, "folders"],
+    queryFn: async () => {
+      const res = await fetch(`/api/shoots/${shoot.id}/folders`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch folders");
       return res.json();
     },
     staleTime: 0,
@@ -108,11 +121,19 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
     },
   });
 
-  const isLoading = imagesLoading || favoritesLoading;
+  const isLoading = imagesLoading || favoritesLoading || foldersLoading;
 
-  const displayedImages = showFavoritesOnly
+  const hasFolders = folders.length > 0;
+
+  const folderFilteredImages = showFavoritesOnly
     ? images.filter((img) => favoriteIds.includes(img.id))
-    : images;
+    : selectedFolder
+      ? images.filter((img) => img.folderId === selectedFolder)
+      : hasFolders
+        ? images.filter((img) => !img.folderId)
+        : images;
+
+  const displayedImages = folderFilteredImages;
 
   const favoritesCount = favoriteIds.length;
 
@@ -198,21 +219,21 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
           </Card>
         ) : (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-4">
               <button
-                onClick={() => setShowFavoritesOnly(false)}
+                onClick={() => { setShowFavoritesOnly(false); setSelectedFolder(null); }}
                 data-testid="button-filter-all"
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  !showFavoritesOnly
+                  !showFavoritesOnly && !selectedFolder
                     ? "bg-[#1a1a1a] text-white"
                     : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
                 }`}
               >
                 <Images className="w-3.5 h-3.5" />
-                All ({images.length})
+                {hasFolders ? `Unsorted (${images.filter((img) => !img.folderId).length})` : `All (${images.length})`}
               </button>
               <button
-                onClick={() => setShowFavoritesOnly(true)}
+                onClick={() => { setShowFavoritesOnly(true); setSelectedFolder(null); }}
                 data-testid="button-filter-favorites"
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
                   showFavoritesOnly
@@ -225,12 +246,44 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
               </button>
             </div>
 
+            {hasFolders && !showFavoritesOnly && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {folders.map((folder) => {
+                  const count = images.filter((img) => img.folderId === folder.id).length;
+                  const isSelected = selectedFolder === folder.id;
+                  return (
+                    <button
+                      key={folder.id}
+                      onClick={() => { setSelectedFolder(folder.id); setShowFavoritesOnly(false); }}
+                      data-testid={`button-folder-${folder.id}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        isSelected
+                          ? "bg-[#1a1a1a] text-white"
+                          : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                      }`}
+                    >
+                      {isSelected ? <FolderOpen className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />}
+                      {folder.name} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {displayedImages.length === 0 && showFavoritesOnly ? (
               <Card className="border-dashed border-2 border-gray-200 bg-white/50">
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                   <Heart className="w-10 h-10 text-gray-300 mb-3" />
                   <h3 className="font-serif text-lg text-gray-900 mb-1">No favorites yet</h3>
                   <p className="text-gray-500 text-sm">Tap the heart icon on any photo to add it to your favorites.</p>
+                </CardContent>
+              </Card>
+            ) : displayedImages.length === 0 && selectedFolder ? (
+              <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Folder className="w-10 h-10 text-gray-300 mb-3" />
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No photos in this folder</h3>
+                  <p className="text-gray-500 text-sm">Photos will appear here once they've been added.</p>
                 </CardContent>
               </Card>
             ) : (
