@@ -65,6 +65,7 @@ Pricing is calculated dynamically based on selections.
   - `POST /api/admin/folders` — Create folder (admin only)
   - `PATCH /api/admin/folders/:id` — Rename folder (admin only)
   - `DELETE /api/admin/folders/:id` — Delete folder and its photos (admin only)
+  - `POST /api/admin/shoots/:id/send-invoice` — Create and send Stripe invoice to client (admin only, uses Stripe Invoicing API)
   - `GET /api/shoots/:id/folders` — Client: get folders for a shoot (authenticated, user-scoped)
   - `GET /api/shoots/:id/favorites` — Client: get favorited image IDs for a shoot (authenticated, user-scoped)
   - `POST /api/shoots/:shootId/gallery/:imageId/favorite` — Client: toggle favorite on an image (authenticated)
@@ -74,6 +75,7 @@ Pricing is calculated dynamically based on selections.
 - **File Uploads**: Photos uploaded via multer to `uploads/` directory, served as static files at `/uploads/` path. Max 50MB per file, image types only.
 - **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
 - **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
+- **Stripe Invoicing**: Admin can create and send itemized invoices via Stripe Invoicing API (customers created/reused automatically, invoices finalized and sent with configurable due dates)
 - **Dev Server**: Vite middleware is used in development for HMR; in production, static files are served from `dist/public`
 
 ### Database

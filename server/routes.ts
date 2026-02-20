@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendInvoiceEmail } from "./gmail";
+import { sendBookingNotification } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -376,7 +376,7 @@ export async function registerRoutes(
   app.post("/api/admin/shoots/:id/send-invoice", isAdmin, async (req, res) => {
     try {
       const shootId = req.params.id as string;
-      const { lineItems, totalAmount, notes } = req.body;
+      const { lineItems, notes, daysUntilDue } = req.body;
 
       if (!Array.isArray(lineItems) || lineItems.length === 0) {
         return res.status(400).json({ message: "At least one line item is required" });
@@ -389,7 +389,6 @@ export async function registerRoutes(
           return res.status(400).json({ message: "Each line item must have a positive amount" });
         }
       }
-      const computedTotal = lineItems.reduce((sum: number, item: any) => sum + item.amount, 0);
 
       const shoot = await storage.getShootById(shootId);
       if (!shoot) {
@@ -402,19 +401,55 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Client has no email address on file" });
       }
 
-      await sendInvoiceEmail({
-        clientName: [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client",
-        clientEmail: user.email,
-        shootTitle: shoot.title,
-        lineItems,
-        totalAmount: computedTotal,
-        notes: notes || undefined,
+      const stripe = await getUncachableStripeClient();
+      const clientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client";
+
+      const validDays = [7, 14, 30, 60];
+      const dueDays = validDays.includes(Number(daysUntilDue)) ? Number(daysUntilDue) : 30;
+
+      const existingCustomers = await stripe.customers.list({ email: user.email, limit: 1 });
+      let customer;
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+      } else {
+        customer = await stripe.customers.create({
+          email: user.email,
+          name: clientName,
+          metadata: { userId: user.id },
+        });
+      }
+
+      const invoice = await stripe.invoices.create({
+        customer: customer.id,
+        collection_method: "send_invoice",
+        days_until_due: dueDays,
+        description: notes?.trim() || undefined,
+        metadata: { shootId, shootTitle: shoot.title },
+        pending_invoice_items_behavior: "exclude",
       });
 
-      res.json({ success: true, sentTo: user.email });
-    } catch (error) {
-      console.error("Failed to send invoice:", error);
-      res.status(500).json({ message: "Failed to send invoice email" });
+      for (const item of lineItems) {
+        await stripe.invoiceItems.create({
+          customer: customer.id,
+          invoice: invoice.id,
+          description: item.description.trim(),
+          amount: Math.round(item.amount * 100),
+          currency: "usd",
+        });
+      }
+
+      const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+      const sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id);
+
+      res.json({
+        success: true,
+        sentTo: user.email,
+        invoiceId: sentInvoice.id,
+        invoiceUrl: sentInvoice.hosted_invoice_url,
+      });
+    } catch (error: any) {
+      console.error("Failed to send Stripe invoice:", error);
+      res.status(500).json({ message: error?.message || "Failed to send invoice" });
     }
   });
 

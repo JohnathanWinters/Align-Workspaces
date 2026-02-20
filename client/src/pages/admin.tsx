@@ -490,6 +490,7 @@ function InvoiceModal({
     { description: "", amount: "" },
   ]);
   const [notes, setNotes] = useState("");
+  const [daysUntilDue, setDaysUntilDue] = useState("30");
   const [sending, setSending] = useState(false);
 
   const addLineItem = () => {
@@ -527,20 +528,20 @@ function InvoiceModal({
             description: item.description.trim(),
             amount: parseFloat(item.amount),
           })),
-          totalAmount,
           notes: notes.trim() || undefined,
+          daysUntilDue: parseInt(daysUntilDue) || 30,
         }),
       });
       if (res.ok) {
         const result = await res.json();
-        toast({ title: "Invoice Sent", description: `Sent to ${result.sentTo}` });
+        toast({ title: "Invoice Sent via Stripe", description: `Invoice sent to ${result.sentTo}` });
         onClose();
       } else {
         const err = await res.json();
         toast({ title: "Error", description: err.message, variant: "destructive" });
       }
     } catch {
-      toast({ title: "Error", description: "Failed to send invoice", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to send Stripe invoice", variant: "destructive" });
     } finally {
       setSending(false);
     }
@@ -630,6 +631,21 @@ function InvoiceModal({
           </div>
 
           <div>
+            <Label className="text-sm text-gray-700">Payment Due</Label>
+            <Select value={daysUntilDue} onValueChange={setDaysUntilDue}>
+              <SelectTrigger className="mt-1" data-testid="select-days-due">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Due in 7 days</SelectItem>
+                <SelectItem value="14">Due in 14 days</SelectItem>
+                <SelectItem value="30">Due in 30 days</SelectItem>
+                <SelectItem value="60">Due in 60 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label className="text-sm text-gray-700">Notes (optional)</Label>
             <Textarea
               value={notes}
@@ -642,7 +658,9 @@ function InvoiceModal({
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-100 flex gap-3">
+        <div className="p-6 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mb-3 text-center">Invoice will be created and sent via Stripe</p>
+          <div className="flex gap-3">
           <Button
             onClick={handleSend}
             disabled={sending || !isValid}
@@ -659,6 +677,7 @@ function InvoiceModal({
           <Button variant="outline" onClick={onClose} data-testid="button-cancel-invoice">
             Cancel
           </Button>
+          </div>
         </div>
       </motion.div>
     </div>
