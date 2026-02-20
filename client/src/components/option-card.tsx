@@ -29,25 +29,23 @@ export function OptionCard({ label, isSelected, onClick, icon, description, test
             {label}
           </span>
         </div>
-        {isSelected && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground flex items-center justify-center"
-          >
-            <Check className="w-3 h-3 text-background" />
-          </motion.div>
-        )}
-      </div>
-      {description && isSelected && (
-        <motion.p
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          transition={{ duration: 0.3 }}
-          className="text-muted-foreground text-xs sm:text-sm mt-3 leading-relaxed"
+        <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: isSelected ? 'hsl(var(--foreground))' : 'transparent' }}
         >
+          {isSelected && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+            >
+              <Check className="w-3 h-3 text-background" />
+            </motion.div>
+          )}
+        </div>
+      </div>
+      {description && (
+        <p className={`text-xs sm:text-sm mt-3 leading-relaxed ${isSelected ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
           {description}
-        </motion.p>
+        </p>
       )}
     </motion.button>
   );
