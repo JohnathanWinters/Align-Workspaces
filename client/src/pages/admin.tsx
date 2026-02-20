@@ -923,13 +923,13 @@ function AdminDashboard({ token }: { token: string }) {
                                       </>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2 mt-2">
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => openGallery(shoot)}
                                       data-testid={`button-gallery-${shoot.id}`}
-                                      className="h-7 text-xs px-2.5 text-gray-600 border-gray-200"
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
                                     >
                                       <Images className="w-3 h-3 mr-1" />
                                       Gallery
@@ -939,7 +939,7 @@ function AdminDashboard({ token }: { token: string }) {
                                       size="sm"
                                       onClick={() => startEdit(shoot)}
                                       data-testid={`button-edit-shoot-${shoot.id}`}
-                                      className="h-7 text-xs px-2.5 text-gray-600 border-gray-200"
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
                                     >
                                       <Edit className="w-3 h-3 mr-1" />
                                       Edit
@@ -949,7 +949,7 @@ function AdminDashboard({ token }: { token: string }) {
                                       size="sm"
                                       onClick={() => handleDeleteShoot(shoot.id)}
                                       data-testid={`button-delete-shoot-${shoot.id}`}
-                                      className="h-7 text-xs px-2.5 text-red-500 border-red-200 hover:bg-red-50"
+                                      className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
                                     >
                                       <Trash2 className="w-3 h-3 mr-1" />
                                       Delete
