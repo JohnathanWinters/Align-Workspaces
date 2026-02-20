@@ -40,13 +40,13 @@ export default function PhotographersPage() {
           className="text-center mb-12"
         >
           <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
-            Behind the Lens
+            Behind the Vision
           </p>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-photographers-title">
             Meet the Team
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-photographers-page-desc">
-            Helping you align your vision with your photograph
+            Helping professionals align their presence with how clients experience them.
           </p>
         </motion.div>
 
