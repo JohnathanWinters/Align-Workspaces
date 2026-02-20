@@ -535,7 +535,7 @@ export default function HomePage() {
                 </AnimatePresence>
               </div>
 
-              <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 ? "hidden lg:block" : ""}`}>
+              <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 || currentStep === 4 ? "hidden lg:block" : ""}`}>
                 <div className="lg:sticky lg:top-24 space-y-6">
                   <ImageGallery
                     environment={state.environment}
