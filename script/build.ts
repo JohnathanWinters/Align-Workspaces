@@ -50,11 +50,8 @@ async function buildAll() {
     entryPoints: ["server/index.ts"],
     platform: "node",
     bundle: true,
-    format: "esm",
+    format: "cjs",
     outfile: "dist/index.cjs",
-    banner: {
-      js: 'import { createRequire } from "module"; const require = createRequire(import.meta.url); import { fileURLToPath } from "url"; const __filename = fileURLToPath(import.meta.url); const __dirname = import.meta.dirname ?? fileURLToPath(new URL(".", import.meta.url));',
-    },
     define: {
       "process.env.NODE_ENV": '"production"',
     },
