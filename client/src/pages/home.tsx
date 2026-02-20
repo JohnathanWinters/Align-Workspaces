@@ -32,8 +32,6 @@ import {
   Palette,
   Scissors,
   AlertCircle,
-  Menu,
-  X,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
@@ -66,7 +64,6 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isBooked, setIsBooked] = useState(false);
   const [state, setState] = useState<ConfiguratorState>({ ...initialState });
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const configuratorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -253,62 +250,17 @@ export default function HomePage() {
         <div ref={configuratorRef} className="min-h-screen">
           <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <img src="/images/logo-black.png" alt="Align" className="h-5 cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo" />
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  data-testid="button-menu-toggle"
-                  className="p-2 rounded-md hover:bg-muted transition-colors"
-                >
-                  {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                  <Link href="/portfolio">
+                    <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Portfolio</Button>
+                  </Link>
+                  <Link href="/about">
+                    <Button variant="ghost" size="sm" data-testid="link-about-header">About Us</Button>
+                  </Link>
+                </div>
               </div>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="fixed inset-0 bg-[#0d0d0d] z-40 flex flex-col"
-                  >
-                    <div className="max-w-6xl w-full mx-auto px-6 py-6 flex items-center justify-between">
-                      <img src="/images/logo-align.png" alt="Align" className="h-6" />
-                      <button
-                        onClick={() => setMenuOpen(false)}
-                        data-testid="button-menu-close"
-                        className="p-2 text-white/60 hover:text-white transition-colors"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <nav className="flex-1 flex flex-col items-center justify-center gap-2">
-                      {[
-                        { href: "/portfolio", label: "Portfolio", testId: "link-portfolio-header" },
-                        { href: "/about", label: "About Us", testId: "link-about-header" },
-                        { href: "/portal", label: "Client Portal", testId: "link-portal-header" },
-                      ].map((item, i) => (
-                        <motion.div
-                          key={item.href}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: 0.05 + i * 0.07 }}
-                        >
-                          <Link href={item.href}>
-                            <button
-                              data-testid={item.testId}
-                              onClick={() => setMenuOpen(false)}
-                              className="font-serif text-3xl sm:text-4xl text-white/80 hover:text-white py-3 transition-colors duration-200"
-                            >
-                              {item.label}
-                            </button>
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </nav>
-                  </motion.div>
-                )}
-              </AnimatePresence>
               <div className="mt-3 lg:hidden">
                 <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
               </div>
