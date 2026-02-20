@@ -25,7 +25,7 @@ export default function PhotographersPage() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <Link href="/">
-              <p className="font-serif text-lg tracking-wide cursor-pointer" data-testid="link-home-from-photographers">Align Portrait Designer</p>
+              <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer" data-testid="link-home-from-photographers">Align Portrait Designer</p>
             </Link>
             <Link href="/">
               <Button variant="ghost" data-testid="button-back-home-photographers">
