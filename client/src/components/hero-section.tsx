@@ -20,7 +20,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-end">
+        <div className="max-w-6xl mx-auto flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -46,16 +46,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 1.2, delay: 0.2 }}
           className="text-center max-w-2xl mx-auto"
         >
-          <motion.img
-            src="/images/logo-align.png"
-            alt="Align"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="h-16 sm:h-20 md:h-24 mx-auto mb-8 sm:mb-10"
-            data-testid="link-home-hero-logo"
-          />
-
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Portrait Is
             <br />
