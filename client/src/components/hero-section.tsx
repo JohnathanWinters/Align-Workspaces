@@ -43,7 +43,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
 
         <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <p className="font-serif text-lg text-white">Align</p>
+            <div className="flex items-center gap-2">
+              <img src="/images/logo-mountain-3.png" alt="Align logo" className="h-8 invert" />
+            </div>
             <Link href="/portal">
               <button
                 data-testid="button-client-portal"
