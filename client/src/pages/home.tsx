@@ -549,7 +549,7 @@ export default function HomePage() {
             </div>
 
             {currentStep === 1 && (
-              <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
+              <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 mt-8 flex-wrap">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
@@ -571,7 +571,7 @@ export default function HomePage() {
             )}
 
             {currentStep === 4 && (
-              <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
+              <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 mt-8 flex-wrap">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
@@ -592,7 +592,7 @@ export default function HomePage() {
             )}
 
             {currentStep === 5 && (
-              <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
+              <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 mt-8 flex-wrap">
                 <Button
                   variant="ghost"
                   onClick={prevStep}
