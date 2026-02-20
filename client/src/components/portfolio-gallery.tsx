@@ -37,7 +37,7 @@ function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
 }
 
 function selectVariedPhotos(photos: PortfolioPhoto[], environment: string, brandMessage: string, emotionalImpact: string): PortfolioPhoto[] {
-  if (photos.length <= 4) return photos;
+  if (photos.length <= 6) return photos;
 
   const scored = photos.map((photo) => {
     let matchCount = 0;
@@ -55,7 +55,7 @@ function selectVariedPhotos(photos: PortfolioPhoto[], environment: string, brand
   const usedMoods = new Set<string>();
 
   for (const { photo } of scored) {
-    if (selected.length >= 4) break;
+    if (selected.length >= 6) break;
 
     const env = photo.environments?.[0] || "";
     const msg = photo.brandMessages?.[0] || "";
@@ -71,7 +71,7 @@ function selectVariedPhotos(photos: PortfolioPhoto[], environment: string, brand
     }
   }
 
-  while (selected.length < 4 && selected.length < photos.length) {
+  while (selected.length < 6 && selected.length < photos.length) {
     const remaining = scored.find(({ photo }) => !selected.includes(photo));
     if (remaining) selected.push(remaining.photo);
     else break;
@@ -174,14 +174,14 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
 function PhotoGrid({ photos, onPhotoClick }: { photos: PortfolioPhoto[]; onPhotoClick: (photo: PortfolioPhoto) => void }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" data-testid="portfolio-grid">
-      {photos.map((photo, index) => (
-        <PhotoCard key={photo.id} photo={photo} index={index} onPhotoClick={onPhotoClick} />
+      {photos.slice(0, 6).map((photo, index) => (
+        <PhotoCard key={photo.id} photo={photo} index={index} onPhotoClick={onPhotoClick} className={index >= 3 ? "hidden sm:block" : ""} />
       ))}
     </div>
   );
 }
 
-function PhotoCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void }) {
+function PhotoCard({ photo, index, onPhotoClick, className }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void; className?: string }) {
   const palette = (photo.colorPalette as ColorSwatch[] | null) || [];
 
   return (
@@ -189,7 +189,7 @@ function PhotoCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; inde
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.12 }}
-      className="relative aspect-[3/4] rounded-md overflow-hidden group cursor-pointer"
+      className={`relative aspect-[3/4] rounded-md overflow-hidden group cursor-pointer ${className || ""}`}
       onClick={() => onPhotoClick(photo)}
       data-testid={`portfolio-photo-card-${photo.id}`}
     >
