@@ -118,6 +118,7 @@ interface ShootFormData {
   shootIntent: string;
   status: string;
   shootDate: string;
+  shootTime: string;
   location: string;
   notes: string;
 }
@@ -130,6 +131,7 @@ const defaultShootForm: ShootFormData = {
   shootIntent: "",
   status: "draft",
   shootDate: "",
+  shootTime: "",
   location: "",
   notes: "",
 };
@@ -810,6 +812,7 @@ function AdminDashboard({ token }: { token: string }) {
       shootIntent: shoot.shootIntent || "",
       status: shoot.status || "draft",
       shootDate: shoot.shootDate || "",
+      shootTime: shoot.shootTime || "",
       location: shoot.location || "",
       notes: shoot.notes || "",
     });
@@ -1008,6 +1011,16 @@ function AdminDashboard({ token }: { token: string }) {
                     value={form.shootDate}
                     onChange={(e) => setForm({ ...form, shootDate: e.target.value })}
                     data-testid="input-shoot-date"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-700">Shoot Time</Label>
+                  <Input
+                    type="time"
+                    value={form.shootTime}
+                    onChange={(e) => setForm({ ...form, shootTime: e.target.value })}
+                    data-testid="input-shoot-time"
                     className="mt-1"
                   />
                 </div>
@@ -1253,7 +1266,10 @@ function AdminDashboard({ token }: { token: string }) {
                                     {shoot.shootDate && (
                                       <>
                                         <span>·</span>
-                                        <span>{new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}</span>
+                                        <span>
+                                          {new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
+                                          {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+                                        </span>
                                       </>
                                     )}
                                   </div>

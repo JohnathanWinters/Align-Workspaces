@@ -76,10 +76,6 @@ function formatDate(date: string | Date | null) {
 }
 
 function buildGoogleCalendarUrl(shoot: Shoot) {
-  const startDate = shoot.shootDate?.replace(/-/g, "") || "";
-  const d = new Date(shoot.shootDate + "T00:00:00");
-  d.setDate(d.getDate() + 1);
-  const endDate = d.toISOString().slice(0, 10).replace(/-/g, "");
   const title = encodeURIComponent(shoot.title || "Portrait Session");
   const location = shoot.location ? encodeURIComponent(shoot.location) : "";
   const details = encodeURIComponent(
@@ -89,6 +85,21 @@ function buildGoogleCalendarUrl(shoot: Shoot) {
       "Align Portrait Designer - AlignPhotoDesign.com",
     ].filter(Boolean).join("\n")
   );
+
+  const dateRaw = shoot.shootDate || "";
+  const [year, month, day] = dateRaw.split("-").map(Number);
+
+  if (shoot.shootTime) {
+    const [hours, minutes] = shoot.shootTime.split(":").map(Number);
+    const start = `${dateRaw.replace(/-/g, "")}T${String(hours).padStart(2, "0")}${String(minutes).padStart(2, "0")}00`;
+    const endDate = new Date(year, month - 1, day, hours + 2, minutes);
+    const end = `${endDate.getFullYear()}${String(endDate.getMonth() + 1).padStart(2, "0")}${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}${String(endDate.getMinutes()).padStart(2, "0")}00`;
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
+  }
+
+  const startDate = dateRaw.replace(/-/g, "");
+  const endD = new Date(year, month - 1, day + 1);
+  const endDate = `${endD.getFullYear()}${String(endD.getMonth() + 1).padStart(2, "0")}${String(endD.getDate()).padStart(2, "0")}`;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
 }
 
@@ -521,7 +532,10 @@ function PortalContent() {
                           {shoot.shootDate && (
                             <div className="flex items-center gap-2">
                               <Calendar className="w-3.5 h-3.5" />
-                              <span>{formatDate(shoot.shootDate)}</span>
+                              <span>
+                                {formatDate(shoot.shootDate)}
+                                {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+                              </span>
                             </div>
                           )}
                           {shoot.location && (
@@ -547,11 +561,7 @@ function PortalContent() {
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center justify-between mt-3">
-                          <p className="text-xs text-gray-400 flex items-center gap-1">
-                            <Images className="w-3 h-3" />
-                            Click to view gallery
-                          </p>
+                        <div className="flex flex-col gap-2.5 mt-3">
                           {shoot.shootDate && (
                             <a
                               href={buildGoogleCalendarUrl(shoot)}
@@ -559,12 +569,16 @@ function PortalContent() {
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               data-testid={`button-calendar-sync-${shoot.id}`}
-                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                              className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
                             >
-                              <CalendarPlus className="w-3.5 h-3.5" />
+                              <CalendarPlus className="w-4 h-4" />
                               Add to Google Calendar
                             </a>
                           )}
+                          <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
+                            <Images className="w-3 h-3" />
+                            Tap to view gallery
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
