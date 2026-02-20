@@ -35,13 +35,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
       >
-        <div
-          className="absolute inset-0 bg-cover scale-[1.02]"
-          style={{ backgroundImage: "url(/images/hero-bg-bright.png)", backgroundPosition: "43% center", filter: "contrast(1.06) brightness(1.03) blur(0.5px)" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-
-        <nav className="absolute top-0 left-0 right-0 z-20 px-6 py-5">
+        <nav className="relative z-20 px-6 py-5">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="font-serif text-xl text-white cursor-pointer" data-testid="link-home-hero-logo">Align</p>
@@ -58,7 +52,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </div>
         </nav>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 justify-end pb-20">
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center pt-6 sm:pt-10">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -95,6 +89,14 @@ export function HeroSection({ onStart }: HeroSectionProps) {
               Start Designing Your Shoot
             </Button>
           </motion.div>
+        </div>
+
+        <div className="relative flex-1 mt-8 sm:mt-12">
+          <div
+            className="absolute inset-0 bg-cover scale-[1.02]"
+            style={{ backgroundImage: "url(/images/hero-bg-bright.png)", backgroundPosition: "43% top", filter: "contrast(1.06) brightness(1.03) blur(0.5px)" }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60" />
         </div>
 
       </motion.section>
