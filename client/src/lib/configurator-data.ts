@@ -23,7 +23,7 @@ export const initialState: ConfiguratorState = {
   brandMessageCustom: "",
   emotionalImpact: null,
   emotionalImpactCustom: "",
-  shootIntent: null,
+  shootIntent: "social-media",
   shootIntentCustom: "",
 };
 
@@ -51,8 +51,8 @@ export const emotionalImpacts: { value: EmotionalImpact; label: string; descript
 ];
 
 export const shootIntents: { value: ShootIntent; label: string; description: string }[] = [
-  { value: "commercial", label: "Commercial", description: "For use in ad campaigns and marketing" },
   { value: "social-media", label: "Social Media", description: "For your website(s) and social media platforms. Non ad campaign usage." },
+  { value: "commercial", label: "Commercial", description: "For use in ad campaigns and marketing" },
   { value: "team", label: "Team or Company", description: "For team photoshoots" },
 ];
 
