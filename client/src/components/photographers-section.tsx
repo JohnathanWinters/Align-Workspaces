@@ -41,33 +41,35 @@ export function PhotographersSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="max-w-sm w-full"
+              className="max-w-2xl w-full"
             >
               <Card className="overflow-visible p-0" data-testid={`card-photographer-${index}`}>
-                <div className="aspect-square overflow-hidden rounded-t-md">
-                  <img
-                    src={photographer.image}
-                    alt={photographer.name}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    decoding="async"
-                    style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
-                    data-testid={`img-photographer-${index}`}
-                  />
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Camera className="w-4 h-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-role-${index}`}>
-                      {photographer.role}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5">
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0 rounded-md overflow-hidden">
+                    <img
+                      src={photographer.image}
+                      alt={photographer.name}
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                      decoding="async"
+                      style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
+                      data-testid={`img-photographer-${index}`}
+                    />
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+                      <Camera className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-role-${index}`}>
+                        {photographer.role}
+                      </p>
+                    </div>
+                    <h3 className="font-serif text-xl mb-2" data-testid={`text-photographer-name-${index}`}>
+                      {photographer.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-photographer-bio-${index}`}>
+                      {photographer.bio}
                     </p>
                   </div>
-                  <h3 className="font-serif text-xl mb-2" data-testid={`text-photographer-name-${index}`}>
-                    {photographer.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-photographer-bio-${index}`}>
-                    {photographer.bio}
-                  </p>
                 </div>
               </Card>
             </motion.div>
