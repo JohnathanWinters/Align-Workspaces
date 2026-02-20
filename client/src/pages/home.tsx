@@ -391,22 +391,7 @@ export default function HomePage() {
                               testId={`option-intent-${intent.value}`}
                             />
                           ))}
-                          <OptionCard
-                            label="Other"
-                            isSelected={state.shootIntent === "other"}
-                            onClick={() => setState({ ...state, shootIntent: "other" })}
-                            icon={<PenLine className="w-5 h-5" />}
-                            testId="option-intent-other"
-                          />
                         </div>
-                        {state.shootIntent === "other" && (
-                          <OtherInput
-                            value={state.shootIntentCustom}
-                            onChange={(v) => setState({ ...state, shootIntentCustom: v })}
-                            placeholder="What is this shoot for?"
-                            testId="input-intent-custom"
-                          />
-                        )}
                       </StepContent>
                     )}
 
