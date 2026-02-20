@@ -252,12 +252,12 @@ export default function HomePage() {
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <p className="font-serif text-lg tracking-wide cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align Portrait Designer</p>
-                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap ml-auto">
                   <Link href="/portfolio">
-                    <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Portfolio</Button>
+                    <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Visual Blueprints</Button>
                   </Link>
                   <Link href="/about">
-                    <Button variant="ghost" size="sm" data-testid="link-about-header">About Us</Button>
+                    <Button variant="ghost" size="sm" data-testid="link-about-header">Our Vision</Button>
                   </Link>
                 </div>
               </div>
