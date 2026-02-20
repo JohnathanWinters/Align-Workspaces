@@ -511,7 +511,7 @@ export default function HomePage() {
                     )}
                   </motion.div>
 
-                  {currentStep < 6 && currentStep !== 5 && (
+                  {currentStep < 6 && currentStep !== 5 && currentStep !== 1 && (
                     <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
                       <Button
                         variant="ghost"
@@ -545,6 +545,28 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {currentStep === 1 && (
+              <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
+                <Button
+                  variant="ghost"
+                  onClick={prevStep}
+                  disabled={currentStep <= 1}
+                  data-testid="button-prev-step-1"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <Button
+                  onClick={nextStep}
+                  disabled={!canProceed()}
+                  data-testid="button-next-step-1"
+                >
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            )}
 
             {currentStep === 5 && (
               <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
