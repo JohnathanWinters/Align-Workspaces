@@ -36,6 +36,50 @@ function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
   );
 }
 
+function selectVariedPhotos(photos: PortfolioPhoto[], environment: string, brandMessage: string, emotionalImpact: string): PortfolioPhoto[] {
+  if (photos.length <= 4) return photos;
+
+  const scored = photos.map((photo) => {
+    let matchCount = 0;
+    if (photo.environments?.includes(environment)) matchCount++;
+    if (photo.brandMessages?.includes(brandMessage)) matchCount++;
+    if (photo.emotionalImpacts?.includes(emotionalImpact)) matchCount++;
+    return { photo, matchCount };
+  });
+
+  scored.sort((a, b) => b.matchCount - a.matchCount);
+
+  const selected: PortfolioPhoto[] = [];
+  const usedEnvs = new Set<string>();
+  const usedMsgs = new Set<string>();
+  const usedMoods = new Set<string>();
+
+  for (const { photo } of scored) {
+    if (selected.length >= 4) break;
+
+    const env = photo.environments?.[0] || "";
+    const msg = photo.brandMessages?.[0] || "";
+    const mood = photo.emotionalImpacts?.[0] || "";
+
+    const isNew = !usedEnvs.has(env) || !usedMsgs.has(msg) || !usedMoods.has(mood);
+
+    if (selected.length === 0 || isNew) {
+      selected.push(photo);
+      if (env) usedEnvs.add(env);
+      if (msg) usedMsgs.add(msg);
+      if (mood) usedMoods.add(mood);
+    }
+  }
+
+  while (selected.length < 4 && selected.length < photos.length) {
+    const remaining = scored.find(({ photo }) => !selected.includes(photo));
+    if (remaining) selected.push(remaining.photo);
+    else break;
+  }
+
+  return selected;
+}
+
 interface PortfolioGalleryProps {
   environment: string;
   brandMessage: string;
@@ -115,7 +159,7 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
             ))}
           </div>
         ) : allPhotos && allPhotos.length > 0 ? (
-          <PhotoGrid photos={allPhotos} onPhotoClick={setSelectedPhoto} />
+          <PhotoGrid photos={selectVariedPhotos(allPhotos, environment, brandMessage, emotionalImpact)} onPhotoClick={setSelectedPhoto} />
         ) : (
           <p className="text-sm text-muted-foreground text-center py-6">Portfolio photos coming soon.</p>
         )}
