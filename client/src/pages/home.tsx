@@ -385,6 +385,24 @@ export default function HomePage() {
                             />
                           ))}
                         </div>
+
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.15 }}
+                          className="mt-6 rounded-xl border border-[hsl(var(--border))] bg-white/80 backdrop-blur-sm p-5"
+                          data-testid="step4-pricing"
+                        >
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+                            Estimated Investment
+                          </p>
+                          <p className="text-xl font-semibold text-card-foreground">
+                            ${calculatePricing(state).min.toLocaleString()} &ndash; ${calculatePricing(state).max.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 italic">
+                            Pricing reflects potential venue rental expenses.
+                          </p>
+                        </motion.div>
                       </StepContent>
                     )}
 
@@ -519,7 +537,7 @@ export default function HomePage() {
                     environment={state.environment}
                     emotionalImpact={state.emotionalImpact}
                   />
-                  <ConceptSummary state={state} />
+                  {currentStep !== 5 && <ConceptSummary state={state} />}
                 </div>
               </div>
             </div>
