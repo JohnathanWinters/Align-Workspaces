@@ -273,8 +273,8 @@ export default function HomePage() {
                   >
                     {currentStep === 1 && (
                       <StepContent
-                        title="Where Should We Shoot Your Portrait?"
-                        subtitle="The right setting makes your portrait tell your story."
+                        title="Environment"
+                        subtitle="Where clients expect to see you."
                       >
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {environments.map((env) => (
@@ -308,8 +308,8 @@ export default function HomePage() {
 
                     {currentStep === 2 && (
                       <StepContent
-                        title="What Should Your Portrait Say About You?"
-                        subtitle="Great portraits communicate who you are without a single word."
+                        title="Presence"
+                        subtitle="What should they understand about you instantly?"
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {brandMessages.map((msg) => (
@@ -328,8 +328,8 @@ export default function HomePage() {
 
                     {currentStep === 3 && (
                       <StepContent
-                        title="What Mood Should Your Portrait Capture?"
-                        subtitle="The right feeling in your portrait connects with people instantly."
+                        title="Impact"
+                        subtitle="How should they feel before you speak?"
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {emotionalImpacts.map((imp) => (
@@ -370,8 +370,8 @@ export default function HomePage() {
 
                     {currentStep === 4 && (
                       <StepContent
-                        title="What Is This Shoot For?"
-                        subtitle="Help us tailor the experience to your goals."
+                        title="Placement"
+                        subtitle="Where will this image attract attention?"
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {shootIntents.map((intent) => (
@@ -493,8 +493,8 @@ export default function HomePage() {
 
                     {currentStep === 6 && (
                       <StepContent
-                        title="Let's Make It Happen"
-                        subtitle="Choose how you'd like to move forward."
+                        title="Bring it to Life"
+                        subtitle="Transform your vision into a lasting first impression."
                       >
                         <BookingForm
                           onSubmit={(data) => bookMutation.mutate(data)}

@@ -114,9 +114,9 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                   <CalendarDays className="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-base mb-1">Lock in a Date</h3>
+                  <h3 className="font-medium text-base mb-1">Secure Your Session</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ready to go? Pick a date, enter your details, and secure your session with a 50% downpayment.
+                    Choose your date and reserve your aligned portrait experience.
                   </p>
                 </div>
               </div>
@@ -132,9 +132,9 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                   <MessageCircleQuestion className="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-base mb-1">Still Have Questions?</h3>
+                  <h3 className="font-medium text-base mb-1">Refine Your Concept</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Want more guidance before committing? Share your info and the photographer will reach out to you.
+                    Talk through your vision and ensure it aligns perfectly.
                   </p>
                 </div>
               </div>
