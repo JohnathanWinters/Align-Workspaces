@@ -24,9 +24,11 @@ export interface IStorage {
   updateFolder(id: string, data: Partial<InsertGalleryFolder>): Promise<GalleryFolder>;
   deleteFolder(id: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getFavorites(userId: string, shootId: string): Promise<string[]>;
   toggleFavorite(userId: string, imageId: string): Promise<boolean>;
   updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<User>;
+  transferShootsOwnership(fromUserId: string, toUserId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -140,6 +142,11 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(users).orderBy(desc(users.createdAt));
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
   async getFavorites(userId: string, shootId: string): Promise<string[]> {
     const favs = await db
       .select({ imageId: imageFavorites.imageId })
@@ -156,6 +163,10 @@ export class DatabaseStorage implements IStorage {
     if (data.email !== undefined) updateData.email = data.email;
     const [result] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     return result;
+  }
+
+  async transferShootsOwnership(fromUserId: string, toUserId: string): Promise<void> {
+    await db.update(shoots).set({ userId: toUserId }).where(eq(shoots.userId, fromUserId));
   }
 
   async toggleFavorite(userId: string, imageId: string): Promise<boolean> {

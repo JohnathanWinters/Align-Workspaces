@@ -158,6 +158,64 @@ export async function sendHelpRequest(data: HelpRequestData) {
   });
 }
 
+interface CollaborateMessageData {
+  clientName: string;
+  clientEmail: string;
+  message: string;
+  environment?: string;
+  brandMessage?: string;
+  emotionalImpact?: string;
+  shootIntent?: string;
+}
+
+export async function sendCollaborateMessage(data: CollaborateMessageData) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `New Collaboration Request — ${data.clientName}`;
+
+  const selections = [
+    data.environment ? `Environment: ${data.environment}` : null,
+    data.brandMessage ? `Brand Message: ${data.brandMessage}` : null,
+    data.emotionalImpact ? `Emotional Impact: ${data.emotionalImpact}` : null,
+    data.shootIntent ? `Shoot Intent: ${data.shootIntent}` : null,
+  ].filter(Boolean);
+
+  const body = [
+    `A new client has submitted a collaboration request from Align.`,
+    ``,
+    `--- Client ---`,
+    `Name: ${data.clientName}`,
+    `Email: ${data.clientEmail}`,
+    ``,
+    ...(selections.length > 0 ? [`--- Concept Selections ---`, ...selections, ``] : []),
+    `--- Message ---`,
+    data.message,
+  ].join('\n');
+
+  const to = 'ArmandoRamirezRomero89@gmail.com';
+
+  const rawMessage = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}
+
 interface InvoiceLineItem {
   description: string;
   amount: number;

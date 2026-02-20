@@ -633,6 +633,12 @@ export default function HomePage() {
                             isPending={bookMutation.isPending}
                             isCheckoutPending={checkoutMutation.isPending}
                             pricing={calculatePricing(state)}
+                            selections={{
+                              environment: (state.environment === "other" ? state.environmentCustom || "other" : state.environment) || undefined,
+                              brandMessage: (state.brandMessage === "other" ? state.brandMessageCustom || "other" : state.brandMessage) || undefined,
+                              emotionalImpact: (state.emotionalImpact === "other" ? state.emotionalImpactCustom || "other" : state.emotionalImpact) || undefined,
+                              shootIntent: (state.shootIntent === "other" ? state.shootIntentCustom || "other" : state.shootIntent) || undefined,
+                            }}
                           />
                         </StepContent>
                       </div>

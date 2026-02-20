@@ -15,9 +15,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft, Users, CreditCard } from "lucide-react";
+import { Loader2, CalendarDays, ArrowLeft, Users, CreditCard, Handshake, CheckCircle } from "lucide-react";
 import { SiSlack, SiInstagram } from "react-icons/si";
 import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const bookingSchema = z.object({
   name: z.string().min(2, "Please enter your name"),
@@ -26,15 +28,16 @@ const bookingSchema = z.object({
   notes: z.string().optional(),
 });
 
-const questionsSchema = z.object({
-  contact: z.string().min(3, "Please enter your email or phone number"),
-  question: z.string().min(3, "Please enter your question"),
+const collaborateSchema = z.object({
+  firstName: z.string().min(2, "Please enter your first name"),
+  email: z.string().email("Please enter a valid email"),
+  message: z.string().min(3, "Please share your vision or questions"),
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
-type QuestionsFormValues = z.infer<typeof questionsSchema>;
+type CollaborateFormValues = z.infer<typeof collaborateSchema>;
 
-type BookingMode = null | "lock-date" | "questions";
+type BookingMode = null | "lock-date" | "collaborate";
 
 interface BookingFormProps {
   onSubmit: (data: BookingFormValues & { preferredDate: string }) => void;
@@ -42,11 +45,20 @@ interface BookingFormProps {
   isPending: boolean;
   isCheckoutPending: boolean;
   pricing: { min: number; max: number };
+  selections?: {
+    environment?: string;
+    brandMessage?: string;
+    emotionalImpact?: string;
+    shootIntent?: string;
+  };
 }
 
-export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending, pricing }: BookingFormProps) {
+export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending, pricing, selections }: BookingFormProps) {
   const [mode, setMode] = useState<BookingMode>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [collaborateSubmitted, setCollaborateSubmitted] = useState(false);
+  const [collaboratePending, setCollaboratePending] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -58,11 +70,12 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
     },
   });
 
-  const questionsForm = useForm<QuestionsFormValues>({
-    resolver: zodResolver(questionsSchema),
+  const collaborateForm = useForm<CollaborateFormValues>({
+    resolver: zodResolver(collaborateSchema),
     defaultValues: {
-      contact: "",
-      question: "",
+      firstName: "",
+      email: "",
+      message: "",
     },
   });
 
@@ -74,15 +87,26 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
     });
   }
 
-  function handleQuestionsSubmit(values: QuestionsFormValues) {
-    const isEmail = values.contact.includes("@");
-    onSubmit({
-      name: "Question Inquiry",
-      email: isEmail ? values.contact : "noemail@placeholder.com",
-      phone: isEmail ? "" : values.contact,
-      notes: values.question,
-      preferredDate: "TBD",
-    });
+  async function handleCollaborateSubmit(values: CollaborateFormValues) {
+    setCollaboratePending(true);
+    try {
+      await apiRequest("POST", "/api/collaborate", {
+        ...values,
+        environment: selections?.environment,
+        brandMessage: selections?.brandMessage,
+        emotionalImpact: selections?.emotionalImpact,
+        shootIntent: selections?.shootIntent,
+      });
+      setCollaborateSubmitted(true);
+    } catch (err: any) {
+      toast({
+        title: "Something went wrong",
+        description: err.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCollaboratePending(false);
+    }
   }
 
   const downpaymentMin = Math.round(pricing.min / 2);
@@ -106,6 +130,24 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
           >
             <Card
               className="p-5 cursor-pointer hover-elevate transition-all"
+              onClick={() => setMode("collaborate")}
+              data-testid="option-collaborate"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-md bg-foreground/5 flex items-center justify-center shrink-0">
+                  <Handshake className="w-5 h-5 text-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-base mb-1">Collaborate on Your Vision</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Create your account to save your concept and refine it together.
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card
+              className="p-5 cursor-pointer hover-elevate transition-all"
               onClick={() => setMode("lock-date")}
               data-testid="option-lock-date"
             >
@@ -117,24 +159,6 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                   <h3 className="font-medium text-base mb-1">Secure Your Session</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Choose your date and reserve your aligned portrait experience.
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <Card
-              className="p-5 cursor-pointer hover-elevate transition-all"
-              onClick={() => setMode("questions")}
-              data-testid="option-questions"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-md bg-foreground/5 flex items-center justify-center shrink-0">
-                  <MessageCircleQuestion className="w-5 h-5 text-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-base mb-1">Refine Your Concept</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Talk through your vision and ensure it aligns perfectly.
                   </p>
                 </div>
               </div>
@@ -193,8 +217,9 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
               onClick={() => {
                 setMode(null);
                 form.reset();
-                questionsForm.reset();
+                collaborateForm.reset();
                 setSelectedDate(undefined);
+                setCollaborateSubmitted(false);
               }}
               className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6 hover-elevate rounded-md px-2 py-1 -ml-2"
               data-testid="button-back-to-options"
@@ -334,20 +359,20 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
               </>
             )}
 
-            {mode === "questions" && (
-              <Form {...questionsForm}>
-                <form onSubmit={questionsForm.handleSubmit(handleQuestionsSubmit)} className="space-y-4">
+            {mode === "collaborate" && !collaborateSubmitted && (
+              <Form {...collaborateForm}>
+                <form onSubmit={collaborateForm.handleSubmit(handleCollaborateSubmit)} className="space-y-4">
                   <FormField
-                    control={questionsForm.control}
-                    name="contact"
+                    control={collaborateForm.control}
+                    name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email or Phone Number</FormLabel>
+                        <FormLabel>First Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="your@email.com or (555) 123-4567"
+                            placeholder="Your first name"
                             {...field}
-                            data-testid="input-question-contact"
+                            data-testid="input-collaborate-firstname"
                           />
                         </FormControl>
                         <FormMessage />
@@ -356,17 +381,36 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                   />
 
                   <FormField
-                    control={questionsForm.control}
-                    name="question"
+                    control={collaborateForm.control}
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Your Question</FormLabel>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="your@email.com"
+                            {...field}
+                            data-testid="input-collaborate-email"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={collaborateForm.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Vision</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="What would you like to know?"
-                            className="resize-none"
+                            placeholder="Tell us about the portrait you're envisioning — goals, style, questions, anything."
+                            className="resize-none min-h-[100px]"
                             {...field}
-                            data-testid="input-question-text"
+                            data-testid="input-collaborate-message"
                           />
                         </FormControl>
                         <FormMessage />
@@ -378,20 +422,37 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                     type="submit"
                     size="lg"
                     className="w-full"
-                    disabled={isPending}
-                    data-testid="button-send-question"
+                    disabled={collaboratePending}
+                    data-testid="button-submit-collaborate"
                   >
-                    {isPending ? (
+                    {collaboratePending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Sending...
                       </>
                     ) : (
-                      "Send Question"
+                      "Start Collaborating"
                     )}
                   </Button>
                 </form>
               </Form>
+            )}
+
+            {mode === "collaborate" && collaborateSubmitted && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="text-center py-8"
+              >
+                <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-7 h-7 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2" data-testid="text-collaborate-success-heading">You're In</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto" data-testid="text-collaborate-success-message">
+                  Your concept has been saved and we've been notified. We'll review your vision and reach out soon to refine it together.
+                </p>
+              </motion.div>
             )}
           </motion.div>
         )}

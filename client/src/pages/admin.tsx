@@ -140,7 +140,7 @@ const environments = ["restaurant", "office", "nature", "workvan", "urban", "sub
 const brandMessages = ["assured", "empathy", "confidence", "motivation"];
 const emotionalImpacts = ["cozy", "bright", "powerful", "cinematic"];
 const shootIntents = ["website", "social-media", "marketing", "personal-brand", "team"];
-const statuses = ["draft", "scheduled", "in-progress", "completed"];
+const statuses = ["draft", "pending-review", "scheduled", "in-progress", "completed"];
 
 function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: string; shootTitle: string; token: string; onBack: () => void }) {
   const { toast } = useToast();

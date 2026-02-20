@@ -44,6 +44,8 @@ function getStatusColor(status: string | null) {
       return "text-blue-600 bg-blue-50";
     case "in-progress":
       return "text-amber-600 bg-amber-50";
+    case "pending-review":
+      return "text-purple-600 bg-purple-50";
     default:
       return "text-gray-600 bg-gray-50";
   }
@@ -56,6 +58,8 @@ function getStatusIcon(status: string | null) {
     case "scheduled":
       return <Calendar className="w-3.5 h-3.5" />;
     case "in-progress":
+      return <Clock className="w-3.5 h-3.5" />;
+    case "pending-review":
       return <Clock className="w-3.5 h-3.5" />;
     default:
       return <Camera className="w-3.5 h-3.5" />;
@@ -70,6 +74,8 @@ function getStatusLabel(status: string | null) {
       return "Scheduled";
     case "in-progress":
       return "In Progress";
+    case "pending-review":
+      return "Pending Review";
     default:
       return "Draft";
   }

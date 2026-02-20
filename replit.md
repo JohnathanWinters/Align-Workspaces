@@ -29,7 +29,7 @@ Preferred communication style: Simple, everyday language.
 - `OptionCard` — Clickable selection cards for each configurator option
 - `ImageGallery` — Dynamic image preview that updates based on environment/emotional impact selections
 - `ConceptSummary` — Live summary panel showing current selections and pricing
-- `BookingForm` — Lead capture form with calendar date picker
+- `BookingForm` — Step 6 with two modes: "Collaborate on Your Vision" (creates account + pending-review shoot + emails photographer) and "Secure Your Session" (date picker + Stripe payment)
 
 ### Configurator Data Model (client/src/lib/configurator-data.ts)
 The configurator state tracks four selections:
@@ -46,6 +46,7 @@ Pricing is calculated dynamically based on selections.
 - **Endpoints**:
   - `POST /api/leads` — Create a new lead/booking (validated with Zod)
   - `GET /api/leads` — Retrieve all leads
+  - `POST /api/collaborate` — Create account + pending-review shoot + email photographer (no auth required)
   - `POST /api/checkout` — Create a Stripe checkout session for 50% downpayment (pricing calculated server-side)
   - `POST /api/stripe/webhook` — Stripe webhook handler (registered before express.json middleware)
   - `GET /api/stripe/publishable-key` — Returns Stripe publishable key

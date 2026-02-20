@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendHelpRequest } from "./gmail";
+import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -12,8 +12,9 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import archiver from "archiver";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import { objectStorageClient, ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
+import { authStorage } from "./replit_integrations/auth";
 
 const objectStorageService = new ObjectStorageService();
 
@@ -293,6 +294,72 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to create booking shoot:", error);
       res.status(500).json({ message: "Failed to create shoot from booking" });
+    }
+  });
+
+  app.post("/api/collaborate", async (req, res) => {
+    try {
+      const { firstName, email, message, environment, brandMessage, emotionalImpact, shootIntent } = req.body;
+      if (!firstName || typeof firstName !== "string" || !firstName.trim()) {
+        return res.status(400).json({ message: "First name is required" });
+      }
+      if (!email || typeof email !== "string" || !email.includes("@")) {
+        return res.status(400).json({ message: "A valid email is required" });
+      }
+      if (!message || typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ message: "A message is required" });
+      }
+
+      const existing = await storage.getUserByEmail(email.trim().toLowerCase());
+      let userId: string;
+      if (existing) {
+        userId = existing.id;
+        await storage.updateUser(existing.id, { firstName: firstName.trim() });
+      } else {
+        const newId = randomUUID();
+        await authStorage.upsertUser({
+          id: newId,
+          email: email.trim().toLowerCase(),
+          firstName: firstName.trim(),
+          lastName: null,
+        });
+        userId = newId;
+      }
+
+      const selections = [environment, brandMessage, emotionalImpact, shootIntent].filter(Boolean);
+      const title = selections.length > 0
+        ? `${firstName.trim()}'s Portrait Session`
+        : `${firstName.trim()}'s Concept Review`;
+
+      await storage.createShoot({
+        userId,
+        title,
+        environment: environment || null,
+        brandMessage: brandMessage || null,
+        emotionalImpact: emotionalImpact || null,
+        shootIntent: shootIntent || null,
+        status: "pending-review",
+        notes: message.trim(),
+      });
+
+      try {
+        await sendCollaborateMessage({
+          clientName: firstName.trim(),
+          clientEmail: email.trim().toLowerCase(),
+          message: message.trim(),
+          environment,
+          brandMessage,
+          emotionalImpact,
+          shootIntent,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send collaborate email (non-blocking):", emailErr);
+      }
+
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Failed to process collaboration request:", err);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
