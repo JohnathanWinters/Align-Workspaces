@@ -56,7 +56,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </div>
         </nav>
 
-        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 justify-end pb-32">
+        <div className="relative z-10 text-center px-6 max-w-3xl mx-auto flex flex-col items-center flex-1 justify-end pb-20">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
