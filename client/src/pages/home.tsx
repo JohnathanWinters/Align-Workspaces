@@ -69,6 +69,10 @@ export default function HomePage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    document.title = "Brand Vision Studio | Portrait Photographer in Miami for Therapists & Small Business Professionals";
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get("payment");
     if (payment === "success") {

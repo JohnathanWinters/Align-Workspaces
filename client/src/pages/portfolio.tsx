@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Palette, Eye, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
 import { environments, brandMessages, emotionalImpacts } from "@/lib/configurator-data";
 import {
@@ -51,7 +51,7 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
     >
       <img
         src={photo.imageUrl}
-        alt="Portfolio photo"
+        alt="Personal branding portrait by Brand Vision Studio Miami"
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="eager"
         decoding="async"
@@ -121,7 +121,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
             {photo && (
               <img
                 src={photo.imageUrl}
-                alt="Enlarged portfolio photo"
+                alt="Professional branding portrait detail - Brand Vision Studio Miami"
                 className="w-full h-full object-cover"
                 data-testid="lightbox-image-full"
               />
@@ -184,6 +184,10 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
 
 export default function PortfolioPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<PortfolioPhoto | null>(null);
+
+  useEffect(() => {
+    document.title = "Portfolio | Miami Personal Branding Photography | Brand Vision Studio";
+  }, []);
 
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
     queryKey: ["/api/portfolio-photos"],

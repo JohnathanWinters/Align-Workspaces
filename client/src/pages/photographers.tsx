@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,10 @@ const photographers = [
 ];
 
 export default function PhotographersPage() {
+  useEffect(() => {
+    document.title = "About Armando Ramirez | Miami Portrait Photographer | Brand Vision Studio";
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">

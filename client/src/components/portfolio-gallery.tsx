@@ -195,7 +195,7 @@ function PhotoCard({ photo, index, onPhotoClick, className }: { photo: Portfolio
     >
       <img
         src={photo.imageUrl}
-        alt="Client portfolio photo"
+        alt="Professional portrait photography for small business professionals in Miami"
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="eager"
         decoding="async"
@@ -267,7 +267,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
             {photo && (
               <img
                 src={photo.imageUrl}
-                alt="Enlarged portfolio photo"
+                alt="Professional branding portrait detail - Brand Vision Studio Miami"
                 className="w-full h-full object-cover"
                 data-testid="lightbox-image"
               />
