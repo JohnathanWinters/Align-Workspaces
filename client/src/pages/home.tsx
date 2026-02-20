@@ -414,8 +414,9 @@ export default function HomePage() {
 
                     {currentStep === 4 && (
                       <StepContent
-                        title="Your Portrait Preview"
-                        subtitle="Based on your selections, here's what to expect."
+                        title="Your Visual Blueprint"
+                        subtitle="Shaped by your choices."
+                        centerTitle
                       >
                         <PortfolioGallery
                           environment={state.environment === "other" ? state.environmentCustom : (state.environment || "")}
@@ -620,15 +621,17 @@ function StepContent({
   title,
   subtitle,
   children,
+  centerTitle,
 }: {
   title: string;
   subtitle: string;
   children: React.ReactNode;
+  centerTitle?: boolean;
 }) {
   return (
     <div>
-      <h2 className="font-serif text-2xl sm:text-3xl mb-2">{title}</h2>
-      <p className="text-muted-foreground text-sm sm:text-base mb-8">{subtitle}</p>
+      <h2 className={`font-serif text-2xl sm:text-3xl mb-2 ${centerTitle ? "text-center" : ""}`}>{title}</h2>
+      <p className={`text-muted-foreground text-sm sm:text-base mb-8 ${centerTitle ? "text-center" : ""}`}>{subtitle}</p>
       {children}
     </div>
   );
