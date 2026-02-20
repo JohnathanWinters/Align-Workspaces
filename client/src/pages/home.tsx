@@ -32,6 +32,8 @@ import {
   Palette,
   Scissors,
   AlertCircle,
+  Menu,
+  X,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
@@ -62,6 +64,7 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [state, setState] = useState<ConfiguratorState>({ ...initialState });
 
@@ -252,13 +255,24 @@ export default function HomePage() {
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer whitespace-nowrap" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align Portrait Designer</p>
-                <div className="flex items-center gap-0 sm:gap-1 shrink-0">
-                  <Link href="/portfolio">
-                    <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-portfolio-header">Visual Blueprints</Button>
-                  </Link>
-                  <Link href="/about">
-                    <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-about-header">Our Vision</Button>
-                  </Link>
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => setMenuOpen(!menuOpen)}
+                    data-testid="button-menu-toggle"
+                    className="p-2 rounded-md hover:bg-black/5 transition-colors"
+                  >
+                    {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  </button>
+                  {menuOpen && (
+                    <div className="absolute right-0 top-full mt-2 bg-background border border-border rounded-lg shadow-lg py-2 min-w-[180px] z-50">
+                      <Link href="/portfolio">
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portfolio-header">Visual Blueprints</button>
+                      </Link>
+                      <Link href="/about">
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-about-header">Our Vision</button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="mt-3 lg:hidden">
