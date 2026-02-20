@@ -441,7 +441,7 @@ export default function HomePage() {
                                   What to Wear
                                 </h3>
                                 <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
-                                  Recommended clothing based on your selections
+                                  While there is a general guideline we always want you to dress in a way that feels like you!
                                 </p>
                               </div>
                               <div className="p-5 space-y-5">
