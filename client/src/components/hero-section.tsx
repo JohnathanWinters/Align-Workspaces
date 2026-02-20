@@ -36,8 +36,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         onDragEnd={handleDragEnd}
       >
         <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url(/images/hero-bg-bright.png)" }}
+          className="absolute inset-0 bg-cover bg-center scale-[1.02]"
+          style={{ backgroundImage: "url(/images/hero-bg-bright.png)", filter: "contrast(1.05) brightness(1.02) blur(0.4px)" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
