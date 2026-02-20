@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, CalendarDays, MessageCircleQuestion, ArrowLeft, Users, CreditCard } from "lucide-react";
+import { SiSlack, SiInstagram } from "react-icons/si";
 import { useState } from "react";
 
 const bookingSchema = z.object({
@@ -146,6 +147,33 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                 </div>
                 <div>
                   <h3 className="font-medium text-base mb-1" data-testid="text-community-heading">Join Our Community</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                    Connect with other professionals and stay up to date on sessions, tips, and behind-the-scenes content.
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <a
+                      href="https://slack.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="link-slack"
+                    >
+                      <Button variant="outline" size="sm">
+                        <SiSlack className="w-4 h-4 mr-2" />
+                        Slack
+                      </Button>
+                    </a>
+                    <a
+                      href="https://www.instagram.com/armando.ramirez.romero/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="link-instagram"
+                    >
+                      <Button variant="outline" size="sm">
+                        <SiInstagram className="w-4 h-4 mr-2" />
+                        Instagram
+                      </Button>
+                    </a>
+                  </div>
                 </div>
               </div>
             </Card>
