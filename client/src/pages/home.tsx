@@ -251,7 +251,7 @@ export default function HomePage() {
           <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
-                <img src="/images/logo-mountain-1.png" alt="Align logo" className="h-10 cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo" />
+                <p className="font-serif text-xl cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align</p>
                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                   <Link href="/portfolio">
                     <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Portfolio</Button>
