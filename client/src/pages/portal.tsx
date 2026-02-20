@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import {
   ArrowLeft,
+  ArrowDown,
   Camera,
   Calendar,
   LogOut,
@@ -348,13 +349,23 @@ function PortalContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mb-8">
-            <h1 className="font-serif text-3xl text-gray-900 mb-1" data-testid="text-welcome">
-              Welcome{user?.firstName ? `, ${user.firstName}` : ""}
-            </h1>
-            <p className="text-gray-500 text-sm">
-              View your photoshoots and galleries
-            </p>
+          <div className="mb-8 flex items-end justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="font-serif text-3xl text-gray-900 mb-1" data-testid="text-welcome">
+                Welcome{user?.firstName ? `, ${user.firstName}` : ""}
+              </h1>
+              <p className="text-gray-500 text-sm">
+                View your photoshoots and galleries
+              </p>
+            </div>
+            <Link href="/">
+              <Button
+                data-testid="button-design-shoot"
+                className="bg-[#1a1a1a] text-white hover:bg-black"
+              >
+                Start Designing Your Shoot
+              </Button>
+            </Link>
           </div>
 
           {isLoading ? (
@@ -373,9 +384,19 @@ function PortalContent() {
                     <Camera className="w-7 h-7 text-gray-400" />
                   </div>
                   <h3 className="font-serif text-xl text-gray-900 mb-2">No photoshoots yet</h3>
-                  <p className="text-gray-500 text-sm max-w-sm">
-                    Your photoshoot sessions will appear here once they've been set up. Check back soon!
+                  <p className="text-gray-500 text-sm max-w-sm mb-6">
+                    Your photoshoot sessions will appear here once they've been set up. Design your shoot to get started!
                   </p>
+                  <Link href="/">
+                    <Button
+                      size="lg"
+                      data-testid="button-design-shoot-empty"
+                      className="text-base px-8 bg-[#1a1a1a] text-white hover:bg-black"
+                    >
+                      <ArrowDown className="w-4 h-4 mr-2" />
+                      Start Designing Your Shoot
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
