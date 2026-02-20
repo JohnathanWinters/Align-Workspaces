@@ -60,30 +60,32 @@ export default function PhotographersPage() {
               className="max-w-md w-full"
             >
               <Card className="overflow-visible p-0" data-testid={`card-photographer-page-${index}`}>
-                <div className="aspect-square overflow-hidden rounded-t-md">
-                  <img
-                    src={photographer.image}
-                    alt={photographer.name}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    decoding="async"
-                    style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
-                    data-testid={`img-photographer-page-${index}`}
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Camera className="w-4 h-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-page-role-${index}`}>
-                      {photographer.role}
+                <div className="flex flex-row items-start gap-5 p-5">
+                  <div className="w-24 h-24 flex-shrink-0 rounded-md overflow-hidden">
+                    <img
+                      src={photographer.image}
+                      alt={photographer.name}
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                      decoding="async"
+                      style={{ backfaceVisibility: "hidden", transform: "translateZ(0)" }}
+                      data-testid={`img-photographer-page-${index}`}
+                    />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Camera className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-page-role-${index}`}>
+                        {photographer.role}
+                      </p>
+                    </div>
+                    <h2 className="font-serif text-2xl mb-3" data-testid={`text-photographer-page-name-${index}`}>
+                      {photographer.name}
+                    </h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-photographer-page-bio-${index}`}>
+                      {photographer.bio}
                     </p>
                   </div>
-                  <h2 className="font-serif text-2xl mb-3" data-testid={`text-photographer-page-name-${index}`}>
-                    {photographer.name}
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-photographer-page-bio-${index}`}>
-                    {photographer.bio}
-                  </p>
                 </div>
               </Card>
             </motion.div>
