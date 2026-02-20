@@ -452,9 +452,9 @@ export default function HomePage() {
                                   </div>
                                   <p className="text-sm text-[hsl(var(--muted-foreground))] italic mb-2">Wear you!</p>
                                   <div className="flex flex-wrap gap-2">
-                                    {recs.clothing.map((item) => (
-                                      <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
-                                        {item}
+                                    {recs.fit.map((f) => (
+                                      <span key={f} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
+                                        {f}
                                       </span>
                                     ))}
                                   </div>
@@ -469,20 +469,6 @@ export default function HomePage() {
                                     {recs.avoidFabrics.map((item) => (
                                       <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
                                         {item}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div data-testid="rec-fit">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Palette className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Recommended Fit</span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {recs.fit.map((f) => (
-                                      <span key={f} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
-                                        {f}
                                       </span>
                                     ))}
                                   </div>
