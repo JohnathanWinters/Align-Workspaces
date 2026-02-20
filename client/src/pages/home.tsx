@@ -14,6 +14,7 @@ import { PortfolioSection } from "@/components/portfolio-section";
 import { PhotographersSection } from "@/components/photographers-section";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import {
   UtensilsCrossed,
@@ -34,6 +35,8 @@ import {
   AlertCircle,
   Menu,
   X,
+  UserPlus,
+  Loader2 as Loader2Icon,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
@@ -66,10 +69,14 @@ export default function HomePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+  const [bookingData, setBookingData] = useState<Record<string, any> | null>(null);
+  const [portalLinkPending, setPortalLinkPending] = useState(false);
+  const [portalLinked, setPortalLinked] = useState(false);
   const [state, setState] = useState<ConfiguratorState>({ ...initialState });
 
   const configuratorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user, isAuthenticated: isLoggedIn } = useAuth();
 
   useEffect(() => {
     document.title = "Align | Portrait Photographer in Miami for Therapists & Small Business Professionals";
@@ -80,6 +87,10 @@ export default function HomePage() {
     const payment = params.get("payment");
     if (payment === "success") {
       setIsBooked(true);
+      const savedBooking = localStorage.getItem("align_booking_data");
+      if (savedBooking) {
+        try { setBookingData(JSON.parse(savedBooking)); } catch {}
+      }
       toast({
         title: "Payment Received!",
         description: "Your session is confirmed. We'll be in touch shortly.",
@@ -97,6 +108,37 @@ export default function HomePage() {
       window.history.replaceState({}, "", "/");
     }
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const savedBooking = localStorage.getItem("align_booking_data");
+    if (!savedBooking) return;
+
+    let data: Record<string, string>;
+    try { data = JSON.parse(savedBooking); } catch { return; }
+
+    setIsBooked(true);
+    setPortalLinkPending(true);
+
+    apiRequest("POST", "/api/booking-shoot", data)
+      .then(() => {
+        localStorage.removeItem("align_booking_data");
+        setPortalLinked(true);
+        setPortalLinkPending(false);
+        toast({
+          title: "Session Added to Portal",
+          description: "Your booking is now visible in your Client Portal.",
+        });
+      })
+      .catch(() => {
+        setPortalLinkPending(false);
+        toast({
+          title: "Couldn't link booking",
+          description: "Please try again from your Client Portal.",
+          variant: "destructive",
+        });
+      });
+  }, [isLoggedIn]);
 
   function getLeadData(data: { name: string; email: string; phone: string; notes?: string; preferredDate: string }) {
     const pricing = calculatePricing(state);
@@ -125,7 +167,10 @@ export default function HomePage() {
     }) => {
       return apiRequest("POST", "/api/leads", getLeadData(data));
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      const leadData = getLeadData(variables);
+      localStorage.setItem("align_booking_data", JSON.stringify(leadData));
+      setBookingData(leadData);
       setIsBooked(true);
       toast({
         title: "Message Sent!",
@@ -150,6 +195,7 @@ export default function HomePage() {
       preferredDate: string;
     }) => {
       const leadData = getLeadData(data);
+      localStorage.setItem("align_booking_data", JSON.stringify(leadData));
       const response = await apiRequest("POST", "/api/checkout", {
         leadData,
       });
@@ -206,6 +252,10 @@ export default function HomePage() {
     }
   }
 
+  function handleCreateAccount() {
+    window.location.href = "/api/login";
+  }
+
   if (isBooked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
@@ -221,16 +271,58 @@ export default function HomePage() {
           <h2 className="font-serif text-3xl mb-4" data-testid="text-booking-success">
             You're All Set
           </h2>
-          <p className="text-muted-foreground leading-relaxed mb-8">
+          <p className="text-muted-foreground leading-relaxed mb-6">
             Your portrait session has been booked. We'll reach out shortly to finalize
             the details and make sure your portraits turn out exactly as you envision.
           </p>
+
+          {portalLinked ? (
+            <div className="mb-6 p-4 rounded-lg bg-foreground/5">
+              <CheckCircle2 className="w-5 h-5 text-green-600 mx-auto mb-2" />
+              <p className="text-sm font-medium mb-1">Linked to Your Portal</p>
+              <p className="text-xs text-muted-foreground mb-3">Your booking is in your Client Portal where you'll receive your photos.</p>
+              <Link href="/portal">
+                <Button variant="default" size="sm" data-testid="button-go-to-portal">
+                  Go to Client Portal
+                </Button>
+              </Link>
+            </div>
+          ) : portalLinkPending ? (
+            <div className="mb-6 p-4 rounded-lg bg-foreground/5">
+              <Loader2Icon className="w-5 h-5 animate-spin mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Adding booking to your portal...</p>
+            </div>
+          ) : !isLoggedIn ? (
+            <div className="mb-6 p-4 rounded-lg bg-foreground/5 text-left">
+              <div className="flex items-start gap-3">
+                <UserPlus className="w-5 h-5 text-foreground shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium mb-1">Create Your Client Portal Account</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                    Sign up to access your private gallery where we'll deliver your finished portraits for viewing, favoriting, and downloading.
+                  </p>
+                  <Button
+                    onClick={handleCreateAccount}
+                    size="sm"
+                    data-testid="button-create-account"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Create Account
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <Button
             variant="outline"
             onClick={() => {
               setIsBooked(false);
               setCurrentStep(0);
               setState({ ...initialState });
+              setBookingData(null);
+              setPortalLinked(false);
+              localStorage.removeItem("align_booking_data");
             }}
             data-testid="button-start-over"
           >

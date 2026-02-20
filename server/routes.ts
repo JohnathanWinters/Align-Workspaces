@@ -208,6 +208,44 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/booking-shoot", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { environment, brandMessage, emotionalImpact, shootIntent, preferredDate, notes } = req.body;
+
+      if (!preferredDate || typeof preferredDate !== "string") {
+        return res.status(400).json({ message: "A preferred date is required" });
+      }
+
+      const existingShoots = await storage.getShootsByUser(userId);
+      const alreadyExists = existingShoots.some(
+        (s) => s.shootDate === preferredDate && s.status === "booked"
+      );
+      if (alreadyExists) {
+        return res.status(200).json(existingShoots.find(
+          (s) => s.shootDate === preferredDate && s.status === "booked"
+        ));
+      }
+
+      const title = `Portrait Session – ${preferredDate}`;
+      const shoot = await storage.createShoot({
+        userId,
+        title,
+        environment: typeof environment === "string" ? environment : null,
+        brandMessage: typeof brandMessage === "string" ? brandMessage : null,
+        emotionalImpact: typeof emotionalImpact === "string" ? emotionalImpact : null,
+        shootIntent: typeof shootIntent === "string" ? shootIntent : null,
+        status: "booked",
+        shootDate: preferredDate,
+        notes: typeof notes === "string" ? notes : null,
+      });
+      res.status(201).json(shoot);
+    } catch (error) {
+      console.error("Failed to create booking shoot:", error);
+      res.status(500).json({ message: "Failed to create shoot from booking" });
+    }
+  });
+
   app.get("/api/shoots", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
