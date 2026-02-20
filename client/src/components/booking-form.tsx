@@ -146,9 +146,9 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                   <Users className="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-base mb-1" data-testid="text-community-heading">Elevate Together</h3>
+                  <h3 className="font-medium text-base mb-1" data-testid="text-community-heading">Be Part of What's Next</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                    Be part of a network focused on visibility and growth.
+                    Early access to new ideas, tools, and professional visibility resources.
                   </p>
                   <div className="flex items-center gap-3 flex-wrap">
                     <a
