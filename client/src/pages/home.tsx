@@ -265,45 +265,48 @@ export default function HomePage() {
               </div>
               <AnimatePresence>
                 {menuOpen && (
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-                      onClick={() => setMenuOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ x: "100%" }}
-                      animate={{ x: 0 }}
-                      exit={{ x: "100%" }}
-                      transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                      className="fixed top-0 right-0 bottom-0 w-72 bg-background shadow-2xl z-50 flex flex-col"
-                    >
-                      <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-                        <img src="/images/logo-black.png" alt="Align" className="h-5" />
-                        <button
-                          onClick={() => setMenuOpen(false)}
-                          data-testid="button-menu-close"
-                          className="p-2 rounded-md hover:bg-muted transition-colors"
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="fixed inset-0 bg-[#0d0d0d] z-40 flex flex-col"
+                  >
+                    <div className="max-w-6xl w-full mx-auto px-6 py-6 flex items-center justify-between">
+                      <img src="/images/logo-align.png" alt="Align" className="h-6" />
+                      <button
+                        onClick={() => setMenuOpen(false)}
+                        data-testid="button-menu-close"
+                        className="p-2 text-white/60 hover:text-white transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <nav className="flex-1 flex flex-col items-center justify-center gap-2">
+                      {[
+                        { href: "/portfolio", label: "Portfolio", testId: "link-portfolio-header" },
+                        { href: "/about", label: "About Us", testId: "link-about-header" },
+                        { href: "/portal", label: "Client Portal", testId: "link-portal-header" },
+                      ].map((item, i) => (
+                        <motion.div
+                          key={item.href}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.05 + i * 0.07 }}
                         >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <nav className="flex flex-col px-4 py-6 gap-1">
-                        <Link href="/portfolio">
-                          <Button variant="ghost" className="w-full justify-start text-base py-6" data-testid="link-portfolio-header" onClick={() => setMenuOpen(false)}>Portfolio</Button>
-                        </Link>
-                        <Link href="/about">
-                          <Button variant="ghost" className="w-full justify-start text-base py-6" data-testid="link-about-header" onClick={() => setMenuOpen(false)}>About Us</Button>
-                        </Link>
-                        <Link href="/portal">
-                          <Button variant="ghost" className="w-full justify-start text-base py-6" data-testid="link-portal-header" onClick={() => setMenuOpen(false)}>Client Portal</Button>
-                        </Link>
-                      </nav>
-                    </motion.div>
-                  </>
+                          <Link href={item.href}>
+                            <button
+                              data-testid={item.testId}
+                              onClick={() => setMenuOpen(false)}
+                              className="font-serif text-3xl sm:text-4xl text-white/80 hover:text-white py-3 transition-colors duration-200"
+                            >
+                              {item.label}
+                            </button>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </nav>
+                  </motion.div>
                 )}
               </AnimatePresence>
               <div className="mt-3 lg:hidden">
