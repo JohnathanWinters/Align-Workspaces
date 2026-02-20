@@ -358,7 +358,7 @@ function PortalContent() {
                 View your photoshoots and galleries
               </p>
             </div>
-            <Link href="/">
+            <Link href="/?start=1">
               <Button
                 data-testid="button-design-shoot"
                 className="bg-[#1a1a1a] text-white hover:bg-black"
@@ -387,7 +387,7 @@ function PortalContent() {
                   <p className="text-gray-500 text-sm max-w-sm mb-6">
                     Your photoshoot sessions will appear here once they've been set up. Design your shoot to get started!
                   </p>
-                  <Link href="/">
+                  <Link href="/?start=1">
                     <Button
                       size="lg"
                       data-testid="button-design-shoot-empty"

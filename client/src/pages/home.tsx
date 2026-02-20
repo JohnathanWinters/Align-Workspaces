@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,10 @@ export default function HomePage() {
         title: "Payment Cancelled",
         description: "No worries — your booking wasn't charged. You can try again anytime.",
       });
+      window.history.replaceState({}, "", "/");
+    }
+    if (params.get("start") === "1") {
+      setCurrentStep(1);
       window.history.replaceState({}, "", "/");
     }
   }, []);
