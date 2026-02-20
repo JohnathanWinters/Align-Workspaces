@@ -450,7 +450,6 @@ export default function HomePage() {
                                     <Shirt className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                                     <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Clothing</span>
                                   </div>
-                                  <p className="text-sm text-[hsl(var(--muted-foreground))] italic mb-2">Wear you!</p>
                                   <div className="flex flex-wrap gap-2">
                                     {recs.fit.map((f) => (
                                       <span key={f} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
