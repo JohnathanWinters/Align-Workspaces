@@ -303,6 +303,12 @@ export default function HomePage() {
                             testId="input-env-custom"
                           />
                         )}
+                        <div className="mt-6">
+                          <ImageGallery
+                            environment={state.environment}
+                            emotionalImpact={state.emotionalImpact}
+                          />
+                        </div>
                       </StepContent>
                     )}
 
@@ -538,14 +544,6 @@ export default function HomePage() {
                 </AnimatePresence>
               </div>
 
-              {currentStep === 1 && (
-                <div className="lg:col-span-12 max-w-3xl mx-auto">
-                  <ImageGallery
-                    environment={state.environment}
-                    emotionalImpact={state.emotionalImpact}
-                  />
-                </div>
-              )}
             </div>
 
             {currentStep === 1 && (
