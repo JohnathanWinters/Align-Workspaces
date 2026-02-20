@@ -179,7 +179,7 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <a
-                  href="https://slack.com"
+                  href="https://join.slack.com/t/align-wz86937/shared_invite/zt-3qhal9os7-ii91ryKvGMzSGA~tuHnU1A"
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid="link-slack"
