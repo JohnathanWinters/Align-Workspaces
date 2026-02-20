@@ -12,21 +12,15 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import archiver from "archiver";
+import { randomUUID } from "crypto";
+import { objectStorageClient, ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
+
+const objectStorageService = new ObjectStorageService();
 
 const uploadDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadDir),
-    filename: (_req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      cb(null, uniqueSuffix + ext);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = /\.(jpg|jpeg|png|gif|webp|heic|heif|tiff|bmp)$/i;
@@ -37,6 +31,62 @@ const upload = multer({
     }
   },
 });
+
+function parseObjectPath(objectPath: string): { bucketName: string; objectName: string } {
+  let p = objectPath;
+  if (!p.startsWith("/")) p = `/${p}`;
+  const parts = p.split("/");
+  if (parts.length < 3) throw new Error("Invalid object path");
+  return { bucketName: parts[1], objectName: parts.slice(2).join("/") };
+}
+
+async function uploadBufferToObjectStorage(buffer: Buffer, contentType: string): Promise<string> {
+  const privateDir = objectStorageService.getPrivateObjectDir();
+  const objectId = randomUUID();
+  const fullPath = `${privateDir}/uploads/${objectId}`;
+  const { bucketName, objectName } = parseObjectPath(fullPath);
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
+  await file.save(buffer, { contentType });
+  return `/objects/uploads/${objectId}`;
+}
+
+async function deleteFromObjectStorage(imageUrl: string): Promise<void> {
+  try {
+    if (imageUrl.startsWith("/objects/")) {
+      const objectFile = await objectStorageService.getObjectEntityFile(imageUrl);
+      await objectFile.delete();
+    } else if (imageUrl.startsWith("/uploads/")) {
+      const filePath = path.join(uploadDir, path.basename(imageUrl));
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.error("Failed to delete file:", imageUrl, err);
+  }
+}
+
+async function getImageStream(imageUrl: string): Promise<{ stream: NodeJS.ReadableStream; contentType: string } | null> {
+  try {
+    if (imageUrl.startsWith("/objects/")) {
+      const objectFile = await objectStorageService.getObjectEntityFile(imageUrl);
+      const [metadata] = await objectFile.getMetadata();
+      return {
+        stream: objectFile.createReadStream(),
+        contentType: (metadata.contentType as string) || "application/octet-stream",
+      };
+    } else if (imageUrl.startsWith("/uploads/")) {
+      const filePath = path.join(uploadDir, path.basename(imageUrl));
+      if (!fs.existsSync(filePath)) return null;
+      return {
+        stream: fs.createReadStream(filePath),
+        contentType: "application/octet-stream",
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -368,14 +418,13 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: delete a shoot (also cleans up files on disk)
+  // Admin: delete a shoot (also cleans up files from storage)
   app.delete("/api/admin/shoots/:id", isAdmin, async (req, res) => {
     try {
       const shootId = req.params.id as string;
       const images = await storage.getGalleryImages(shootId);
       for (const img of images) {
-        const filePath = path.join(uploadDir, path.basename(img.imageUrl));
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        await deleteFromObjectStorage(img.imageUrl);
       }
       await storage.deleteShoot(shootId);
       res.json({ success: true });
@@ -484,15 +533,12 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: delete gallery image (also removes file from disk)
+  // Admin: delete gallery image (also removes file from storage)
   app.delete("/api/admin/gallery/:id", isAdmin, async (req, res) => {
     try {
       const image = await storage.getGalleryImageById(req.params.id as string);
       if (image) {
-        const filePath = path.join(uploadDir, path.basename(image.imageUrl));
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        await deleteFromObjectStorage(image.imageUrl);
       }
       await storage.deleteGalleryImage(req.params.id as string);
       res.json({ success: true });
@@ -513,10 +559,12 @@ export async function registerRoutes(
       const images = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        const contentType = file.mimetype || "application/octet-stream";
+        const objectPath = await uploadBufferToObjectStorage(file.buffer, contentType);
         const image = await storage.createGalleryImage({
           shootId,
           folderId: folderId || null,
-          imageUrl: `/uploads/${file.filename}`,
+          imageUrl: objectPath,
           originalFilename: file.originalname,
           sortOrder: i,
         });
@@ -528,8 +576,25 @@ export async function registerRoutes(
     }
   });
 
-  // Serve uploaded files
-  app.use("/uploads", (await import("express")).default.static(uploadDir));
+  // Serve files from Object Storage
+  app.get(/^\/objects\/(.+)$/, async (req, res) => {
+    try {
+      const objectPath = req.path;
+      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+      await objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      if (error instanceof ObjectNotFoundError) {
+        return res.status(404).json({ error: "Object not found" });
+      }
+      console.error("Error serving object:", error);
+      return res.status(500).json({ error: "Failed to serve object" });
+    }
+  });
+
+  // Legacy: serve old uploaded files from disk (backward compat)
+  if (fs.existsSync(uploadDir)) {
+    app.use("/uploads", (await import("express")).default.static(uploadDir));
+  }
 
   // Admin: folder CRUD
   app.get("/api/admin/shoots/:id/folders", isAdmin, async (req, res) => {
@@ -567,8 +632,7 @@ export async function registerRoutes(
         const images = await storage.getGalleryImages(folder.shootId);
         const folderImages = images.filter((img) => img.folderId === folderId);
         for (const img of folderImages) {
-          const filePath = path.join(uploadDir, path.basename(img.imageUrl));
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          await deleteFromObjectStorage(img.imageUrl);
         }
       }
       await storage.deleteFolder(folderId);
@@ -631,12 +695,13 @@ export async function registerRoutes(
       const image = await storage.getGalleryImageById(req.params.imageId);
       if (!image || image.shootId !== shoot.id) return res.status(404).json({ message: "Image not found" });
 
-      const filePath = path.join(uploadDir, path.basename(image.imageUrl));
-      if (!fs.existsSync(filePath)) return res.status(404).json({ message: "File not found" });
+      const result = await getImageStream(image.imageUrl);
+      if (!result) return res.status(404).json({ message: "File not found" });
 
       const filename = image.originalFilename || path.basename(image.imageUrl);
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-      res.sendFile(filePath);
+      res.setHeader("Content-Type", result.contentType);
+      (result.stream as any).pipe(res);
     } catch {
       res.status(500).json({ message: "Failed to download image" });
     }
@@ -662,12 +727,12 @@ export async function registerRoutes(
       archive.pipe(res);
 
       for (const image of images) {
-        const filePath = path.join(uploadDir, path.basename(image.imageUrl));
-        if (fs.existsSync(filePath)) {
+        const result = await getImageStream(image.imageUrl);
+        if (result) {
           const filename = image.originalFilename || path.basename(image.imageUrl);
           const folderName = image.folderId ? folderMap.get(image.folderId) || "Other" : "";
           const archivePath = folderName ? `${folderName}/${filename}` : filename;
-          archive.file(filePath, { name: archivePath });
+          archive.append(result.stream as any, { name: archivePath });
         }
       }
 

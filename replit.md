@@ -73,7 +73,7 @@ Pricing is calculated dynamically based on selections.
   - `GET /api/shoots/:shootId/gallery/:imageId/download` — Client: download single image (authenticated)
   - `GET /api/shoots/:id/download-all` — Client: download all images as zip (authenticated)
 - **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete), gallery images with folder organization, and photo uploads.
-- **File Uploads**: Photos uploaded via multer to `uploads/` directory, served as static files at `/uploads/` path. Max 50MB per file, image types only.
+- **File Uploads**: Photos uploaded via multer (memory storage) then stored in Replit Object Storage for persistence across republishes. Served via `/objects/uploads/{uuid}` route. Legacy files from `/uploads/` path still served for backward compatibility. Max 50MB per file, image types only.
 - **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
 - **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
 - **Stripe Invoicing**: Admin can create and send itemized invoices via Stripe Invoicing API (customers created/reused automatically, invoices finalized and sent with configurable due dates)
