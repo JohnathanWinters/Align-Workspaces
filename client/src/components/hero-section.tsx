@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { ArrowDown, User } from "lucide-react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useState, useCallback } from "react";
 import { Link } from "wouter";
@@ -85,6 +85,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             transition={{ duration: 0.6, delay: 0.45 }}
             className="flex flex-col items-center gap-3 pb-12"
           >
+            <ArrowDown className="w-6 h-6 text-white/50 animate-bounce" />
             <Button
               onClick={onStart}
               size="lg"
