@@ -444,7 +444,7 @@ export default function HomePage() {
                                 <div data-testid="rec-clothing-types">
                                   <div className="flex items-center gap-2 mb-1">
                                     <Shirt className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Clothing</span>
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Clothing Tips</span>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     {recs.fit.map((f) => (
