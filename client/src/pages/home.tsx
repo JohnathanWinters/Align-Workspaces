@@ -533,10 +533,12 @@ export default function HomePage() {
 
               <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 || currentStep === 5 ? "hidden lg:block" : ""}`}>
                 <div className="lg:sticky lg:top-24 space-y-6">
-                  <ImageGallery
-                    environment={state.environment}
-                    emotionalImpact={state.emotionalImpact}
-                  />
+                  {currentStep !== 4 && (
+                    <ImageGallery
+                      environment={state.environment}
+                      emotionalImpact={state.emotionalImpact}
+                    />
+                  )}
                   {currentStep !== 4 && currentStep !== 1 && <ConceptSummary state={state} />}
                 </div>
               </div>
