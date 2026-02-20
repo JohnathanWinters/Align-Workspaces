@@ -27,10 +27,10 @@ export default function PhotographersPage() {
             <Link href="/">
               <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer" data-testid="link-home-from-photographers">Align Portrait Designer</p>
             </Link>
-            <Link href="/">
+            <Link href="/?start=1">
               <Button variant="ghost" data-testid="button-back-home-photographers">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
+                Design Your Portrait
               </Button>
             </Link>
           </div>
