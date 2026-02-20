@@ -15,9 +15,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CalendarDays, Users, CreditCard, Handshake, CheckCircle, X } from "lucide-react";
+import { Loader2, CalendarDays, Users, CreditCard, Handshake, CheckCircle, X, LogIn } from "lucide-react";
 import { SiSlack, SiInstagram } from "react-icons/si";
 import { useState } from "react";
+import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -475,9 +476,15 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                       <CheckCircle className="w-7 h-7 text-green-600" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2" data-testid="text-collaborate-success-heading">You're In</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto" data-testid="text-collaborate-success-message">
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto mb-5" data-testid="text-collaborate-success-message">
                       Your concept has been saved and we've been notified. We'll review your vision and reach out soon to refine it together.
                     </p>
+                    <Link href="/portal">
+                      <Button size="lg" className="w-full" data-testid="button-go-to-portal">
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Client Portal
+                      </Button>
+                    </Link>
                   </motion.div>
                 )}
               </div>
