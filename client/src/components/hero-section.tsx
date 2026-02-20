@@ -55,10 +55,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={{ duration: 1.2, delay: 0.3 }}
           className="text-center max-w-2xl mx-auto"
         >
-          <p className="text-[10px] sm:text-xs tracking-[0.35em] uppercase text-white/50 mb-5 sm:mb-6 font-light">
-            Portrait Photography &mdash; Miami
-          </p>
-
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Portrait Is
             <br />
