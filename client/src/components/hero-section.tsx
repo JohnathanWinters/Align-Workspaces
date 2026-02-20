@@ -38,7 +38,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             <Link href="/portal">
               <button
                 data-testid="button-client-portal"
-                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
+                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/90 hover:text-white border border-white/30 hover:border-white/60 rounded-full px-5 py-2.5 backdrop-blur-md bg-white/10 hover:bg-white/15 transition-all duration-300"
               >
                 <User className="w-3.5 h-3.5" />
                 Client Portal
@@ -81,11 +81,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             <button
               onClick={onStart}
               data-testid="button-start-configurator"
-              className="group relative inline-flex items-center gap-3 text-sm tracking-widest uppercase text-white/80 hover:text-white transition-all duration-500"
+              className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-white text-black px-8 py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
             >
-              <span className="h-px w-8 bg-white/30 group-hover:w-12 group-hover:bg-white/60 transition-all duration-500" />
               Begin Your Session
-              <span className="h-px w-8 bg-white/30 group-hover:w-12 group-hover:bg-white/60 transition-all duration-500" />
             </button>
           </motion.div>
         </motion.div>
