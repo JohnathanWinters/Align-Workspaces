@@ -28,6 +28,7 @@ import {
   Search,
   Receipt,
   Send,
+  MapPin,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
@@ -117,6 +118,7 @@ interface ShootFormData {
   shootIntent: string;
   status: string;
   shootDate: string;
+  location: string;
   notes: string;
 }
 
@@ -128,6 +130,7 @@ const defaultShootForm: ShootFormData = {
   shootIntent: "",
   status: "draft",
   shootDate: "",
+  location: "",
   notes: "",
 };
 
@@ -176,8 +179,9 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
       for (let i = 0; i < files.length; i++) {
         formData.append("photos", files[i]);
       }
-      if (selectedFolder) {
-        formData.append("folderId", selectedFolder);
+      const uploadFolder = effectiveFolder || selectedFolder;
+      if (uploadFolder) {
+        formData.append("folderId", uploadFolder);
       }
       const res = await fetch(`/api/admin/shoots/${shootId}/upload`, {
         method: "POST",
@@ -264,12 +268,16 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
     }
   };
 
-  const filteredImages = selectedFolder
-    ? images.filter((img) => img.folderId === selectedFolder)
-    : images.filter((img) => !img.folderId);
-
   const allImagesCount = images.length;
   const rootImagesCount = images.filter((img) => !img.folderId).length;
+
+  const effectiveFolder = selectedFolder === null && rootImagesCount === 0 && folders.length > 0
+    ? folders[0].id
+    : selectedFolder;
+
+  const filteredImages = effectiveFolder
+    ? images.filter((img) => img.folderId === effectiveFolder)
+    : images.filter((img) => !img.folderId);
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
@@ -341,21 +349,23 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
           </div>
 
           <div className="flex flex-wrap gap-2 mb-6">
-            <button
-              onClick={() => setSelectedFolder(null)}
-              data-testid="button-folder-root"
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                selectedFolder === null
-                  ? "bg-[#1a1a1a] text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }`}
-            >
-              <Images className="w-3.5 h-3.5" />
-              All Unsorted ({rootImagesCount})
-            </button>
+            {(rootImagesCount > 0 || folders.length === 0) && (
+              <button
+                onClick={() => setSelectedFolder(null)}
+                data-testid="button-folder-root"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  effectiveFolder === null
+                    ? "bg-[#1a1a1a] text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                <Images className="w-3.5 h-3.5" />
+                {folders.length === 0 ? `All (${rootImagesCount})` : `Unsorted (${rootImagesCount})`}
+              </button>
+            )}
             {folders.map((folder) => {
               const count = images.filter((img) => img.folderId === folder.id).length;
-              const isSelected = selectedFolder === folder.id;
+              const isSelected = effectiveFolder === folder.id;
               const isEditing = editingFolderId === folder.id;
               return (
                 <div key={folder.id} className="flex items-center gap-1">
@@ -697,6 +707,9 @@ function AdminDashboard({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [invoiceShoot, setInvoiceShoot] = useState<Shoot | null>(null);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editUserForm, setEditUserForm] = useState({ firstName: "", lastName: "", email: "" });
+  const [savingUser, setSavingUser] = useState(false);
 
   const filteredUsers = users.filter((u) => {
     if (!searchQuery.trim()) return true;
@@ -797,6 +810,7 @@ function AdminDashboard({ token }: { token: string }) {
       shootIntent: shoot.shootIntent || "",
       status: shoot.status || "draft",
       shootDate: shoot.shootDate || "",
+      location: shoot.location || "",
       notes: shoot.notes || "",
     });
     setView("edit");
@@ -811,6 +825,37 @@ function AdminDashboard({ token }: { token: string }) {
   const openGallery = (shoot: Shoot) => {
     setGalleryShoot(shoot);
     setView("gallery");
+  };
+
+  const startEditUser = (user: UserType) => {
+    setEditingUser(user.id);
+    setEditUserForm({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+    });
+  };
+
+  const handleSaveUser = async (userId: string) => {
+    setSavingUser(true);
+    try {
+      const res = await adminFetch(`/api/admin/users/${userId}`, token, {
+        method: "PATCH",
+        body: JSON.stringify(editUserForm),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+        setEditingUser(null);
+        toast({ title: "Updated", description: "Client info saved" });
+      } else {
+        toast({ title: "Error", description: "Failed to update client", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to update client", variant: "destructive" });
+    } finally {
+      setSavingUser(false);
+    }
   };
 
   if (loading) {
@@ -969,6 +1014,17 @@ function AdminDashboard({ token }: { token: string }) {
               </div>
 
               <div>
+                <Label className="text-sm text-gray-700">Location</Label>
+                <Input
+                  value={form.location}
+                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  placeholder="e.g., 123 Main St, Miami, FL 33101"
+                  data-testid="input-shoot-location"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
                 <Label className="text-sm text-gray-700">Notes</Label>
                 <Textarea
                   value={form.notes}
@@ -1089,21 +1145,83 @@ function AdminDashboard({ token }: { token: string }) {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <CardTitle className="text-base font-medium text-gray-900 truncate">
-                              {user.firstName} {user.lastName}
-                            </CardTitle>
-                            <Button
-                              size="sm"
-                              onClick={() => startCreate(user)}
-                              data-testid={`button-add-shoot-${user.id}`}
-                              className="bg-[#1a1a1a] text-white shrink-0"
-                            >
-                              <Plus className="w-3.5 h-3.5 mr-1.5" />
-                              Add Shoot
-                            </Button>
-                          </div>
-                          <p className="text-xs text-gray-500 truncate">{user.email || "No email"}</p>
+                          {editingUser === user.id ? (
+                            <div className="space-y-2">
+                              <div className="flex gap-2">
+                                <Input
+                                  value={editUserForm.firstName}
+                                  onChange={(e) => setEditUserForm({ ...editUserForm, firstName: e.target.value })}
+                                  placeholder="First name"
+                                  data-testid={`input-edit-firstname-${user.id}`}
+                                  className="h-8 text-sm"
+                                />
+                                <Input
+                                  value={editUserForm.lastName}
+                                  onChange={(e) => setEditUserForm({ ...editUserForm, lastName: e.target.value })}
+                                  placeholder="Last name"
+                                  data-testid={`input-edit-lastname-${user.id}`}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <Input
+                                value={editUserForm.email}
+                                onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                                placeholder="Email"
+                                type="email"
+                                data-testid={`input-edit-email-${user.id}`}
+                                className="h-8 text-sm"
+                              />
+                              <div className="flex gap-1.5">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveUser(user.id)}
+                                  disabled={savingUser}
+                                  data-testid={`button-save-user-${user.id}`}
+                                  className="h-7 bg-[#1a1a1a] text-white text-xs"
+                                >
+                                  {savingUser ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditingUser(null)}
+                                  className="h-7 text-xs"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <CardTitle className="text-base font-medium text-gray-900 truncate">
+                                    {user.firstName || user.lastName
+                                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                                      : "No name"}
+                                  </CardTitle>
+                                  <button
+                                    onClick={() => startEditUser(user)}
+                                    data-testid={`button-edit-user-${user.id}`}
+                                    className="text-gray-400 hover:text-gray-700 shrink-0"
+                                  >
+                                    <Edit className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => startCreate(user)}
+                                  data-testid={`button-add-shoot-${user.id}`}
+                                  className="bg-[#1a1a1a] text-white shrink-0"
+                                >
+                                  <Plus className="w-3.5 h-3.5 mr-1.5" />
+                                  Add Shoot
+                                </Button>
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">{user.email || "No email"}</p>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardHeader>

@@ -67,6 +67,7 @@ export const shoots = pgTable("shoots", {
   shootIntent: text("shoot_intent"),
   status: text("status").default("draft"),
   shootDate: text("shoot_date"),
+  location: text("location"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });

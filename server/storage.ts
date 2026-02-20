@@ -26,6 +26,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getFavorites(userId: string, shootId: string): Promise<string[]>;
   toggleFavorite(userId: string, imageId: string): Promise<boolean>;
+  updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -146,6 +147,15 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(galleryImages, eq(imageFavorites.imageId, galleryImages.id))
       .where(and(eq(imageFavorites.userId, userId), eq(galleryImages.shootId, shootId)));
     return favs.map((f) => f.imageId);
+  }
+
+  async updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<User> {
+    const updateData: any = { updatedAt: new Date() };
+    if (data.firstName !== undefined) updateData.firstName = data.firstName;
+    if (data.lastName !== undefined) updateData.lastName = data.lastName;
+    if (data.email !== undefined) updateData.email = data.email;
+    const [result] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+    return result;
   }
 
   async toggleFavorite(userId: string, imageId: string): Promise<boolean> {

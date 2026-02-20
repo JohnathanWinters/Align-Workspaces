@@ -24,6 +24,9 @@ import {
   Heart,
   Folder,
   FolderOpen,
+  MapPin,
+  ExternalLink,
+  CalendarPlus,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 
@@ -70,6 +73,23 @@ function formatDate(date: string | Date | null) {
   if (!date) return "";
   const d = new Date(date);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function buildGoogleCalendarUrl(shoot: Shoot) {
+  const startDate = shoot.shootDate?.replace(/-/g, "") || "";
+  const d = new Date(shoot.shootDate + "T00:00:00");
+  d.setDate(d.getDate() + 1);
+  const endDate = d.toISOString().slice(0, 10).replace(/-/g, "");
+  const title = encodeURIComponent(shoot.title || "Portrait Session");
+  const location = shoot.location ? encodeURIComponent(shoot.location) : "";
+  const details = encodeURIComponent(
+    [
+      shoot.environment ? `Environment: ${shoot.environment}` : "",
+      shoot.emotionalImpact ? `Mood: ${shoot.emotionalImpact}` : "",
+      "Align Portrait Designer - AlignPhotoDesign.com",
+    ].filter(Boolean).join("\n")
+  );
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
 }
 
 function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
@@ -124,11 +144,17 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const isLoading = imagesLoading || favoritesLoading || foldersLoading;
 
   const hasFolders = folders.length > 0;
+  const unsortedCount = images.filter((img) => !img.folderId).length;
+  const showUnsorted = unsortedCount > 0 || !hasFolders;
+
+  const effectiveFolder = selectedFolder === null && unsortedCount === 0 && hasFolders
+    ? folders[0].id
+    : selectedFolder;
 
   const folderFilteredImages = showFavoritesOnly
     ? images.filter((img) => favoriteIds.includes(img.id))
-    : selectedFolder
-      ? images.filter((img) => img.folderId === selectedFolder)
+    : effectiveFolder
+      ? images.filter((img) => img.folderId === effectiveFolder)
       : hasFolders
         ? images.filter((img) => !img.folderId)
         : images;
@@ -220,18 +246,20 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
         ) : (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="flex flex-wrap gap-2 mb-4">
-              <button
-                onClick={() => { setShowFavoritesOnly(false); setSelectedFolder(null); }}
-                data-testid="button-filter-all"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  !showFavoritesOnly && !selectedFolder
-                    ? "bg-[#1a1a1a] text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
-              >
-                <Images className="w-3.5 h-3.5" />
-                {hasFolders ? `Unsorted (${images.filter((img) => !img.folderId).length})` : `All (${images.length})`}
-              </button>
+              {showUnsorted && (
+                <button
+                  onClick={() => { setShowFavoritesOnly(false); setSelectedFolder(null); }}
+                  data-testid="button-filter-all"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    !showFavoritesOnly && effectiveFolder === null
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  <Images className="w-3.5 h-3.5" />
+                  {hasFolders ? `Unsorted (${unsortedCount})` : `All (${images.length})`}
+                </button>
+              )}
               <button
                 onClick={() => { setShowFavoritesOnly(true); setSelectedFolder(null); }}
                 data-testid="button-filter-favorites"
@@ -250,7 +278,7 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
               <div className="flex flex-wrap gap-2 mb-6">
                 {folders.map((folder) => {
                   const count = images.filter((img) => img.folderId === folder.id).length;
-                  const isSelected = selectedFolder === folder.id;
+                  const isSelected = effectiveFolder === folder.id;
                   return (
                     <button
                       key={folder.id}
@@ -496,6 +524,22 @@ function PortalContent() {
                               <span>{formatDate(shoot.shootDate)}</span>
                             </div>
                           )}
+                          {shoot.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-3.5 h-3.5 shrink-0" />
+                              <a
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid={`link-location-${shoot.id}`}
+                                className="text-blue-600 hover:underline truncate flex items-center gap-1"
+                              >
+                                {shoot.location}
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                              </a>
+                            </div>
+                          )}
                           {shoot.emotionalImpact && (
                             <div className="flex items-center gap-2">
                               <Image className="w-3.5 h-3.5" />
@@ -503,10 +547,25 @@ function PortalContent() {
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400 mt-3 flex items-center gap-1">
-                          <Images className="w-3 h-3" />
-                          Click to view gallery
-                        </p>
+                        <div className="flex items-center justify-between mt-3">
+                          <p className="text-xs text-gray-400 flex items-center gap-1">
+                            <Images className="w-3 h-3" />
+                            Click to view gallery
+                          </p>
+                          {shoot.shootDate && (
+                            <a
+                              href={buildGoogleCalendarUrl(shoot)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              data-testid={`button-calendar-sync-${shoot.id}`}
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              <CalendarPlus className="w-3.5 h-3.5" />
+                              Add to Google Calendar
+                            </a>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>

@@ -322,6 +322,17 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id as string;
+      const { firstName, lastName, email } = req.body;
+      const updated = await storage.updateUser(userId, { firstName, lastName, email });
+      res.json(updated);
+    } catch {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   // Admin: list all shoots (with user info)
   app.get("/api/admin/shoots", isAdmin, async (_req, res) => {
     try {
