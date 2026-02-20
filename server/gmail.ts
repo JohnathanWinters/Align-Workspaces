@@ -112,6 +112,52 @@ export async function sendBookingNotification(data: BookingEmailData) {
   });
 }
 
+interface HelpRequestData {
+  clientName: string;
+  clientEmail: string;
+  message: string;
+}
+
+export async function sendHelpRequest(data: HelpRequestData) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `Client Help Request — ${data.clientName}`;
+
+  const body = [
+    `A client has submitted a help request from the Client Portal.`,
+    ``,
+    `--- Client ---`,
+    `Name: ${data.clientName}`,
+    `Email: ${data.clientEmail}`,
+    ``,
+    `--- Message ---`,
+    data.message,
+  ].join('\n');
+
+  const to = 'ArmandoRamirezRomero89@gmail.com';
+
+  const rawMessage = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}
+
 interface InvoiceLineItem {
   description: string;
   amount: number;

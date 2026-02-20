@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification } from "./gmail";
+import { sendBookingNotification, sendHelpRequest } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -293,6 +293,25 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to create booking shoot:", error);
       res.status(500).json({ message: "Failed to create shoot from booking" });
+    }
+  });
+
+  app.post("/api/help-request", isAuthenticated, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      if (!message || typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      const userId = req.user.claims.sub;
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === userId);
+      const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+      const clientEmail = user?.email || "Unknown";
+      await sendHelpRequest({ clientName, clientEmail, message: message.trim() });
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Failed to send help request:", err);
+      res.status(500).json({ message: "Failed to send message. Please try again." });
     }
   });
 
