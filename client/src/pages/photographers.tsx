@@ -72,7 +72,7 @@ export default function PhotographersPage() {
                     className="w-full h-full object-cover"
                     loading="eager"
                     decoding="async"
-                    style={{ imageRendering: "auto" }}
+                    style={{ filter: "blur(0.4px)", imageRendering: "auto" }}
                     data-testid={`img-photographer-page-${index}`}
                   />
                 </div>

@@ -51,7 +51,7 @@ export function PhotographersSection() {
                     className="w-full h-full object-cover"
                     loading="eager"
                     decoding="async"
-                    style={{ imageRendering: "auto" }}
+                    style={{ filter: "blur(0.4px)", imageRendering: "auto" }}
                     data-testid={`img-photographer-${index}`}
                   />
                 </div>
