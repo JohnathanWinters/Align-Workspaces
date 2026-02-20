@@ -25,6 +25,7 @@ import {
   Folder,
   FolderOpen,
   Images,
+  Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
@@ -479,6 +480,15 @@ function AdminDashboard({ token }: { token: string }) {
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
   const [form, setForm] = useState<ShootFormData>(defaultShootForm);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredUsers = users.filter((u) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const email = (u.email || "").toLowerCase();
+    const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+    return email.includes(q) || name.includes(q);
+  });
 
   const loadData = async () => {
     setLoading(true);
@@ -808,7 +818,37 @@ function AdminDashboard({ token }: { token: string }) {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <h2 className="font-serif text-2xl text-gray-900 mb-6">Clients & Photoshoots</h2>
 
-          {users.length === 0 ? (
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search clients by email or name..."
+              data-testid="input-search-clients"
+              className="pl-10 bg-white"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                data-testid="button-clear-search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {filteredUsers.length === 0 && searchQuery ? (
+            <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <Search className="w-10 h-10 text-gray-300 mb-3" />
+                <h3 className="font-serif text-lg text-gray-900 mb-1">No clients found</h3>
+                <p className="text-gray-500 text-sm">
+                  No clients match "{searchQuery}". Try a different search.
+                </p>
+              </CardContent>
+            </Card>
+          ) : users.length === 0 ? (
             <Card className="border-dashed border-2 border-gray-200 bg-white/50">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <Users className="w-10 h-10 text-gray-300 mb-3" />
@@ -820,7 +860,7 @@ function AdminDashboard({ token }: { token: string }) {
             </Card>
           ) : (
             <div className="space-y-4">
-              {users.map((user) => {
+              {filteredUsers.map((user) => {
                 const userShoots = getUserShoots(user.id);
                 return (
                   <Card key={user.id} className="bg-white" data-testid={`card-client-${user.id}`}>
