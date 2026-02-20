@@ -919,7 +919,7 @@ function AdminDashboard({ token }: { token: string }) {
                                     {shoot.shootDate && (
                                       <>
                                         <span>·</span>
-                                        <span>{shoot.shootDate}</span>
+                                        <span>{new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}</span>
                                       </>
                                     )}
                                   </div>
