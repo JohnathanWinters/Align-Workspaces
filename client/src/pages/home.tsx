@@ -446,10 +446,11 @@ export default function HomePage() {
                               </div>
                               <div className="p-5 space-y-5">
                                 <div data-testid="rec-clothing-types">
-                                  <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-center gap-2 mb-1">
                                     <Shirt className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                                     <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Clothing</span>
                                   </div>
+                                  <p className="text-sm text-[hsl(var(--muted-foreground))] italic mb-2">Wear you!</p>
                                   <div className="flex flex-wrap gap-2">
                                     {recs.clothing.map((item) => (
                                       <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
@@ -462,10 +463,10 @@ export default function HomePage() {
                                 <div data-testid="rec-fabrics">
                                   <div className="flex items-center gap-2 mb-2">
                                     <Scissors className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Fabrics</span>
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Fabrics to Avoid</span>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
-                                    {recs.fabrics.map((item) => (
+                                    {recs.avoidFabrics.map((item) => (
                                       <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
                                         {item}
                                       </span>
@@ -473,15 +474,15 @@ export default function HomePage() {
                                   </div>
                                 </div>
 
-                                <div data-testid="rec-colors">
+                                <div data-testid="rec-fit">
                                   <div className="flex items-center gap-2 mb-2">
                                     <Palette className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Recommended Colors</span>
+                                    <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Recommended Fit</span>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
-                                    {recs.colors.map((color) => (
-                                      <span key={color} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
-                                        {color}
+                                    {recs.fit.map((f) => (
+                                      <span key={f} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
+                                        {f}
                                       </span>
                                     ))}
                                   </div>

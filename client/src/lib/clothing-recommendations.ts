@@ -1,63 +1,57 @@
-interface ClothingRecommendation {
-  type: string;
-  fabric: string;
-  note: string;
-}
-
-const environmentClothing: Record<string, { types: string[]; fabrics: string[]; avoid: string }> = {
+const environmentClothing: Record<string, { types: string[]; avoidFabrics: string[]; avoid: string }> = {
   kitchen: {
     types: ["Chef coat", "Apron over dress shirt", "Fitted culinary jacket"],
-    fabrics: ["Cotton twill", "Linen blend", "Canvas"],
+    avoidFabrics: ["Synthetic blends", "Loose-weave fabrics", "Polyester"],
     avoid: "Avoid loose sleeves or synthetic materials that wrinkle under heat",
   },
   restaurant: {
     types: ["Blazer with open collar", "Tailored vest", "Dark dress shirt"],
-    fabrics: ["Wool blend", "Silk blend", "Fine cotton"],
+    avoidFabrics: ["Denim", "Athletic fabrics", "Heavy canvas"],
     avoid: "Avoid overly casual pieces — the setting calls for polished attire",
   },
   office: {
     types: ["Tailored suit", "Structured blazer", "Button-down with slacks"],
-    fabrics: ["Worsted wool", "Cotton poplin", "Gabardine"],
+    avoidFabrics: ["Jersey knit", "Distressed denim", "Sheer fabrics"],
     avoid: "Avoid loud patterns — solids and subtle textures photograph best",
   },
   nature: {
     types: ["Linen shirt", "Light jacket", "Henley or relaxed button-down"],
-    fabrics: ["Linen", "Chambray", "Soft cotton"],
+    avoidFabrics: ["Heavy wool", "Stiff synthetics", "Formal silks"],
     avoid: "Avoid stiff formal wear — aim for relaxed but put-together",
   },
   workvan: {
     types: ["Work jacket", "Branded polo", "Utility vest over tee"],
-    fabrics: ["Canvas", "Denim", "Heavy cotton"],
+    avoidFabrics: ["Silk", "Formal wool", "Delicate fabrics"],
     avoid: "Avoid anything too dressy — authentic workwear reads best",
   },
   urban: {
     types: ["Leather jacket", "Fitted overcoat", "Modern blazer with crew neck"],
-    fabrics: ["Leather", "Wool", "Structured cotton"],
+    avoidFabrics: ["Baggy fleece", "Cargo fabrics", "Athletic mesh"],
     avoid: "Avoid overly relaxed fits — clean lines match the city backdrop",
   },
   suburban: {
     types: ["Casual blazer", "Light sweater", "Polo or relaxed button-down"],
-    fabrics: ["Cotton knit", "Light linen", "Jersey blend"],
+    avoidFabrics: ["Heavy dark fabrics", "Stiff formal suiting", "Shiny synthetics"],
     avoid: "Avoid heavy dark suits — keep it approachable and warm",
   },
 };
 
-const brandMessageModifiers: Record<string, { preference: string; colors: string[] }> = {
+const brandMessageFit: Record<string, { fit: string[]; preference: string }> = {
   assured: {
+    fit: ["Loose top, slim bottom", "Relaxed shoulders, tapered leg"],
     preference: "Open, relaxed silhouettes that feel welcoming and approachable",
-    colors: ["Soft navy", "Warm gray", "Cream", "Muted olive"],
   },
   empathy: {
+    fit: ["Soft drape top, relaxed bottom", "Flowy top, fitted waist"],
     preference: "Softer cuts, open collars, and inviting silhouettes",
-    colors: ["Warm cream", "Soft blue", "Earth tones", "Muted sage"],
   },
   confidence: {
+    fit: ["Fitted top, tapered bottom", "Structured top, slim leg"],
     preference: "Sharp tailoring, strong shoulders, and bold structure",
-    colors: ["Black", "White", "Deep red", "Royal blue"],
   },
   motivation: {
+    fit: ["Tapered top, loose bottom", "Slim fit top, relaxed leg"],
     preference: "Modern, energetic fits that convey drive and ambition",
-    colors: ["Bright white", "Coral", "Electric blue", "Teal"],
   },
 };
 
@@ -73,8 +67,8 @@ export function getClothingRecommendations(
   emotionalImpact: string | null
 ): {
   clothing: string[];
-  fabrics: string[];
-  colors: string[];
+  avoidFabrics: string[];
+  fit: string[];
   styleNote: string;
   fabricNote: string;
   avoidNote: string;
@@ -82,15 +76,15 @@ export function getClothingRecommendations(
   if (!environment || !brandMessage) return null;
 
   const envData = environmentClothing[environment];
-  const msgData = brandMessageModifiers[brandMessage];
+  const msgData = brandMessageFit[brandMessage];
   const moodNote = emotionalImpact ? moodFabricNotes[emotionalImpact] : null;
 
   if (!envData || !msgData) return null;
 
   return {
     clothing: envData.types,
-    fabrics: envData.fabrics,
-    colors: msgData.colors,
+    avoidFabrics: envData.avoidFabrics,
+    fit: msgData.fit,
     styleNote: msgData.preference,
     fabricNote: moodNote || "",
     avoidNote: envData.avoid,
