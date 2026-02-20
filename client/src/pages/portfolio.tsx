@@ -203,7 +203,7 @@ export default function PortfolioPage() {
             <Link href="/?start=1">
               <Button variant="ghost" data-testid="button-back-home">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Design Your Portrait
+                Back
               </Button>
             </Link>
           </div>
