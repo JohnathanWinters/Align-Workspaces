@@ -899,14 +899,14 @@ function AdminDashboard({ token }: { token: string }) {
                           {userShoots.map((shoot) => (
                             <div
                               key={shoot.id}
-                              className="flex items-center justify-between p-3 rounded-lg bg-gray-50 group"
+                              className="p-3 rounded-lg bg-gray-50"
                               data-testid={`shoot-row-${shoot.id}`}
                             >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <Camera className="w-4 h-4 text-gray-400 shrink-0" />
-                                <div className="min-w-0">
+                              <div className="flex items-start gap-3">
+                                <Camera className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                <div className="flex-1 min-w-0">
                                   <p className="text-sm font-medium text-gray-900 truncate">{shoot.title}</p>
-                                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                                     {shoot.status && (
                                       <span className="capitalize">{shoot.status}</span>
                                     )}
@@ -923,37 +923,39 @@ function AdminDashboard({ token }: { token: string }) {
                                       </>
                                     )}
                                   </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openGallery(shoot)}
+                                      data-testid={`button-gallery-${shoot.id}`}
+                                      className="h-7 text-xs px-2.5 text-gray-600 border-gray-200"
+                                    >
+                                      <Images className="w-3 h-3 mr-1" />
+                                      Gallery
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => startEdit(shoot)}
+                                      data-testid={`button-edit-shoot-${shoot.id}`}
+                                      className="h-7 text-xs px-2.5 text-gray-600 border-gray-200"
+                                    >
+                                      <Edit className="w-3 h-3 mr-1" />
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDeleteShoot(shoot.id)}
+                                      data-testid={`button-delete-shoot-${shoot.id}`}
+                                      className="h-7 text-xs px-2.5 text-red-500 border-red-200 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="w-3 h-3 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openGallery(shoot)}
-                                  data-testid={`button-gallery-${shoot.id}`}
-                                  className="h-8 w-8 p-0 text-gray-500"
-                                  title="Manage Gallery"
-                                >
-                                  <Images className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => startEdit(shoot)}
-                                  data-testid={`button-edit-shoot-${shoot.id}`}
-                                  className="h-8 w-8 p-0 text-gray-500"
-                                >
-                                  <Edit className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteShoot(shoot.id)}
-                                  data-testid={`button-delete-shoot-${shoot.id}`}
-                                  className="h-8 w-8 p-0 text-red-500"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
                               </div>
                             </div>
                           ))}
