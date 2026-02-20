@@ -621,6 +621,26 @@ export default function HomePage() {
                           emotionalImpact={state.emotionalImpact}
                         />
                         <ConceptSummary state={state} />
+                        <StepContent
+                          title="Bring it to Life"
+                          subtitle="Transform your vision into a lasting first impression."
+                          centerTitle
+                          heroTitle
+                        >
+                          <BookingForm
+                            onSubmit={(data) => bookMutation.mutate(data)}
+                            onCheckout={(data) => checkoutMutation.mutate(data)}
+                            isPending={bookMutation.isPending}
+                            isCheckoutPending={checkoutMutation.isPending}
+                            pricing={calculatePricing(state)}
+                            selections={{
+                              environment: (state.environment === "other" ? state.environmentCustom || "other" : state.environment) || undefined,
+                              brandMessage: (state.brandMessage === "other" ? state.brandMessageCustom || "other" : state.brandMessage) || undefined,
+                              emotionalImpact: (state.emotionalImpact === "other" ? state.emotionalImpactCustom || "other" : state.emotionalImpact) || undefined,
+                              shootIntent: (state.shootIntent === "other" ? state.shootIntentCustom || "other" : state.shootIntent) || undefined,
+                            }}
+                          />
+                        </StepContent>
                       </div>
                     )}
                   </motion.div>
@@ -718,65 +738,6 @@ export default function HomePage() {
         </div>
       )}
 
-      <AnimatePresence>
-        {currentStep === 6 && (
-          <motion.div
-            key="step6-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-            data-testid="step6-popup-overlay"
-          >
-            <motion.div
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={prevStep}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 80, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 80, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.1 }}
-              className="relative w-full max-w-lg mx-4 mb-0 sm:mb-0 bg-background rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
-              data-testid="step6-popup-content"
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between p-5 pb-2 bg-background rounded-t-2xl">
-                <div>
-                  <h2 className="font-serif text-xl font-semibold tracking-tight">Bring it to Life</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Transform your vision into a lasting first impression.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={prevStep}
-                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-foreground/5 transition-colors shrink-0"
-                  data-testid="button-close-step6"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="p-5 pt-3">
-                <BookingForm
-                  onSubmit={(data) => bookMutation.mutate(data)}
-                  onCheckout={(data) => checkoutMutation.mutate(data)}
-                  isPending={bookMutation.isPending}
-                  isCheckoutPending={checkoutMutation.isPending}
-                  pricing={calculatePricing(state)}
-                  selections={{
-                    environment: (state.environment === "other" ? state.environmentCustom || "other" : state.environment) || undefined,
-                    brandMessage: (state.brandMessage === "other" ? state.brandMessageCustom || "other" : state.brandMessage) || undefined,
-                    emotionalImpact: (state.emotionalImpact === "other" ? state.emotionalImpactCustom || "other" : state.emotionalImpact) || undefined,
-                    shootIntent: (state.shootIntent === "other" ? state.shootIntentCustom || "other" : state.shootIntent) || undefined,
-                  }}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
