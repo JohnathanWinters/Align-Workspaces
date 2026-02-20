@@ -44,8 +44,8 @@ export function PhotographersSection() {
               className="max-w-2xl w-full"
             >
               <Card className="overflow-visible p-0" data-testid={`card-photographer-${index}`}>
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5">
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0 rounded-md overflow-hidden">
+                <div className="flex flex-row items-start gap-5 p-5">
+                  <div className="w-24 h-24 flex-shrink-0 rounded-md overflow-hidden">
                     <img
                       src={photographer.image}
                       alt={photographer.name}
@@ -56,8 +56,8 @@ export function PhotographersSection() {
                       data-testid={`img-photographer-${index}`}
                     />
                   </div>
-                  <div className="text-center sm:text-left">
-                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
+                  <div className="text-left">
+                    <div className="flex items-center gap-2 mb-2">
                       <Camera className="w-4 h-4 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-role-${index}`}>
                         {photographer.role}
