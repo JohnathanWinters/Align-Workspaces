@@ -1,6 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -10,7 +9,6 @@ import {
   ArrowLeft,
   Camera,
   Calendar,
-  Plus,
   LogOut,
   Image,
   Clock,
@@ -72,18 +70,6 @@ function PortalContent() {
     queryKey: ["/api/shoots"],
   });
 
-  const createShoot = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/shoots", {
-        title: "New Photoshoot",
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shoots"] });
-    },
-  });
-
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -131,28 +117,13 @@ function PortalContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="font-serif text-3xl text-gray-900 mb-1" data-testid="text-welcome">
-                Welcome{user?.firstName ? `, ${user.firstName}` : ""}
-              </h1>
-              <p className="text-gray-500 text-sm">
-                Manage your photoshoots and view your galleries
-              </p>
-            </div>
-            <Button
-              onClick={() => createShoot.mutate()}
-              disabled={createShoot.isPending}
-              data-testid="button-new-shoot"
-              className="bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white"
-            >
-              {createShoot.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4 mr-2" />
-              )}
-              New Photoshoot
-            </Button>
+          <div className="mb-8">
+            <h1 className="font-serif text-3xl text-gray-900 mb-1" data-testid="text-welcome">
+              Welcome{user?.firstName ? `, ${user.firstName}` : ""}
+            </h1>
+            <p className="text-gray-500 text-sm">
+              View your photoshoots and galleries
+            </p>
           </div>
 
           {isLoading ? (
@@ -171,18 +142,9 @@ function PortalContent() {
                     <Camera className="w-7 h-7 text-gray-400" />
                   </div>
                   <h3 className="font-serif text-xl text-gray-900 mb-2">No photoshoots yet</h3>
-                  <p className="text-gray-500 text-sm mb-6 max-w-sm">
-                    Start designing your first portrait session. We'll guide you through choosing your environment, mood, and style.
+                  <p className="text-gray-500 text-sm max-w-sm">
+                    Your photoshoot sessions will appear here once they've been set up. Check back soon!
                   </p>
-                  <Button
-                    onClick={() => createShoot.mutate()}
-                    disabled={createShoot.isPending}
-                    data-testid="button-new-shoot-empty"
-                    className="bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Your First Shoot
-                  </Button>
                 </CardContent>
               </Card>
             </motion.div>

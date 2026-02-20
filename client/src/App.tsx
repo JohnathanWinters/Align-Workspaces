@@ -8,6 +8,7 @@ import HomePage from "@/pages/home";
 import PortfolioPage from "@/pages/portfolio";
 import AboutPage from "@/pages/photographers";
 import PortalPage from "@/pages/portal";
+import AdminPage from "@/pages/admin";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/portal" component={PortalPage} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

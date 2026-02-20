@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
@@ -8,6 +8,18 @@ import { sendBookingNotification } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
+
+function isAdmin(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Admin authentication required" });
+  }
+  const token = authHeader.slice(7);
+  if (token !== process.env.ADMIN_PASSWORD) {
+    return res.status(403).json({ message: "Invalid admin credentials" });
+  }
+  next();
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -220,6 +232,101 @@ export async function registerRoutes(
       res.json(images);
     } catch {
       res.status(500).json({ message: "Failed to fetch gallery" });
+    }
+  });
+
+  // Admin auth check
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    if (password === process.env.ADMIN_PASSWORD) {
+      res.json({ success: true });
+    } else {
+      res.status(403).json({ message: "Invalid password" });
+    }
+  });
+
+  // Admin: list all users
+  app.get("/api/admin/users", isAdmin, async (_req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Admin: list all shoots (with user info)
+  app.get("/api/admin/shoots", isAdmin, async (_req, res) => {
+    try {
+      const allShoots = await storage.getAllShoots();
+      res.json(allShoots);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch shoots" });
+    }
+  });
+
+  // Admin: create shoot for a user
+  app.post("/api/admin/shoots", isAdmin, async (req, res) => {
+    try {
+      const data = insertShootSchema.parse(req.body);
+      const shoot = await storage.createShoot(data);
+      res.status(201).json(shoot);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({ message: fromZodError(error).message });
+      } else {
+        res.status(500).json({ message: "Failed to create shoot" });
+      }
+    }
+  });
+
+  // Admin: update a shoot
+  app.patch("/api/admin/shoots/:id", isAdmin, async (req, res) => {
+    try {
+      const shoot = await storage.updateShoot(req.params.id as string, req.body);
+      res.json(shoot);
+    } catch {
+      res.status(500).json({ message: "Failed to update shoot" });
+    }
+  });
+
+  // Admin: delete a shoot
+  app.delete("/api/admin/shoots/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteShoot(req.params.id as string);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Failed to delete shoot" });
+    }
+  });
+
+  // Admin: get gallery images for a shoot
+  app.get("/api/admin/shoots/:id/gallery", isAdmin, async (req, res) => {
+    try {
+      const images = await storage.getGalleryImages(req.params.id as string);
+      res.json(images);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch gallery" });
+    }
+  });
+
+  // Admin: add gallery image
+  app.post("/api/admin/gallery", isAdmin, async (req, res) => {
+    try {
+      const image = await storage.createGalleryImage(req.body);
+      res.status(201).json(image);
+    } catch {
+      res.status(500).json({ message: "Failed to add gallery image" });
+    }
+  });
+
+  // Admin: delete gallery image
+  app.delete("/api/admin/gallery/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteGalleryImage(req.params.id as string);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Failed to delete gallery image" });
     }
   });
 

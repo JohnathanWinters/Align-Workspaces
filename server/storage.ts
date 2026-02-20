@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type User, users } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc } from "drizzle-orm";
 
@@ -12,8 +12,12 @@ export interface IStorage {
   getShootsByUser(userId: string): Promise<Shoot[]>;
   getShootById(id: string): Promise<Shoot | undefined>;
   updateShoot(id: string, data: Partial<InsertShoot>): Promise<Shoot>;
+  deleteShoot(id: string): Promise<void>;
+  getAllShoots(): Promise<Shoot[]>;
   getGalleryImages(shootId: string): Promise<GalleryImage[]>;
   createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage>;
+  deleteGalleryImage(id: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -67,6 +71,23 @@ export class DatabaseStorage implements IStorage {
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
     const [result] = await db.insert(galleryImages).values(image).returning();
     return result;
+  }
+
+  async deleteGalleryImage(id: string): Promise<void> {
+    await db.delete(galleryImages).where(eq(galleryImages.id, id));
+  }
+
+  async deleteShoot(id: string): Promise<void> {
+    await db.delete(galleryImages).where(eq(galleryImages.shootId, id));
+    await db.delete(shoots).where(eq(shoots.id, id));
+  }
+
+  async getAllShoots(): Promise<Shoot[]> {
+    return db.select().from(shoots).orderBy(desc(shoots.createdAt));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
   }
 }
 

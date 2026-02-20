@@ -49,6 +49,18 @@ Pricing is calculated dynamically based on selections.
   - `POST /api/checkout` — Create a Stripe checkout session for 50% downpayment (pricing calculated server-side)
   - `POST /api/stripe/webhook` — Stripe webhook handler (registered before express.json middleware)
   - `GET /api/stripe/publishable-key` — Returns Stripe publishable key
+  - `GET /api/shoots` — Get shoots for authenticated user (protected)
+  - `POST /api/shoots` — Create shoot for authenticated user (protected, but currently admin-only via admin panel)
+  - `GET /api/shoots/:id` — Get single shoot (protected, user-scoped)
+  - `GET /api/shoots/:id/gallery` — Get gallery images for a shoot (protected, user-scoped)
+  - `POST /api/admin/login` — Verify admin password
+  - `GET /api/admin/users` — List all users (admin only)
+  - `GET/POST /api/admin/shoots` — List/create shoots (admin only)
+  - `PATCH/DELETE /api/admin/shoots/:id` — Update/delete shoots (admin only)
+  - `GET /api/admin/shoots/:id/gallery` — Gallery images for shoot (admin only)
+  - `POST /api/admin/gallery` — Add gallery image (admin only)
+  - `DELETE /api/admin/gallery/:id` — Delete gallery image (admin only)
+- **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete) and gallery images.
 - **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
 - **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
 - **Dev Server**: Vite middleware is used in development for HMR; in production, static files are served from `dist/public`
