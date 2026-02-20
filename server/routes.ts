@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification } from "./gmail";
+import { sendBookingNotification, sendInvoiceEmail } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -370,6 +370,51 @@ export async function registerRoutes(
       res.json({ success: true });
     } catch {
       res.status(500).json({ message: "Failed to delete shoot" });
+    }
+  });
+
+  app.post("/api/admin/shoots/:id/send-invoice", isAdmin, async (req, res) => {
+    try {
+      const shootId = req.params.id as string;
+      const { lineItems, totalAmount, notes } = req.body;
+
+      if (!Array.isArray(lineItems) || lineItems.length === 0) {
+        return res.status(400).json({ message: "At least one line item is required" });
+      }
+      for (const item of lineItems) {
+        if (!item || typeof item.description !== "string" || !item.description.trim()) {
+          return res.status(400).json({ message: "Each line item must have a description" });
+        }
+        if (typeof item.amount !== "number" || isNaN(item.amount) || item.amount <= 0) {
+          return res.status(400).json({ message: "Each line item must have a positive amount" });
+        }
+      }
+      const computedTotal = lineItems.reduce((sum: number, item: any) => sum + item.amount, 0);
+
+      const shoot = await storage.getShootById(shootId);
+      if (!shoot) {
+        return res.status(404).json({ message: "Shoot not found" });
+      }
+
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === shoot.userId);
+      if (!user || !user.email) {
+        return res.status(400).json({ message: "Client has no email address on file" });
+      }
+
+      await sendInvoiceEmail({
+        clientName: [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client",
+        clientEmail: user.email,
+        shootTitle: shoot.title,
+        lineItems,
+        totalAmount: computedTotal,
+        notes: notes || undefined,
+      });
+
+      res.json({ success: true, sentTo: user.email });
+    } catch (error) {
+      console.error("Failed to send invoice:", error);
+      res.status(500).json({ message: "Failed to send invoice email" });
     }
   });
 

@@ -26,6 +26,8 @@ import {
   FolderOpen,
   Images,
   Search,
+  Receipt,
+  Send,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
@@ -469,6 +471,200 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   );
 }
 
+interface InvoiceLineItem {
+  description: string;
+  amount: string;
+}
+
+function InvoiceModal({
+  shoot,
+  token,
+  onClose,
+}: {
+  shoot: Shoot;
+  token: string;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([
+    { description: "", amount: "" },
+  ]);
+  const [notes, setNotes] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const addLineItem = () => {
+    setLineItems([...lineItems, { description: "", amount: "" }]);
+  };
+
+  const removeLineItem = (index: number) => {
+    if (lineItems.length <= 1) return;
+    setLineItems(lineItems.filter((_, i) => i !== index));
+  };
+
+  const updateLineItem = (index: number, field: "description" | "amount", value: string) => {
+    const updated = [...lineItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setLineItems(updated);
+  };
+
+  const totalAmount = lineItems.reduce((sum, item) => {
+    const val = parseFloat(item.amount);
+    return sum + (isNaN(val) ? 0 : val);
+  }, 0);
+
+  const isValid = lineItems.every(
+    (item) => item.description.trim() && item.amount.trim() && !isNaN(parseFloat(item.amount)) && parseFloat(item.amount) > 0
+  );
+
+  const handleSend = async () => {
+    if (!isValid) return;
+    setSending(true);
+    try {
+      const res = await adminFetch(`/api/admin/shoots/${shoot.id}/send-invoice`, token, {
+        method: "POST",
+        body: JSON.stringify({
+          lineItems: lineItems.map((item) => ({
+            description: item.description.trim(),
+            amount: parseFloat(item.amount),
+          })),
+          totalAmount,
+          notes: notes.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        toast({ title: "Invoice Sent", description: `Sent to ${result.sentTo}` });
+        onClose();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to send invoice", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                <Receipt className="w-4.5 h-4.5 text-gray-600" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg text-gray-900" data-testid="text-invoice-title">Send Invoice</h3>
+                <p className="text-xs text-gray-500">{shoot.title}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600" data-testid="button-close-invoice">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <Label className="text-sm text-gray-700 font-medium">Line Items</Label>
+            <div className="space-y-2 mt-2">
+              {lineItems.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={item.description}
+                    onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                    placeholder="Description (e.g., Portrait session)"
+                    data-testid={`input-invoice-desc-${index}`}
+                    className="flex-1"
+                  />
+                  <div className="relative w-28 shrink-0">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                    <Input
+                      value={item.amount}
+                      onChange={(e) => updateLineItem(index, "amount", e.target.value)}
+                      placeholder="0.00"
+                      data-testid={`input-invoice-amount-${index}`}
+                      className="pl-7"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+                  {lineItems.length > 1 && (
+                    <button
+                      onClick={() => removeLineItem(index)}
+                      className="text-gray-400 hover:text-red-500 shrink-0"
+                      data-testid={`button-remove-line-${index}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addLineItem}
+              className="mt-2 text-xs"
+              data-testid="button-add-line-item"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              Add Line Item
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+            <span className="text-sm font-medium text-gray-700">Total</span>
+            <span className="text-lg font-semibold text-gray-900" data-testid="text-invoice-total">
+              ${totalAmount.toFixed(2)}
+            </span>
+          </div>
+
+          <div>
+            <Label className="text-sm text-gray-700">Notes (optional)</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any additional notes for the client..."
+              data-testid="input-invoice-notes"
+              className="mt-1"
+              rows={2}
+            />
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-gray-100 flex gap-3">
+          <Button
+            onClick={handleSend}
+            disabled={sending || !isValid}
+            data-testid="button-send-invoice"
+            className="flex-1 bg-[#1a1a1a] text-white"
+          >
+            {sending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {sending ? "Sending..." : "Send Invoice"}
+          </Button>
+          <Button variant="outline" onClick={onClose} data-testid="button-cancel-invoice">
+            Cancel
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserType[]>([]);
@@ -481,6 +677,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [form, setForm] = useState<ShootFormData>(defaultShootForm);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [invoiceShoot, setInvoiceShoot] = useState<Shoot | null>(null);
 
   const filteredUsers = users.filter((u) => {
     if (!searchQuery.trim()) return true;
@@ -947,6 +1144,16 @@ function AdminDashboard({ token }: { token: string }) {
                                     <Button
                                       variant="outline"
                                       size="sm"
+                                      onClick={() => setInvoiceShoot(shoot)}
+                                      data-testid={`button-invoice-${shoot.id}`}
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                    >
+                                      <Receipt className="w-3 h-3 mr-1" />
+                                      Invoice
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       onClick={() => handleDeleteShoot(shoot.id)}
                                       data-testid={`button-delete-shoot-${shoot.id}`}
                                       className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
@@ -969,6 +1176,14 @@ function AdminDashboard({ token }: { token: string }) {
           )}
         </motion.div>
       </main>
+
+      {invoiceShoot && (
+        <InvoiceModal
+          shoot={invoiceShoot}
+          token={token}
+          onClose={() => setInvoiceShoot(null)}
+        />
+      )}
     </div>
   );
 }

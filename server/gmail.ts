@@ -111,3 +111,69 @@ export async function sendBookingNotification(data: BookingEmailData) {
     },
   });
 }
+
+interface InvoiceLineItem {
+  description: string;
+  amount: number;
+}
+
+interface InvoiceEmailData {
+  clientName: string;
+  clientEmail: string;
+  shootTitle: string;
+  lineItems: InvoiceLineItem[];
+  totalAmount: number;
+  notes?: string;
+}
+
+export async function sendInvoiceEmail(data: InvoiceEmailData) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `Align Portrait Design — Invoice for ${data.shootTitle}`;
+
+  const itemRows = data.lineItems
+    .map((item) => `  ${item.description}: $${item.amount.toFixed(2)}`)
+    .join('\n');
+
+  const body = [
+    `Hi ${data.clientName},`,
+    ``,
+    `Thank you for choosing Align Portrait Design. Below is the invoice for your session.`,
+    ``,
+    `——————————————————`,
+    `Session: ${data.shootTitle}`,
+    ``,
+    `Itemization:`,
+    itemRows,
+    ``,
+    `Total: $${data.totalAmount.toFixed(2)}`,
+    `——————————————————`,
+    ``,
+    data.notes ? `Note: ${data.notes}\n` : '',
+    `If you have any questions about this invoice, please reply to this email.`,
+    ``,
+    `Best regards,`,
+    `Align Portrait Design`,
+  ].join('\n');
+
+  const rawMessage = [
+    `To: ${data.clientEmail}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}
