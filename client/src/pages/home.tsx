@@ -250,14 +250,14 @@ export default function HomePage() {
         <div ref={configuratorRef} className="min-h-screen">
           <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <p className="font-serif text-lg tracking-wide cursor-pointer" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align Portrait Designer</p>
-                <div className="flex items-center gap-1 sm:gap-2 flex-wrap ml-auto">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer whitespace-nowrap" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align Portrait Designer</p>
+                <div className="flex items-center gap-0 sm:gap-1 shrink-0">
                   <Link href="/portfolio">
-                    <Button variant="ghost" size="sm" data-testid="link-portfolio-header">Visual Blueprints</Button>
+                    <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-portfolio-header">Visual Blueprints</Button>
                   </Link>
                   <Link href="/about">
-                    <Button variant="ghost" size="sm" data-testid="link-about-header">Our Vision</Button>
+                    <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-about-header">Our Vision</Button>
                   </Link>
                 </div>
               </div>
