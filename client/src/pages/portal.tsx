@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -18,11 +19,10 @@ import {
   User,
   Download,
   ChevronLeft,
-  Folder,
-  FolderOpen,
   Images,
+  Heart,
 } from "lucide-react";
-import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
+import type { Shoot, GalleryImage } from "@shared/schema";
 
 function getStatusColor(status: string | null) {
   switch (status) {
@@ -70,7 +70,7 @@ function formatDate(date: string | Date | null) {
 }
 
 function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [downloadingAll, setDownloadingAll] = useState(false);
 
   const { data: images = [], isLoading: imagesLoading } = useQuery<GalleryImage[]>({
@@ -83,23 +83,37 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
     staleTime: 0,
   });
 
-  const { data: folders = [], isLoading: foldersLoading } = useQuery<GalleryFolder[]>({
-    queryKey: ["/api/shoots", shoot.id, "folders"],
+  const { data: favoriteIds = [], isLoading: favoritesLoading } = useQuery<string[]>({
+    queryKey: ["/api/shoots", shoot.id, "favorites"],
     queryFn: async () => {
-      const res = await fetch(`/api/shoots/${shoot.id}/folders`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch folders");
+      const res = await fetch(`/api/shoots/${shoot.id}/favorites`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch favorites");
       return res.json();
     },
     staleTime: 0,
   });
 
-  const isLoading = imagesLoading || foldersLoading;
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      const res = await fetch(`/api/shoots/${shoot.id}/gallery/${imageId}/favorite`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to toggle favorite");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shoots", shoot.id, "favorites"] });
+    },
+  });
 
-  const filteredImages = selectedFolder
-    ? images.filter((img) => img.folderId === selectedFolder)
-    : images.filter((img) => !img.folderId);
+  const isLoading = imagesLoading || favoritesLoading;
 
-  const rootImagesCount = images.filter((img) => !img.folderId).length;
+  const displayedImages = showFavoritesOnly
+    ? images.filter((img) => favoriteIds.includes(img.id))
+    : images;
+
+  const favoritesCount = favoriteIds.length;
 
   const handleDownloadSingle = (imageId: string, filename: string) => {
     const link = document.createElement("a");
@@ -183,70 +197,85 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
           </Card>
         ) : (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            {folders.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                <button
-                  onClick={() => setSelectedFolder(null)}
-                  data-testid="button-client-folder-root"
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                    selectedFolder === null
-                      ? "bg-[#1a1a1a] text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}
-                >
-                  <Images className="w-3.5 h-3.5" />
-                  Unsorted ({rootImagesCount})
-                </button>
-                {folders.map((folder) => {
-                  const count = images.filter((img) => img.folderId === folder.id).length;
-                  const isSelected = selectedFolder === folder.id;
+            <div className="flex flex-wrap gap-2 mb-6">
+              <button
+                onClick={() => setShowFavoritesOnly(false)}
+                data-testid="button-filter-all"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  !showFavoritesOnly
+                    ? "bg-[#1a1a1a] text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                <Images className="w-3.5 h-3.5" />
+                All ({images.length})
+              </button>
+              <button
+                onClick={() => setShowFavoritesOnly(true)}
+                data-testid="button-filter-favorites"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  showFavoritesOnly
+                    ? "bg-[#1a1a1a] text-white"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                <Heart className="w-3.5 h-3.5" />
+                Favorites ({favoritesCount})
+              </button>
+            </div>
+
+            {displayedImages.length === 0 && showFavoritesOnly ? (
+              <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Heart className="w-10 h-10 text-gray-300 mb-3" />
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No favorites yet</h3>
+                  <p className="text-gray-500 text-sm">Tap the heart icon on any photo to add it to your favorites.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {displayedImages.map((image) => {
+                  const isFav = favoriteIds.includes(image.id);
                   return (
-                    <button
-                      key={folder.id}
-                      onClick={() => setSelectedFolder(folder.id)}
-                      data-testid={`button-client-folder-${folder.id}`}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                        isSelected
-                          ? "bg-[#1a1a1a] text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                      }`}
+                    <div
+                      key={image.id}
+                      className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                      data-testid={`client-gallery-image-${image.id}`}
                     >
-                      {isSelected ? <FolderOpen className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />}
-                      {folder.name} ({count})
-                    </button>
+                      <img
+                        src={image.imageUrl}
+                        alt={image.originalFilename || image.caption || "Photo"}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => toggleFavoriteMutation.mutate(image.id)}
+                        data-testid={`button-favorite-${image.id}`}
+                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          isFav
+                            ? "bg-red-500 text-white shadow-md"
+                            : "bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50"
+                        }`}
+                      >
+                        <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
+                      </button>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 pointer-events-none">
+                        <p className="text-white text-xs truncate flex-1 mr-2">
+                          {image.originalFilename || "Photo"}
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={() => handleDownloadSingle(image.id, image.originalFilename || "photo.jpg")}
+                          data-testid={`button-download-image-${image.id}`}
+                          className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white pointer-events-auto"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             )}
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {filteredImages.map((image) => (
-                <div
-                  key={image.id}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
-                  data-testid={`client-gallery-image-${image.id}`}
-                >
-                  <img
-                    src={image.imageUrl}
-                    alt={image.originalFilename || image.caption || "Photo"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                    <p className="text-white text-xs truncate flex-1 mr-2">
-                      {image.originalFilename || "Photo"}
-                    </p>
-                    <Button
-                      size="sm"
-                      onClick={() => handleDownloadSingle(image.id, image.originalFilename || "photo.jpg")}
-                      data-testid={`button-download-image-${image.id}`}
-                      className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
           </motion.div>
         )}
       </main>

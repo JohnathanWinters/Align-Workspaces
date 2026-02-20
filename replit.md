@@ -66,6 +66,8 @@ Pricing is calculated dynamically based on selections.
   - `PATCH /api/admin/folders/:id` — Rename folder (admin only)
   - `DELETE /api/admin/folders/:id` — Delete folder and its photos (admin only)
   - `GET /api/shoots/:id/folders` — Client: get folders for a shoot (authenticated, user-scoped)
+  - `GET /api/shoots/:id/favorites` — Client: get favorited image IDs for a shoot (authenticated, user-scoped)
+  - `POST /api/shoots/:shootId/gallery/:imageId/favorite` — Client: toggle favorite on an image (authenticated)
   - `GET /api/shoots/:shootId/gallery/:imageId/download` — Client: download single image (authenticated)
   - `GET /api/shoots/:id/download-all` — Client: download all images as zip (authenticated)
 - **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete), gallery images with folder organization, and photo uploads.
@@ -77,7 +79,7 @@ Pricing is calculated dynamically based on selections.
 ### Database
 - **Database**: PostgreSQL (required — `DATABASE_URL` environment variable)
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
-- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions), `gallery_folders` table (folder organization per shoot), and `gallery_images` table (photos per shoot with optional folderId and originalFilename). Auth tables (`users`, `sessions`) from Replit Auth integration.
+- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions), `gallery_folders` table (folder organization per shoot, admin-only), `gallery_images` table (photos per shoot with optional folderId and originalFilename), and `image_favorites` table (userId + imageId for client photo favoriting). Auth tables (`users`, `sessions`) from Replit Auth integration.
 - **Shared Pricing** (`shared/pricing.ts`): Server-authoritative pricing logic used by both frontend and backend
 - **Migrations**: Drizzle Kit with `db:push` command for schema sync
 

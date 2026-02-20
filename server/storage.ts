@@ -87,6 +87,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGalleryImage(id: string): Promise<void> {
+    await db.delete(imageFavorites).where(eq(imageFavorites.imageId, id));
     await db.delete(galleryImages).where(eq(galleryImages.id, id));
   }
 
@@ -110,11 +111,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteFolder(id: string): Promise<void> {
+    const imgs = await db.select({ id: galleryImages.id }).from(galleryImages).where(eq(galleryImages.folderId, id));
+    if (imgs.length > 0) {
+      const imgIds = imgs.map((i) => i.id);
+      await db.delete(imageFavorites).where(sql`${imageFavorites.imageId} = ANY(${imgIds})`);
+    }
     await db.delete(galleryImages).where(eq(galleryImages.folderId, id));
     await db.delete(galleryFolders).where(eq(galleryFolders.id, id));
   }
 
   async deleteShoot(id: string): Promise<void> {
+    const imgs = await db.select({ id: galleryImages.id }).from(galleryImages).where(eq(galleryImages.shootId, id));
+    if (imgs.length > 0) {
+      const imgIds = imgs.map((i) => i.id);
+      await db.delete(imageFavorites).where(sql`${imageFavorites.imageId} = ANY(${imgIds})`);
+    }
     await db.delete(galleryImages).where(eq(galleryImages.shootId, id));
     await db.delete(galleryFolders).where(eq(galleryFolders.shootId, id));
     await db.delete(shoots).where(eq(shoots.id, id));
@@ -129,12 +140,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFavorites(userId: string, shootId: string): Promise<string[]> {
-    const imgs = await db.select().from(galleryImages).where(eq(galleryImages.shootId, shootId));
-    const imgIds = imgs.map((i) => i.id);
-    if (imgIds.length === 0) return [];
-    const favs = await db.select().from(imageFavorites).where(
-      and(eq(imageFavorites.userId, userId), sql`${imageFavorites.imageId} = ANY(${imgIds})`)
-    );
+    const favs = await db
+      .select({ imageId: imageFavorites.imageId })
+      .from(imageFavorites)
+      .innerJoin(galleryImages, eq(imageFavorites.imageId, galleryImages.id))
+      .where(and(eq(imageFavorites.userId, userId), eq(galleryImages.shootId, shootId)));
     return favs.map((f) => f.imageId);
   }
 
