@@ -12,15 +12,15 @@ export function HeroSection({ onStart }: HeroSectionProps) {
     <section className="relative min-h-screen flex flex-col bg-[#0d0d0d]">
       <nav className="relative z-20 px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <motion.p
+          <motion.img
+            src="/images/logo-align.png"
+            alt="Align"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
-            className="font-serif text-2xl tracking-wide text-white/90 cursor-pointer"
+            className="h-10 sm:h-12 cursor-pointer"
             data-testid="link-home-hero-logo"
-          >
-            Align
-          </motion.p>
+          />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
