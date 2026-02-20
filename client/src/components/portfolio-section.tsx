@@ -30,7 +30,6 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="eager"
         decoding="async"
-        style={{ filter: "blur(0.6px) contrast(1.03)", imageRendering: "auto" }}
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         data-testid={`portfolio-preview-${index}`}
       />
@@ -95,7 +94,6 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
                 src={photo.imageUrl}
                 alt="Professional branding portrait detail - Brand Vision Studio Miami"
                 className="w-full h-full object-cover"
-                style={{ filter: "blur(0.6px) contrast(1.03)" }}
                 data-testid="lightbox-image-preview"
               />
             )}
