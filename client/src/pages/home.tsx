@@ -492,18 +492,21 @@ export default function HomePage() {
                     )}
 
                     {currentStep === 6 && (
-                      <StepContent
-                        title="Bring it to Life"
-                        subtitle="Transform your vision into a lasting first impression."
-                      >
-                        <BookingForm
-                          onSubmit={(data) => bookMutation.mutate(data)}
-                          onCheckout={(data) => checkoutMutation.mutate(data)}
-                          isPending={bookMutation.isPending}
-                          isCheckoutPending={checkoutMutation.isPending}
-                          pricing={calculatePricing(state)}
-                        />
-                      </StepContent>
+                      <div className="space-y-8">
+                        <ConceptSummary state={state} />
+                        <StepContent
+                          title="Bring it to Life"
+                          subtitle="Transform your vision into a lasting first impression."
+                        >
+                          <BookingForm
+                            onSubmit={(data) => bookMutation.mutate(data)}
+                            onCheckout={(data) => checkoutMutation.mutate(data)}
+                            isPending={bookMutation.isPending}
+                            isCheckoutPending={checkoutMutation.isPending}
+                            pricing={calculatePricing(state)}
+                          />
+                        </StepContent>
+                      </div>
                     )}
                   </motion.div>
 
@@ -539,7 +542,7 @@ export default function HomePage() {
                       emotionalImpact={state.emotionalImpact}
                     />
                   )}
-                  {currentStep !== 4 && currentStep !== 1 && <ConceptSummary state={state} />}
+                  {currentStep !== 4 && currentStep !== 1 && currentStep !== 6 && <ConceptSummary state={state} />}
                 </div>
               </div>
             </div>
