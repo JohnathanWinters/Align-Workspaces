@@ -329,7 +329,7 @@ export default function HomePage() {
                     {currentStep === 3 && (
                       <StepContent
                         title="Impact"
-                        subtitle="How should they feel before you speak?"
+                        subtitle="How should clients feel when they see you?"
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {emotionalImpacts.map((imp) => (

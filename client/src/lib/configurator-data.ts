@@ -45,9 +45,9 @@ export const brandMessages: { value: BrandMessage; label: string; description: s
 ];
 
 export const emotionalImpacts: { value: EmotionalImpact; label: string; description: string }[] = [
-  { value: "bright", label: "Bright", description: "Airy, clean, natural light, fresh and open feeling" },
-  { value: "cozy", label: "Cozy", description: "Warm tones, golden hour lighting, intimate framing" },
-  { value: "powerful", label: "Powerful", description: "Bold contrast, dramatic shadows, commanding presence" },
+  { value: "bright", label: "Inspired", description: "Airy, clean, natural light, fresh and open feeling" },
+  { value: "cozy", label: "Comfortable", description: "Warm tones, golden hour lighting, intimate framing" },
+  { value: "powerful", label: "Reassured", description: "Bold contrast, dramatic shadows, commanding presence" },
 ];
 
 export const shootIntents: { value: ShootIntent; label: string; description: string }[] = [
