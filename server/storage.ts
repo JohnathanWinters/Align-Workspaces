@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull } from "drizzle-orm";
 
@@ -24,6 +24,8 @@ export interface IStorage {
   updateFolder(id: string, data: Partial<InsertGalleryFolder>): Promise<GalleryFolder>;
   deleteFolder(id: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
+  getFavorites(userId: string, shootId: string): Promise<string[]>;
+  toggleFavorite(userId: string, imageId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -124,6 +126,29 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getFavorites(userId: string, shootId: string): Promise<string[]> {
+    const imgs = await db.select().from(galleryImages).where(eq(galleryImages.shootId, shootId));
+    const imgIds = imgs.map((i) => i.id);
+    if (imgIds.length === 0) return [];
+    const favs = await db.select().from(imageFavorites).where(
+      and(eq(imageFavorites.userId, userId), sql`${imageFavorites.imageId} = ANY(${imgIds})`)
+    );
+    return favs.map((f) => f.imageId);
+  }
+
+  async toggleFavorite(userId: string, imageId: string): Promise<boolean> {
+    const [existing] = await db.select().from(imageFavorites).where(
+      and(eq(imageFavorites.userId, userId), eq(imageFavorites.imageId, imageId))
+    );
+    if (existing) {
+      await db.delete(imageFavorites).where(eq(imageFavorites.id, existing.id));
+      return false;
+    } else {
+      await db.insert(imageFavorites).values({ userId, imageId });
+      return true;
+    }
   }
 }
 

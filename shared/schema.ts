@@ -113,3 +113,12 @@ export const insertGalleryImageSchema = createInsertSchema(galleryImages).omit({
 
 export type InsertGalleryImage = z.infer<typeof insertGalleryImageSchema>;
 export type GalleryImage = typeof galleryImages.$inferSelect;
+
+export const imageFavorites = pgTable("image_favorites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  imageId: varchar("image_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ImageFavorite = typeof imageFavorites.$inferSelect;
