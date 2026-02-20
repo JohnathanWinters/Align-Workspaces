@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -27,6 +27,8 @@ import {
   MapPin,
   ExternalLink,
   CalendarPlus,
+  ChevronRight,
+  X,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 
@@ -103,10 +105,106 @@ function buildGoogleCalendarUrl(shoot: Shoot) {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
 }
 
+function Lightbox({
+  images,
+  initialIndex,
+  onClose,
+}: {
+  images: GalleryImage[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  const goNext = useCallback(() => {
+    setCurrentIndex((i) => (i + 1) % images.length);
+  }, [images.length]);
+
+  const goPrev = useCallback(() => {
+    setCurrentIndex((i) => (i - 1 + images.length) % images.length);
+  }, [images.length]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    };
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, goNext, goPrev]);
+
+  const current = images[currentIndex];
+  if (!current) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+      onClick={onClose}
+      data-testid="lightbox-overlay"
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        data-testid="lightbox-close"
+        className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/60 text-sm" data-testid="lightbox-counter">
+        {currentIndex + 1} / {images.length}
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); goPrev(); }}
+            data-testid="lightbox-prev"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); goNext(); }}
+            data-testid="lightbox-next"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </>
+      )}
+
+      <motion.img
+        key={current.id}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        src={current.imageUrl}
+        alt={current.originalFilename || "Photo"}
+        onClick={(e) => e.stopPropagation()}
+        className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg select-none"
+        data-testid="lightbox-image"
+      />
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-xs">
+        {current.originalFilename || "Photo"}
+      </div>
+    </motion.div>
+  );
+}
+
 function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data: images = [], isLoading: imagesLoading } = useQuery<GalleryImage[]>({
     queryKey: ["/api/shoots", shoot.id, "gallery"],
@@ -326,48 +424,61 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {displayedImages.map((image) => {
-                  const isFav = favoriteIds.includes(image.id);
-                  return (
-                    <div
-                      key={image.id}
-                      className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
-                      data-testid={`client-gallery-image-${image.id}`}
-                    >
-                      <img
-                        src={image.imageUrl}
-                        alt={image.originalFilename || image.caption || "Photo"}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => toggleFavoriteMutation.mutate(image.id)}
-                        data-testid={`button-favorite-${image.id}`}
-                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                          isFav
-                            ? "bg-red-500 text-white shadow-md"
-                            : "bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50"
-                        }`}
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {displayedImages.map((image, index) => {
+                    const isFav = favoriteIds.includes(image.id);
+                    return (
+                      <div
+                        key={image.id}
+                        className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+                        data-testid={`client-gallery-image-${image.id}`}
+                        onClick={() => setLightboxIndex(index)}
                       >
-                        <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
-                      </button>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 pointer-events-none">
-                        <p className="text-white text-xs truncate flex-1 mr-2">
-                          {image.originalFilename || "Photo"}
-                        </p>
-                        <Button
-                          size="sm"
-                          onClick={() => handleDownloadSingle(image.id, image.originalFilename || "photo.jpg")}
-                          data-testid={`button-download-image-${image.id}`}
-                          className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white pointer-events-auto"
+                        <img
+                          src={image.imageUrl}
+                          alt={image.originalFilename || image.caption || "Photo"}
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleFavoriteMutation.mutate(image.id); }}
+                          data-testid={`button-favorite-${image.id}`}
+                          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                            isFav
+                              ? "bg-red-500 text-white shadow-md"
+                              : "bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50"
+                          }`}
                         >
-                          <Download className="w-3.5 h-3.5" />
-                        </Button>
+                          <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
+                        </button>
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 pointer-events-none">
+                          <p className="text-white text-xs truncate flex-1 mr-2">
+                            {image.originalFilename || "Photo"}
+                          </p>
+                          <Button
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleDownloadSingle(image.id, image.originalFilename || "photo.jpg"); }}
+                            data-testid={`button-download-image-${image.id}`}
+                            className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white pointer-events-auto"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                <AnimatePresence>
+                  {lightboxIndex !== null && (
+                    <Lightbox
+                      images={displayedImages}
+                      initialIndex={lightboxIndex}
+                      onClose={() => setLightboxIndex(null)}
+                    />
+                  )}
+                </AnimatePresence>
+              </>
             )}
           </motion.div>
         )}
