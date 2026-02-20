@@ -368,7 +368,7 @@ export default function HomePage() {
                       </StepContent>
                     )}
 
-                    {currentStep === 4 && (
+                    {currentStep === 5 && (
                       <StepContent
                         title="Placement"
                         subtitle="Where will this image attract attention?"
@@ -406,7 +406,7 @@ export default function HomePage() {
                       </StepContent>
                     )}
 
-                    {currentStep === 5 && (
+                    {currentStep === 4 && (
                       <StepContent
                         title="Your Portrait Preview"
                         subtitle="Based on your selections, here's what to expect."
@@ -507,7 +507,7 @@ export default function HomePage() {
                     )}
                   </motion.div>
 
-                  {currentStep < 6 && currentStep !== 5 && currentStep !== 1 && (
+                  {currentStep < 6 && currentStep !== 4 && currentStep !== 5 && currentStep !== 1 && (
                     <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
                       <Button
                         variant="ghost"
@@ -531,13 +531,13 @@ export default function HomePage() {
                 </AnimatePresence>
               </div>
 
-              <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 || currentStep === 4 ? "hidden lg:block" : ""}`}>
+              <div className={`lg:col-span-5 ${currentStep === 2 || currentStep === 3 || currentStep === 5 ? "hidden lg:block" : ""}`}>
                 <div className="lg:sticky lg:top-24 space-y-6">
                   <ImageGallery
                     environment={state.environment}
                     emotionalImpact={state.emotionalImpact}
                   />
-                  {currentStep !== 5 && <ConceptSummary state={state} />}
+                  {currentStep !== 4 && <ConceptSummary state={state} />}
                 </div>
               </div>
             </div>
@@ -557,6 +557,27 @@ export default function HomePage() {
                   onClick={nextStep}
                   disabled={!canProceed()}
                   data-testid="button-next-step-1"
+                >
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            )}
+
+            {currentStep === 4 && (
+              <div className="flex items-center justify-between gap-4 mt-8 flex-wrap">
+                <Button
+                  variant="ghost"
+                  onClick={prevStep}
+                  data-testid="button-prev-step-4"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <Button
+                  onClick={nextStep}
+                  disabled={!canProceed()}
+                  data-testid="button-next-step-4"
                 >
                   Continue
                   <ArrowRight className="w-4 h-4 ml-2" />
