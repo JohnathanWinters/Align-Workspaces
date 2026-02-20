@@ -1,6 +1,6 @@
 import { calculatePricing as calcPricing } from "@shared/pricing";
 
-export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "kitchen" | "other";
+export type Environment = "restaurant" | "office" | "nature" | "workvan" | "urban" | "suburban" | "kitchen" | "gym" | "other";
 export type BrandMessage = "assured" | "empathy" | "confidence" | "motivation" | "other";
 export type EmotionalImpact = "cozy" | "bright" | "powerful" | "other";
 export type ShootIntent = "commercial" | "social-media" | "team" | "other";
@@ -28,6 +28,7 @@ export const initialState: ConfiguratorState = {
 };
 
 export const environments: { value: Environment; label: string; icon: string }[] = [
+  { value: "gym", label: "Gym", icon: "Dumbbell" },
   { value: "kitchen", label: "Kitchen", icon: "ChefHat" },
   { value: "nature", label: "Nature", icon: "TreePine" },
   { value: "office", label: "Office", icon: "Building2" },
@@ -57,6 +58,7 @@ export const shootIntents: { value: ShootIntent; label: string; description: str
 ];
 
 export const environmentImages: Record<string, string> = {
+  gym: "/images/env-gym.png",
   kitchen: "/images/env-kitchen.jpg",
   restaurant: "/images/env-restaurant.png",
   office: "/images/env-office.png",

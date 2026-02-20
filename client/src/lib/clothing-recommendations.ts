@@ -34,6 +34,11 @@ const environmentClothing: Record<string, { types: string[]; avoidFabrics: strin
     avoidFabrics: ["Heavy dark fabrics", "Stiff formal suiting", "Shiny synthetics"],
     avoid: "Avoid heavy dark suits — keep it approachable and warm",
   },
+  gym: {
+    types: ["Fitted athletic top", "Branded tank or compression shirt", "Clean performance jacket"],
+    avoidFabrics: ["Formal wool", "Denim", "Loose cotton tees"],
+    avoid: "Avoid oversized or worn-out gym clothes — go for clean, fitted performance wear",
+  },
 };
 
 const brandMessageFit: Record<string, { fit: string[]; preference: string }> = {

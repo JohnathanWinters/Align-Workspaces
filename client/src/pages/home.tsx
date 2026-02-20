@@ -23,6 +23,7 @@ import {
   Building,
   Home,
   ChefHat,
+  Dumbbell,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -50,6 +51,7 @@ import {
 
 const iconMap: Record<string, React.ReactNode> = {
   ChefHat: <ChefHat className="w-5 h-5" />,
+  Dumbbell: <Dumbbell className="w-5 h-5" />,
   UtensilsCrossed: <UtensilsCrossed className="w-5 h-5" />,
   Building2: <Building2 className="w-5 h-5" />,
   TreePine: <TreePine className="w-5 h-5" />,
