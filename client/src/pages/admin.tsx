@@ -712,6 +712,11 @@ function AdminDashboard({ token }: { token: string }) {
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editUserForm, setEditUserForm] = useState({ firstName: "", lastName: "", email: "" });
   const [savingUser, setSavingUser] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<UserType | null>(null);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const filteredUsers = users.filter((u) => {
     if (!searchQuery.trim()) return true;
@@ -858,6 +863,33 @@ function AdminDashboard({ token }: { token: string }) {
       toast({ title: "Error", description: "Failed to update client", variant: "destructive" });
     } finally {
       setSavingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      const res = await adminFetch(`/api/admin/users/${deletingUser.id}`, token, {
+        method: "DELETE",
+        body: JSON.stringify({ deletePassword }),
+      });
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
+        setShoots((prev) => prev.filter((s) => s.userId !== deletingUser.id));
+        setDeletingUser(null);
+        setDeletePassword("");
+        setDeleteConfirmText("");
+        toast({ title: "Deleted", description: "Account and all associated data removed" });
+      } else {
+        const data = await res.json();
+        setDeleteError(data.message || "Failed to delete account");
+      }
+    } catch {
+      setDeleteError("Connection error");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -1221,6 +1253,18 @@ function AdminDashboard({ token }: { token: string }) {
                                   >
                                     <Edit className="w-3.5 h-3.5" />
                                   </button>
+                                  <button
+                                    onClick={() => {
+                                      setDeletingUser(user);
+                                      setDeletePassword("");
+                                      setDeleteConfirmText("");
+                                      setDeleteError("");
+                                    }}
+                                    data-testid={`button-delete-user-${user.id}`}
+                                    className="text-gray-400 hover:text-red-500 shrink-0"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                                 <Button
                                   size="sm"
@@ -1336,6 +1380,81 @@ function AdminDashboard({ token }: { token: string }) {
           token={token}
           onClose={() => setInvoiceShoot(null)}
         />
+      )}
+
+      {deletingUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg text-gray-900">Delete Account</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-800">
+                You are about to permanently delete <strong>{deletingUser.firstName} {deletingUser.lastName}</strong>'s account
+                ({deletingUser.email}). This will remove all their shoots, gallery images, folders, and favorites.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm text-gray-700">Type "DELETE" to confirm</Label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder='Type "DELETE"'
+                  data-testid="input-delete-confirm"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm text-gray-700">Delete password</Label>
+                <Input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Enter delete password"
+                  data-testid="input-delete-password"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            {deleteError && (
+              <p className="text-red-500 text-sm mt-3" data-testid="text-delete-error">{deleteError}</p>
+            )}
+
+            <div className="flex gap-2 mt-5">
+              <Button
+                variant="outline"
+                onClick={() => setDeletingUser(null)}
+                className="flex-1"
+                data-testid="button-cancel-delete"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteUser}
+                disabled={deleteConfirmText !== "DELETE" || !deletePassword || deleteLoading}
+                data-testid="button-confirm-delete"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+              >
+                {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
+                Delete Account
+              </Button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

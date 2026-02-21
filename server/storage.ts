@@ -29,6 +29,7 @@ export interface IStorage {
   toggleFavorite(userId: string, imageId: string): Promise<boolean>;
   updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<User>;
   transferShootsOwnership(fromUserId: string, toUserId: string): Promise<void>;
+  deleteUser(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -180,6 +181,19 @@ export class DatabaseStorage implements IStorage {
       await db.insert(imageFavorites).values({ userId, imageId });
       return true;
     }
+  }
+  async deleteUser(id: string): Promise<void> {
+    const userShoots = await db.select().from(shoots).where(eq(shoots.userId, id));
+    for (const shoot of userShoots) {
+      await db.delete(imageFavorites).where(
+        sql`${imageFavorites.imageId} IN (SELECT id FROM gallery_images WHERE shoot_id = ${shoot.id})`
+      );
+      await db.delete(galleryImages).where(eq(galleryImages.shootId, shoot.id));
+      await db.delete(galleryFolders).where(eq(galleryFolders.shootId, shoot.id));
+    }
+    await db.delete(shoots).where(eq(shoots.userId, id));
+    await db.delete(imageFavorites).where(eq(imageFavorites.userId, id));
+    await db.delete(users).where(eq(users.id, id));
   }
 }
 

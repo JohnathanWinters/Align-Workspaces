@@ -458,6 +458,22 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id as string;
+      const { deletePassword } = req.body;
+      if (!deletePassword || deletePassword !== process.env.ADMIN_DELETE_PASSWORD) {
+        res.status(403).json({ message: "Invalid delete password" });
+        return;
+      }
+      await storage.deleteUser(userId);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      res.status(500).json({ message: "Failed to delete account" });
+    }
+  });
+
   app.patch("/api/admin/users/:id", isAdmin, async (req, res) => {
     try {
       const userId = req.params.id as string;
