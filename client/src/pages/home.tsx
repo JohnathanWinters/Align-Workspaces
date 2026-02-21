@@ -253,7 +253,7 @@ export default function HomePage() {
   }
 
   function handleCreateAccount() {
-    window.location.href = "/api/login";
+    window.location.href = "/api/login?returnTo=/portal";
   }
 
   if (isBooked) {

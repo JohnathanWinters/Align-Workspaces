@@ -868,7 +868,7 @@ export default function PortalPage() {
             Sign in to view your photoshoot galleries, track your sessions, and download your photos.
           </p>
           <div className="flex flex-col gap-3">
-            <a href="/api/login" data-testid="button-login">
+            <a href="/api/login?returnTo=/portal" data-testid="button-login">
               <Button
                 size="lg"
                 className="w-full bg-white text-black hover:bg-white/90 text-base"
