@@ -124,3 +124,73 @@ export const imageFavorites = pgTable("image_favorites", {
 });
 
 export type ImageFavorite = typeof imageFavorites.$inferSelect;
+
+export const editTokens = pgTable("edit_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  annualTokens: integer("annual_tokens").default(2).notNull(),
+  purchasedTokens: integer("purchased_tokens").default(0).notNull(),
+  annualTokenResetDate: timestamp("annual_token_reset_date").notNull(),
+  lastPhotoshootDate: timestamp("last_photoshoot_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEditTokenSchema = createInsertSchema(editTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertEditToken = z.infer<typeof insertEditTokenSchema>;
+export type EditToken = typeof editTokens.$inferSelect;
+
+export const tokenTransactions = pgTable("token_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  type: text("type").notNull(),
+  amount: integer("amount").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTokenTransactionSchema = createInsertSchema(tokenTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTokenTransaction = z.infer<typeof insertTokenTransactionSchema>;
+export type TokenTransaction = typeof tokenTransactions.$inferSelect;
+
+export const editRequests = pgTable("edit_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  shootId: varchar("shoot_id"),
+  photoCount: integer("photo_count").notNull(),
+  annualTokensUsed: integer("annual_tokens_used").default(0).notNull(),
+  purchasedTokensUsed: integer("purchased_tokens_used").default(0).notNull(),
+  status: text("status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEditRequestSchema = createInsertSchema(editRequests).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertEditRequest = z.infer<typeof insertEditRequestSchema>;
+export type EditRequest = typeof editRequests.$inferSelect;
+
+export const editRequestPhotos = pgTable("edit_request_photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  editRequestId: varchar("edit_request_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  originalFilename: text("original_filename"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEditRequestPhotoSchema = createInsertSchema(editRequestPhotos).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertEditRequestPhoto = z.infer<typeof insertEditRequestPhotoSchema>;
+export type EditRequestPhoto = typeof editRequestPhotos.$inferSelect;

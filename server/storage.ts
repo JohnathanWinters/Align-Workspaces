@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull } from "drizzle-orm";
 
@@ -30,6 +30,18 @@ export interface IStorage {
   updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<User>;
   transferShootsOwnership(fromUserId: string, toUserId: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
+  getOrCreateEditTokens(userId: string): Promise<EditToken>;
+  resetExpiredAnnualTokens(userId: string): Promise<EditToken>;
+  deductTokens(userId: string, count: number): Promise<{ annualUsed: number; purchasedUsed: number }>;
+  addPurchasedTokens(userId: string, count: number): Promise<EditToken>;
+  adjustTokens(userId: string, annual: number, purchased: number): Promise<EditToken>;
+  getTokenTransactions(userId: string): Promise<TokenTransaction[]>;
+  createTokenTransaction(tx: InsertTokenTransaction): Promise<TokenTransaction>;
+  createEditRequest(data: InsertEditRequest): Promise<EditRequest>;
+  getEditRequests(userId?: string): Promise<EditRequest[]>;
+  getEditRequestPhotos(editRequestId: string): Promise<EditRequestPhoto[]>;
+  createEditRequestPhoto(photo: InsertEditRequestPhoto): Promise<EditRequestPhoto>;
+  getAllEditTokens(): Promise<EditToken[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -191,9 +203,168 @@ export class DatabaseStorage implements IStorage {
       await db.delete(galleryImages).where(eq(galleryImages.shootId, shoot.id));
       await db.delete(galleryFolders).where(eq(galleryFolders.shootId, shoot.id));
     }
+    await db.delete(editRequestPhotos).where(
+      sql`${editRequestPhotos.editRequestId} IN (SELECT id FROM edit_requests WHERE user_id = ${id})`
+    );
+    await db.delete(editRequests).where(eq(editRequests.userId, id));
+    await db.delete(tokenTransactions).where(eq(tokenTransactions.userId, id));
+    await db.delete(editTokens).where(eq(editTokens.userId, id));
     await db.delete(shoots).where(eq(shoots.userId, id));
     await db.delete(imageFavorites).where(eq(imageFavorites.userId, id));
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getOrCreateEditTokens(userId: string): Promise<EditToken> {
+    const [existing] = await db.select().from(editTokens).where(eq(editTokens.userId, userId));
+    if (existing) return existing;
+    const resetDate = new Date();
+    resetDate.setFullYear(resetDate.getFullYear() + 1);
+    const [created] = await db.insert(editTokens).values({
+      userId,
+      annualTokens: 2,
+      purchasedTokens: 0,
+      annualTokenResetDate: resetDate,
+      lastPhotoshootDate: new Date(),
+    }).returning();
+    await db.insert(tokenTransactions).values({
+      userId,
+      type: "earned_annual",
+      amount: 2,
+      description: "Annual edit tokens granted",
+    });
+    return created;
+  }
+
+  async resetExpiredAnnualTokens(userId: string): Promise<EditToken> {
+    const tokens = await this.getOrCreateEditTokens(userId);
+    const now = new Date();
+    if (now >= tokens.annualTokenResetDate) {
+      const newResetDate = new Date(tokens.annualTokenResetDate);
+      while (newResetDate <= now) {
+        newResetDate.setFullYear(newResetDate.getFullYear() + 1);
+      }
+      const [updated] = await db.update(editTokens)
+        .set({ annualTokens: 2, annualTokenResetDate: newResetDate })
+        .where(eq(editTokens.id, tokens.id))
+        .returning();
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "earned_annual",
+        amount: 2,
+        description: "Annual edit tokens reset",
+      });
+      return updated;
+    }
+    return tokens;
+  }
+
+  async deductTokens(userId: string, count: number): Promise<{ annualUsed: number; purchasedUsed: number }> {
+    const tokens = await this.resetExpiredAnnualTokens(userId);
+    const totalAvailable = tokens.annualTokens + tokens.purchasedTokens;
+    if (totalAvailable < count) {
+      throw new Error("Insufficient edit tokens");
+    }
+    const annualUsed = Math.min(tokens.annualTokens, count);
+    const purchasedUsed = count - annualUsed;
+    await db.update(editTokens)
+      .set({
+        annualTokens: tokens.annualTokens - annualUsed,
+        purchasedTokens: tokens.purchasedTokens - purchasedUsed,
+      })
+      .where(eq(editTokens.id, tokens.id));
+    if (annualUsed > 0) {
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "used_annual",
+        amount: -annualUsed,
+        description: `Used ${annualUsed} annual token(s) for photo editing`,
+      });
+    }
+    if (purchasedUsed > 0) {
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "used_purchased",
+        amount: -purchasedUsed,
+        description: `Used ${purchasedUsed} purchased token(s) for photo editing`,
+      });
+    }
+    return { annualUsed, purchasedUsed };
+  }
+
+  async addPurchasedTokens(userId: string, count: number): Promise<EditToken> {
+    const tokens = await this.getOrCreateEditTokens(userId);
+    const [updated] = await db.update(editTokens)
+      .set({ purchasedTokens: tokens.purchasedTokens + count })
+      .where(eq(editTokens.id, tokens.id))
+      .returning();
+    await db.insert(tokenTransactions).values({
+      userId,
+      type: "purchased",
+      amount: count,
+      description: `Purchased ${count} edit token(s)`,
+    });
+    return updated;
+  }
+
+  async adjustTokens(userId: string, annual: number, purchased: number): Promise<EditToken> {
+    const tokens = await this.getOrCreateEditTokens(userId);
+    const [updated] = await db.update(editTokens)
+      .set({ annualTokens: annual, purchasedTokens: purchased })
+      .where(eq(editTokens.id, tokens.id))
+      .returning();
+    const annualDiff = annual - tokens.annualTokens;
+    const purchasedDiff = purchased - tokens.purchasedTokens;
+    if (annualDiff !== 0) {
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "admin_adjustment",
+        amount: annualDiff,
+        description: `Admin adjusted annual tokens by ${annualDiff > 0 ? "+" : ""}${annualDiff}`,
+      });
+    }
+    if (purchasedDiff !== 0) {
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "admin_adjustment",
+        amount: purchasedDiff,
+        description: `Admin adjusted purchased tokens by ${purchasedDiff > 0 ? "+" : ""}${purchasedDiff}`,
+      });
+    }
+    return updated;
+  }
+
+  async getTokenTransactions(userId: string): Promise<TokenTransaction[]> {
+    return db.select().from(tokenTransactions).where(eq(tokenTransactions.userId, userId)).orderBy(desc(tokenTransactions.createdAt));
+  }
+
+  async createTokenTransaction(tx: InsertTokenTransaction): Promise<TokenTransaction> {
+    const [result] = await db.insert(tokenTransactions).values(tx).returning();
+    return result;
+  }
+
+  async createEditRequest(data: InsertEditRequest): Promise<EditRequest> {
+    const [result] = await db.insert(editRequests).values(data).returning();
+    return result;
+  }
+
+  async getEditRequests(userId?: string): Promise<EditRequest[]> {
+    if (userId) {
+      return db.select().from(editRequests).where(eq(editRequests.userId, userId)).orderBy(desc(editRequests.createdAt));
+    }
+    return db.select().from(editRequests).orderBy(desc(editRequests.createdAt));
+  }
+
+  async getEditRequestPhotos(editRequestId: string): Promise<EditRequestPhoto[]> {
+    return db.select().from(editRequestPhotos).where(eq(editRequestPhotos.editRequestId, editRequestId));
+  }
+
+  async createEditRequestPhoto(photo: InsertEditRequestPhoto): Promise<EditRequestPhoto> {
+    const [result] = await db.insert(editRequestPhotos).values(photo).returning();
+    return result;
+  }
+
+  async getAllEditTokens(): Promise<EditToken[]> {
+    return db.select().from(editTokens);
   }
 }
 

@@ -29,9 +29,41 @@ import {
   Receipt,
   Send,
   MapPin,
+  Coins,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
+
+interface EditToken {
+  id: string;
+  userId: string;
+  annualTokens: number;
+  purchasedTokens: number;
+  annualTokenResetDate: string;
+  lastPhotoshootDate: string | null;
+  createdAt: string;
+}
+
+interface TokenTransaction {
+  id: string;
+  userId: string;
+  type: string;
+  amount: number;
+  description: string | null;
+  createdAt: string;
+}
+
+interface EditRequest {
+  id: string;
+  userId: string;
+  shootId: string | null;
+  photoCount: number;
+  annualTokensUsed: number;
+  purchasedTokensUsed: number;
+  status: string;
+  createdAt: string;
+}
 
 function adminFetch(url: string, token: string, options: RequestInit = {}) {
   return fetch(url, {
@@ -835,12 +867,226 @@ function InvoiceModal({
   );
 }
 
+function TokenManager({ userId, userName, token, onBack }: { userId: string; userName: string; token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [annual, setAnnual] = useState(0);
+  const [purchased, setPurchased] = useState(0);
+  const [transactions, setTransactions] = useState<TokenTransaction[]>([]);
+  const [editRequests, setEditRequests] = useState<EditRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [tokensRes, txRes, reqRes] = await Promise.all([
+          adminFetch(`/api/admin/edit-tokens/${userId}`, token),
+          adminFetch(`/api/admin/token-transactions/${userId}`, token),
+          adminFetch("/api/admin/edit-requests", token),
+        ]);
+        if (tokensRes.ok) {
+          const data = await tokensRes.json();
+          setAnnual(data.annualTokens ?? 0);
+          setPurchased(data.purchasedTokens ?? 0);
+        }
+        if (txRes.ok) setTransactions(await txRes.json());
+        if (reqRes.ok) {
+          const all: EditRequest[] = await reqRes.json();
+          setEditRequests(all.filter((r) => r.userId === userId));
+        }
+      } catch {
+        toast({ title: "Error", description: "Failed to load token data", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [userId, token]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await adminFetch(`/api/admin/edit-tokens/${userId}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ annual, purchased }),
+      });
+      if (res.ok) {
+        toast({ title: "Saved", description: "Token counts updated" });
+      } else {
+        toast({ title: "Error", description: "Failed to save tokens", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to save tokens", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+          <button
+            onClick={onBack}
+            data-testid="button-back-from-tokens"
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div className="h-4 w-px bg-gray-200" />
+          <div>
+            <p className="font-serif text-lg text-gray-900" data-testid="text-tokens-title">Token Management</p>
+            <p className="text-xs text-gray-500">{userName}</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium text-gray-900 flex items-center gap-2">
+                  <Coins className="w-4 h-4" />
+                  Edit Tokens
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap items-end gap-4">
+                  <div>
+                    <Label className="text-sm text-gray-700">Annual Tokens</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={annual}
+                      onChange={(e) => setAnnual(parseInt(e.target.value) || 0)}
+                      data-testid="input-annual-tokens"
+                      className="mt-1 w-32"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-700">Purchased Tokens</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={purchased}
+                      onChange={(e) => setPurchased(parseInt(e.target.value) || 0)}
+                      data-testid="input-purchased-tokens"
+                      className="mt-1 w-32"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSave}
+                    disabled={saving}
+                    data-testid="button-save-tokens"
+                    className="bg-[#1a1a1a] text-white"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium text-gray-900">Transaction History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {transactions.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic py-2">No transactions yet</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" data-testid="table-transactions">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Date</th>
+                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Type</th>
+                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Amount</th>
+                          <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map((tx) => (
+                          <tr key={tx.id} className="border-b border-gray-50" data-testid={`row-transaction-${tx.id}`}>
+                            <td className="py-2 pr-4 text-gray-600">
+                              {new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </td>
+                            <td className="py-2 pr-4">
+                              <Badge variant="secondary" className="text-xs capitalize">{tx.type}</Badge>
+                            </td>
+                            <td className="py-2 pr-4 text-gray-900 font-medium">{tx.amount > 0 ? `+${tx.amount}` : tx.amount}</td>
+                            <td className="py-2 text-gray-600">{tx.description || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium text-gray-900">Edit Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {editRequests.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic py-2">No edit requests yet</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" data-testid="table-edit-requests">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Date</th>
+                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Photos</th>
+                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Tokens Used</th>
+                          <th className="text-left py-2 text-gray-500 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editRequests.map((req) => (
+                          <tr key={req.id} className="border-b border-gray-50" data-testid={`row-edit-request-${req.id}`}>
+                            <td className="py-2 pr-4 text-gray-600">
+                              {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </td>
+                            <td className="py-2 pr-4 text-gray-900">{req.photoCount}</td>
+                            <td className="py-2 pr-4 text-gray-600">
+                              {req.annualTokensUsed > 0 && <span>Annual: {req.annualTokensUsed}</span>}
+                              {req.annualTokensUsed > 0 && req.purchasedTokensUsed > 0 && <span>, </span>}
+                              {req.purchasedTokensUsed > 0 && <span>Purchased: {req.purchasedTokensUsed}</span>}
+                              {req.annualTokensUsed === 0 && req.purchasedTokensUsed === 0 && <span>0</span>}
+                            </td>
+                            <td className="py-2">
+                              <Badge variant="secondary" className="text-xs capitalize">{req.status}</Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -848,6 +1094,8 @@ function AdminDashboard({ token }: { token: string }) {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [invoiceShoot, setInvoiceShoot] = useState<Shoot | null>(null);
+  const [allEditTokens, setAllEditTokens] = useState<EditToken[]>([]);
+  const [selectedTokenUser, setSelectedTokenUser] = useState<UserType | null>(null);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editUserForm, setEditUserForm] = useState({ firstName: "", lastName: "", email: "" });
   const [savingUser, setSavingUser] = useState(false);
@@ -865,15 +1113,20 @@ function AdminDashboard({ token }: { token: string }) {
     return email.includes(q) || name.includes(q);
   });
 
+  const tokenMap = new Map<string, EditToken>();
+  allEditTokens.forEach((t) => tokenMap.set(t.userId, t));
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, shootsRes] = await Promise.all([
+      const [usersRes, shootsRes, tokensRes] = await Promise.all([
         adminFetch("/api/admin/users", token),
         adminFetch("/api/admin/shoots", token),
+        adminFetch("/api/admin/all-edit-tokens", token),
       ]);
       if (usersRes.ok) setUsers(await usersRes.json());
       if (shootsRes.ok) setShoots(await shootsRes.json());
+      if (tokensRes.ok) setAllEditTokens(await tokensRes.json());
     } catch {
       toast({ title: "Error", description: "Failed to load data", variant: "destructive" });
     } finally {
@@ -1047,6 +1300,18 @@ function AdminDashboard({ token }: { token: string }) {
         shootTitle={galleryShoot.title}
         token={token}
         onBack={() => { setView("clients"); setGalleryShoot(null); }}
+      />
+    );
+  }
+
+  if (view === "tokens" && selectedTokenUser) {
+    const name = `${selectedTokenUser.firstName || ""} ${selectedTokenUser.lastName || ""}`.trim() || selectedTokenUser.email || "Client";
+    return (
+      <TokenManager
+        userId={selectedTokenUser.id}
+        userName={name}
+        token={token}
+        onBack={() => { setView("clients"); setSelectedTokenUser(null); loadData(); }}
       />
     );
   }
@@ -1416,6 +1681,26 @@ function AdminDashboard({ token }: { token: string }) {
                                 </Button>
                               </div>
                               <p className="text-xs text-gray-500 truncate">{user.email || "No email"}</p>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                <Badge variant="secondary" className="text-xs" data-testid={`badge-annual-tokens-${user.id}`}>
+                                  <Coins className="w-3 h-3 mr-1" />
+                                  Annual: {tokenMap.get(user.id)?.annualTokens ?? 0}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs" data-testid={`badge-purchased-tokens-${user.id}`}>
+                                  <Coins className="w-3 h-3 mr-1" />
+                                  Purchased: {tokenMap.get(user.id)?.purchasedTokens ?? 0}
+                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => { setSelectedTokenUser(user); setView("tokens"); }}
+                                  data-testid={`button-tokens-${user.id}`}
+                                  className="h-6 text-xs px-2 text-gray-600 border-gray-200"
+                                >
+                                  <Coins className="w-3 h-3 mr-1" />
+                                  Tokens
+                                </Button>
+                              </div>
                             </>
                           )}
                         </div>

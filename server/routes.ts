@@ -314,6 +314,7 @@ export async function registerRoutes(
         shootDate: preferredDate,
         notes: typeof notes === "string" ? notes : null,
       });
+      await storage.getOrCreateEditTokens(userId);
       res.status(201).json(shoot);
     } catch (error) {
       console.error("Failed to create booking shoot:", error);
@@ -365,6 +366,7 @@ export async function registerRoutes(
         status: "pending-review",
         notes: message.trim(),
       });
+      await storage.getOrCreateEditTokens(userId);
 
       try {
         await sendCollaborateMessage({
@@ -524,6 +526,7 @@ export async function registerRoutes(
     try {
       const data = insertShootSchema.parse(req.body);
       const shoot = await storage.createShoot(data);
+      await storage.getOrCreateEditTokens(data.userId);
       res.status(201).json(shoot);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -871,6 +874,169 @@ export async function registerRoutes(
       if (!res.headersSent) {
         res.status(500).json({ message: "Failed to create download" });
       }
+    }
+  });
+
+  const EDIT_TOKEN_PRICE_CENTS = 2500;
+  const TOKENS_PER_PHOTO = 1;
+
+  app.get("/api/edit-tokens", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tokens = await storage.resetExpiredAnnualTokens(userId);
+      res.json(tokens);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to get tokens" });
+    }
+  });
+
+  app.get("/api/edit-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requests = await storage.getEditRequests(userId);
+      res.json(requests);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to get edit requests" });
+    }
+  });
+
+  app.post("/api/edit-requests", isAuthenticated, upload.array("photos", 10), async (req: any, res) => {
+    const files = req.files as Express.Multer.File[];
+    try {
+      const userId = req.user.claims.sub;
+      const shootId = req.body.shootId || null;
+      if (!files || files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+      const tokenCost = files.length * TOKENS_PER_PHOTO;
+      const { annualUsed, purchasedUsed } = await storage.deductTokens(userId, tokenCost);
+      const editRequest = await storage.createEditRequest({
+        userId,
+        shootId,
+        photoCount: files.length,
+        annualTokensUsed: annualUsed,
+        purchasedTokensUsed: purchasedUsed,
+        status: "pending",
+      });
+      for (const file of files) {
+        const contentType = file.mimetype || "application/octet-stream";
+        const objectPath = await uploadFileFromDisk(file.path, contentType);
+        await storage.createEditRequestPhoto({
+          editRequestId: editRequest.id,
+          imageUrl: objectPath,
+          originalFilename: file.originalname,
+        });
+      }
+      const updatedTokens = await storage.getOrCreateEditTokens(userId);
+      res.status(201).json({ editRequest, tokens: updatedTokens });
+    } catch (err: any) {
+      for (const file of (files || [])) {
+        await fs.promises.unlink(file.path).catch(() => {});
+      }
+      if (err.message === "Insufficient edit tokens") {
+        return res.status(400).json({ message: "You do not have enough Edit Tokens. Please purchase additional tokens to continue." });
+      }
+      res.status(500).json({ message: err.message || "Failed to submit edit request" });
+    }
+  });
+
+  app.post("/api/edit-tokens/checkout", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const email = req.user.claims.email;
+      const quantity = parseInt(req.body.quantity) || 1;
+      if (quantity < 1 || quantity > 100) {
+        return res.status(400).json({ message: "Quantity must be between 1 and 100" });
+      }
+      const stripe = await getUncachableStripeClient();
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: "Edit Token",
+                description: "Photo editing token - submit photos for professional editing",
+              },
+              unit_amount: EDIT_TOKEN_PRICE_CENTS,
+            },
+            quantity,
+          },
+        ],
+        mode: "payment",
+        success_url: `${baseUrl}/portal?token_purchase=success`,
+        cancel_url: `${baseUrl}/portal?token_purchase=cancelled`,
+        customer_email: email,
+        metadata: {
+          type: "edit_tokens",
+          userId,
+          quantity: String(quantity),
+        },
+      });
+      res.json({ url: session.url });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to create checkout" });
+    }
+  });
+
+  app.get("/api/edit-tokens/config", (_req, res) => {
+    res.json({ pricePerToken: EDIT_TOKEN_PRICE_CENTS / 100, tokensPerPhoto: TOKENS_PER_PHOTO });
+  });
+
+  app.get("/api/admin/edit-tokens/:userId", isAdmin, async (req: any, res) => {
+    try {
+      const tokens = await storage.getOrCreateEditTokens(req.params.userId);
+      res.json(tokens);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/edit-tokens/:userId", isAdmin, async (req: any, res) => {
+    try {
+      const { annual, purchased } = req.body;
+      const tokens = await storage.adjustTokens(req.params.userId, annual, purchased);
+      res.json(tokens);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/edit-requests", isAdmin, async (_req: any, res) => {
+    try {
+      const requests = await storage.getEditRequests();
+      res.json(requests);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/edit-requests/:id/photos", isAdmin, async (req: any, res) => {
+    try {
+      const photos = await storage.getEditRequestPhotos(req.params.id);
+      res.json(photos);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/token-transactions/:userId", isAdmin, async (req: any, res) => {
+    try {
+      const transactions = await storage.getTokenTransactions(req.params.userId);
+      res.json(transactions);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/all-edit-tokens", isAdmin, async (_req: any, res) => {
+    try {
+      const tokens = await storage.getAllEditTokens();
+      res.json(tokens);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   });
 

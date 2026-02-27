@@ -33,8 +33,54 @@ import {
   HelpCircle,
   Send,
   CheckCircle2,
+  Coins,
+  Upload,
+  ShoppingCart,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  FileImage,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+
+type EditToken = {
+  id: string;
+  userId: string;
+  annualTokens: number;
+  purchasedTokens: number;
+  annualTokenResetDate: string;
+  lastPhotoshootDate: string | null;
+};
+
+type EditRequest = {
+  id: string;
+  userId: string;
+  shootId: string | null;
+  photoCount: number;
+  annualTokensUsed: number;
+  purchasedTokensUsed: number;
+  status: string;
+  createdAt: string;
+};
+
+type TokenConfig = {
+  pricePerToken: number;
+  tokensPerPhoto: number;
+};
 
 function getStatusColor(status: string | null) {
   switch (status) {
@@ -260,6 +306,398 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
   );
 }
 
+function EditTokenSection({ shoot }: { shoot: Shoot }) {
+  const { toast } = useToast();
+  const [editSectionOpen, setEditSectionOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBuyDialog, setShowBuyDialog] = useState(false);
+  const [buyQuantity, setBuyQuantity] = useState(1);
+  const [isBuying, setIsBuying] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("token_purchase") === "success") {
+      toast({ title: "Purchase Successful", description: "Your edit tokens have been added to your account." });
+      const url = new URL(window.location.href);
+      url.searchParams.delete("token_purchase");
+      window.history.replaceState({}, "", url.toString());
+      queryClient.invalidateQueries({ queryKey: ["/api/edit-tokens"] });
+    }
+  }, [toast]);
+
+  const { data: tokenBalance, isLoading: tokensLoading } = useQuery<EditToken>({
+    queryKey: ["/api/edit-tokens"],
+    queryFn: async () => {
+      const res = await fetch("/api/edit-tokens", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch token balance");
+      return res.json();
+    },
+  });
+
+  const { data: editRequests = [], isLoading: requestsLoading } = useQuery<EditRequest[]>({
+    queryKey: ["/api/edit-requests"],
+    queryFn: async () => {
+      const res = await fetch("/api/edit-requests", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch edit requests");
+      return res.json();
+    },
+  });
+
+  const { data: tokenConfig } = useQuery<TokenConfig>({
+    queryKey: ["/api/edit-tokens/config"],
+    queryFn: async () => {
+      const res = await fetch("/api/edit-tokens/config", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch config");
+      return res.json();
+    },
+  });
+
+  const totalTokens = (tokenBalance?.annualTokens ?? 0) + (tokenBalance?.purchasedTokens ?? 0);
+  const fileCount = selectedFiles.length;
+  const tokensPerPhoto = tokenConfig?.tokensPerPhoto ?? 1;
+  const tokenCost = fileCount * tokensPerPhoto;
+  const annualAvailable = tokenBalance?.annualTokens ?? 0;
+  const purchasedAvailable = tokenBalance?.purchasedTokens ?? 0;
+  const annualUsed = Math.min(tokenCost, annualAvailable);
+  const purchasedUsed = Math.min(tokenCost - annualUsed, purchasedAvailable);
+  const hasEnoughTokens = tokenCost <= totalTokens;
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleDragLeave = () => setIsDragging(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files).filter((f) => f.type.startsWith("image/"));
+      setSelectedFiles((prev) => [...prev, ...files]);
+    }
+  };
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitPhotos = async () => {
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("shootId", shoot.id);
+      selectedFiles.forEach((file) => formData.append("photos", file));
+      const res = await fetch("/api/edit-requests", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to submit" }));
+        throw new Error(err.message || "Failed to submit edit request");
+      }
+      toast({ title: "Edit Request Submitted", description: `${fileCount} photo(s) submitted for editing.` });
+      setSelectedFiles([]);
+      setShowConfirmDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/edit-tokens"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/edit-requests"] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to submit edit request.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBuyTokens = async () => {
+    setIsBuying(true);
+    try {
+      const res = await fetch("/api/edit-tokens/checkout", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity: buyQuantity }),
+      });
+      if (!res.ok) throw new Error("Failed to create checkout");
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to start purchase.", variant: "destructive" });
+    } finally {
+      setIsBuying(false);
+    }
+  };
+
+  const getEditRequestStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge variant="secondary" className="bg-green-50 text-green-700" data-testid="badge-request-completed"><CheckCircle className="w-3 h-3 mr-1" />Completed</Badge>;
+      case "in-progress":
+        return <Badge variant="secondary" className="bg-amber-50 text-amber-700" data-testid="badge-request-in-progress"><Clock className="w-3 h-3 mr-1" />In Progress</Badge>;
+      default:
+        return <Badge variant="secondary" className="bg-blue-50 text-blue-700" data-testid="badge-request-pending"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+    }
+  };
+
+  return (
+    <div className="space-y-4 mb-8">
+      <Card className="bg-white" data-testid="card-token-balance">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Coins className="w-5 h-5 text-amber-500" />
+              <CardTitle className="text-base font-semibold">Edit Tokens</CardTitle>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBuyDialog(true)}
+              data-testid="button-buy-tokens"
+            >
+              <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+              Buy More Tokens
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {tokensLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            </div>
+          ) : tokenBalance ? (
+            <div className="flex flex-wrap gap-6 text-sm">
+              <div data-testid="text-annual-tokens">
+                <span className="text-gray-500">Annual Tokens Remaining:</span>{" "}
+                <span className="font-semibold text-gray-900">{tokenBalance.annualTokens}</span>
+              </div>
+              <div data-testid="text-purchased-tokens">
+                <span className="text-gray-500">Purchased Tokens Remaining:</span>{" "}
+                <span className="font-semibold text-gray-900">{tokenBalance.purchasedTokens}</span>
+              </div>
+              <div data-testid="text-reset-date">
+                <span className="text-gray-500">Next Annual Reset Date:</span>{" "}
+                <span className="font-semibold text-gray-900">{formatDate(tokenBalance.annualTokenResetDate)}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">Unable to load token balance.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white" data-testid="card-edit-section">
+        <CardHeader className="pb-3">
+          <button
+            onClick={() => setEditSectionOpen(!editSectionOpen)}
+            data-testid="button-toggle-edit-section"
+            className="flex items-center justify-between w-full text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-gray-500" />
+              <CardTitle className="text-base font-semibold">Submit Photos for Editing</CardTitle>
+            </div>
+            {editSectionOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+          </button>
+        </CardHeader>
+        {editSectionOpen && (
+          <CardContent className="space-y-4">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              data-testid="dropzone-edit-photos"
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                isDragging ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+              }`}
+              onClick={() => document.getElementById("edit-photo-input")?.click()}
+            >
+              <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-1">Drag & drop photos here, or click to browse</p>
+              <p className="text-xs text-gray-400">Accepts image files only</p>
+              <input
+                id="edit-photo-input"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+                data-testid="input-edit-photos"
+              />
+            </div>
+
+            {selectedFiles.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {selectedFiles.map((file, i) => (
+                    <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-md px-2 py-1 text-xs text-gray-700">
+                      <FileImage className="w-3 h-3 text-gray-400" />
+                      <span className="max-w-[120px] truncate">{file.name}</span>
+                      <button
+                        onClick={() => removeFile(i)}
+                        data-testid={`button-remove-file-${i}`}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
+                  <p className="font-medium text-gray-900" data-testid="text-token-cost">
+                    This will use {tokenCost} edit token(s)
+                  </p>
+                  {hasEnoughTokens ? (
+                    <p className="text-gray-500" data-testid="text-token-breakdown">
+                      {annualUsed} from annual tokens, {purchasedUsed} from purchased tokens
+                    </p>
+                  ) : (
+                    <div className="flex items-start gap-2 text-amber-600" data-testid="text-insufficient-tokens">
+                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <p>You do not have enough Edit Tokens. Please purchase additional tokens to continue.</p>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => setShowConfirmDialog(true)}
+                  disabled={!hasEnoughTokens || fileCount === 0}
+                  data-testid="button-submit-edit-request"
+                  className="bg-[#1a1a1a] text-white"
+                >
+                  <Upload className="w-4 h-4 mr-1.5" />
+                  Submit for Editing
+                </Button>
+              </div>
+            )}
+
+            {!requestsLoading && editRequests.length > 0 && (
+              <div className="pt-4 border-t border-gray-100">
+                <h4 className="text-sm font-medium text-gray-900 mb-3" data-testid="text-past-requests-heading">Past Edit Requests</h4>
+                <div className="space-y-2">
+                  {editRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="flex items-center justify-between flex-wrap gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm"
+                      data-testid={`card-edit-request-${req.id}`}
+                    >
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-gray-500">{formatDate(req.createdAt)}</span>
+                        <span className="text-gray-900">{req.photoCount} photo(s)</span>
+                        <span className="text-gray-400 text-xs">
+                          {req.annualTokensUsed} annual + {req.purchasedTokensUsed} purchased tokens
+                        </span>
+                      </div>
+                      {getEditRequestStatusBadge(req.status)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent data-testid="dialog-confirm-edit">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Edit Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to submit {fileCount} photo(s) for editing. This will use{" "}
+              <span className="font-semibold">{tokenCost} edit token(s)</span>:
+              <br />
+              {annualUsed} from annual tokens and {purchasedUsed} from purchased tokens.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting} data-testid="button-cancel-edit">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSubmitPhotos}
+              disabled={isSubmitting}
+              data-testid="button-confirm-edit"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+              {isSubmitting ? "Submitting..." : "Confirm & Submit"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
+        <DialogContent data-testid="dialog-buy-tokens">
+          <DialogHeader>
+            <DialogTitle>Buy More Edit Tokens</DialogTitle>
+            <DialogDescription>Purchase additional edit tokens for your photos.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <label className="text-sm text-gray-700">Quantity</label>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setBuyQuantity(Math.max(1, buyQuantity - 1))}
+                  disabled={buyQuantity <= 1}
+                  data-testid="button-decrease-quantity"
+                >
+                  -
+                </Button>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={buyQuantity}
+                  onChange={(e) => setBuyQuantity(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                  className="w-16 text-center"
+                  data-testid="input-token-quantity"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setBuyQuantity(Math.min(10, buyQuantity + 1))}
+                  disabled={buyQuantity >= 10}
+                  data-testid="button-increase-quantity"
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 text-sm">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-gray-500">Price per token</span>
+                <span className="text-gray-900" data-testid="text-price-per-token">${tokenConfig?.pricePerToken ?? 25}</span>
+              </div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mt-1 pt-1 border-t border-gray-200">
+                <span className="font-medium text-gray-900">Total</span>
+                <span className="font-semibold text-gray-900" data-testid="text-total-price">
+                  ${(tokenConfig?.pricePerToken ?? 25) * buyQuantity}
+                </span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleBuyTokens}
+              disabled={isBuying}
+              data-testid="button-purchase-tokens"
+              className="bg-[#1a1a1a] text-white"
+            >
+              {isBuying ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <ShoppingCart className="w-4 h-4 mr-1.5" />}
+              {isBuying ? "Processing..." : "Purchase"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -412,6 +850,7 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
+        <EditTokenSection shoot={shoot} />
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
