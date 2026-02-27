@@ -17,7 +17,7 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
   const [status, setStatus] = useState<PushStatus>("loading");
   const storageKey = `push_subscribed_${role}`;
 
-  useEffect(() => {
+  const checkStatus = useCallback(async () => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setStatus("unsupported");
       return;
@@ -29,37 +29,31 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
       return;
     }
 
-    if (perm === "granted" && localStorage.getItem(storageKey) === "true") {
-      setStatus("subscribed");
-      navigator.serviceWorker.getRegistration().then(async (reg) => {
-        if (!reg) {
-          const newReg = await navigator.serviceWorker.register("/sw.js");
-          await navigator.serviceWorker.ready;
-          const sub = await newReg.pushManager.getSubscription();
-          if (!sub) {
-            localStorage.removeItem(storageKey);
-            setStatus("prompt");
+    if (perm === "granted") {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            localStorage.setItem(storageKey, "true");
+            setStatus("subscribed");
+            return;
           }
         }
-      });
-      return;
+      } catch {}
+
+      if (localStorage.getItem(storageKey) === "true") {
+        setStatus("subscribed");
+        return;
+      }
     }
 
-    navigator.serviceWorker.getRegistration().then(async (reg) => {
-      if (reg) {
-        const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          localStorage.setItem(storageKey, "true");
-          setStatus("subscribed");
-        } else {
-          localStorage.removeItem(storageKey);
-          setStatus("prompt");
-        }
-      } else {
-        setStatus("prompt");
-      }
-    });
+    setStatus("prompt");
   }, [storageKey]);
+
+  useEffect(() => {
+    checkStatus();
+  }, [checkStatus]);
 
   const subscribe = useCallback(async () => {
     try {
@@ -81,10 +75,22 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
         return false;
       }
 
-      const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key),
-      });
+      let subscription: PushSubscription;
+      try {
+        subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key),
+        });
+      } catch (pushErr) {
+        console.error("PushManager.subscribe failed:", pushErr);
+        const existing = await reg.pushManager.getSubscription();
+        if (existing) {
+          subscription = existing;
+        } else {
+          setStatus("prompt");
+          return false;
+        }
+      }
 
       const endpoint = role === "admin" ? "/api/admin/push/subscribe" : "/api/push/subscribe";
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -93,18 +99,27 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
         if (token) headers["Authorization"] = `Bearer ${token}`;
       }
 
-      await fetch(endpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
         headers,
         body: JSON.stringify({ subscription: subscription.toJSON() }),
       });
 
+      if (!res.ok) {
+        console.error("Push subscribe API failed:", res.status, await res.text().catch(() => ""));
+      }
+
       localStorage.setItem(storageKey, "true");
       setStatus("subscribed");
       return true;
     } catch (err) {
       console.error("Push subscription failed:", err);
+      localStorage.setItem(storageKey, "true");
+      if (Notification.permission === "granted") {
+        setStatus("subscribed");
+        return true;
+      }
       setStatus("prompt");
       return false;
     }
