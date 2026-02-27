@@ -158,23 +158,6 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!lightboxImage) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightboxImage(null);
-      if (e.key === "ArrowLeft") {
-        const idx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
-        if (idx > 0) setLightboxImage(filteredImages[idx - 1]);
-      }
-      if (e.key === "ArrowRight") {
-        const idx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
-        if (idx < filteredImages.length - 1) setLightboxImage(filteredImages[idx + 1]);
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [lightboxImage, filteredImages]);
-
   const loadGallery = useCallback(async () => {
     setLoading(true);
     try {
@@ -185,10 +168,10 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
       if (imagesRes.ok) setImages(await imagesRes.json());
       if (foldersRes.ok) setFolders(await foldersRes.json());
     } catch {
-      toast({ title: "Error", description: "Failed to load gallery", variant: "destructive" });
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shootId, token]);
 
   useEffect(() => { loadGallery(); }, [loadGallery]);
@@ -348,6 +331,23 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   const filteredImages = effectiveFolder
     ? images.filter((img) => img.folderId === effectiveFolder)
     : images.filter((img) => !img.folderId);
+
+  useEffect(() => {
+    if (!lightboxImage) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxImage(null);
+      if (e.key === "ArrowLeft") {
+        const idx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
+        if (idx > 0) setLightboxImage(filteredImages[idx - 1]);
+      }
+      if (e.key === "ArrowRight") {
+        const idx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
+        if (idx < filteredImages.length - 1) setLightboxImage(filteredImages[idx + 1]);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxImage, filteredImages]);
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
