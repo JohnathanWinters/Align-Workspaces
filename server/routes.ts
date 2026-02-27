@@ -19,9 +19,14 @@ import { authStorage } from "./replit_integrations/auth";
 const objectStorageService = new ObjectStorageService();
 
 const uploadDir = path.join(process.cwd(), "uploads");
+const tmpUploadDir = path.join(process.cwd(), "tmp_uploads");
+if (!fs.existsSync(tmpUploadDir)) fs.mkdirSync(tmpUploadDir, { recursive: true });
 
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.diskStorage({
+    destination: tmpUploadDir,
+    filename: (_req, _file, cb) => cb(null, `${randomUUID()}`),
+  }),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = /\.(jpg|jpeg|png|gif|webp|heic|heif|tiff|bmp)$/i;
@@ -49,6 +54,25 @@ async function uploadBufferToObjectStorage(buffer: Buffer, contentType: string):
   const bucket = objectStorageClient.bucket(bucketName);
   const file = bucket.file(objectName);
   await file.save(buffer, { contentType });
+  return `/objects/uploads/${objectId}`;
+}
+
+async function uploadFileFromDisk(filePath: string, contentType: string): Promise<string> {
+  const privateDir = objectStorageService.getPrivateObjectDir();
+  const objectId = randomUUID();
+  const fullPath = `${privateDir}/uploads/${objectId}`;
+  const { bucketName, objectName } = parseObjectPath(fullPath);
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
+  await new Promise<void>((resolve, reject) => {
+    const readStream = fs.createReadStream(filePath);
+    const writeStream = file.createWriteStream({ metadata: { contentType } });
+    readStream.pipe(writeStream);
+    writeStream.on("finish", resolve);
+    writeStream.on("error", reject);
+    readStream.on("error", reject);
+  });
+  await fs.promises.unlink(filePath).catch(() => {});
   return `/objects/uploads/${objectId}`;
 }
 
@@ -650,11 +674,11 @@ export async function registerRoutes(
   });
 
   // Admin: upload photos to a shoot
-  app.post("/api/admin/shoots/:id/upload", isAdmin, upload.array("photos", 50), async (req: any, res) => {
+  app.post("/api/admin/shoots/:id/upload", isAdmin, upload.array("photos", 10), async (req: any, res) => {
+    const files = req.files as Express.Multer.File[];
     try {
       const shootId = req.params.id as string;
       const folderId = req.body.folderId || null;
-      const files = req.files as Express.Multer.File[];
       if (!files || files.length === 0) {
         return res.status(400).json({ message: "No files uploaded" });
       }
@@ -662,7 +686,7 @@ export async function registerRoutes(
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const contentType = file.mimetype || "application/octet-stream";
-        const objectPath = await uploadBufferToObjectStorage(file.buffer, contentType);
+        const objectPath = await uploadFileFromDisk(file.path, contentType);
         const image = await storage.createGalleryImage({
           shootId,
           folderId: folderId || null,
@@ -674,6 +698,9 @@ export async function registerRoutes(
       }
       res.status(201).json(images);
     } catch (err: any) {
+      for (const file of (files || [])) {
+        await fs.promises.unlink(file.path).catch(() => {});
+      }
       res.status(500).json({ message: err.message || "Failed to upload photos" });
     }
   });

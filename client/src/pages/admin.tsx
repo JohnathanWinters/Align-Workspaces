@@ -184,14 +184,14 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
       return;
     }
     setUploading(true);
-    const BATCH_SIZE = 5;
+    const BATCH_SIZE = 2;
     let uploaded = 0;
     let failed = 0;
     const totalFiles = imageFiles.length;
     try {
       for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
         const batch = imageFiles.slice(i, i + BATCH_SIZE);
-        setUploadProgress(`Uploading ${Math.min(i + BATCH_SIZE, totalFiles)} of ${totalFiles}...`);
+        setUploadProgress(`Uploading ${Math.min(i + batch.length, totalFiles)} of ${totalFiles}...`);
         const formData = new FormData();
         for (const file of batch) {
           formData.append("photos", file);
