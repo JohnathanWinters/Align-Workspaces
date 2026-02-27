@@ -710,6 +710,7 @@ export async function registerRoutes(
     try {
       const objectPath = req.path;
       const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       if (error instanceof ObjectNotFoundError) {

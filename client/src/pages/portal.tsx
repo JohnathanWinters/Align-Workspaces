@@ -210,9 +210,60 @@ function Lightbox({
   );
 }
 
+function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, onOpenLightbox, onDownload, shootId }: {
+  image: GalleryImage;
+  index: number;
+  isFav: boolean;
+  isVisible: boolean;
+  onToggleFavorite: (id: string) => void;
+  onOpenLightbox: (index: number) => void;
+  onDownload: (imageId: string, filename: string) => void;
+  shootId: string;
+}) {
+  return (
+    <div
+      className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+      data-testid={`client-gallery-image-${image.id}`}
+      onClick={() => { if (isVisible) onOpenLightbox(index); }}
+    >
+      <img
+        src={image.imageUrl}
+        alt={image.originalFilename || image.caption || "Photo"}
+        className="w-full h-full object-cover"
+        loading={isVisible ? "eager" : "lazy"}
+      />
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleFavorite(image.id); }}
+        data-testid={`button-favorite-${image.id}`}
+        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+          isFav
+            ? "bg-red-500 text-white shadow-md"
+            : "bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50"
+        }`}
+      >
+        <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
+      </button>
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 pointer-events-none">
+        <p className="text-white text-xs truncate flex-1 mr-2">
+          {image.originalFilename || "Photo"}
+        </p>
+        <Button
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); onDownload(image.id, image.originalFilename || "photo.jpg"); }}
+          data-testid={`button-download-image-${image.id}`}
+          className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white pointer-events-auto"
+        >
+          <Download className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [visitedFolders, setVisitedFolders] = useState<Set<string | null>>(new Set([null]));
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -269,6 +320,17 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const effectiveFolder = selectedFolder === null && unsortedCount === 0 && hasFolders
     ? folders[0].id
     : selectedFolder;
+
+  useEffect(() => {
+    if (effectiveFolder !== undefined) {
+      setVisitedFolders((prev) => {
+        if (prev.has(effectiveFolder)) return prev;
+        const next = new Set(prev);
+        next.add(effectiveFolder);
+        return next;
+      });
+    }
+  }, [effectiveFolder]);
 
   const folderFilteredImages = showFavoritesOnly
     ? images.filter((img) => favoriteIds.includes(img.id))
@@ -401,7 +463,11 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
                   return (
                     <button
                       key={folder.id}
-                      onClick={() => { setSelectedFolder(folder.id); setShowFavoritesOnly(false); }}
+                      onClick={() => {
+                        setSelectedFolder(folder.id);
+                        setShowFavoritesOnly(false);
+                        setVisitedFolders((prev) => { if (prev.has(folder.id)) return prev; const next = new Set(prev); next.add(folder.id); return next; });
+                      }}
                       data-testid={`button-folder-${folder.id}`}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
                         isSelected
@@ -433,52 +499,23 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
                   <p className="text-gray-500 text-sm">Photos will appear here once they've been added.</p>
                 </CardContent>
               </Card>
-            ) : (
+            ) : showFavoritesOnly ? (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {displayedImages.map((image, index) => {
-                    const isFav = favoriteIds.includes(image.id);
-                    return (
-                      <div
-                        key={image.id}
-                        className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
-                        data-testid={`client-gallery-image-${image.id}`}
-                        onClick={() => setLightboxIndex(index)}
-                      >
-                        <img
-                          src={image.imageUrl}
-                          alt={image.originalFilename || image.caption || "Photo"}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleFavoriteMutation.mutate(image.id); }}
-                          data-testid={`button-favorite-${image.id}`}
-                          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                            isFav
-                              ? "bg-red-500 text-white shadow-md"
-                              : "bg-black/30 text-white opacity-0 group-hover:opacity-100 hover:bg-black/50"
-                          }`}
-                        >
-                          <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
-                        </button>
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 pointer-events-none">
-                          <p className="text-white text-xs truncate flex-1 mr-2">
-                            {image.originalFilename || "Photo"}
-                          </p>
-                          <Button
-                            size="sm"
-                            onClick={(e) => { e.stopPropagation(); handleDownloadSingle(image.id, image.originalFilename || "photo.jpg"); }}
-                            data-testid={`button-download-image-${image.id}`}
-                            className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white pointer-events-auto"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {displayedImages.map((image, index) => (
+                    <GalleryImageCard
+                      key={image.id}
+                      image={image}
+                      index={index}
+                      isFav={favoriteIds.includes(image.id)}
+                      isVisible={true}
+                      onToggleFavorite={(id) => toggleFavoriteMutation.mutate(id)}
+                      onOpenLightbox={setLightboxIndex}
+                      onDownload={handleDownloadSingle}
+                      shootId={shoot.id}
+                    />
+                  ))}
                 </div>
-
                 <AnimatePresence>
                   {lightboxIndex !== null && (
                     <Lightbox
@@ -488,6 +525,66 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
                     />
                   )}
                 </AnimatePresence>
+              </>
+            ) : (
+              <>
+                {(() => {
+                  const folderGroups: { folderId: string | null; imgs: typeof images }[] = [];
+                  if (hasFolders) {
+                    for (const folder of folders) {
+                      const folderImgs = images.filter((img) => img.folderId === folder.id);
+                      folderGroups.push({ folderId: folder.id, imgs: folderImgs });
+                    }
+                    const unsorted = images.filter((img) => !img.folderId);
+                    if (unsorted.length > 0) {
+                      folderGroups.push({ folderId: null, imgs: unsorted });
+                    }
+                  } else {
+                    folderGroups.push({ folderId: null, imgs: images });
+                  }
+                  const activeFolderId = effectiveFolder;
+                  const activeGroup = folderGroups.find((g) => g.folderId === activeFolderId);
+                  return (
+                    <>
+                      {folderGroups
+                        .filter((group) => visitedFolders.has(group.folderId))
+                        .map((group) => {
+                        const isActive = group.folderId === activeFolderId;
+                        return (
+                          <div
+                            key={group.folderId ?? "unsorted"}
+                            className={isActive ? "" : "hidden"}
+                          >
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {group.imgs.map((image, index) => (
+                                <GalleryImageCard
+                                  key={image.id}
+                                  image={image}
+                                  index={index}
+                                  isFav={favoriteIds.includes(image.id)}
+                                  isVisible={isActive}
+                                  onToggleFavorite={(id) => toggleFavoriteMutation.mutate(id)}
+                                  onOpenLightbox={setLightboxIndex}
+                                  onDownload={handleDownloadSingle}
+                                  shootId={shoot.id}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <AnimatePresence>
+                        {lightboxIndex !== null && activeGroup && (
+                          <Lightbox
+                            images={activeGroup.imgs}
+                            initialIndex={lightboxIndex}
+                            onClose={() => setLightboxIndex(null)}
+                          />
+                        )}
+                      </AnimatePresence>
+                    </>
+                  );
+                })()}
               </>
             )}
           </motion.div>
