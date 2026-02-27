@@ -969,12 +969,12 @@ function EditTokenSection() {
             <div className="bg-gray-50 rounded-lg p-3 text-sm">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-gray-500">Price per token</span>
-                <span className="text-gray-900" data-testid="text-price-per-token">${tokenConfig?.pricePerToken ?? 2}</span>
+                <span className="text-gray-900" data-testid="text-price-per-token">${tokenConfig?.pricePerToken ?? 5}</span>
               </div>
               <div className="flex items-center justify-between flex-wrap gap-2 mt-1 pt-1 border-t border-gray-200">
                 <span className="font-medium text-gray-900">Total</span>
                 <span className="font-semibold text-gray-900" data-testid="text-total-price">
-                  ${(tokenConfig?.pricePerToken ?? 2) * buyQuantity}
+                  ${(tokenConfig?.pricePerToken ?? 5) * buyQuantity}
                 </span>
               </div>
             </div>
