@@ -40,6 +40,7 @@ import {
   ChevronUp,
   AlertTriangle,
   FileImage,
+  Pencil,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -306,9 +307,9 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
   );
 }
 
-function EditTokenSection({ shoot }: { shoot: Shoot }) {
+function EditTokenSection() {
   const { toast } = useToast();
-  const [editSectionOpen, setEditSectionOpen] = useState(false);
+  const [editSectionOpen, setEditSectionOpen] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -390,7 +391,6 @@ function EditTokenSection({ shoot }: { shoot: Shoot }) {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("shootId", shoot.id);
       selectedFiles.forEach((file) => formData.append("photos", file));
       const res = await fetch("/api/edit-requests", {
         method: "POST",
@@ -850,7 +850,6 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        <EditTokenSection shoot={shoot} />
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -1158,6 +1157,7 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
+  const [activeTab, setActiveTab] = useState<"shoots" | "edits">("shoots");
 
   const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
     queryKey: ["/api/shoots"],
@@ -1224,13 +1224,13 @@ function PortalContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mb-8 flex items-end justify-between flex-wrap gap-4">
+          <div className="mb-6 flex items-end justify-between flex-wrap gap-4">
             <div>
               <h1 className="font-serif text-3xl text-gray-900 mb-1" data-testid="text-welcome">
                 Welcome{user?.firstName ? `, ${user.firstName}` : ""}
               </h1>
               <p className="text-gray-500 text-sm">
-                View your photoshoots and galleries
+                Manage your photoshoots and photo edits
               </p>
             </div>
             <Link href="/?start=1">
@@ -1243,7 +1243,48 @@ function PortalContent() {
             </Link>
           </div>
 
-          {isLoading ? (
+          <div className="flex gap-1 mb-8 border-b border-gray-200" data-testid="portal-tabs">
+            <button
+              onClick={() => setActiveTab("shoots")}
+              data-testid="tab-my-shoots"
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === "shoots"
+                  ? "text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Camera className="w-4 h-4" />
+              My Shoots
+              {activeTab === "shoots" && (
+                <motion.div
+                  layoutId="portal-tab-indicator"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("edits")}
+              data-testid="tab-my-edits"
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === "edits"
+                  ? "text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Pencil className="w-4 h-4" />
+              My Edits
+              {activeTab === "edits" && (
+                <motion.div
+                  layoutId="portal-tab-indicator"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                />
+              )}
+            </button>
+          </div>
+
+          {activeTab === "edits" ? (
+            <EditTokenSection />
+          ) : isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
             </div>
