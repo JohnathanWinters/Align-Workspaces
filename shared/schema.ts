@@ -194,3 +194,21 @@ export const insertEditRequestPhotoSchema = createInsertSchema(editRequestPhotos
 
 export type InsertEditRequestPhoto = z.infer<typeof insertEditRequestPhotoSchema>;
 export type EditRequestPhoto = typeof editRequestPhotos.$inferSelect;
+
+export const editRequestMessages = pgTable("edit_request_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  editRequestId: varchar("edit_request_id").notNull(),
+  senderId: text("sender_id").notNull(),
+  senderRole: text("sender_role").notNull(),
+  senderName: text("sender_name"),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEditRequestMessageSchema = createInsertSchema(editRequestMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertEditRequestMessage = z.infer<typeof insertEditRequestMessageSchema>;
+export type EditRequestMessage = typeof editRequestMessages.$inferSelect;

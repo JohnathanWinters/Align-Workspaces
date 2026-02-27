@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -41,6 +41,7 @@ import {
   AlertTriangle,
   FileImage,
   Pencil,
+  MessageCircle,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -81,6 +82,16 @@ type EditRequest = {
 type TokenConfig = {
   pricePerToken: number;
   tokensPerPhoto: number;
+};
+
+type EditRequestMessage = {
+  id: string;
+  editRequestId: string;
+  senderId: string;
+  senderRole: string;
+  senderName: string | null;
+  message: string;
+  createdAt: string;
 };
 
 function getStatusColor(status: string | null) {
@@ -278,6 +289,8 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
         alt={image.originalFilename || image.caption || "Photo"}
         className="w-full h-full object-cover"
         loading={isVisible ? "eager" : "lazy"}
+        decoding="async"
+        sizes="(min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
       />
       <button
         onClick={(e) => { e.stopPropagation(); onToggleFavorite(image.id); }}
@@ -301,6 +314,140 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
           className="h-7 w-7 p-0 shrink-0 bg-white/90 text-black hover:bg-white pointer-events-auto"
         >
           <Download className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function EditRequestCard({ request, getStatusBadge }: { request: EditRequest; getStatusBadge: (status: string) => JSX.Element }) {
+  const [showChat, setShowChat] = useState(false);
+
+  return (
+    <div
+      className="bg-gray-50 rounded-lg overflow-hidden"
+      data-testid={`card-edit-request-${request.id}`}
+    >
+      <div className="flex items-center justify-between flex-wrap gap-2 px-3 py-2 text-sm">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-gray-500">{formatDate(request.createdAt)}</span>
+          <span className="text-gray-900">{request.photoCount} photo(s)</span>
+          <span className="text-gray-400 text-xs">
+            {request.annualTokensUsed} annual + {request.purchasedTokensUsed} purchased tokens
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {getStatusBadge(request.status)}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowChat(!showChat)}
+            data-testid={`button-toggle-chat-${request.id}`}
+            className="h-7 px-2 text-gray-500 hover:text-gray-900"
+          >
+            <MessageCircle className="w-3.5 h-3.5 mr-1" />
+            Chat
+          </Button>
+        </div>
+      </div>
+      {showChat && <EditRequestChat editRequestId={request.id} />}
+    </div>
+  );
+}
+
+function EditRequestChat({ editRequestId }: { editRequestId: string }) {
+  const { toast } = useToast();
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { data: messages = [], isLoading } = useQuery<EditRequestMessage[]>({
+    queryKey: ["/api/edit-requests", editRequestId, "messages"],
+    queryFn: async () => {
+      const res = await fetch(`/api/edit-requests/${editRequestId}/messages`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch messages");
+      return res.json();
+    },
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || sending) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/edit-requests/${editRequestId}/messages`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: newMessage.trim() }),
+      });
+      if (!res.ok) throw new Error("Failed to send message");
+      setNewMessage("");
+      queryClient.invalidateQueries({ queryKey: ["/api/edit-requests", editRequestId, "messages"] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 border border-gray-200 rounded-lg bg-white" data-testid={`chat-${editRequestId}`}>
+      <div className="max-h-60 overflow-y-auto p-3 space-y-2">
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+          </div>
+        ) : messages.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-3">No messages yet. Start a conversation about your edit request.</p>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex flex-col ${msg.senderRole === "client" ? "items-end" : "items-start"}`}
+              data-testid={`message-${msg.id}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                  msg.senderRole === "client"
+                    ? "bg-[#1a1a1a] text-white"
+                    : "bg-gray-100 text-gray-900"
+                }`}
+              >
+                <p className={`text-[10px] font-medium mb-0.5 ${msg.senderRole === "client" ? "text-white/60" : "text-gray-500"}`}>
+                  {msg.senderName || (msg.senderRole === "admin" ? "Armando R." : "You")}
+                </p>
+                <p className="whitespace-pre-wrap">{msg.message}</p>
+              </div>
+              <span className="text-[10px] text-gray-400 mt-0.5 px-1">
+                {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+              </span>
+            </div>
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="border-t border-gray-200 p-2 flex gap-2">
+        <Input
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message..."
+          data-testid={`input-chat-message-${editRequestId}`}
+          className="text-sm"
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+        />
+        <Button
+          size="sm"
+          onClick={handleSend}
+          disabled={!newMessage.trim() || sending}
+          data-testid={`button-send-message-${editRequestId}`}
+          className="bg-[#1a1a1a] text-white shrink-0"
+        >
+          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>
     </div>
@@ -579,23 +726,10 @@ function EditTokenSection() {
 
             {!requestsLoading && editRequests.length > 0 && (
               <div className="pt-4 border-t border-gray-100">
-                <h4 className="text-sm font-medium text-gray-900 mb-3" data-testid="text-past-requests-heading">Past Edit Requests</h4>
-                <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 mb-3" data-testid="text-past-requests-heading">Edit Requests</h4>
+                <div className="space-y-3">
                   {editRequests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="flex items-center justify-between flex-wrap gap-2 bg-gray-50 rounded-lg px-3 py-2 text-sm"
-                      data-testid={`card-edit-request-${req.id}`}
-                    >
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-gray-500">{formatDate(req.createdAt)}</span>
-                        <span className="text-gray-900">{req.photoCount} photo(s)</span>
-                        <span className="text-gray-400 text-xs">
-                          {req.annualTokensUsed} annual + {req.purchasedTokensUsed} purchased tokens
-                        </span>
-                      </div>
-                      {getEditRequestStatusBadge(req.status)}
-                    </div>
+                    <EditRequestCard key={req.id} request={req} getStatusBadge={getEditRequestStatusBadge} />
                   ))}
                 </div>
               </div>

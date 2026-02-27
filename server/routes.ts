@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage } from "./gmail";
+import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification } from "./gmail";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -928,6 +928,14 @@ export async function registerRoutes(
         });
       }
       const updatedTokens = await storage.getOrCreateEditTokens(userId);
+      const clientName = req.user.claims.name || req.user.claims.email || "Client";
+      const clientEmail = req.user.claims.email || "";
+      sendEditRequestNotification({
+        clientName,
+        clientEmail,
+        photoCount: files.length,
+        tokensUsed: tokenCost,
+      }).catch((err) => console.error("Failed to send edit request notification:", err));
       res.status(201).json({ editRequest, tokens: updatedTokens });
     } catch (err: any) {
       for (const file of (files || [])) {
@@ -1037,6 +1045,75 @@ export async function registerRoutes(
       res.json(tokens);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/edit-requests/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const editRequest = await storage.getEditRequestById(req.params.id);
+      if (!editRequest || editRequest.userId !== userId) {
+        return res.status(404).json({ message: "Edit request not found" });
+      }
+      const messages = await storage.getEditRequestMessages(req.params.id);
+      res.json(messages);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to get messages" });
+    }
+  });
+
+  app.post("/api/edit-requests/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const editRequest = await storage.getEditRequestById(req.params.id);
+      if (!editRequest || editRequest.userId !== userId) {
+        return res.status(404).json({ message: "Edit request not found" });
+      }
+      const { message } = req.body;
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      const firstName = req.user.claims.first_name || req.user.claims.name?.split(" ")[0] || "";
+      const lastName = req.user.claims.last_name || req.user.claims.name?.split(" ").slice(1).join(" ") || "";
+      const senderName = lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName || "Client";
+      const msg = await storage.createEditRequestMessage({
+        editRequestId: req.params.id,
+        senderId: userId,
+        senderRole: "client",
+        senderName,
+        message: message.trim(),
+      });
+      res.status(201).json(msg);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to send message" });
+    }
+  });
+
+  app.get("/api/admin/edit-requests/:id/messages", isAdmin, async (req: any, res) => {
+    try {
+      const messages = await storage.getEditRequestMessages(req.params.id);
+      res.json(messages);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to get messages" });
+    }
+  });
+
+  app.post("/api/admin/edit-requests/:id/messages", isAdmin, async (req: any, res) => {
+    try {
+      const { message } = req.body;
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      const msg = await storage.createEditRequestMessage({
+        editRequestId: req.params.id,
+        senderId: "admin",
+        senderRole: "admin",
+        senderName: "Armando R.",
+        message: message.trim(),
+      });
+      res.status(201).json(msg);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to send message" });
     }
   });
 

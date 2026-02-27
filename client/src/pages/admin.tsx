@@ -30,6 +30,7 @@ import {
   Send,
   MapPin,
   Coins,
+  MessageCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,16 @@ interface EditRequest {
   annualTokensUsed: number;
   purchasedTokensUsed: number;
   status: string;
+  createdAt: string;
+}
+
+interface EditRequestMessage {
+  id: string;
+  editRequestId: string;
+  senderId: string;
+  senderRole: string;
+  senderName: string | null;
+  message: string;
   createdAt: string;
 }
 
@@ -182,6 +193,7 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
+  const [visitedFolders, setVisitedFolders] = useState<Set<string | null>>(new Set([null]));
   const [newFolderName, setNewFolderName] = useState("");
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editFolderName, setEditFolderName] = useState("");
@@ -494,7 +506,7 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
                   ) : (
                     <>
                       <button
-                        onClick={() => setSelectedFolder(folder.id)}
+                        onClick={() => { setSelectedFolder(folder.id); setVisitedFolders(prev => new Set(prev).add(folder.id)); }}
                         data-testid={`button-folder-${folder.id}`}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
                           isSelected
@@ -551,50 +563,70 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
               </div>
-            ) : filteredImages.length === 0 ? (
-              <Card className={`border-dashed border-2 bg-white/50 cursor-pointer ${dragOver ? "border-blue-400" : "border-gray-200"}`} onClick={() => !uploading && fileInputRef.current?.click()}>
-                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                  <Upload className="w-10 h-10 text-gray-300 mb-3" />
-                  <h3 className="font-serif text-lg text-gray-900 mb-1">
-                    {selectedFolder ? "No photos in this folder" : "No unsorted photos"}
-                  </h3>
-                  <p className="text-gray-500 text-sm">
-                    Drag & drop photos here or click to browse
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {filteredImages.map((image) => (
-                  <div
-                    key={image.id}
-                    className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
-                    data-testid={`gallery-image-${image.id}`}
-                    onClick={() => setLightboxImage(image)}
-                  >
-                    <img
-                      src={image.imageUrl}
-                      alt={image.originalFilename || image.caption || "Gallery photo"}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                      <p className="text-white text-xs truncate flex-1 mr-2">
-                        {image.originalFilename || "Photo"}
-                      </p>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleDeleteImage(image.id); }}
-                        data-testid={`button-delete-image-${image.id}`}
-                        className="h-7 w-7 p-0 shrink-0"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            ) : (() => {
+              const folderGroups = [null, ...folders.map(f => f.id)].filter(fId => visitedFolders.has(fId));
+              return (
+                <>
+                  {folderGroups.map(folderId => {
+                    const isActive = effectiveFolder === folderId;
+                    const groupImages = folderId
+                      ? images.filter(img => img.folderId === folderId)
+                      : images.filter(img => !img.folderId);
+                    return (
+                      <div key={folderId ?? "__root"} className={isActive ? "" : "hidden"}>
+                        {groupImages.length === 0 ? (
+                          <Card className={`border-dashed border-2 bg-white/50 cursor-pointer ${dragOver ? "border-blue-400" : "border-gray-200"}`} onClick={() => !uploading && fileInputRef.current?.click()}>
+                            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                              <Upload className="w-10 h-10 text-gray-300 mb-3" />
+                              <h3 className="font-serif text-lg text-gray-900 mb-1">
+                                {folderId ? "No photos in this folder" : "No unsorted photos"}
+                              </h3>
+                              <p className="text-gray-500 text-sm">
+                                Drag & drop photos here or click to browse
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {groupImages.map((image) => (
+                              <div
+                                key={image.id}
+                                className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+                                data-testid={`gallery-image-${image.id}`}
+                                onClick={() => { if (isActive) setLightboxImage(image); }}
+                              >
+                                <img
+                                  src={image.imageUrl}
+                                  alt={image.originalFilename || image.caption || "Gallery photo"}
+                                  className="w-full h-full object-cover"
+                                  loading={isActive ? "eager" : "lazy"}
+                                  decoding="async"
+                                  sizes="(min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
+                                  <p className="text-white text-xs truncate flex-1 mr-2">
+                                    {image.originalFilename || "Photo"}
+                                  </p>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteImage(image.id); }}
+                                    data-testid={`button-delete-image-${image.id}`}
+                                    className="h-7 w-7 p-0 shrink-0"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })()}
           </div>
         </motion.div>
       </main>
@@ -867,6 +899,148 @@ function InvoiceModal({
   );
 }
 
+function AdminEditRequestItem({ request, token }: { request: EditRequest; token: string }) {
+  const [showChat, setShowChat] = useState(false);
+
+  return (
+    <div className="bg-gray-50 rounded-lg overflow-hidden" data-testid={`admin-edit-request-${request.id}`}>
+      <div className="flex items-center justify-between flex-wrap gap-2 px-3 py-2 text-sm">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-gray-500">
+            {new Date(request.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </span>
+          <span className="text-gray-900">{request.photoCount} photo(s)</span>
+          <span className="text-gray-400 text-xs">
+            {request.annualTokensUsed > 0 && `Annual: ${request.annualTokensUsed}`}
+            {request.annualTokensUsed > 0 && request.purchasedTokensUsed > 0 && ", "}
+            {request.purchasedTokensUsed > 0 && `Purchased: ${request.purchasedTokensUsed}`}
+            {request.annualTokensUsed === 0 && request.purchasedTokensUsed === 0 && "0"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs capitalize">{request.status}</Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowChat(!showChat)}
+            data-testid={`button-admin-toggle-chat-${request.id}`}
+            className="h-7 px-2 text-gray-500 hover:text-gray-900"
+          >
+            <MessageCircle className="w-3.5 h-3.5 mr-1" />
+            Chat
+          </Button>
+        </div>
+      </div>
+      {showChat && (
+        <div className="px-3 pb-3">
+          <AdminEditRequestChat editRequestId={request.id} token={token} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminEditRequestChat({ editRequestId, token: authToken }: { editRequestId: string; token: string }) {
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<EditRequestMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const loadMessages = useCallback(async () => {
+    try {
+      const res = await adminFetch(`/api/admin/edit-requests/${editRequestId}/messages`, authToken);
+      if (res.ok) setMessages(await res.json());
+    } catch {} finally { setLoading(false); }
+  }, [editRequestId, authToken]);
+
+  useEffect(() => { loadMessages(); }, [loadMessages]);
+
+  useEffect(() => {
+    const interval = setInterval(loadMessages, 10000);
+    return () => clearInterval(interval);
+  }, [loadMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!newMessage.trim() || sending) return;
+    setSending(true);
+    try {
+      const res = await adminFetch(`/api/admin/edit-requests/${editRequestId}/messages`, authToken, {
+        method: "POST",
+        body: JSON.stringify({ message: newMessage.trim() }),
+      });
+      if (!res.ok) throw new Error("Failed to send");
+      setNewMessage("");
+      await loadMessages();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white" data-testid={`admin-chat-${editRequestId}`}>
+      <div className="max-h-60 overflow-y-auto p-3 space-y-2">
+        {loading ? (
+          <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>
+        ) : messages.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-3">No messages yet. Start a conversation with the client.</p>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex flex-col ${msg.senderRole === "admin" ? "items-end" : "items-start"}`}
+              data-testid={`admin-message-${msg.id}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                  msg.senderRole === "admin"
+                    ? "bg-[#1a1a1a] text-white"
+                    : "bg-gray-100 text-gray-900"
+                }`}
+              >
+                <p className={`text-[10px] font-medium mb-0.5 ${msg.senderRole === "admin" ? "text-white/60" : "text-gray-500"}`}>
+                  {msg.senderName || (msg.senderRole === "admin" ? "Armando R." : "Client")}
+                </p>
+                <p className="whitespace-pre-wrap">{msg.message}</p>
+              </div>
+              <span className="text-[10px] text-gray-400 mt-0.5 px-1">
+                {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+              </span>
+            </div>
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="border-t border-gray-200 p-2 flex gap-2">
+        <Input
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message..."
+          data-testid={`input-admin-chat-${editRequestId}`}
+          className="text-sm"
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+        />
+        <Button
+          size="sm"
+          onClick={handleSend}
+          disabled={!newMessage.trim() || sending}
+          data-testid={`button-admin-send-${editRequestId}`}
+          className="bg-[#1a1a1a] text-white shrink-0"
+        >
+          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function TokenManager({ userId, userName, token, onBack }: { userId: string; userName: string; token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [annual, setAnnual] = useState(0);
@@ -1040,36 +1214,10 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
                 {editRequests.length === 0 ? (
                   <p className="text-sm text-gray-400 italic py-2">No edit requests yet</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm" data-testid="table-edit-requests">
-                      <thead>
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Date</th>
-                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Photos</th>
-                          <th className="text-left py-2 pr-4 text-gray-500 font-medium">Tokens Used</th>
-                          <th className="text-left py-2 text-gray-500 font-medium">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {editRequests.map((req) => (
-                          <tr key={req.id} className="border-b border-gray-50" data-testid={`row-edit-request-${req.id}`}>
-                            <td className="py-2 pr-4 text-gray-600">
-                              {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                            </td>
-                            <td className="py-2 pr-4 text-gray-900">{req.photoCount}</td>
-                            <td className="py-2 pr-4 text-gray-600">
-                              {req.annualTokensUsed > 0 && <span>Annual: {req.annualTokensUsed}</span>}
-                              {req.annualTokensUsed > 0 && req.purchasedTokensUsed > 0 && <span>, </span>}
-                              {req.purchasedTokensUsed > 0 && <span>Purchased: {req.purchasedTokensUsed}</span>}
-                              {req.annualTokensUsed === 0 && req.purchasedTokensUsed === 0 && <span>0</span>}
-                            </td>
-                            <td className="py-2">
-                              <Badge variant="secondary" className="text-xs capitalize">{req.status}</Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="space-y-3">
+                    {editRequests.map((req) => (
+                      <AdminEditRequestItem key={req.id} request={req} token={token} />
+                    ))}
                   </div>
                 )}
               </CardContent>

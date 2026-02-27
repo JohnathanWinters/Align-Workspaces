@@ -84,17 +84,21 @@ Pricing is calculated dynamically based on selections.
   - `GET /api/admin/edit-requests/:id/photos` — Get photos for edit request (admin)
   - `GET /api/admin/token-transactions/:userId` — Get token transaction history (admin)
   - `GET /api/admin/all-edit-tokens` — Get all edit token records (admin)
+  - `GET /api/edit-requests/:id/messages` — Get messages for an edit request (authenticated, user-scoped)
+  - `POST /api/edit-requests/:id/messages` — Send a message on an edit request (authenticated)
+  - `GET /api/admin/edit-requests/:id/messages` — Get messages for edit request (admin)
+  - `POST /api/admin/edit-requests/:id/messages` — Send a message as admin (admin)
 - **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete), gallery images with folder organization, photo uploads, and edit token management.
 - **File Uploads**: Photos uploaded via multer (disk storage in `tmp_uploads/`) then streamed to Replit Object Storage for persistence across republishes. Temp files cleaned up after upload. Served via `/objects/uploads/{uuid}` route. Legacy files from `/uploads/` path still served for backward compatibility. Max 50MB per file, max 10 files per request, image types only. Frontend batches uploads in groups of 2 to prevent memory overflow with large files.
 - **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
-- **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
+- **Email Notifications**: Booking notifications, collaboration requests, help requests, and edit request submissions sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
 - **Stripe Invoicing**: Admin can create and send itemized invoices via Stripe Invoicing API (customers created/reused automatically, invoices finalized and sent with configurable due dates)
 - **Dev Server**: Vite middleware is used in development for HMR; in production, static files are served from `dist/public`
 
 ### Database
 - **Database**: PostgreSQL (required — `DATABASE_URL` environment variable)
 - **ORM**: Drizzle ORM with `drizzle-zod` for schema-to-validation integration
-- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions with optional `location` field), `gallery_folders` table (folder organization per shoot, admin-only), `gallery_images` table (photos per shoot with optional folderId and originalFilename), and `image_favorites` table (userId + imageId for client photo favoriting). Edit token system: `edit_tokens` table (per-user token balance with annualTokens, purchasedTokens, annualTokenResetDate), `token_transactions` table (audit log of all token changes), `edit_requests` table (photo editing submissions with token usage), `edit_request_photos` table (uploaded photos per edit request). Auth tables (`users`, `sessions`) from Replit Auth integration.
+- **Schema** (`shared/schema.ts`): `leads` table with fields for contact info (name, email, phone), configurator selections (environment, brandMessage, emotionalImpact, shootIntent), preferred date, notes, estimated pricing range (min/max), paymentStatus (none/pending/paid), and timestamps. Also `shoots` table (per-user photoshoot sessions with optional `location` field), `gallery_folders` table (folder organization per shoot, admin-only), `gallery_images` table (photos per shoot with optional folderId and originalFilename), and `image_favorites` table (userId + imageId for client photo favoriting). Edit token system: `edit_tokens` table (per-user token balance with annualTokens, purchasedTokens, annualTokenResetDate), `token_transactions` table (audit log of all token changes), `edit_requests` table (photo editing submissions with token usage), `edit_request_photos` table (uploaded photos per edit request), `edit_request_messages` table (per-edit-request chat between client and admin, with senderRole and senderName). Auth tables (`users`, `sessions`) from Replit Auth integration.
 - **Shared Pricing** (`shared/pricing.ts`): Server-authoritative pricing logic used by both frontend and backend
 - **Migrations**: Drizzle Kit with `db:push` command for schema sync
 

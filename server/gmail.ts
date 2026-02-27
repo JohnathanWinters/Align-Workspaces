@@ -281,3 +281,53 @@ export async function sendInvoiceEmail(data: InvoiceEmailData) {
     },
   });
 }
+
+interface EditRequestNotificationData {
+  clientName: string;
+  clientEmail: string;
+  photoCount: number;
+  tokensUsed: number;
+}
+
+export async function sendEditRequestNotification(data: EditRequestNotificationData) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `New Edit Request — ${data.clientName} (${data.photoCount} photo${data.photoCount !== 1 ? 's' : ''})`;
+
+  const body = [
+    `A client has submitted photos for editing.`,
+    ``,
+    `--- Client ---`,
+    `Name: ${data.clientName}`,
+    `Email: ${data.clientEmail}`,
+    ``,
+    `--- Request Details ---`,
+    `Photos submitted: ${data.photoCount}`,
+    `Tokens used: ${data.tokensUsed}`,
+    ``,
+    `Log in to the admin panel to view the photos and start a conversation.`,
+  ].join('\n');
+
+  const to = 'ArmandoRamirezRomero89@gmail.com';
+
+  const rawMessage = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}

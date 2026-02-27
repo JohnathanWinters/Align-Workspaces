@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull } from "drizzle-orm";
 
@@ -42,6 +42,9 @@ export interface IStorage {
   getEditRequestPhotos(editRequestId: string): Promise<EditRequestPhoto[]>;
   createEditRequestPhoto(photo: InsertEditRequestPhoto): Promise<EditRequestPhoto>;
   getAllEditTokens(): Promise<EditToken[]>;
+  getEditRequestMessages(editRequestId: string): Promise<EditRequestMessage[]>;
+  createEditRequestMessage(msg: InsertEditRequestMessage): Promise<EditRequestMessage>;
+  getEditRequestById(id: string): Promise<EditRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -365,6 +368,20 @@ export class DatabaseStorage implements IStorage {
 
   async getAllEditTokens(): Promise<EditToken[]> {
     return db.select().from(editTokens);
+  }
+
+  async getEditRequestMessages(editRequestId: string): Promise<EditRequestMessage[]> {
+    return db.select().from(editRequestMessages).where(eq(editRequestMessages.editRequestId, editRequestId)).orderBy(editRequestMessages.createdAt);
+  }
+
+  async createEditRequestMessage(msg: InsertEditRequestMessage): Promise<EditRequestMessage> {
+    const [result] = await db.insert(editRequestMessages).values(msg).returning();
+    return result;
+  }
+
+  async getEditRequestById(id: string): Promise<EditRequest | undefined> {
+    const [result] = await db.select().from(editRequests).where(eq(editRequests.id, id));
+    return result;
   }
 }
 
