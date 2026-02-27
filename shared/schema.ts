@@ -213,3 +213,21 @@ export const insertEditRequestMessageSchema = createInsertSchema(editRequestMess
 
 export type InsertEditRequestMessage = z.infer<typeof insertEditRequestMessageSchema>;
 export type EditRequestMessage = typeof editRequestMessages.$inferSelect;
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  role: text("role").default("client"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

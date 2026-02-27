@@ -31,8 +31,11 @@ import {
   MapPin,
   Coins,
   MessageCircle,
+  Bell,
+  BellRing,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
 
@@ -1243,6 +1246,7 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
 
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
+  const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("admin");
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1696,6 +1700,24 @@ function AdminDashboard({ token }: { token: string }) {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
+        {pushStatus === "prompt" && (
+          <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6">
+            <Bell className="w-5 h-5 text-blue-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-blue-900">Get notified when clients message you</p>
+              <p className="text-xs text-blue-600">Receive push notifications on this device</p>
+            </div>
+            <Button
+              size="sm"
+              onClick={subscribePush}
+              data-testid="button-admin-enable-notifications"
+              className="bg-blue-600 text-white hover:bg-blue-700 shrink-0"
+            >
+              <BellRing className="w-3.5 h-3.5 mr-1.5" />
+              Enable
+            </Button>
+          </div>
+        )}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <h2 className="font-serif text-2xl text-gray-900 mb-6">Clients & Photoshoots</h2>
 
@@ -2051,6 +2073,7 @@ export default function AdminPage() {
 
   const handleLogin = (t: string) => {
     sessionStorage.setItem("admin_token", t);
+    sessionStorage.setItem("adminToken", t);
     setToken(t);
   };
 

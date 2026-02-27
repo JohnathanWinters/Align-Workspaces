@@ -41,3 +41,10 @@ waitForPort = 5000
 
 [agent]
 integrations = ["google-mail:1.0.0", "stripe:2.0.0", "javascript_log_in_with_replit:2.0.0", "javascript_object_storage:2.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BLIYz-opfD3JyB7Q5LvYZDmsbJtkQPYgp8JAcNXYoafM-vOPYYJaKHbgCzPLqeCUCAAZaXniPFd22dNSw2OOMaQ"
+VITE_VAPID_PUBLIC_KEY = "BLIYz-opfD3JyB7Q5LvYZDmsbJtkQPYgp8JAcNXYoafM-vOPYYJaKHbgCzPLqeCUCAAZaXniPFd22dNSw2OOMaQ"
+VAPID_PRIVATE_KEY = "XNx0oZtzHaDtVDcnNwVM2SolsAO7ZlMB8KxNpjWtSwA"

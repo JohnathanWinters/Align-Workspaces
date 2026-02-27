@@ -5,6 +5,7 @@ import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from 
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification } from "./gmail";
+import { sendPushToUser, sendPushToRole } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -1097,6 +1098,12 @@ export async function registerRoutes(
         senderName,
         message: message.trim(),
       });
+      sendPushToRole("admin", {
+        title: `${senderName} sent a message`,
+        body: message.trim().slice(0, 100),
+        url: "/admin",
+        tag: `chat-${req.params.id}`,
+      }).catch(() => {});
       res.status(201).json(msg);
     } catch (err: any) {
       res.status(500).json({ message: err.message || "Failed to send message" });
@@ -1118,6 +1125,7 @@ export async function registerRoutes(
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message is required" });
       }
+      const editRequest = await storage.getEditRequestById(req.params.id);
       const msg = await storage.createEditRequestMessage({
         editRequestId: req.params.id,
         senderId: "admin",
@@ -1125,10 +1133,73 @@ export async function registerRoutes(
         senderName: "Armando R.",
         message: message.trim(),
       });
+      if (editRequest) {
+        sendPushToUser(editRequest.userId, {
+          title: "Armando R. replied to your edit request",
+          body: message.trim().slice(0, 100),
+          url: "/portal",
+          tag: `chat-${req.params.id}`,
+        }).catch(() => {});
+      }
       res.status(201).json(msg);
     } catch (err: any) {
       res.status(500).json({ message: err.message || "Failed to send message" });
     }
+  });
+
+  app.post("/api/push/subscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { subscription } = req.body;
+      if (!subscription || !subscription.endpoint || !subscription.keys) {
+        return res.status(400).json({ message: "Invalid subscription" });
+      }
+      await storage.savePushSubscription({
+        userId,
+        endpoint: subscription.endpoint,
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
+        role: "client",
+      });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to save subscription" });
+    }
+  });
+
+  app.post("/api/push/unsubscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const { endpoint } = req.body;
+      if (endpoint) {
+        await storage.deletePushSubscription(endpoint);
+      }
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to unsubscribe" });
+    }
+  });
+
+  app.post("/api/admin/push/subscribe", isAdmin, async (req: any, res) => {
+    try {
+      const { subscription } = req.body;
+      if (!subscription || !subscription.endpoint || !subscription.keys) {
+        return res.status(400).json({ message: "Invalid subscription" });
+      }
+      await storage.savePushSubscription({
+        userId: "admin",
+        endpoint: subscription.endpoint,
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
+        role: "admin",
+      });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to save subscription" });
+    }
+  });
+
+  app.get("/api/push/vapid-key", (_req, res) => {
+    res.json({ key: process.env.VAPID_PUBLIC_KEY || "" });
   });
 
   return httpServer;

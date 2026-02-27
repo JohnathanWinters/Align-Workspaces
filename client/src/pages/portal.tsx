@@ -42,9 +42,12 @@ import {
   FileImage,
   Pencil,
   MessageCircle,
+  Bell,
+  BellRing,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -489,6 +492,7 @@ function EditTokenSection() {
   const [buyQuantity, setBuyQuantity] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
   const [justSubmittedId, setJustSubmittedId] = useState<string | null>(null);
+  const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("client");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -667,6 +671,25 @@ function EditTokenSection() {
           )}
         </CardContent>
       </Card>
+
+      {pushStatus === "prompt" && (
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <Bell className="w-5 h-5 text-blue-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-blue-900">Get notified when your photographer replies</p>
+            <p className="text-xs text-blue-600">Receive push notifications on this device</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={subscribePush}
+            data-testid="button-enable-notifications"
+            className="bg-blue-600 text-white hover:bg-blue-700 shrink-0"
+          >
+            <BellRing className="w-3.5 h-3.5 mr-1.5" />
+            Enable
+          </Button>
+        </div>
+      )}
 
       <Card className="bg-white" data-testid="card-edit-section">
         <CardHeader className="pb-3">
