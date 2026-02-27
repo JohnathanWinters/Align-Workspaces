@@ -931,9 +931,28 @@ function EditTokenSection() {
         <DialogContent data-testid="dialog-buy-tokens">
           <DialogHeader>
             <DialogTitle>Buy More Edit Tokens</DialogTitle>
-            <DialogDescription>Purchase additional edit tokens for your photos.</DialogDescription>
+            <DialogDescription>Each token covers one photo edit. Here's what's included:</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700">Touch ups</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700">Color corrections</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700">People / item removals</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700">Custom requests — describe what you need in the editing instructions</span>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between flex-wrap gap-2">
               <label className="text-sm text-gray-700">Quantity</label>
               <div className="flex items-center gap-2">
