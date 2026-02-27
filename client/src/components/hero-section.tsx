@@ -12,7 +12,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div
         className="absolute inset-0 bg-cover"
         style={{
-          backgroundImage: "url(/images/hero-bg-bright.png)",
+          backgroundImage: "url(/images/hero-bg-bright.webp)",
           backgroundPosition: "43% center",
           filter: "brightness(0.85) contrast(1.05)",
         }}

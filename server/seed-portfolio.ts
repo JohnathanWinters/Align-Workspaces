@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 
 const portfolioData = [
   {
-    imageUrl: "/images/portfolio-office-assured-cozy.jpg",
+    imageUrl: "/images/portfolio-office-assured-cozy.webp",
     environments: ["office"],
     brandMessages: ["assured"],
     emotionalImpacts: ["cozy"],
@@ -15,7 +15,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-urban-assured-bright-2.jpg",
+    imageUrl: "/images/portfolio-urban-assured-bright-2.webp",
     environments: ["urban"],
     brandMessages: ["assured"],
     emotionalImpacts: ["bright"],
@@ -26,7 +26,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-urban-confidence-bright.jpg",
+    imageUrl: "/images/portfolio-urban-confidence-bright.webp",
     environments: ["urban"],
     brandMessages: ["confidence"],
     emotionalImpacts: ["bright"],
@@ -37,7 +37,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-1.jpg",
+    imageUrl: "/images/portfolio-1.webp",
     environments: ["office"],
     brandMessages: ["assured"],
     emotionalImpacts: ["bright"],
@@ -48,7 +48,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-2.jpg",
+    imageUrl: "/images/portfolio-2.webp",
     environments: ["office"],
     brandMessages: ["confidence"],
     emotionalImpacts: ["bright"],
@@ -59,7 +59,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio/IMG_2875.jpg",
+    imageUrl: "/images/portfolio/IMG_2875.webp",
     environments: ["nature"],
     brandMessages: ["empathy"],
     emotionalImpacts: ["powerful"],
@@ -70,7 +70,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio/IMG_6186.jpg",
+    imageUrl: "/images/portfolio/IMG_6186.webp",
     environments: ["nature"],
     brandMessages: ["assured"],
     emotionalImpacts: ["powerful"],
@@ -81,7 +81,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-urban-assured-bright.jpg",
+    imageUrl: "/images/portfolio-urban-assured-bright.webp",
     environments: ["urban"],
     brandMessages: ["assured"],
     emotionalImpacts: ["bright"],
@@ -92,7 +92,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-office-assured-bright-2.jpg",
+    imageUrl: "/images/portfolio-office-assured-bright-2.webp",
     environments: ["office"],
     brandMessages: ["assured"],
     emotionalImpacts: ["bright"],
@@ -103,7 +103,7 @@ const portfolioData = [
     ],
   },
   {
-    imageUrl: "/images/portfolio-office-assured-bright-3.jpg",
+    imageUrl: "/images/portfolio-office-assured-bright-3.webp",
     environments: ["office"],
     brandMessages: ["assured"],
     emotionalImpacts: ["bright"],

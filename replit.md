@@ -74,7 +74,7 @@ Pricing is calculated dynamically based on selections.
   - `GET /api/shoots/:shootId/gallery/:imageId/download` — Client: download single image (authenticated)
   - `GET /api/shoots/:id/download-all` — Client: download all images as zip (authenticated)
 - **Admin Panel**: Password-protected at `/admin` using `ADMIN_PASSWORD` env secret. Bearer token auth for all admin API calls. Allows managing client photoshoots (create/edit/delete), gallery images with folder organization, and photo uploads.
-- **File Uploads**: Photos uploaded via multer (memory storage) then stored in Replit Object Storage for persistence across republishes. Served via `/objects/uploads/{uuid}` route. Legacy files from `/uploads/` path still served for backward compatibility. Max 50MB per file, image types only.
+- **File Uploads**: Photos uploaded via multer (memory storage) then stored in Replit Object Storage for persistence across republishes. Served via `/objects/uploads/{uuid}` route. Legacy files from `/uploads/` path still served for backward compatibility. Max 50MB per file, image types only. Frontend batches uploads in groups of 5 to prevent memory overflow.
 - **Stripe Integration**: Uses `stripe-replit-sync` for webhook management. Checkout creates lead with `paymentStatus: "pending"`, redirects to Stripe, then back with `?payment=success` or `?payment=cancelled` URL params.
 - **Email Notifications**: Booking notifications sent to ArmandoRamirezRomero89@gmail.com via Google Mail integration
 - **Stripe Invoicing**: Admin can create and send itemized invoices via Stripe Invoicing API (customers created/reused automatically, invoices finalized and sent with configurable due dates)
@@ -148,4 +148,7 @@ attached_assets/  # Project requirements and reference docs
 - **Playfair Display** — Serif font for headings
 
 ### Static Assets
-- Images are expected at `/images/` path (hero background, environment previews) — these need to be placed in `client/public/images/`
+- All images are in WebP format at `/images/` path (hero background, environment previews) in `client/public/images/`
+- Images were compressed from PNG/JPG to WebP (93% size reduction, ~100MB down to ~7MB)
+- Portfolio images in database also use `.webp` paths
+- Admin gallery supports drag-and-drop photo upload with batched processing (5 files per request)

@@ -148,11 +148,14 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   const [folders, setFolders] = useState<GalleryFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editFolderName, setEditFolderName] = useState("");
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const loadGallery = useCallback(async () => {
     setLoading(true);
@@ -172,38 +175,85 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
 
   useEffect(() => { loadGallery(); }, [loadGallery]);
 
+  const uploadFiles = async (fileList: File[]) => {
+    if (fileList.length === 0) return;
+    const imageFiles = fileList.filter((f) => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) {
+      toast({ title: "No images", description: "Only image files are accepted", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    const BATCH_SIZE = 5;
+    let uploaded = 0;
+    let failed = 0;
+    const totalFiles = imageFiles.length;
+    try {
+      for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
+        const batch = imageFiles.slice(i, i + BATCH_SIZE);
+        setUploadProgress(`Uploading ${Math.min(i + BATCH_SIZE, totalFiles)} of ${totalFiles}...`);
+        const formData = new FormData();
+        for (const file of batch) {
+          formData.append("photos", file);
+        }
+        const uploadFolder = effectiveFolder || selectedFolder;
+        if (uploadFolder) {
+          formData.append("folderId", uploadFolder);
+        }
+        try {
+          const res = await fetch(`/api/admin/shoots/${shootId}/upload`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
+          if (res.ok) {
+            const newImages = await res.json();
+            uploaded += newImages.length;
+          } else {
+            failed += batch.length;
+          }
+        } catch {
+          failed += batch.length;
+        }
+      }
+      if (uploaded > 0) {
+        toast({ title: "Uploaded", description: `${uploaded} photo(s) uploaded${failed > 0 ? `, ${failed} failed` : ""}` });
+      } else {
+        toast({ title: "Error", description: "All uploads failed", variant: "destructive" });
+      }
+      await loadGallery();
+    } finally {
+      setUploading(false);
+      setUploadProgress("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append("photos", files[i]);
-      }
-      const uploadFolder = effectiveFolder || selectedFolder;
-      if (uploadFolder) {
-        formData.append("folderId", uploadFolder);
-      }
-      const res = await fetch(`/api/admin/shoots/${shootId}/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (res.ok) {
-        const newImages = await res.json();
-        toast({ title: "Uploaded", description: `${newImages.length} photo(s) uploaded` });
-        await loadGallery();
-      } else {
-        const err = await res.json();
-        toast({ title: "Error", description: err.message, variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Error", description: "Upload failed", variant: "destructive" });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+    await uploadFiles(Array.from(files));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setDragOver(false);
     }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    await uploadFiles(files);
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -345,7 +395,7 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
                 ) : (
                   <Upload className="w-4 h-4 mr-1.5" />
                 )}
-                {uploading ? "Uploading..." : "Upload Photos"}
+                {uploading ? (uploadProgress || "Uploading...") : "Upload Photos"}
               </Button>
             </div>
           </div>
@@ -430,53 +480,71 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
             })}
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            </div>
-          ) : filteredImages.length === 0 ? (
-            <Card className="border-dashed border-2 border-gray-200 bg-white/50">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <Image className="w-10 h-10 text-gray-300 mb-3" />
-                <h3 className="font-serif text-lg text-gray-900 mb-1">
-                  {selectedFolder ? "No photos in this folder" : "No unsorted photos"}
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  Upload photos using the button above
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {filteredImages.map((image) => (
-                <div
-                  key={image.id}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
-                  data-testid={`gallery-image-${image.id}`}
-                >
-                  <img
-                    src={image.imageUrl}
-                    alt={image.originalFilename || image.caption || "Gallery photo"}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                    <p className="text-white text-xs truncate flex-1 mr-2">
-                      {image.originalFilename || "Photo"}
-                    </p>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteImage(image.id)}
-                      data-testid={`button-delete-image-${image.id}`}
-                      className="h-7 w-7 p-0 shrink-0"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+          <div
+            ref={dropZoneRef}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`relative rounded-xl transition-all ${dragOver ? "ring-2 ring-blue-400 ring-offset-2 bg-blue-50/50" : ""}`}
+            data-testid="drop-zone-gallery"
+          >
+            {dragOver && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-blue-50/80 border-2 border-dashed border-blue-400 pointer-events-none">
+                <div className="text-center">
+                  <Upload className="w-10 h-10 text-blue-400 mx-auto mb-2" />
+                  <p className="text-blue-600 font-medium text-lg">Drop photos here</p>
+                  <p className="text-blue-400 text-sm">Images will upload to the selected folder</p>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : filteredImages.length === 0 ? (
+              <Card className={`border-dashed border-2 bg-white/50 cursor-pointer ${dragOver ? "border-blue-400" : "border-gray-200"}`} onClick={() => !uploading && fileInputRef.current?.click()}>
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Upload className="w-10 h-10 text-gray-300 mb-3" />
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">
+                    {selectedFolder ? "No photos in this folder" : "No unsorted photos"}
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    Drag & drop photos here or click to browse
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {filteredImages.map((image) => (
+                  <div
+                    key={image.id}
+                    className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                    data-testid={`gallery-image-${image.id}`}
+                  >
+                    <img
+                      src={image.imageUrl}
+                      alt={image.originalFilename || image.caption || "Gallery photo"}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
+                      <p className="text-white text-xs truncate flex-1 mr-2">
+                        {image.originalFilename || "Photo"}
+                      </p>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteImage(image.id)}
+                        data-testid={`button-delete-image-${image.id}`}
+                        className="h-7 w-7 p-0 shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </motion.div>
       </main>
     </div>

@@ -53,7 +53,7 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         src={photo.imageUrl}
         alt="Personal branding portrait by Align Miami"
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        loading="eager"
+        loading="lazy"
         decoding="async"
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         data-testid={`portfolio-full-photo-${index}`}
