@@ -15,6 +15,7 @@ type PushStatus = "unsupported" | "denied" | "prompt" | "subscribed" | "loading"
 
 export function usePushNotifications(role: "client" | "admin" = "client") {
   const [status, setStatus] = useState<PushStatus>("loading");
+  const storageKey = `push_subscribed_${role}`;
 
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
@@ -28,15 +29,37 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
       return;
     }
 
+    if (perm === "granted" && localStorage.getItem(storageKey) === "true") {
+      setStatus("subscribed");
+      navigator.serviceWorker.getRegistration().then(async (reg) => {
+        if (!reg) {
+          const newReg = await navigator.serviceWorker.register("/sw.js");
+          await navigator.serviceWorker.ready;
+          const sub = await newReg.pushManager.getSubscription();
+          if (!sub) {
+            localStorage.removeItem(storageKey);
+            setStatus("prompt");
+          }
+        }
+      });
+      return;
+    }
+
     navigator.serviceWorker.getRegistration().then(async (reg) => {
       if (reg) {
         const sub = await reg.pushManager.getSubscription();
-        setStatus(sub ? "subscribed" : "prompt");
+        if (sub) {
+          localStorage.setItem(storageKey, "true");
+          setStatus("subscribed");
+        } else {
+          localStorage.removeItem(storageKey);
+          setStatus("prompt");
+        }
       } else {
         setStatus("prompt");
       }
     });
-  }, []);
+  }, [storageKey]);
 
   const subscribe = useCallback(async () => {
     try {
@@ -77,6 +100,7 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
         body: JSON.stringify({ subscription: subscription.toJSON() }),
       });
 
+      localStorage.setItem(storageKey, "true");
       setStatus("subscribed");
       return true;
     } catch (err) {
@@ -84,7 +108,7 @@ export function usePushNotifications(role: "client" | "admin" = "client") {
       setStatus("prompt");
       return false;
     }
-  }, [role]);
+  }, [role, storageKey]);
 
   return { status, subscribe };
 }
