@@ -878,7 +878,7 @@ export async function registerRoutes(
     }
   });
 
-  const EDIT_TOKEN_PRICE_CENTS = 2500;
+  const EDIT_TOKEN_PRICE_CENTS = 200;
   const TOKENS_PER_PHOTO = 1;
 
   app.get("/api/edit-tokens", isAuthenticated, async (req: any, res) => {
