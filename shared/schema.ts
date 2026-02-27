@@ -167,6 +167,7 @@ export const editRequests = pgTable("edit_requests", {
   photoCount: integer("photo_count").notNull(),
   annualTokensUsed: integer("annual_tokens_used").default(0).notNull(),
   purchasedTokensUsed: integer("purchased_tokens_used").default(0).notNull(),
+  notes: text("notes"),
   status: text("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
 });

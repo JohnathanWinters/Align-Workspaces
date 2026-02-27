@@ -75,6 +75,7 @@ type EditRequest = {
   photoCount: number;
   annualTokensUsed: number;
   purchasedTokensUsed: number;
+  notes: string | null;
   status: string;
   createdAt: string;
 };
@@ -320,37 +321,59 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
   );
 }
 
-function EditRequestCard({ request, getStatusBadge }: { request: EditRequest; getStatusBadge: (status: string) => JSX.Element }) {
-  const [showChat, setShowChat] = useState(false);
+function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: EditRequest; getStatusBadge: (status: string) => JSX.Element; defaultOpen?: boolean }) {
+  const [showChat, setShowChat] = useState(defaultOpen ?? false);
 
   return (
     <div
-      className="bg-gray-50 rounded-lg overflow-hidden"
+      className={`rounded-lg overflow-hidden border ${defaultOpen ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white"}`}
       data-testid={`card-edit-request-${request.id}`}
     >
-      <div className="flex items-center justify-between flex-wrap gap-2 px-3 py-2 text-sm">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-gray-500">{formatDate(request.createdAt)}</span>
-          <span className="text-gray-900">{request.photoCount} photo(s)</span>
-          <span className="text-gray-400 text-xs">
+      <div className="px-4 py-3">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <Camera className="w-4 h-4 text-gray-400" />
+            <span className="font-medium text-gray-900 text-sm">{request.photoCount} photo(s)</span>
+            {getStatusBadge(request.status)}
+          </div>
+          <span className="text-xs text-gray-400">{formatDate(request.createdAt)}</span>
+        </div>
+
+        {request.notes && (
+          <div className="bg-gray-50 rounded-md px-3 py-2 mb-2">
+            <p className="text-xs text-gray-500 font-medium mb-0.5">Editing Instructions</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{request.notes}</p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">
             {request.annualTokensUsed} annual + {request.purchasedTokensUsed} purchased tokens
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {getStatusBadge(request.status)}
           <Button
-            variant="ghost"
+            variant={showChat ? "default" : "outline"}
             size="sm"
             onClick={() => setShowChat(!showChat)}
             data-testid={`button-toggle-chat-${request.id}`}
-            className="h-7 px-2 text-gray-500 hover:text-gray-900"
+            className={showChat ? "bg-[#1a1a1a] text-white h-8" : "h-8"}
           >
-            <MessageCircle className="w-3.5 h-3.5 mr-1" />
-            Chat
+            <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+            {showChat ? "Hide Chat" : "Chat with Photographer"}
           </Button>
         </div>
       </div>
-      {showChat && <EditRequestChat editRequestId={request.id} />}
+      <AnimatePresence>
+        {showChat && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <EditRequestChat editRequestId={request.id} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -458,12 +481,14 @@ function EditTokenSection() {
   const { toast } = useToast();
   const [editSectionOpen, setEditSectionOpen] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editInstructions, setEditInstructions] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBuyDialog, setShowBuyDialog] = useState(false);
   const [buyQuantity, setBuyQuantity] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
+  const [justSubmittedId, setJustSubmittedId] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -539,6 +564,9 @@ function EditTokenSection() {
     try {
       const formData = new FormData();
       selectedFiles.forEach((file) => formData.append("photos", file));
+      if (editInstructions.trim()) {
+        formData.append("notes", editInstructions.trim());
+      }
       const res = await fetch("/api/edit-requests", {
         method: "POST",
         credentials: "include",
@@ -548,9 +576,11 @@ function EditTokenSection() {
         const err = await res.json().catch(() => ({ message: "Failed to submit" }));
         throw new Error(err.message || "Failed to submit edit request");
       }
-      toast({ title: "Edit Request Submitted", description: `${fileCount} photo(s) submitted for editing.` });
+      const data = await res.json();
       setSelectedFiles([]);
+      setEditInstructions("");
       setShowConfirmDialog(false);
+      setJustSubmittedId(data.editRequest?.id || null);
       queryClient.invalidateQueries({ queryKey: ["/api/edit-tokens"] });
       queryClient.invalidateQueries({ queryKey: ["/api/edit-requests"] });
     } catch (err: any) {
@@ -696,6 +726,21 @@ function EditTokenSection() {
                   ))}
                 </div>
 
+                <div>
+                  <label className="text-sm font-medium text-gray-900 block mb-1.5" htmlFor="edit-instructions">
+                    What would you like done to these photos?
+                  </label>
+                  <Textarea
+                    id="edit-instructions"
+                    value={editInstructions}
+                    onChange={(e) => setEditInstructions(e.target.value)}
+                    placeholder="E.g. Remove background, brighten exposure, color correction, crop for LinkedIn headshot, retouch skin..."
+                    className="min-h-[80px] text-sm resize-none"
+                    data-testid="textarea-edit-instructions"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Be specific about what edits you'd like — this helps your photographer deliver exactly what you need.</p>
+                </div>
+
                 <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
                   <p className="font-medium text-gray-900" data-testid="text-token-cost">
                     This will use {tokenCost} edit token(s)
@@ -716,37 +761,86 @@ function EditTokenSection() {
                   onClick={() => setShowConfirmDialog(true)}
                   disabled={!hasEnoughTokens || fileCount === 0}
                   data-testid="button-submit-edit-request"
-                  className="bg-[#1a1a1a] text-white"
+                  className="w-full bg-[#1a1a1a] text-white py-3 text-base font-medium"
+                  size="lg"
                 >
-                  <Upload className="w-4 h-4 mr-1.5" />
+                  <Upload className="w-5 h-5 mr-2" />
                   Submit for Editing
                 </Button>
-              </div>
-            )}
-
-            {!requestsLoading && editRequests.length > 0 && (
-              <div className="pt-4 border-t border-gray-100">
-                <h4 className="text-sm font-medium text-gray-900 mb-3" data-testid="text-past-requests-heading">Edit Requests</h4>
-                <div className="space-y-3">
-                  {editRequests.map((req) => (
-                    <EditRequestCard key={req.id} request={req} getStatusBadge={getEditRequestStatusBadge} />
-                  ))}
-                </div>
               </div>
             )}
           </CardContent>
         )}
       </Card>
 
+      {justSubmittedId && editRequests.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-50 border border-green-200 rounded-lg p-4"
+          data-testid="banner-submission-success"
+        >
+          <div className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-900">Edit request submitted successfully!</p>
+              <p className="text-sm text-green-700 mt-0.5">Your photos have been sent. You can chat with your photographer below to discuss the edits.</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setJustSubmittedId(null)}
+                className="mt-2 text-green-700 hover:text-green-900 hover:bg-green-100 h-7 px-2 text-xs"
+                data-testid="button-dismiss-success"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {!requestsLoading && editRequests.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2" data-testid="text-past-requests-heading">
+            <Pencil className="w-4 h-4 text-gray-500" />
+            Your Edit Requests
+          </h3>
+          {editRequests.map((req) => (
+            <EditRequestCard
+              key={req.id}
+              request={req}
+              getStatusBadge={getEditRequestStatusBadge}
+              defaultOpen={req.id === justSubmittedId}
+            />
+          ))}
+        </div>
+      )}
+
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent data-testid="dialog-confirm-edit">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Edit Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to submit {fileCount} photo(s) for editing. This will use{" "}
-              <span className="font-semibold">{tokenCost} edit token(s)</span>:
-              <br />
-              {annualUsed} from annual tokens and {purchasedUsed} from purchased tokens.
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  You are about to submit {fileCount} photo(s) for editing. This will use{" "}
+                  <span className="font-semibold">{tokenCost} edit token(s)</span>:
+                  <br />
+                  {annualUsed} from annual tokens and {purchasedUsed} from purchased tokens.
+                </p>
+                {editInstructions.trim() && (
+                  <div className="bg-gray-50 rounded-md p-3 mt-2">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Your Instructions</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{editInstructions.trim()}</p>
+                  </div>
+                )}
+                {!editInstructions.trim() && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    No instructions provided — you can add them after by chatting with your photographer.
+                  </p>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

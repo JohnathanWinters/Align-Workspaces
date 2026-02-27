@@ -909,6 +909,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "No files uploaded" });
       }
       const tokenCost = files.length * TOKENS_PER_PHOTO;
+      const notes = req.body.notes || null;
       const { annualUsed, purchasedUsed } = await storage.deductTokens(userId, tokenCost);
       const editRequest = await storage.createEditRequest({
         userId,
@@ -916,8 +917,20 @@ export async function registerRoutes(
         photoCount: files.length,
         annualTokensUsed: annualUsed,
         purchasedTokensUsed: purchasedUsed,
+        notes,
         status: "pending",
       });
+      if (notes && notes.trim()) {
+        const firstName = (req.user.claims.name || "Client").split(" ")[0];
+        const lastName = (req.user.claims.name || "").split(" ").slice(1).join(" ");
+        const senderName = lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
+        await storage.createEditRequestMessage({
+          editRequestId: editRequest.id,
+          senderRole: "client",
+          senderName,
+          message: notes.trim(),
+        });
+      }
       for (const file of files) {
         const contentType = file.mimetype || "application/octet-stream";
         const objectPath = await uploadFileFromDisk(file.path, contentType);
@@ -935,6 +948,7 @@ export async function registerRoutes(
         clientEmail,
         photoCount: files.length,
         tokensUsed: tokenCost,
+        notes: notes || undefined,
       }).catch((err) => console.error("Failed to send edit request notification:", err));
       res.status(201).json({ editRequest, tokens: updatedTokens });
     } catch (err: any) {

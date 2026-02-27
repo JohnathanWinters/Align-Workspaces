@@ -287,6 +287,7 @@ interface EditRequestNotificationData {
   clientEmail: string;
   photoCount: number;
   tokensUsed: number;
+  notes?: string;
 }
 
 export async function sendEditRequestNotification(data: EditRequestNotificationData) {
@@ -294,7 +295,7 @@ export async function sendEditRequestNotification(data: EditRequestNotificationD
 
   const subject = `New Edit Request — ${data.clientName} (${data.photoCount} photo${data.photoCount !== 1 ? 's' : ''})`;
 
-  const body = [
+  const bodyLines = [
     `A client has submitted photos for editing.`,
     ``,
     `--- Client ---`,
@@ -304,9 +305,12 @@ export async function sendEditRequestNotification(data: EditRequestNotificationD
     `--- Request Details ---`,
     `Photos submitted: ${data.photoCount}`,
     `Tokens used: ${data.tokensUsed}`,
-    ``,
-    `Log in to the admin panel to view the photos and start a conversation.`,
-  ].join('\n');
+  ];
+  if (data.notes) {
+    bodyLines.push(``, `--- Client Instructions ---`, data.notes);
+  }
+  bodyLines.push(``, `Log in to the admin panel to view the photos and start a conversation.`);
+  const body = bodyLines.join('\n');
 
   const to = 'ArmandoRamirezRomero89@gmail.com';
 

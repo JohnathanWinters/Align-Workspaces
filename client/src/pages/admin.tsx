@@ -62,6 +62,7 @@ interface EditRequest {
   photoCount: number;
   annualTokensUsed: number;
   purchasedTokensUsed: number;
+  notes: string | null;
   status: string;
   createdAt: string;
 }
@@ -903,31 +904,42 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
   const [showChat, setShowChat] = useState(false);
 
   return (
-    <div className="bg-gray-50 rounded-lg overflow-hidden" data-testid={`admin-edit-request-${request.id}`}>
-      <div className="flex items-center justify-between flex-wrap gap-2 px-3 py-2 text-sm">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-gray-500">
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white" data-testid={`admin-edit-request-${request.id}`}>
+      <div className="px-4 py-3">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Camera className="w-4 h-4 text-gray-400" />
+            <span className="font-medium text-gray-900">{request.photoCount} photo(s)</span>
+            <Badge variant="secondary" className="text-xs capitalize">{request.status}</Badge>
+          </div>
+          <span className="text-xs text-gray-400">
             {new Date(request.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
-          <span className="text-gray-900">{request.photoCount} photo(s)</span>
-          <span className="text-gray-400 text-xs">
+        </div>
+
+        {request.notes && (
+          <div className="bg-amber-50 border border-amber-100 rounded-md px-3 py-2 mb-2">
+            <p className="text-xs text-amber-700 font-medium mb-0.5">Client Instructions</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{request.notes}</p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-400">
             {request.annualTokensUsed > 0 && `Annual: ${request.annualTokensUsed}`}
             {request.annualTokensUsed > 0 && request.purchasedTokensUsed > 0 && ", "}
             {request.purchasedTokensUsed > 0 && `Purchased: ${request.purchasedTokensUsed}`}
-            {request.annualTokensUsed === 0 && request.purchasedTokensUsed === 0 && "0"}
+            {request.annualTokensUsed === 0 && request.purchasedTokensUsed === 0 && "0 tokens"}
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-xs capitalize">{request.status}</Badge>
           <Button
-            variant="ghost"
+            variant={showChat ? "default" : "outline"}
             size="sm"
             onClick={() => setShowChat(!showChat)}
             data-testid={`button-admin-toggle-chat-${request.id}`}
-            className="h-7 px-2 text-gray-500 hover:text-gray-900"
+            className={showChat ? "bg-[#1a1a1a] text-white h-8" : "h-8"}
           >
-            <MessageCircle className="w-3.5 h-3.5 mr-1" />
-            Chat
+            <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+            {showChat ? "Hide Chat" : "Reply to Client"}
           </Button>
         </div>
       </div>
