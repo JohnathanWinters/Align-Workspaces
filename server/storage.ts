@@ -47,6 +47,8 @@ export interface IStorage {
   getEditRequestById(id: string): Promise<EditRequest | undefined>;
   getEditRequestPhotoById(id: string): Promise<EditRequestPhoto | undefined>;
   deleteEditRequestPhoto(id: string): Promise<void>;
+  deleteEditRequest(id: string): Promise<void>;
+  refundEditRequestTokens(userId: string, annualRefund: number, purchasedRefund: number): Promise<void>;
   savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
   deletePushSubscription(endpoint: string): Promise<void>;
   getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]>;
@@ -397,6 +399,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEditRequestPhoto(id: string): Promise<void> {
     await db.delete(editRequestPhotos).where(eq(editRequestPhotos.id, id));
+  }
+
+  async deleteEditRequest(id: string): Promise<void> {
+    await db.delete(editRequestMessages).where(eq(editRequestMessages.editRequestId, id));
+    await db.delete(editRequestPhotos).where(eq(editRequestPhotos.editRequestId, id));
+    await db.delete(editRequests).where(eq(editRequests.id, id));
+  }
+
+  async refundEditRequestTokens(userId: string, annualRefund: number, purchasedRefund: number): Promise<void> {
+    const tokens = await this.getOrCreateEditTokens(userId);
+    await db.update(editTokens)
+      .set({
+        annualTokens: tokens.annualTokens + annualRefund,
+        purchasedTokens: tokens.purchasedTokens + purchasedRefund,
+      })
+      .where(eq(editTokens.id, tokens.id));
+    if (annualRefund > 0) {
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "refund",
+        amount: annualRefund,
+        description: `Refunded ${annualRefund} annual token(s) — edit request deleted`,
+      });
+    }
+    if (purchasedRefund > 0) {
+      await db.insert(tokenTransactions).values({
+        userId,
+        type: "refund",
+        amount: purchasedRefund,
+        description: `Refunded ${purchasedRefund} purchased token(s) — edit request deleted`,
+      });
+    }
   }
 
   async savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {

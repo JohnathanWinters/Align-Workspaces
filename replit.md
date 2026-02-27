@@ -81,6 +81,7 @@ Pricing is calculated dynamically based on selections.
   - `GET /api/admin/edit-tokens/:userId` — Get user's token balance (admin)
   - `PATCH /api/admin/edit-tokens/:userId` — Adjust user's token balance (admin)
   - `GET /api/admin/edit-requests` — Get all edit requests (admin)
+  - `DELETE /api/admin/edit-requests/:id` — Delete edit request, refund tokens, clean up photos from storage (admin only)
   - `GET /api/admin/edit-requests/:id/photos` — Get photos for edit request (admin)
   - `GET /api/admin/token-transactions/:userId` — Get token transaction history (admin)
   - `GET /api/admin/all-edit-tokens` — Get all edit token records (admin)

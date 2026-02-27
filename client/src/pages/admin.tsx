@@ -912,14 +912,15 @@ interface EditRequestPhoto {
   createdAt: string;
 }
 
-function AdminEditRequestItem({ request, token }: { request: EditRequest; token: string }) {
+function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequest; token: string; onDeleted: () => void }) {
   const { toast } = useToast();
   const [showChat, setShowChat] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
   const [photos, setPhotos] = useState<EditRequestPhoto[]>([]);
   const [photosLoading, setPhotosLoading] = useState(false);
-  const [deletingPhoto, setDeletingPhoto] = useState<string | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const lastSeenRef = useRef<number>(0);
 
   useEffect(() => {
@@ -965,17 +966,23 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
     setShowPhotos(!showPhotos);
   };
 
-  const handleDeletePhoto = async (photoId: string) => {
-    setDeletingPhoto(photoId);
+  const handleDelete = async () => {
+    setDeleting(true);
     try {
-      const res = await adminFetch(`/api/admin/edit-request-photos/${photoId}`, token, { method: "DELETE" });
+      const res = await adminFetch(`/api/admin/edit-requests/${request.id}`, token, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
-      setPhotos(prev => prev.filter(p => p.id !== photoId));
-      toast({ title: "Photo deleted" });
+      const data = await res.json();
+      const refundTotal = (data.refunded?.annual || 0) + (data.refunded?.purchased || 0);
+      toast({
+        title: "Edit request deleted",
+        description: refundTotal > 0 ? `${refundTotal} token(s) refunded to client` : undefined,
+      });
+      onDeleted();
     } catch {
-      toast({ title: "Error", description: "Failed to delete photo", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to delete edit request", variant: "destructive" });
     } finally {
-      setDeletingPhoto(null);
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
@@ -986,6 +993,8 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
     }
     setShowChat(!showChat);
   };
+
+  const totalTokens = request.annualTokensUsed + request.purchasedTokensUsed;
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white" data-testid={`admin-edit-request-${request.id}`}>
@@ -1018,29 +1027,67 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={togglePhotos}
-              data-testid={`button-admin-toggle-photos-${request.id}`}
-              className="h-8"
-            >
-              <Images className="w-3.5 h-3.5 mr-1.5" />
-              {showPhotos ? "Hide Photos" : "View Photos"}
-            </Button>
-            <Button
-              variant={showChat ? "default" : "outline"}
-              size="sm"
-              onClick={handleChatToggle}
-              data-testid={`button-admin-toggle-chat-${request.id}`}
-              className={`relative h-8 ${showChat ? "bg-[#1a1a1a] text-white" : ""}`}
-            >
-              <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-              {showChat ? "Hide Chat" : "Reply to Client"}
-              {hasUnread && !showChat && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-              )}
-            </Button>
+            {!confirmDelete ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={togglePhotos}
+                  data-testid={`button-admin-toggle-photos-${request.id}`}
+                  className="h-8"
+                >
+                  <Images className="w-3.5 h-3.5 mr-1.5" />
+                  {showPhotos ? "Hide Photos" : "View Photos"}
+                </Button>
+                <Button
+                  variant={showChat ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleChatToggle}
+                  data-testid={`button-admin-toggle-chat-${request.id}`}
+                  className={`relative h-8 ${showChat ? "bg-[#1a1a1a] text-white" : ""}`}
+                >
+                  <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+                  {showChat ? "Hide Chat" : "Reply to Client"}
+                  {hasUnread && !showChat && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmDelete(true)}
+                  data-testid={`button-admin-delete-request-${request.id}`}
+                  className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-600">
+                  Delete{totalTokens > 0 ? ` & refund ${totalTokens} token(s)` : ""}?
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  data-testid={`button-confirm-delete-request-${request.id}`}
+                  className="h-7"
+                >
+                  {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Yes, delete"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                  data-testid={`button-cancel-delete-request-${request.id}`}
+                  className="h-7"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1054,7 +1101,7 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
               {photos.map(photo => (
-                <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden bg-gray-100" data-testid={`admin-edit-photo-${photo.id}`}>
+                <div key={photo.id} className="relative aspect-square rounded-md overflow-hidden bg-gray-100" data-testid={`admin-edit-photo-${photo.id}`}>
                   <img
                     src={photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`}
                     alt={photo.originalFilename || "Edit request photo"}
@@ -1062,21 +1109,6 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
                     loading="lazy"
                     decoding="async"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeletePhoto(photo.id)}
-                      disabled={deletingPhoto === photo.id}
-                      data-testid={`button-delete-edit-photo-${photo.id}`}
-                      className="h-7 px-2"
-                    >
-                      {deletingPhoto === photo.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    </Button>
-                  </div>
-                  <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                    {photo.originalFilename || "photo"}
-                  </p>
                 </div>
               ))}
             </div>
@@ -1214,33 +1246,34 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [tokensRes, txRes, reqRes] = await Promise.all([
-          adminFetch(`/api/admin/edit-tokens/${userId}`, token),
-          adminFetch(`/api/admin/token-transactions/${userId}`, token),
-          adminFetch("/api/admin/edit-requests", token),
-        ]);
-        if (tokensRes.ok) {
-          const data = await tokensRes.json();
-          setAnnual(data.annualTokens ?? 0);
-          setPurchased(data.purchasedTokens ?? 0);
-        }
-        if (txRes.ok) setTransactions(await txRes.json());
-        if (reqRes.ok) {
-          const all: EditRequest[] = await reqRes.json();
-          setEditRequests(all.filter((r) => r.userId === userId));
-        }
-      } catch {
-        toast({ title: "Error", description: "Failed to load token data", variant: "destructive" });
-      } finally {
-        setLoading(false);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [tokensRes, txRes, reqRes] = await Promise.all([
+        adminFetch(`/api/admin/edit-tokens/${userId}`, token),
+        adminFetch(`/api/admin/token-transactions/${userId}`, token),
+        adminFetch("/api/admin/edit-requests", token),
+      ]);
+      if (tokensRes.ok) {
+        const data = await tokensRes.json();
+        setAnnual(data.annualTokens ?? 0);
+        setPurchased(data.purchasedTokens ?? 0);
       }
-    };
-    load();
+      if (txRes.ok) setTransactions(await txRes.json());
+      if (reqRes.ok) {
+        const all: EditRequest[] = await reqRes.json();
+        setEditRequests(all.filter((r) => r.userId === userId));
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to load token data", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   }, [userId, token]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -1380,7 +1413,7 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
                 ) : (
                   <div className="space-y-3">
                     {editRequests.map((req) => (
-                      <AdminEditRequestItem key={req.id} request={req} token={token} />
+                      <AdminEditRequestItem key={req.id} request={req} token={token} onDeleted={loadData} />
                     ))}
                   </div>
                 )}

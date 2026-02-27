@@ -1045,17 +1045,28 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/edit-request-photos/:id", isAdmin, async (req: any, res) => {
+  app.delete("/api/admin/edit-requests/:id", isAdmin, async (req: any, res) => {
     try {
-      const photo = await storage.getEditRequestPhotoById(req.params.id);
-      if (!photo) {
-        return res.status(404).json({ message: "Photo not found" });
+      const request = await storage.getEditRequestById(req.params.id);
+      if (!request) {
+        return res.status(404).json({ message: "Edit request not found" });
       }
-      await deleteFromObjectStorage(photo.imageUrl);
-      await storage.deleteEditRequestPhoto(req.params.id);
-      res.json({ success: true });
+
+      const photos = await storage.getEditRequestPhotos(request.id);
+      for (const photo of photos) {
+        await deleteFromObjectStorage(photo.imageUrl);
+      }
+
+      const annualRefund = request.annualTokensUsed;
+      const purchasedRefund = request.purchasedTokensUsed;
+      if (annualRefund > 0 || purchasedRefund > 0) {
+        await storage.refundEditRequestTokens(request.userId, annualRefund, purchasedRefund);
+      }
+
+      await storage.deleteEditRequest(request.id);
+      res.json({ success: true, refunded: { annual: annualRefund, purchased: purchasedRefund } });
     } catch (err: any) {
-      res.status(500).json({ message: err.message || "Failed to delete photo" });
+      res.status(500).json({ message: err.message || "Failed to delete edit request" });
     }
   });
 
