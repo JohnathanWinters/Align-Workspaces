@@ -154,8 +154,26 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editFolderName, setEditFolderName] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!lightboxImage) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxImage(null);
+      if (e.key === "ArrowLeft") {
+        const idx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
+        if (idx > 0) setLightboxImage(filteredImages[idx - 1]);
+      }
+      if (e.key === "ArrowRight") {
+        const idx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
+        if (idx < filteredImages.length - 1) setLightboxImage(filteredImages[idx + 1]);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxImage, filteredImages]);
 
   const loadGallery = useCallback(async () => {
     setLoading(true);
@@ -518,8 +536,9 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
                 {filteredImages.map((image) => (
                   <div
                     key={image.id}
-                    className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100"
+                    className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
                     data-testid={`gallery-image-${image.id}`}
+                    onClick={() => setLightboxImage(image)}
                   >
                     <img
                       src={image.imageUrl}
@@ -533,7 +552,7 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteImage(image.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteImage(image.id); }}
                         data-testid={`button-delete-image-${image.id}`}
                         className="h-7 w-7 p-0 shrink-0"
                       >
@@ -547,6 +566,58 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
           </div>
         </motion.div>
       </main>
+
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+          data-testid="lightbox-overlay"
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white z-10"
+            data-testid="button-close-lightbox"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const currentIdx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
+              if (currentIdx > 0) setLightboxImage(filteredImages[currentIdx - 1]);
+            }}
+            className="absolute left-4 text-white/70 hover:text-white z-10"
+            data-testid="button-lightbox-prev"
+          >
+            <ChevronLeft className="w-8 h-8" />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const currentIdx = filteredImages.findIndex((img) => img.id === lightboxImage.id);
+              if (currentIdx < filteredImages.length - 1) setLightboxImage(filteredImages[currentIdx + 1]);
+            }}
+            className="absolute right-4 text-white/70 hover:text-white z-10"
+            data-testid="button-lightbox-next"
+          >
+            <ChevronLeft className="w-8 h-8 rotate-180" />
+          </button>
+
+          <div className="max-w-5xl max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightboxImage.imageUrl}
+              alt={lightboxImage.originalFilename || "Gallery photo"}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              data-testid="lightbox-image"
+            />
+            <p className="text-white/60 text-sm mt-3">
+              {lightboxImage.originalFilename || "Photo"}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
