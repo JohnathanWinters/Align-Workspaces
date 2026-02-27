@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
 
@@ -903,8 +904,88 @@ function InvoiceModal({
   );
 }
 
+interface EditRequestPhoto {
+  id: string;
+  editRequestId: string;
+  imageUrl: string;
+  originalFilename: string | null;
+  createdAt: string;
+}
+
 function AdminEditRequestItem({ request, token }: { request: EditRequest; token: string }) {
+  const { toast } = useToast();
   const [showChat, setShowChat] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [photos, setPhotos] = useState<EditRequestPhoto[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [deletingPhoto, setDeletingPhoto] = useState<string | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
+  const lastSeenRef = useRef<number>(0);
+
+  useEffect(() => {
+    const checkUnread = async () => {
+      try {
+        const res = await adminFetch(`/api/admin/edit-requests/${request.id}/messages`, token);
+        if (res.ok) {
+          const msgs: EditRequestMessage[] = await res.json();
+          const adminMessages = msgs.filter(m => m.senderRole === "admin");
+          const clientMessages = msgs.filter(m => m.senderRole === "client");
+          if (clientMessages.length > 0) {
+            const lastClientMsg = clientMessages[clientMessages.length - 1];
+            const lastAdminMsg = adminMessages.length > 0 ? adminMessages[adminMessages.length - 1] : null;
+            if (!lastAdminMsg || new Date(lastClientMsg.createdAt) > new Date(lastAdminMsg.createdAt)) {
+              if (lastSeenRef.current < clientMessages.length) {
+                setHasUnread(true);
+              }
+            } else {
+              setHasUnread(false);
+            }
+          }
+        }
+      } catch {}
+    };
+    checkUnread();
+    const interval = setInterval(checkUnread, 15000);
+    return () => clearInterval(interval);
+  }, [request.id, token]);
+
+  const loadPhotos = async () => {
+    if (photos.length > 0) return;
+    setPhotosLoading(true);
+    try {
+      const res = await adminFetch(`/api/admin/edit-requests/${request.id}/photos`, token);
+      if (res.ok) setPhotos(await res.json());
+    } catch {} finally {
+      setPhotosLoading(false);
+    }
+  };
+
+  const togglePhotos = () => {
+    if (!showPhotos) loadPhotos();
+    setShowPhotos(!showPhotos);
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    setDeletingPhoto(photoId);
+    try {
+      const res = await adminFetch(`/api/admin/edit-request-photos/${photoId}`, token, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      setPhotos(prev => prev.filter(p => p.id !== photoId));
+      toast({ title: "Photo deleted" });
+    } catch {
+      toast({ title: "Error", description: "Failed to delete photo", variant: "destructive" });
+    } finally {
+      setDeletingPhoto(null);
+    }
+  };
+
+  const handleChatToggle = () => {
+    if (!showChat) {
+      setHasUnread(false);
+      lastSeenRef.current = Date.now();
+    }
+    setShowChat(!showChat);
+  };
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white" data-testid={`admin-edit-request-${request.id}`}>
@@ -927,25 +1008,82 @@ function AdminEditRequestItem({ request, token }: { request: EditRequest; token:
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">
-            {request.annualTokensUsed > 0 && `Annual: ${request.annualTokensUsed}`}
-            {request.annualTokensUsed > 0 && request.purchasedTokensUsed > 0 && ", "}
-            {request.purchasedTokensUsed > 0 && `Purchased: ${request.purchasedTokensUsed}`}
-            {request.annualTokensUsed === 0 && request.purchasedTokensUsed === 0 && "0 tokens"}
-          </span>
-          <Button
-            variant={showChat ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowChat(!showChat)}
-            data-testid={`button-admin-toggle-chat-${request.id}`}
-            className={showChat ? "bg-[#1a1a1a] text-white h-8" : "h-8"}
-          >
-            <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-            {showChat ? "Hide Chat" : "Reply to Client"}
-          </Button>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">
+              {request.annualTokensUsed > 0 && `Annual: ${request.annualTokensUsed}`}
+              {request.annualTokensUsed > 0 && request.purchasedTokensUsed > 0 && ", "}
+              {request.purchasedTokensUsed > 0 && `Purchased: ${request.purchasedTokensUsed}`}
+              {request.annualTokensUsed === 0 && request.purchasedTokensUsed === 0 && "0 tokens"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={togglePhotos}
+              data-testid={`button-admin-toggle-photos-${request.id}`}
+              className="h-8"
+            >
+              <Images className="w-3.5 h-3.5 mr-1.5" />
+              {showPhotos ? "Hide Photos" : "View Photos"}
+            </Button>
+            <Button
+              variant={showChat ? "default" : "outline"}
+              size="sm"
+              onClick={handleChatToggle}
+              data-testid={`button-admin-toggle-chat-${request.id}`}
+              className={`relative h-8 ${showChat ? "bg-[#1a1a1a] text-white" : ""}`}
+            >
+              <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+              {showChat ? "Hide Chat" : "Reply to Client"}
+              {hasUnread && !showChat && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {showPhotos && (
+        <div className="px-4 pb-3 border-t border-gray-100 pt-3">
+          {photosLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>
+          ) : photos.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-2">No photos found</p>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+              {photos.map(photo => (
+                <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden bg-gray-100" data-testid={`admin-edit-photo-${photo.id}`}>
+                  <img
+                    src={photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`}
+                    alt={photo.originalFilename || "Edit request photo"}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      disabled={deletingPhoto === photo.id}
+                      data-testid={`button-delete-edit-photo-${photo.id}`}
+                      className="h-7 px-2"
+                    >
+                      {deletingPhoto === photo.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
+                  <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] px-1 py-0.5 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                    {photo.originalFilename || "photo"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {showChat && (
         <div className="px-3 pb-3">
           <AdminEditRequestChat editRequestId={request.id} token={token} />
@@ -962,13 +1100,24 @@ function AdminEditRequestChat({ editRequestId, token: authToken }: { editRequest
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(0);
 
   const loadMessages = useCallback(async () => {
     try {
       const res = await adminFetch(`/api/admin/edit-requests/${editRequestId}/messages`, authToken);
-      if (res.ok) setMessages(await res.json());
+      if (res.ok) {
+        const msgs = await res.json();
+        if (!loading && msgs.length > prevCountRef.current) {
+          const newest = msgs[msgs.length - 1];
+          if (newest.senderRole === "client") {
+            playNotificationSound();
+          }
+        }
+        prevCountRef.current = msgs.length;
+        setMessages(msgs);
+      }
     } catch {} finally { setLoading(false); }
-  }, [editRequestId, authToken]);
+  }, [editRequestId, authToken, loading]);
 
   useEffect(() => { loadMessages(); }, [loadMessages]);
 

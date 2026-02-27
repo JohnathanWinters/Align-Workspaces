@@ -1045,6 +1045,20 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/edit-request-photos/:id", isAdmin, async (req: any, res) => {
+    try {
+      const photo = await storage.getEditRequestPhotoById(req.params.id);
+      if (!photo) {
+        return res.status(404).json({ message: "Photo not found" });
+      }
+      await deleteFromObjectStorage(photo.imageUrl);
+      await storage.deleteEditRequestPhoto(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to delete photo" });
+    }
+  });
+
   app.get("/api/admin/token-transactions/:userId", isAdmin, async (req: any, res) => {
     try {
       const transactions = await storage.getTokenTransactions(req.params.userId);

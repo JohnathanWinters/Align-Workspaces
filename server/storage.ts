@@ -45,6 +45,8 @@ export interface IStorage {
   getEditRequestMessages(editRequestId: string): Promise<EditRequestMessage[]>;
   createEditRequestMessage(msg: InsertEditRequestMessage): Promise<EditRequestMessage>;
   getEditRequestById(id: string): Promise<EditRequest | undefined>;
+  getEditRequestPhotoById(id: string): Promise<EditRequestPhoto | undefined>;
+  deleteEditRequestPhoto(id: string): Promise<void>;
   savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
   deletePushSubscription(endpoint: string): Promise<void>;
   getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]>;
@@ -386,6 +388,15 @@ export class DatabaseStorage implements IStorage {
   async getEditRequestById(id: string): Promise<EditRequest | undefined> {
     const [result] = await db.select().from(editRequests).where(eq(editRequests.id, id));
     return result;
+  }
+
+  async getEditRequestPhotoById(id: string): Promise<EditRequestPhoto | undefined> {
+    const [result] = await db.select().from(editRequestPhotos).where(eq(editRequestPhotos.id, id));
+    return result;
+  }
+
+  async deleteEditRequestPhoto(id: string): Promise<void> {
+    await db.delete(editRequestPhotos).where(eq(editRequestPhotos.id, id));
   }
 
   async savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {

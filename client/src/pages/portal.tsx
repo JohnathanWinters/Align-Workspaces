@@ -48,6 +48,7 @@ import {
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { playNotificationSound } from "@/lib/notification-sound";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -326,6 +327,38 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
 
 function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: EditRequest; getStatusBadge: (status: string) => JSX.Element; defaultOpen?: boolean }) {
   const [showChat, setShowChat] = useState(defaultOpen ?? false);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    if (showChat) return;
+    const checkUnread = async () => {
+      try {
+        const res = await fetch(`/api/edit-requests/${request.id}/messages`, { credentials: "include" });
+        if (res.ok) {
+          const msgs: EditRequestMessage[] = await res.json();
+          const adminMsgs = msgs.filter(m => m.senderRole === "admin");
+          const clientMsgs = msgs.filter(m => m.senderRole === "client");
+          if (adminMsgs.length > 0) {
+            const lastAdmin = adminMsgs[adminMsgs.length - 1];
+            const lastClient = clientMsgs.length > 0 ? clientMsgs[clientMsgs.length - 1] : null;
+            if (!lastClient || new Date(lastAdmin.createdAt) > new Date(lastClient.createdAt)) {
+              setHasUnread(true);
+            } else {
+              setHasUnread(false);
+            }
+          }
+        }
+      } catch {}
+    };
+    checkUnread();
+    const interval = setInterval(checkUnread, 15000);
+    return () => clearInterval(interval);
+  }, [request.id, showChat]);
+
+  const handleChatToggle = () => {
+    if (!showChat) setHasUnread(false);
+    setShowChat(!showChat);
+  };
 
   return (
     <div
@@ -356,12 +389,15 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
           <Button
             variant={showChat ? "default" : "outline"}
             size="sm"
-            onClick={() => setShowChat(!showChat)}
+            onClick={handleChatToggle}
             data-testid={`button-toggle-chat-${request.id}`}
-            className={showChat ? "bg-[#1a1a1a] text-white h-8" : "h-8"}
+            className={`relative h-8 ${showChat ? "bg-[#1a1a1a] text-white" : ""}`}
           >
             <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
             {showChat ? "Hide Chat" : "Chat with Photographer"}
+            {hasUnread && !showChat && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+            )}
           </Button>
         </div>
       </div>
@@ -386,6 +422,7 @@ function EditRequestChat({ editRequestId }: { editRequestId: string }) {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(0);
 
   const { data: messages = [], isLoading } = useQuery<EditRequestMessage[]>({
     queryKey: ["/api/edit-requests", editRequestId, "messages"],
@@ -396,6 +433,16 @@ function EditRequestChat({ editRequestId }: { editRequestId: string }) {
     },
     refetchInterval: 10000,
   });
+
+  useEffect(() => {
+    if (messages.length > prevCountRef.current && prevCountRef.current > 0) {
+      const newest = messages[messages.length - 1];
+      if (newest.senderRole === "admin") {
+        playNotificationSound();
+      }
+    }
+    prevCountRef.current = messages.length;
+  }, [messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
