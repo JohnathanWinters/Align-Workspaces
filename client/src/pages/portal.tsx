@@ -529,7 +529,7 @@ function EditRequestChat({ editRequestId }: { editRequestId: string }) {
 
 function EditTokenSection() {
   const { toast } = useToast();
-  const [editSectionOpen, setEditSectionOpen] = useState(true);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [editInstructions, setEditInstructions] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -631,6 +631,7 @@ function EditTokenSection() {
       setSelectedFiles([]);
       setEditInstructions("");
       setShowConfirmDialog(false);
+      setShowSubmitDialog(false);
       setJustSubmittedId(data.editRequest?.id || null);
       queryClient.invalidateQueries({ queryKey: ["/api/edit-tokens"] });
       queryClient.invalidateQueries({ queryKey: ["/api/edit-requests"] });
@@ -738,28 +739,29 @@ function EditTokenSection() {
         </div>
       )}
 
-      <Card className="bg-white" data-testid="card-edit-section">
-        <CardHeader className="pb-3">
-          <button
-            onClick={() => setEditSectionOpen(!editSectionOpen)}
-            data-testid="button-toggle-edit-section"
-            className="flex items-center justify-between w-full text-left"
-          >
-            <div className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-gray-500" />
-              <CardTitle className="text-base font-semibold">Submit Photos for Editing</CardTitle>
-            </div>
-            {editSectionOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-          </button>
-        </CardHeader>
-        {editSectionOpen && (
-          <CardContent className="space-y-4">
+      <Button
+        onClick={() => setShowSubmitDialog(true)}
+        data-testid="button-open-submit-dialog"
+        className="w-full bg-[#1a1a1a] text-white py-3 text-base font-medium"
+        size="lg"
+      >
+        <Upload className="w-5 h-5 mr-2" />
+        Submit Photos for Editing
+      </Button>
+
+      <Dialog open={showSubmitDialog} onOpenChange={(open) => { if (!isSubmitting) setShowSubmitDialog(open); }}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto" data-testid="dialog-submit-edit">
+          <DialogHeader>
+            <DialogTitle>Submit Photos for Editing</DialogTitle>
+            <DialogDescription>Upload your photos and describe the edits you'd like.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               data-testid="dropzone-edit-photos"
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
                 isDragging ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"
               }`}
               onClick={() => document.getElementById("edit-photo-input")?.click()}
@@ -779,69 +781,70 @@ function EditTokenSection() {
             </div>
 
             {selectedFiles.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {selectedFiles.map((file, i) => (
-                    <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-md px-2 py-1 text-xs text-gray-700">
-                      <FileImage className="w-3 h-3 text-gray-400" />
-                      <span className="max-w-[120px] truncate">{file.name}</span>
-                      <button
-                        onClick={() => removeFile(i)}
-                        data-testid={`button-remove-file-${i}`}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-900 block mb-1.5" htmlFor="edit-instructions">
-                    What would you like done to these photos?
-                  </label>
-                  <Textarea
-                    id="edit-instructions"
-                    value={editInstructions}
-                    onChange={(e) => setEditInstructions(e.target.value)}
-                    placeholder="E.g. Remove background, brighten exposure, color correction, crop for LinkedIn headshot, retouch skin..."
-                    className="min-h-[80px] text-sm resize-none"
-                    data-testid="textarea-edit-instructions"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Be specific about what edits you'd like — this helps your photographer deliver exactly what you need.</p>
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
-                  <p className="font-medium text-gray-900" data-testid="text-token-cost">
-                    This will use {tokenCost} edit token(s)
-                  </p>
-                  {hasEnoughTokens ? (
-                    <p className="text-gray-500" data-testid="text-token-breakdown">
-                      {annualUsed} from annual tokens, {purchasedUsed} from purchased tokens
-                    </p>
-                  ) : (
-                    <div className="flex items-start gap-2 text-amber-600" data-testid="text-insufficient-tokens">
-                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <p>You do not have enough Edit Tokens. Please purchase additional tokens to continue.</p>
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  onClick={() => setShowConfirmDialog(true)}
-                  disabled={!hasEnoughTokens || fileCount === 0}
-                  data-testid="button-submit-edit-request"
-                  className="w-full bg-[#1a1a1a] text-white py-3 text-base font-medium"
-                  size="lg"
-                >
-                  <Upload className="w-5 h-5 mr-2" />
-                  Submit for Editing
-                </Button>
+              <div className="flex flex-wrap gap-2">
+                {selectedFiles.map((file, i) => (
+                  <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-md px-2 py-1 text-xs text-gray-700">
+                    <FileImage className="w-3 h-3 text-gray-400" />
+                    <span className="max-w-[120px] truncate">{file.name}</span>
+                    <button
+                      onClick={() => removeFile(i)}
+                      data-testid={`button-remove-file-${i}`}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
-          </CardContent>
-        )}
-      </Card>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 block mb-1.5" htmlFor="edit-instructions">
+                What would you like done to these photos?
+              </label>
+              <Textarea
+                id="edit-instructions"
+                value={editInstructions}
+                onChange={(e) => setEditInstructions(e.target.value)}
+                placeholder="E.g. Remove background, brighten exposure, color correction, crop for LinkedIn headshot, retouch skin..."
+                className="min-h-[80px] text-sm resize-none"
+                data-testid="textarea-edit-instructions"
+              />
+              <p className="text-xs text-gray-400 mt-1">Be specific about what edits you'd like.</p>
+            </div>
+
+            {selectedFiles.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
+                <p className="font-medium text-gray-900" data-testid="text-token-cost">
+                  This will use {tokenCost} edit token(s)
+                </p>
+                {hasEnoughTokens ? (
+                  <p className="text-gray-500" data-testid="text-token-breakdown">
+                    {annualUsed} from annual tokens, {purchasedUsed} from purchased tokens
+                  </p>
+                ) : (
+                  <div className="flex items-start gap-2 text-amber-600" data-testid="text-insufficient-tokens">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <p>You do not have enough Edit Tokens. Please purchase additional tokens to continue.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowConfirmDialog(true)}
+              disabled={!hasEnoughTokens || fileCount === 0}
+              data-testid="button-submit-edit-request"
+              className="w-full bg-[#1a1a1a] text-white"
+              size="lg"
+            >
+              <Upload className="w-5 h-5 mr-2" />
+              Submit for Editing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {justSubmittedId && editRequests.length > 0 && (
         <motion.div

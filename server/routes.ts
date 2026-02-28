@@ -927,6 +927,7 @@ export async function registerRoutes(
         const senderName = lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
         await storage.createEditRequestMessage({
           editRequestId: editRequest.id,
+          senderId: userId,
           senderRole: "client",
           senderName,
           message: notes.trim(),
