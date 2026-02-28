@@ -13,7 +13,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import archiver from "archiver";
-import { randomUUID, createHash } from "crypto";
+import { randomUUID, createHash, scryptSync, randomBytes } from "crypto";
 import { objectStorageClient, ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
 import { authStorage } from "./replit_integrations/auth";
 
@@ -135,6 +135,32 @@ async function getClientDisplayName(claims: any, userId: string): Promise<string
   return lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
 }
 
+function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
+  const s = salt || randomBytes(16).toString("hex");
+  const h = scryptSync(password, s, 64).toString("hex");
+  return { hash: `${s}:${h}`, salt: s };
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
+  const { hash: full } = hashPassword(password, salt);
+  return full === stored;
+}
+
+const EMPLOYEE_ROLES: Record<string, string[]> = {
+  editor: [
+    "view_users", "view_shoots", "view_gallery", "view_edit_requests",
+    "upload_finished_photos", "chat_edit_requests", "view_edit_tokens",
+  ],
+  manager: [
+    "view_users", "view_shoots", "view_gallery", "view_edit_requests",
+    "upload_finished_photos", "chat_edit_requests", "view_edit_tokens",
+    "create_shoots", "edit_shoots", "manage_gallery", "upload_photos",
+    "manage_folders", "adjust_tokens",
+  ],
+};
+
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -144,7 +170,46 @@ function isAdmin(req: Request, res: Response, next: NextFunction) {
   if (token !== process.env.ADMIN_PASSWORD) {
     return res.status(403).json({ message: "Invalid admin credentials" });
   }
+  (req as any).adminRole = "admin";
   next();
+}
+
+function isAdminOrEmployee(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  const token = authHeader.slice(7);
+  if (token === process.env.ADMIN_PASSWORD) {
+    (req as any).adminRole = "admin";
+    return next();
+  }
+  if (token.startsWith("emp:")) {
+    const parts = token.split(":");
+    const empId = parts[1];
+    const empRole = parts[2];
+    if (empId && empRole) {
+      (req as any).adminRole = "employee";
+      (req as any).employeeId = empId;
+      (req as any).employeeRole = empRole;
+      return next();
+    }
+  }
+  return res.status(403).json({ message: "Invalid credentials" });
+}
+
+function requirePermission(...permissions: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const role = (req as any).adminRole;
+    if (role === "admin") return next();
+    const empRole = (req as any).employeeRole as string;
+    const allowed = EMPLOYEE_ROLES[empRole] || [];
+    const hasAll = permissions.every(p => allowed.includes(p));
+    if (!hasAll) {
+      return res.status(403).json({ message: "Insufficient permissions" });
+    }
+    next();
+  };
 }
 
 export async function registerRoutes(
@@ -496,8 +561,140 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: list all users
-  app.get("/api/admin/users", isAdmin, async (_req, res) => {
+  app.post("/api/employee/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+      }
+      const employee = await storage.getEmployeeByUsername(username);
+      if (!employee || !employee.active) {
+        return res.status(403).json({ message: "Invalid credentials" });
+      }
+      if (!verifyPassword(password, employee.passwordHash)) {
+        return res.status(403).json({ message: "Invalid credentials" });
+      }
+      const token = `emp:${employee.id}:${employee.role}`;
+      res.json({
+        success: true,
+        token,
+        employee: {
+          id: employee.id,
+          username: employee.username,
+          displayName: employee.displayName,
+          role: employee.role,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Login failed" });
+    }
+  });
+
+  app.get("/api/employee/me", isAdminOrEmployee, async (req: any, res) => {
+    if (req.adminRole === "admin") {
+      return res.json({ role: "admin", displayName: "Admin" });
+    }
+    try {
+      const employee = await storage.getEmployeeById(req.employeeId);
+      if (!employee || !employee.active) {
+        return res.status(403).json({ message: "Account deactivated" });
+      }
+      res.json({
+        id: employee.id,
+        username: employee.username,
+        displayName: employee.displayName,
+        role: employee.role,
+      });
+    } catch {
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.get("/api/admin/employees", isAdmin, async (_req, res) => {
+    try {
+      const emps = await storage.getEmployees();
+      const safe = emps.map(e => ({ id: e.id, username: e.username, displayName: e.displayName, role: e.role, active: e.active, createdAt: e.createdAt }));
+      res.json(safe);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch employees" });
+    }
+  });
+
+  app.post("/api/admin/employees", isAdmin, async (req, res) => {
+    try {
+      const { username, password, displayName, role } = req.body;
+      if (!username || !password || !displayName) {
+        return res.status(400).json({ message: "Username, password, and display name are required" });
+      }
+      if (role && !["editor", "manager"].includes(role)) {
+        return res.status(400).json({ message: "Role must be editor or manager" });
+      }
+      const existing = await storage.getEmployeeByUsername(username);
+      if (existing) {
+        return res.status(409).json({ message: "Username already taken" });
+      }
+      const { hash } = hashPassword(password);
+      const employee = await storage.createEmployee({
+        username,
+        passwordHash: hash,
+        displayName,
+        role: role || "editor",
+      });
+      res.status(201).json({
+        id: employee.id,
+        username: employee.username,
+        displayName: employee.displayName,
+        role: employee.role,
+        active: employee.active,
+        createdAt: employee.createdAt,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to create employee" });
+    }
+  });
+
+  app.patch("/api/admin/employees/:id", isAdmin, async (req, res) => {
+    try {
+      const { username, password, displayName, role, active } = req.body;
+      const update: any = {};
+      if (username) update.username = username;
+      if (displayName) update.displayName = displayName;
+      if (role && ["editor", "manager"].includes(role)) update.role = role;
+      if (typeof active === "number") update.active = active;
+      if (password) {
+        const { hash } = hashPassword(password);
+        update.passwordHash = hash;
+      }
+      if (username) {
+        const existing = await storage.getEmployeeByUsername(username);
+        if (existing && existing.id !== req.params.id) {
+          return res.status(409).json({ message: "Username already taken" });
+        }
+      }
+      const updated = await storage.updateEmployee(req.params.id, update);
+      res.json({
+        id: updated.id,
+        username: updated.username,
+        displayName: updated.displayName,
+        role: updated.role,
+        active: updated.active,
+        createdAt: updated.createdAt,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to update employee" });
+    }
+  });
+
+  app.delete("/api/admin/employees/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteEmployee(req.params.id);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Failed to delete employee" });
+    }
+  });
+
+  app.get("/api/admin/users", isAdminOrEmployee, requirePermission("view_users"), async (_req, res) => {
     try {
       const allUsers = await storage.getAllUsers();
       res.json(allUsers);
@@ -534,7 +731,7 @@ export async function registerRoutes(
   });
 
   // Admin: list all shoots (with user info)
-  app.get("/api/admin/shoots", isAdmin, async (_req, res) => {
+  app.get("/api/admin/shoots", isAdminOrEmployee, requirePermission("view_shoots"), async (_req, res) => {
     try {
       const allShoots = await storage.getAllShoots();
       res.json(allShoots);
@@ -544,7 +741,7 @@ export async function registerRoutes(
   });
 
   // Admin: create shoot for a user
-  app.post("/api/admin/shoots", isAdmin, async (req, res) => {
+  app.post("/api/admin/shoots", isAdminOrEmployee, requirePermission("create_shoots"), async (req, res) => {
     try {
       const data = insertShootSchema.parse(req.body);
       const shoot = await storage.createShoot(data);
@@ -560,7 +757,7 @@ export async function registerRoutes(
   });
 
   // Admin: update a shoot
-  app.patch("/api/admin/shoots/:id", isAdmin, async (req, res) => {
+  app.patch("/api/admin/shoots/:id", isAdminOrEmployee, requirePermission("edit_shoots"), async (req, res) => {
     try {
       const shoot = await storage.updateShoot(req.params.id as string, req.body);
       res.json(shoot);
@@ -665,7 +862,7 @@ export async function registerRoutes(
   });
 
   // Admin: get gallery images for a shoot
-  app.get("/api/admin/shoots/:id/gallery", isAdmin, async (req, res) => {
+  app.get("/api/admin/shoots/:id/gallery", isAdminOrEmployee, requirePermission("view_gallery"), async (req, res) => {
     try {
       const images = await storage.getGalleryImages(req.params.id as string);
       res.json(images);
@@ -675,7 +872,7 @@ export async function registerRoutes(
   });
 
   // Admin: add gallery image
-  app.post("/api/admin/gallery", isAdmin, async (req, res) => {
+  app.post("/api/admin/gallery", isAdminOrEmployee, requirePermission("manage_gallery"), async (req, res) => {
     try {
       const image = await storage.createGalleryImage(req.body);
       res.status(201).json(image);
@@ -685,7 +882,7 @@ export async function registerRoutes(
   });
 
   // Admin: delete gallery image (also removes file from storage)
-  app.delete("/api/admin/gallery/:id", isAdmin, async (req, res) => {
+  app.delete("/api/admin/gallery/:id", isAdminOrEmployee, requirePermission("manage_gallery"), async (req, res) => {
     try {
       const image = await storage.getGalleryImageById(req.params.id as string);
       if (image) {
@@ -699,7 +896,7 @@ export async function registerRoutes(
   });
 
   // Admin: upload photos to a shoot
-  app.post("/api/admin/shoots/:id/upload", isAdmin, upload.array("photos", 10), async (req: any, res) => {
+  app.post("/api/admin/shoots/:id/upload", isAdminOrEmployee, requirePermission("upload_photos"), upload.array("photos", 10), async (req: any, res) => {
     const files = req.files as Express.Multer.File[];
     try {
       const shootId = req.params.id as string;
@@ -752,7 +949,7 @@ export async function registerRoutes(
   }
 
   // Admin: folder CRUD
-  app.get("/api/admin/shoots/:id/folders", isAdmin, async (req, res) => {
+  app.get("/api/admin/shoots/:id/folders", isAdminOrEmployee, requirePermission("view_gallery"), async (req, res) => {
     try {
       const folders = await storage.getFolders(req.params.id as string);
       res.json(folders);
@@ -761,7 +958,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/folders", isAdmin, async (req, res) => {
+  app.post("/api/admin/folders", isAdminOrEmployee, requirePermission("manage_folders"), async (req, res) => {
     try {
       const folder = await storage.createFolder(req.body);
       res.status(201).json(folder);
@@ -770,7 +967,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/folders/:id", isAdmin, async (req, res) => {
+  app.patch("/api/admin/folders/:id", isAdminOrEmployee, requirePermission("manage_folders"), async (req, res) => {
     try {
       const folder = await storage.updateFolder(req.params.id as string, req.body);
       res.json(folder);
@@ -779,7 +976,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/folders/:id", isAdmin, async (req, res) => {
+  app.delete("/api/admin/folders/:id", isAdminOrEmployee, requirePermission("manage_folders"), async (req, res) => {
     try {
       const folderId = req.params.id as string;
       const folder = await storage.getFolderById(folderId);
@@ -1028,7 +1225,7 @@ export async function registerRoutes(
     res.json({ pricePerToken: EDIT_TOKEN_PRICE_CENTS / 100, tokensPerPhoto: TOKENS_PER_PHOTO });
   });
 
-  app.get("/api/admin/edit-tokens/:userId", isAdmin, async (req: any, res) => {
+  app.get("/api/admin/edit-tokens/:userId", isAdminOrEmployee, requirePermission("view_edit_tokens"), async (req: any, res) => {
     try {
       const tokens = await storage.getOrCreateEditTokens(req.params.userId);
       res.json(tokens);
@@ -1037,7 +1234,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/edit-tokens/:userId", isAdmin, async (req: any, res) => {
+  app.patch("/api/admin/edit-tokens/:userId", isAdminOrEmployee, requirePermission("adjust_tokens"), async (req: any, res) => {
     try {
       const { annual, purchased } = req.body;
       const tokens = await storage.adjustTokens(req.params.userId, annual, purchased);
@@ -1047,7 +1244,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/edit-requests", isAdmin, async (_req: any, res) => {
+  app.get("/api/admin/edit-requests", isAdminOrEmployee, requirePermission("view_edit_requests"), async (_req: any, res) => {
     try {
       const requests = await storage.getEditRequests();
       res.json(requests);
@@ -1056,7 +1253,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/edit-requests/:id/photos", isAdmin, async (req: any, res) => {
+  app.get("/api/admin/edit-requests/:id/photos", isAdminOrEmployee, requirePermission("view_edit_requests"), async (req: any, res) => {
     try {
       const photos = await storage.getEditRequestPhotos(req.params.id);
       res.json(photos);
@@ -1090,7 +1287,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/edit-photos/:photoId/finished", isAdmin, upload.single("photo"), async (req: any, res) => {
+  app.post("/api/admin/edit-photos/:photoId/finished", isAdminOrEmployee, requirePermission("upload_finished_photos"), upload.single("photo"), async (req: any, res) => {
     const file = req.file as Express.Multer.File | undefined;
     try {
       if (!file) {
@@ -1116,7 +1313,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/token-transactions/:userId", isAdmin, async (req: any, res) => {
+  app.get("/api/admin/token-transactions/:userId", isAdminOrEmployee, requirePermission("view_edit_tokens"), async (req: any, res) => {
     try {
       const transactions = await storage.getTokenTransactions(req.params.userId);
       res.json(transactions);
@@ -1125,7 +1322,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/all-edit-tokens", isAdmin, async (_req: any, res) => {
+  app.get("/api/admin/all-edit-tokens", isAdminOrEmployee, requirePermission("view_edit_tokens"), async (_req: any, res) => {
     try {
       const tokens = await storage.getAllEditTokens();
       res.json(tokens);
@@ -1193,7 +1390,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/edit-requests/:id/messages", isAdmin, async (req: any, res) => {
+  app.get("/api/admin/edit-requests/:id/messages", isAdminOrEmployee, requirePermission("chat_edit_requests"), async (req: any, res) => {
     try {
       const messages = await storage.getEditRequestMessages(req.params.id);
       res.json(messages);
@@ -1202,7 +1399,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/edit-requests/:id/messages", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/edit-requests/:id/messages", isAdminOrEmployee, requirePermission("chat_edit_requests"), async (req: any, res) => {
     try {
       const { message } = req.body;
       if (!message || !message.trim()) {

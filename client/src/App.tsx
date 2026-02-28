@@ -9,6 +9,7 @@ import PortfolioPage from "@/pages/portfolio";
 import AboutPage from "@/pages/photographers";
 import PortalPage from "@/pages/portal";
 import AdminPage from "@/pages/admin";
+import EmployeePage from "@/pages/employee";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <Route path="/portal" component={PortalPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/team" component={EmployeePage} />
       <Route component={NotFound} />
     </Switch>
   );

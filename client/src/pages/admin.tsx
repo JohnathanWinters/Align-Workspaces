@@ -1579,13 +1579,291 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
   );
 }
 
+interface EmployeeData {
+  id: string;
+  username: string;
+  displayName: string;
+  role: string;
+  active: number;
+  createdAt: string;
+}
+
+function EmployeeManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [employees, setEmployees] = useState<EmployeeData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ username: "", password: "", displayName: "", role: "editor" });
+  const [saving, setSaving] = useState(false);
+
+  const loadEmployees = useCallback(async () => {
+    try {
+      const res = await adminFetch("/api/admin/employees", token);
+      if (res.ok) setEmployees(await res.json());
+    } catch {} finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { loadEmployees(); }, [loadEmployees]);
+
+  const resetForm = () => {
+    setFormData({ username: "", password: "", displayName: "", role: "editor" });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleSave = async () => {
+    if (!formData.username || !formData.displayName || (!editingId && !formData.password)) {
+      toast({ title: "Error", description: "Fill in all required fields", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingId) {
+        const body: any = { username: formData.username, displayName: formData.displayName, role: formData.role };
+        if (formData.password) body.password = formData.password;
+        const res = await adminFetch(`/api/admin/employees/${editingId}`, token, {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "Failed to update");
+        }
+        toast({ title: "Employee updated" });
+      } else {
+        const res = await adminFetch("/api/admin/employees", token, {
+          method: "POST",
+          body: JSON.stringify(formData),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "Failed to create");
+        }
+        toast({ title: "Employee created" });
+      }
+      resetForm();
+      loadEmployees();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleActive = async (emp: EmployeeData) => {
+    try {
+      const res = await adminFetch(`/api/admin/employees/${emp.id}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ active: emp.active ? 0 : 1 }),
+      });
+      if (res.ok) {
+        loadEmployees();
+        toast({ title: emp.active ? "Employee deactivated" : "Employee activated" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to update", variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/employees/${id}`, token, { method: "DELETE" });
+      if (res.ok) {
+        loadEmployees();
+        toast({ title: "Employee deleted" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to delete", variant: "destructive" });
+    }
+  };
+
+  const startEdit = (emp: EmployeeData) => {
+    setEditingId(emp.id);
+    setFormData({ username: emp.username, password: "", displayName: emp.displayName, role: emp.role });
+    setShowForm(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors" data-testid="button-emp-back">
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </button>
+            <div className="h-4 w-px bg-gray-200" />
+            <p className="font-serif text-lg text-gray-900">Team Members</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => { resetForm(); setShowForm(true); }}
+            data-testid="button-add-employee"
+            className="bg-[#1a1a1a] h-8"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Add Employee
+          </Button>
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-6 py-6 space-y-4">
+        <AnimatePresence>
+          {showForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <Card className="border-gray-200">
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-medium text-gray-900 text-sm">{editingId ? "Edit Employee" : "New Employee"}</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Display Name *</label>
+                      <Input
+                        value={formData.displayName}
+                        onChange={(e) => setFormData(p => ({ ...p, displayName: e.target.value }))}
+                        placeholder="e.g. Sarah Johnson"
+                        data-testid="input-emp-display-name"
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Username *</label>
+                      <Input
+                        value={formData.username}
+                        onChange={(e) => setFormData(p => ({ ...p, username: e.target.value }))}
+                        placeholder="e.g. sarah"
+                        data-testid="input-emp-username"
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Password {editingId ? "(leave blank to keep)" : "*"}</label>
+                      <Input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
+                        placeholder={editingId ? "••••••••" : "Enter password"}
+                        data-testid="input-emp-password"
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Role</label>
+                      <Select value={formData.role} onValueChange={(v) => setFormData(p => ({ ...p, role: v }))}>
+                        <SelectTrigger className="h-9" data-testid="select-emp-role">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="editor">Editor — View & edit photos, chat</SelectItem>
+                          <SelectItem value="manager">Manager — Full access except admin settings</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 justify-end pt-2">
+                    <Button variant="outline" size="sm" onClick={resetForm} className="h-8" data-testid="button-emp-cancel">Cancel</Button>
+                    <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 bg-[#1a1a1a]" data-testid="button-emp-save">
+                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
+                      {editingId ? "Update" : "Create"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : employees.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">No employees yet</p>
+            <p className="text-gray-400 text-xs mt-1">Add team members to help manage your photoshoots</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {employees.map(emp => (
+              <Card key={emp.id} className={`${!emp.active ? "opacity-50" : ""}`} data-testid={`card-employee-${emp.id}`}>
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-9 h-9 bg-gray-100">
+                        <AvatarFallback className="text-sm font-medium">{emp.displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{emp.displayName}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-400">@{emp.username}</p>
+                          <Badge variant="secondary" className="text-[10px] capitalize">{emp.role}</Badge>
+                          {!emp.active && <Badge variant="destructive" className="text-[10px]">Inactive</Badge>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEdit(emp)}
+                        data-testid={`button-edit-emp-${emp.id}`}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleActive(emp)}
+                        data-testid={`button-toggle-emp-${emp.id}`}
+                        className={`h-8 px-2 text-xs ${emp.active ? "text-amber-600 hover:text-amber-700" : "text-green-600 hover:text-green-700"}`}
+                      >
+                        {emp.active ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(emp.id)}
+                        data-testid={`button-delete-emp-${emp.id}`}
+                        className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <div className="bg-gray-100 rounded-lg p-4 mt-6">
+          <p className="text-xs font-medium text-gray-600 mb-2">Team login URL</p>
+          <p className="text-sm text-gray-900 font-mono bg-white rounded px-3 py-2 border border-gray-200 select-all" data-testid="text-team-url">
+            {window.location.origin}/team
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
   const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("admin");
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -1813,6 +2091,10 @@ function AdminDashboard({ token }: { token: string }) {
         onBack={() => { setView("clients"); setSelectedTokenUser(null); loadData(); }}
       />
     );
+  }
+
+  if (view === "employees") {
+    return <EmployeeManager token={token} onBack={() => setView("clients")} />;
   }
 
   if (view === "create" || view === "edit") {

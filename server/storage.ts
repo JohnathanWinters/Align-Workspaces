@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull } from "drizzle-orm";
 
@@ -54,6 +54,12 @@ export interface IStorage {
   deletePushSubscription(endpoint: string): Promise<void>;
   getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]>;
   getPushSubscriptionsByRole(role: string): Promise<PushSubscription[]>;
+  createEmployee(data: { username: string; passwordHash: string; displayName: string; role: string }): Promise<Employee>;
+  getEmployees(): Promise<Employee[]>;
+  getEmployeeById(id: string): Promise<Employee | undefined>;
+  getEmployeeByUsername(username: string): Promise<Employee | undefined>;
+  updateEmployee(id: string, data: Partial<{ username: string; passwordHash: string; displayName: string; role: string; active: number }>): Promise<Employee>;
+  deleteEmployee(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -455,6 +461,34 @@ export class DatabaseStorage implements IStorage {
 
   async getPushSubscriptionsByRole(role: string): Promise<PushSubscription[]> {
     return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.role, role));
+  }
+
+  async createEmployee(data: { username: string; passwordHash: string; displayName: string; role: string }): Promise<Employee> {
+    const [result] = await db.insert(employees).values(data).returning();
+    return result;
+  }
+
+  async getEmployees(): Promise<Employee[]> {
+    return db.select().from(employees).orderBy(desc(employees.createdAt));
+  }
+
+  async getEmployeeById(id: string): Promise<Employee | undefined> {
+    const [result] = await db.select().from(employees).where(eq(employees.id, id));
+    return result;
+  }
+
+  async getEmployeeByUsername(username: string): Promise<Employee | undefined> {
+    const [result] = await db.select().from(employees).where(eq(employees.username, username));
+    return result;
+  }
+
+  async updateEmployee(id: string, data: Partial<{ username: string; passwordHash: string; displayName: string; role: string; active: number }>): Promise<Employee> {
+    const [result] = await db.update(employees).set({ ...data, updatedAt: new Date() }).where(eq(employees.id, id)).returning();
+    return result;
+  }
+
+  async deleteEmployee(id: string): Promise<void> {
+    await db.delete(employees).where(eq(employees.id, id));
   }
 }
 
