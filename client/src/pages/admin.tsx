@@ -34,6 +34,7 @@ import {
   Bell,
   BellRing,
   Download,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -2213,7 +2214,7 @@ function AdminDashboard({ token }: { token: string }) {
                                   data-testid={`button-tokens-${user.id}`}
                                   className="h-6 text-xs px-2 text-gray-600 border-gray-200"
                                 >
-                                  <Coins className="w-3 h-3 mr-1" />
+                                  <Pencil className="w-3 h-3 mr-1" />
                                   Editor
                                 </Button>
                               </div>
