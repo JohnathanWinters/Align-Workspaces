@@ -33,6 +33,7 @@ import {
   MessageCircle,
   Bell,
   BellRing,
+  Download,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -921,6 +922,7 @@ function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequ
   const [hasUnread, setHasUnread] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<EditRequestPhoto | null>(null);
   const lastSeenRef = useRef<number>(0);
 
   useEffect(() => {
@@ -1100,19 +1102,83 @@ function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequ
             <p className="text-xs text-gray-400 text-center py-2">No photos found</p>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-              {photos.map(photo => (
-                <div key={photo.id} className="relative aspect-square rounded-md overflow-hidden bg-gray-100" data-testid={`admin-edit-photo-${photo.id}`}>
-                  <img
-                    src={photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`}
-                    alt={photo.originalFilename || "Edit request photo"}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              ))}
+              {photos.map(photo => {
+                const src = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
+                return (
+                  <div
+                    key={photo.id}
+                    className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
+                    data-testid={`admin-edit-photo-${photo.id}`}
+                    onClick={() => setLightboxPhoto(photo)}
+                  >
+                    <img
+                      src={src}
+                      alt={photo.originalFilename || "Edit request photo"}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const a = document.createElement("a");
+                          a.href = src;
+                          a.download = photo.originalFilename || "photo.jpg";
+                          a.click();
+                        }}
+                        data-testid={`button-download-edit-photo-${photo.id}`}
+                        className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+        </div>
+      )}
+
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+          data-testid="lightbox-overlay"
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
+              <button
+                onClick={() => {
+                  const src = lightboxPhoto.imageUrl.startsWith("/") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`;
+                  const a = document.createElement("a");
+                  a.href = src;
+                  a.download = lightboxPhoto.originalFilename || "photo.jpg";
+                  a.click();
+                }}
+                data-testid="button-lightbox-download"
+                className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setLightboxPhoto(null)}
+                data-testid="button-lightbox-close"
+                className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <img
+              src={lightboxPhoto.imageUrl.startsWith("/") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`}
+              alt={lightboxPhoto.originalFilename || "Edit request photo"}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+            {lightboxPhoto.originalFilename && (
+              <p className="text-white/70 text-xs mt-2">{lightboxPhoto.originalFilename}</p>
+            )}
+          </div>
         </div>
       )}
 

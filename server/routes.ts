@@ -1108,6 +1108,20 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/edit-requests/:id/photos", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const editRequest = await storage.getEditRequestById(req.params.id);
+      if (!editRequest || editRequest.userId !== userId) {
+        return res.status(404).json({ message: "Edit request not found" });
+      }
+      const photos = await storage.getEditRequestPhotos(req.params.id);
+      res.json(photos);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/edit-requests/:id/messages", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

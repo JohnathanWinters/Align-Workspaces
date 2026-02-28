@@ -325,8 +325,20 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
   );
 }
 
+interface EditRequestPhoto {
+  id: string;
+  editRequestId: string;
+  imageUrl: string;
+  originalFilename: string | null;
+  createdAt: string;
+}
+
 function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: EditRequest; getStatusBadge: (status: string) => JSX.Element; defaultOpen?: boolean }) {
   const [showChat, setShowChat] = useState(defaultOpen ?? false);
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [photos, setPhotos] = useState<EditRequestPhoto[]>([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<EditRequestPhoto | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
@@ -360,6 +372,22 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
     setShowChat(!showChat);
   };
 
+  const loadPhotos = async () => {
+    if (photos.length > 0) return;
+    setPhotosLoading(true);
+    try {
+      const res = await fetch(`/api/edit-requests/${request.id}/photos`, { credentials: "include" });
+      if (res.ok) setPhotos(await res.json());
+    } catch {} finally {
+      setPhotosLoading(false);
+    }
+  };
+
+  const togglePhotos = () => {
+    if (!showPhotos) loadPhotos();
+    setShowPhotos(!showPhotos);
+  };
+
   return (
     <div
       className={`rounded-lg overflow-hidden border ${defaultOpen ? "border-amber-200 bg-amber-50/30" : "border-gray-200 bg-white"}`}
@@ -386,21 +414,122 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
           <span className="text-xs text-gray-400">
             {request.annualTokensUsed} annual + {request.purchasedTokensUsed} purchased tokens
           </span>
-          <Button
-            variant={showChat ? "default" : "outline"}
-            size="sm"
-            onClick={handleChatToggle}
-            data-testid={`button-toggle-chat-${request.id}`}
-            className={`relative h-8 ${showChat ? "bg-[#1a1a1a] text-white" : ""}`}
-          >
-            <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
-            {showChat ? "Hide Chat" : "Chat with Photographer"}
-            {hasUnread && !showChat && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={togglePhotos}
+              data-testid={`button-toggle-photos-${request.id}`}
+              className="h-8"
+            >
+              <Images className="w-3.5 h-3.5 mr-1.5" />
+              {showPhotos ? "Hide Photos" : "View Photos"}
+            </Button>
+            <Button
+              variant={showChat ? "default" : "outline"}
+              size="sm"
+              onClick={handleChatToggle}
+              data-testid={`button-toggle-chat-${request.id}`}
+              className={`relative h-8 ${showChat ? "bg-[#1a1a1a] text-white" : ""}`}
+            >
+              <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+              {showChat ? "Hide Chat" : "Chat"}
+              {hasUnread && !showChat && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {showPhotos && (
+        <div className="px-4 pb-3 border-t border-gray-100 pt-3">
+          {photosLoading ? (
+            <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>
+          ) : photos.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-2">No photos found</p>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {photos.map(photo => {
+                const src = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
+                return (
+                  <div
+                    key={photo.id}
+                    className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
+                    data-testid={`edit-photo-${photo.id}`}
+                    onClick={() => setLightboxPhoto(photo)}
+                  >
+                    <img
+                      src={src}
+                      alt={photo.originalFilename || "Edit request photo"}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const a = document.createElement("a");
+                          a.href = src;
+                          a.download = photo.originalFilename || "photo.jpg";
+                          a.click();
+                        }}
+                        data-testid={`button-download-edit-photo-${photo.id}`}
+                        className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxPhoto(null)}
+          data-testid="lightbox-overlay"
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
+              <button
+                onClick={() => {
+                  const src = lightboxPhoto.imageUrl.startsWith("/") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`;
+                  const a = document.createElement("a");
+                  a.href = src;
+                  a.download = lightboxPhoto.originalFilename || "photo.jpg";
+                  a.click();
+                }}
+                data-testid="button-lightbox-download"
+                className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setLightboxPhoto(null)}
+                data-testid="button-lightbox-close"
+                className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <img
+              src={lightboxPhoto.imageUrl.startsWith("/") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`}
+              alt={lightboxPhoto.originalFilename || "Edit request photo"}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+            {lightboxPhoto.originalFilename && (
+              <p className="text-white/70 text-xs mt-2">{lightboxPhoto.originalFilename}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <AnimatePresence>
         {showChat && (
           <motion.div

@@ -75,6 +75,7 @@ Pricing is calculated dynamically based on selections.
   - `GET /api/shoots/:id/download-all` — Client: download all images as zip (authenticated)
   - `GET /api/edit-tokens` — Get current user's edit token balance (authenticated, auto-creates if none)
   - `GET /api/edit-requests` — Get current user's edit requests (authenticated)
+  - `GET /api/edit-requests/:id/photos` — Get photos for an edit request (authenticated, user-scoped)
   - `POST /api/edit-requests` — Submit photos for editing, deducts tokens (authenticated, multipart)
   - `POST /api/edit-tokens/checkout` — Create Stripe checkout for purchasing edit tokens (authenticated)
   - `GET /api/edit-tokens/config` — Get token pricing config (public)
