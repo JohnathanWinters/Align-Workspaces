@@ -2214,7 +2214,7 @@ function AdminDashboard({ token }: { token: string }) {
                                   className="h-6 text-xs px-2 text-gray-600 border-gray-200"
                                 >
                                   <Coins className="w-3 h-3 mr-1" />
-                                  Tokens
+                                  Editor
                                 </Button>
                               </div>
                             </>
