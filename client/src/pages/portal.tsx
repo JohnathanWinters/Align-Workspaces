@@ -40,7 +40,7 @@ import {
   ChevronUp,
   AlertTriangle,
   FileImage,
-  Pencil,
+  ImagePlus,
   MessageCircle,
   Bell,
   BellRing,
@@ -1752,7 +1752,7 @@ function PortalContent() {
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              <Pencil className="w-4 h-4" />
+              <ImagePlus className="w-4 h-4" />
               My Edits
               {activeTab === "edits" && (
                 <motion.div
