@@ -114,6 +114,27 @@ async function getImageStream(imageUrl: string): Promise<{ stream: NodeJS.Readab
   }
 }
 
+async function getClientDisplayName(claims: any, userId: string): Promise<string> {
+  let firstName = claims.first_name || "";
+  let lastName = claims.last_name || "";
+  if (!firstName && claims.name) {
+    const parts = claims.name.split(" ");
+    firstName = parts[0] || "";
+    lastName = parts.slice(1).join(" ");
+  }
+  if (!firstName) {
+    try {
+      const dbUser = await authStorage.getUser(userId);
+      if (dbUser) {
+        firstName = dbUser.firstName || "";
+        lastName = dbUser.lastName || "";
+      }
+    } catch {}
+  }
+  if (!firstName) return "Client";
+  return lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
+}
+
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -922,9 +943,7 @@ export async function registerRoutes(
         status: "pending",
       });
       if (notes && notes.trim()) {
-        const firstName = (req.user.claims.name || "Client").split(" ")[0];
-        const lastName = (req.user.claims.name || "").split(" ").slice(1).join(" ");
-        const senderName = lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
+        const senderName = await getClientDisplayName(req.user.claims, userId);
         await storage.createEditRequestMessage({
           editRequestId: editRequest.id,
           senderId: userId,
@@ -1114,9 +1133,7 @@ export async function registerRoutes(
       if (!message || !message.trim()) {
         return res.status(400).json({ message: "Message is required" });
       }
-      const firstName = req.user.claims.first_name || req.user.claims.name?.split(" ")[0] || "";
-      const lastName = req.user.claims.last_name || req.user.claims.name?.split(" ").slice(1).join(" ") || "";
-      const senderName = lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName || "Client";
+      const senderName = await getClientDisplayName(req.user.claims, userId);
       const msg = await storage.createEditRequestMessage({
         editRequestId: req.params.id,
         senderId: userId,
