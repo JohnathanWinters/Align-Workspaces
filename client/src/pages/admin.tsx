@@ -82,13 +82,19 @@ interface EditRequestMessage {
   createdAt: string;
 }
 
-function adminFetch(url: string, token: string, options: RequestInit = {}) {
+function adminFetch(url: string, token: string, options: RequestInit & { isFormData?: boolean } = {}) {
+  const { isFormData, ...fetchOptions } = options;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
   return fetch(url, {
-    ...options,
+    ...fetchOptions,
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
+      ...headers,
+      ...(fetchOptions.headers as Record<string, string>),
     },
   });
 }
@@ -910,6 +916,8 @@ interface EditRequestPhoto {
   editRequestId: string;
   imageUrl: string;
   originalFilename: string | null;
+  finishedImageUrl: string | null;
+  finishedFilename: string | null;
   createdAt: string;
 }
 
@@ -923,6 +931,9 @@ function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequ
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<EditRequestPhoto | null>(null);
+  const [uploadingPhotoId, setUploadingPhotoId] = useState<string | null>(null);
+  const finishedInputRef = useRef<HTMLInputElement>(null);
+  const [targetPhotoId, setTargetPhotoId] = useState<string | null>(null);
   const lastSeenRef = useRef<number>(0);
 
   useEffect(() => {
@@ -994,6 +1005,29 @@ function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequ
       lastSeenRef.current = Date.now();
     }
     setShowChat(!showChat);
+  };
+
+  const handleUploadFinished = async (file: File) => {
+    if (!targetPhotoId) return;
+    setUploadingPhotoId(targetPhotoId);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      const res = await adminFetch(`/api/admin/edit-photos/${targetPhotoId}/finished`, token, {
+        method: "POST",
+        body: formData,
+        isFormData: true,
+      });
+      if (!res.ok) throw new Error("Failed to upload");
+      const updated = await res.json();
+      setPhotos(prev => prev.map(p => p.id === updated.id ? updated : p));
+      toast({ title: "Finished photo uploaded" });
+    } catch {
+      toast({ title: "Error", description: "Failed to upload finished photo", variant: "destructive" });
+    } finally {
+      setUploadingPhotoId(null);
+      setTargetPhotoId(null);
+    }
   };
 
   const totalTokens = request.annualTokensUsed + request.purchasedTokensUsed;
@@ -1094,6 +1128,18 @@ function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequ
         </div>
       </div>
 
+      <input
+        ref={finishedInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleUploadFinished(file);
+          e.target.value = "";
+        }}
+      />
+
       {showPhotos && (
         <div className="px-4 pb-3 border-t border-gray-100 pt-3">
           {photosLoading ? (
@@ -1101,37 +1147,77 @@ function AdminEditRequestItem({ request, token, onDeleted }: { request: EditRequ
           ) : photos.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-2">No photos found</p>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            <div className="space-y-3">
               {photos.map(photo => {
-                const src = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
+                const originalSrc = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
+                const finishedSrc = photo.finishedImageUrl
+                  ? (photo.finishedImageUrl.startsWith("/") ? photo.finishedImageUrl : `/objects/${photo.finishedImageUrl}`)
+                  : null;
+                const isUploading = uploadingPhotoId === photo.id;
                 return (
-                  <div
-                    key={photo.id}
-                    className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
-                    data-testid={`admin-edit-photo-${photo.id}`}
-                    onClick={() => setLightboxPhoto(photo)}
-                  >
-                    <img
-                      src={src}
-                      alt={photo.originalFilename || "Edit request photo"}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const a = document.createElement("a");
-                          a.href = src;
-                          a.download = photo.originalFilename || "photo.jpg";
-                          a.click();
-                        }}
-                        data-testid={`button-download-edit-photo-${photo.id}`}
-                        className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                  <div key={photo.id} className="flex gap-2 items-start" data-testid={`admin-edit-photo-${photo.id}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Original</p>
+                      <div
+                        className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
+                        onClick={() => setLightboxPhoto(photo)}
                       >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
+                        <img src={originalSrc} alt={photo.originalFilename || "Original"} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); const a = document.createElement("a"); a.href = originalSrc; a.download = photo.originalFilename || "photo.jpg"; a.click(); }}
+                            data-testid={`button-download-edit-photo-${photo.id}`}
+                            className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Finished</p>
+                      {finishedSrc ? (
+                        <div
+                          className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
+                          onClick={() => setLightboxPhoto({ ...photo, imageUrl: photo.finishedImageUrl!, originalFilename: photo.finishedFilename })}
+                        >
+                          <img src={finishedSrc} alt={photo.finishedFilename || "Finished"} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); const a = document.createElement("a"); a.href = finishedSrc; a.download = photo.finishedFilename || "finished.jpg"; a.click(); }}
+                                data-testid={`button-download-finished-photo-${photo.id}`}
+                                className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setTargetPhotoId(photo.id); finishedInputRef.current?.click(); }}
+                                data-testid={`button-replace-finished-${photo.id}`}
+                                className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                              >
+                                <Upload className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setTargetPhotoId(photo.id); finishedInputRef.current?.click(); }}
+                          disabled={isUploading}
+                          data-testid={`button-upload-finished-${photo.id}`}
+                          className="w-full aspect-square rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-gray-400 hover:text-gray-500 transition-colors"
+                        >
+                          {isUploading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-5 h-5" />
+                              <span className="text-[10px]">Upload edit</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

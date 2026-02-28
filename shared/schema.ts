@@ -185,6 +185,8 @@ export const editRequestPhotos = pgTable("edit_request_photos", {
   editRequestId: varchar("edit_request_id").notNull(),
   imageUrl: text("image_url").notNull(),
   originalFilename: text("original_filename"),
+  finishedImageUrl: text("finished_image_url"),
+  finishedFilename: text("finished_filename"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

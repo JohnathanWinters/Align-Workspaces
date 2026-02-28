@@ -46,6 +46,7 @@ export interface IStorage {
   createEditRequestMessage(msg: InsertEditRequestMessage): Promise<EditRequestMessage>;
   getEditRequestById(id: string): Promise<EditRequest | undefined>;
   getEditRequestPhotoById(id: string): Promise<EditRequestPhoto | undefined>;
+  updateEditRequestPhoto(id: string, data: { finishedImageUrl: string; finishedFilename: string }): Promise<EditRequestPhoto>;
   deleteEditRequestPhoto(id: string): Promise<void>;
   deleteEditRequest(id: string): Promise<void>;
   refundEditRequestTokens(userId: string, annualRefund: number, purchasedRefund: number): Promise<void>;
@@ -394,6 +395,11 @@ export class DatabaseStorage implements IStorage {
 
   async getEditRequestPhotoById(id: string): Promise<EditRequestPhoto | undefined> {
     const [result] = await db.select().from(editRequestPhotos).where(eq(editRequestPhotos.id, id));
+    return result;
+  }
+
+  async updateEditRequestPhoto(id: string, data: { finishedImageUrl: string; finishedFilename: string }): Promise<EditRequestPhoto> {
+    const [result] = await db.update(editRequestPhotos).set(data).where(eq(editRequestPhotos.id, id)).returning();
     return result;
   }
 

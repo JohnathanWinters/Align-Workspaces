@@ -1090,6 +1090,32 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/edit-photos/:photoId/finished", isAdmin, upload.single("photo"), async (req: any, res) => {
+    const file = req.file as Express.Multer.File | undefined;
+    try {
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const photo = await storage.getEditRequestPhotoById(req.params.photoId);
+      if (!photo) {
+        return res.status(404).json({ message: "Photo not found" });
+      }
+      if (photo.finishedImageUrl) {
+        await deleteFromObjectStorage(photo.finishedImageUrl).catch(() => {});
+      }
+      const contentType = file.mimetype || "application/octet-stream";
+      const objectPath = await uploadFileFromDisk(file.path, contentType);
+      const updated = await storage.updateEditRequestPhoto(photo.id, {
+        finishedImageUrl: objectPath,
+        finishedFilename: file.originalname,
+      });
+      res.json(updated);
+    } catch (err: any) {
+      if (file) await fs.promises.unlink(file.path).catch(() => {});
+      res.status(500).json({ message: err.message || "Failed to upload finished photo" });
+    }
+  });
+
   app.get("/api/admin/token-transactions/:userId", isAdmin, async (req: any, res) => {
     try {
       const transactions = await storage.getTokenTransactions(req.params.userId);

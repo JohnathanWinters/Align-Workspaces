@@ -330,6 +330,8 @@ interface EditRequestPhoto {
   editRequestId: string;
   imageUrl: string;
   originalFilename: string | null;
+  finishedImageUrl: string | null;
+  finishedFilename: string | null;
   createdAt: string;
 }
 
@@ -449,38 +451,68 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
           ) : photos.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-2">No photos found</p>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            <div className="space-y-3">
               {photos.map(photo => {
-                const src = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
+                const originalSrc = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
+                const finishedSrc = photo.finishedImageUrl
+                  ? (photo.finishedImageUrl.startsWith("/") ? photo.finishedImageUrl : `/objects/${photo.finishedImageUrl}`)
+                  : null;
                 return (
-                  <div
-                    key={photo.id}
-                    className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
-                    data-testid={`edit-photo-${photo.id}`}
-                    onClick={() => setLightboxPhoto(photo)}
-                  >
-                    <img
-                      src={src}
-                      alt={photo.originalFilename || "Edit request photo"}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const a = document.createElement("a");
-                          a.href = src;
-                          a.download = photo.originalFilename || "photo.jpg";
-                          a.click();
-                        }}
-                        data-testid={`button-download-edit-photo-${photo.id}`}
-                        className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                  <div key={photo.id} data-testid={`edit-photo-${photo.id}`}>
+                    {finishedSrc ? (
+                      <div className="flex gap-2 items-start">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Original</p>
+                          <div
+                            className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer"
+                            onClick={() => setLightboxPhoto(photo)}
+                          >
+                            <img src={originalSrc} alt={photo.originalFilename || "Original"} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); const a = document.createElement("a"); a.href = originalSrc; a.download = photo.originalFilename || "photo.jpg"; a.click(); }}
+                                className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] text-emerald-600 mb-1 uppercase tracking-wide font-medium">Finished</p>
+                          <div
+                            className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer ring-2 ring-emerald-200"
+                            onClick={() => setLightboxPhoto({ ...photo, imageUrl: photo.finishedImageUrl!, originalFilename: photo.finishedFilename })}
+                          >
+                            <img src={finishedSrc} alt={photo.finishedFilename || "Finished"} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); const a = document.createElement("a"); a.href = finishedSrc; a.download = photo.finishedFilename || "finished.jpg"; a.click(); }}
+                                data-testid={`button-download-finished-photo-${photo.id}`}
+                                className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative aspect-square rounded-md overflow-hidden bg-gray-100 group cursor-pointer max-w-[50%]"
+                        onClick={() => setLightboxPhoto(photo)}
                       >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                        <img src={originalSrc} alt={photo.originalFilename || "Edit request photo"} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end justify-end p-1.5 opacity-0 group-hover:opacity-100">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); const a = document.createElement("a"); a.href = originalSrc; a.download = photo.originalFilename || "photo.jpg"; a.click(); }}
+                            data-testid={`button-download-edit-photo-${photo.id}`}
+                            className="w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center hover:bg-white"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
