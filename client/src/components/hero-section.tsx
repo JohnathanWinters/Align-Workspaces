@@ -67,7 +67,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.1 }}
-            className="mt-8 sm:mt-10"
+            className="mt-8 sm:mt-10 flex flex-col items-center gap-4"
           >
             <button
               onClick={onStart}
@@ -76,6 +76,14 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             >
               Begin Your Session
             </button>
+            <Link href="/featured">
+              <button
+                data-testid="button-featured-hero"
+                className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
+              >
+                Meet Our Featured Professionals
+              </button>
+            </Link>
           </motion.div>
         </motion.div>
       </div>
