@@ -358,7 +358,7 @@ export default function HomePage() {
                   {menuOpen && (
                     <div className="absolute right-0 top-full mt-2 bg-background border border-border rounded-lg shadow-lg py-2 min-w-[180px] z-50">
                       <Link href="/portfolio">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portfolio-header">Visual Blueprints</button>
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portfolio-header">Our Work</button>
                       </Link>
                       <Link href="/about">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-about-header">Our Vision</button>
@@ -533,7 +533,7 @@ export default function HomePage() {
 
                     {currentStep === 4 && (
                       <StepContent
-                        title="Your Visual Blueprint"
+                        title="Our Work"
                         subtitle="Shaped by your choices."
                         centerTitle
                       >
