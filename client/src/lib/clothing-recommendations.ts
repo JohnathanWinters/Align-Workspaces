@@ -66,6 +66,17 @@ const moodFabricNotes: Record<string, string> = {
   powerful: "Structured, matte fabrics like wool and gabardine absorb dramatic light and hold strong silhouettes.",
 };
 
+const genericClothing = {
+  types: ["Tailored blazer", "Clean button-down", "Simple structured jacket"],
+  avoidFabrics: ["Shiny synthetics", "Loud patterns", "Distressed denim"],
+  avoid: "Avoid overly busy patterns or logos — solid colors and subtle textures photograph best",
+};
+
+const genericFit = {
+  fit: ["Well-fitted top, clean bottom", "Structured yet comfortable"],
+  preference: "Choose pieces that feel like you — comfort translates to confidence on camera",
+};
+
 export function getClothingRecommendations(
   environment: string | null,
   brandMessage: string | null,
@@ -78,13 +89,9 @@ export function getClothingRecommendations(
   fabricNote: string;
   avoidNote: string;
 } | null {
-  if (!environment || !brandMessage) return null;
-
-  const envData = environmentClothing[environment];
-  const msgData = brandMessageFit[brandMessage];
+  const envData = environment ? (environmentClothing[environment] || genericClothing) : genericClothing;
+  const msgData = brandMessage ? (brandMessageFit[brandMessage] || genericFit) : genericFit;
   const moodNote = emotionalImpact ? moodFabricNotes[emotionalImpact] : null;
-
-  if (!envData || !msgData) return null;
 
   return {
     clothing: envData.types,
