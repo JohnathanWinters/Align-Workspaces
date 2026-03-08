@@ -4,7 +4,7 @@ import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
 import { Sparkles, Palette, Eye, Tag } from "lucide-react";
 import { brandMessages, emotionalImpacts, environments } from "@/lib/configurator-data";
 import { useState } from "react";
-import { getRecommendedPalettes, type PaletteOption } from "@/lib/color-palettes";
+import { getRecommendedPalettes, getPaletteDescription, type PaletteOption } from "@/lib/color-palettes";
 import {
   Dialog,
   DialogContent,
@@ -328,6 +328,8 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
 }
 
 function RecommendedPalettes({ palettes }: { palettes: PaletteOption[] }) {
+  const [selectedPalette, setSelectedPalette] = useState<PaletteOption | null>(null);
+
   return (
     <div className="mt-8" data-testid="recommended-palette">
       <div className="flex items-center gap-2 mb-2">
@@ -339,12 +341,13 @@ function RecommendedPalettes({ palettes }: { palettes: PaletteOption[] }) {
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {palettes.map((option, i) => (
-          <div
+          <button
             key={i}
-            className="p-3 rounded-md border border-border bg-card"
+            onClick={() => setSelectedPalette(option)}
+            className="p-3 rounded-md border border-border bg-card text-left transition-all hover:border-foreground/20 hover:shadow-sm cursor-pointer group"
             data-testid={`recommended-palette-option-${i}`}
           >
-            <p className="text-xs font-medium mb-3 text-center">{option.name}</p>
+            <p className="text-xs font-medium mb-3 text-center group-hover:text-foreground transition-colors">{option.name}</p>
             <div className="flex justify-center gap-2">
               {option.colors.map((swatch, j) => (
                 <div
@@ -353,7 +356,7 @@ function RecommendedPalettes({ palettes }: { palettes: PaletteOption[] }) {
                   data-testid={`recommended-swatch-${i}-${j}`}
                 >
                   <div
-                    className="w-10 h-10 rounded-md border border-border"
+                    className="w-10 h-10 rounded-md border border-border transition-transform group-hover:scale-105"
                     style={{ backgroundColor: swatch.hex }}
                   />
                   <span className="text-[9px] text-muted-foreground text-center leading-tight max-w-[48px]">
@@ -362,9 +365,60 @@ function RecommendedPalettes({ palettes }: { palettes: PaletteOption[] }) {
                 </div>
               ))}
             </div>
-          </div>
+            <p className="text-[10px] text-muted-foreground text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Tap to learn more</p>
+          </button>
         ))}
       </div>
+
+      <Dialog open={!!selectedPalette} onOpenChange={(open) => { if (!open) setSelectedPalette(null); }}>
+        <DialogContent className="max-w-sm w-[90vw] p-0 gap-0 overflow-hidden border-none rounded-xl" data-testid="palette-detail-dialog" aria-describedby="palette-description">
+          <DialogTitle className="sr-only">{selectedPalette?.name || "Palette Details"}</DialogTitle>
+          {selectedPalette && (
+            <div>
+              <div
+                className="relative h-28 flex items-end"
+                style={{
+                  background: `linear-gradient(135deg, ${selectedPalette.colors[0]?.hex || '#333'} 0%, ${selectedPalette.colors[1]?.hex || '#666'} 50%, ${selectedPalette.colors[2]?.hex || '#999'} 100%)`,
+                }}
+              >
+                <div className="absolute inset-0 bg-black/30" />
+                <div className="relative px-5 pb-4">
+                  <p className="text-white/70 text-[10px] uppercase tracking-widest font-medium mb-1">Color Palette</p>
+                  <h3 className="text-white text-xl font-serif font-semibold">{selectedPalette.name}</h3>
+                </div>
+              </div>
+
+              <div className="px-5 py-5 space-y-5">
+                <p id="palette-description" className="text-sm text-muted-foreground leading-relaxed" data-testid="text-palette-description">
+                  {getPaletteDescription(selectedPalette.name)}
+                </p>
+
+                <div className="space-y-3">
+                  <p className="text-[10px] uppercase tracking-widest font-medium text-muted-foreground">Colors in this palette</p>
+                  {selectedPalette.colors.map((swatch, i) => (
+                    <div key={i} className="flex items-center gap-3" data-testid={`detail-swatch-${i}`}>
+                      <div
+                        className="w-12 h-12 rounded-lg border border-border shrink-0 shadow-sm"
+                        style={{ backgroundColor: swatch.hex }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{swatch.keyword}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{swatch.hex}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Wear clothing or accessories in these tones to create a cohesive, intentional look in your portraits.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
