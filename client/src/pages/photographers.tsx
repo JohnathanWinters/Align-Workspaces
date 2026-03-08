@@ -10,7 +10,7 @@ const photographers = [
     name: "Armando Ramirez Romero",
     role: "Founder / Photographer",
     image: "/images/photographer-armando.webp",
-    bio: "With over 9 years of experience behind the lens, Armando founded Align to help professionals tell their story through compelling imagery. He's committed to building a new, more intuitive way for clients to navigate the photography process\u2014from concept to final delivery.",
+    bio: "With over 9 years behind the lens, Armando founded Align to help professionals share the story behind their business. Through both photography and technology, he's building a platform that makes it easier for professionals to showcase who they are, what they do, and why they do it.",
   },
 ];
 
