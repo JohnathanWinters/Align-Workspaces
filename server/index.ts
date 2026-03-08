@@ -7,6 +7,7 @@ import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { seedPortfolioIfEmpty } from "./seed-portfolio";
+import { fixPortfolioImageExtensions } from "./migrations";
 
 const app = express();
 const httpServer = createServer(app);
@@ -132,6 +133,7 @@ app.use((req, res, next) => {
   await setupAuth(app);
   registerAuthRoutes(app);
   await seedPortfolioIfEmpty();
+  await fixPortfolioImageExtensions();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

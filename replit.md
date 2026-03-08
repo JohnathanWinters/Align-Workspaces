@@ -65,3 +65,15 @@ The application uses a monorepo structure, separating the React frontend (`clien
 ### Fonts (External CDN)
 - **Plus Jakarta Sans**
 - **Playfair Display**
+
+## AI Crawlability & SEO
+- **robots.txt**: Server-rendered at `/robots.txt`, explicitly allows major AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Anthropic, Applebot-Extended, Bytespider, CCBot). Blocks `/admin`, `/portal`, `/employee`, `/api/`.
+- **sitemap.xml**: Dynamic server-rendered at `/sitemap.xml`, includes static pages and all featured professional profile URLs.
+- **llms.txt**: Summary for LLMs at `/llms.txt` with business info, services, pricing, location, and key pages.
+- **llms-full.txt**: Extended version at `/llms-full.txt` with full featured professionals directory.
+- **Structured Data**: JSON-LD in `client/index.html` includes LocalBusiness (Photographer), FAQPage, and WebSite schemas.
+- **Meta Tags**: OG, Twitter Card, geo, classification, and descriptive meta tags in `client/index.html`.
+- **Canonical URL**: `https://alignphotodesign.com`
+
+## Data Migrations
+- `server/migrations.ts`: `fixPortfolioImageExtensions()` runs on startup — fixes `.jpg` → `.webp` in portfolio_photos table.
