@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, CalendarDays, Users, CreditCard, Handshake, CheckCircle, X, LogIn } from "lucide-react";
-import { SiSlack, SiInstagram } from "react-icons/si";
+import { SiInstagram } from "react-icons/si";
 import { useState } from "react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -178,17 +178,12 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                 Early access to new ideas, tools, and professional visibility resources.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
-                <a
-                  href="https://join.slack.com/t/align-wz86937/shared_invite/zt-3qhal9os7-ii91ryKvGMzSGA~tuHnU1A"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid="link-slack"
-                >
-                  <Button variant="outline" size="sm">
-                    <SiSlack className="w-4 h-4 mr-2" />
-                    Slack
+                <Link href="/featured">
+                  <Button variant="outline" size="sm" data-testid="link-featured-community">
+                    <Users className="w-4 h-4 mr-2" />
+                    Featured Professionals
                   </Button>
-                </a>
+                </Link>
                 <a
                   href="https://www.instagram.com/armando.ramirez.romero/"
                   target="_blank"

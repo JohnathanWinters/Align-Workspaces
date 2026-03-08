@@ -10,6 +10,7 @@ import AboutPage from "@/pages/photographers";
 import PortalPage from "@/pages/portal";
 import AdminPage from "@/pages/admin";
 import EmployeePage from "@/pages/employee";
+import FeaturedPage from "@/pages/featured";
 
 function Router() {
   return (
@@ -18,6 +19,8 @@ function Router() {
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/portal" component={PortalPage} />
+      <Route path="/featured/:slug" component={FeaturedPage} />
+      <Route path="/featured" component={FeaturedPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/team" component={EmployeePage} />
       <Route component={NotFound} />

@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification } from "./gmail";
@@ -1480,6 +1480,126 @@ export async function registerRoutes(
 
   app.get("/api/push/vapid-key", (_req, res) => {
     res.json({ key: process.env.VAPID_PUBLIC_KEY || "" });
+  });
+
+  app.get("/api/featured/categories", async (_req, res) => {
+    try {
+      const isDev = process.env.NODE_ENV !== "production";
+      const categories = await storage.getFeaturedCategories({ includeSamples: isDev });
+      res.json(categories);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/featured/professional-of-the-week", async (_req, res) => {
+    try {
+      const isDev = process.env.NODE_ENV !== "production";
+      const pro = await storage.getFeaturedOfWeek({ includeSamples: isDev });
+      res.json(pro || null);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/featured/:slug", async (req, res) => {
+    try {
+      const pro = await storage.getFeaturedProfessionalBySlug(req.params.slug);
+      if (!pro) return res.status(404).json({ message: "Professional not found" });
+      if (pro.isSample && process.env.NODE_ENV === "production") {
+        return res.status(404).json({ message: "Professional not found" });
+      }
+      res.json(pro);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/featured", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      const isDev = process.env.NODE_ENV !== "production";
+      const includeSamples = isDev;
+      const pros = await storage.getFeaturedProfessionals({ category, includeSamples });
+      res.json(pros);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/featured", isAdmin, async (_req, res) => {
+    try {
+      const pros = await storage.getFeaturedProfessionals({ includeSamples: true });
+      res.json(pros);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/featured", isAdmin, async (req, res) => {
+    try {
+      const validated = insertFeaturedProfessionalSchema.parse(req.body);
+      const pro = await storage.createFeaturedProfessional(validated);
+      res.status(201).json(pro);
+    } catch (err: any) {
+      if (err instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(err).message });
+      }
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/featured/:id", isAdmin, async (req, res) => {
+    try {
+      const validated = insertFeaturedProfessionalSchema.partial().parse(req.body);
+      const pro = await storage.updateFeaturedProfessional(req.params.id, validated);
+      res.json(pro);
+    } catch (err: any) {
+      if (err instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(err).message });
+      }
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/featured/:id", isAdmin, async (req, res) => {
+    try {
+      const pro = await storage.getFeaturedProfessionalById(req.params.id);
+      if (pro?.portraitImageUrl) {
+        const key = pro.portraitImageUrl.replace("/objects/", "");
+        try { await objectStorageClient.delete(key); } catch {}
+      }
+      await storage.deleteFeaturedProfessional(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/featured/:id/upload-portrait", isAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const ext = path.extname(req.file.originalname || ".jpg");
+      const objectKey = `uploads/featured-${randomUUID()}${ext}`;
+      const fileBuffer = fs.readFileSync(req.file.path);
+      await objectStorageClient.uploadFromBytes(objectKey, fileBuffer);
+      fs.unlinkSync(req.file.path);
+      const imageUrl = `/objects/${objectKey}`;
+      const pro = await storage.updateFeaturedProfessional(req.params.id, { portraitImageUrl: imageUrl });
+      res.json(pro);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/featured/seed", isAdmin, async (_req, res) => {
+    try {
+      const { seedFeaturedProfessionals } = await import("./seed-featured");
+      const result = await seedFeaturedProfessionals();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
   });
 
   return httpServer;

@@ -1,6 +1,6 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals } from "@shared/schema";
 import { db } from "./db";
-import { sql, eq, desc, and, isNull } from "drizzle-orm";
+import { sql, eq, desc, and, isNull, ne, ilike } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -60,6 +60,14 @@ export interface IStorage {
   getEmployeeByUsername(username: string): Promise<Employee | undefined>;
   updateEmployee(id: string, data: Partial<{ username: string; passwordHash: string; displayName: string; role: string; active: number }>): Promise<Employee>;
   deleteEmployee(id: string): Promise<void>;
+  createFeaturedProfessional(data: InsertFeaturedProfessional): Promise<FeaturedProfessional>;
+  getFeaturedProfessionals(opts?: { category?: string; includeSamples?: boolean }): Promise<FeaturedProfessional[]>;
+  getFeaturedProfessionalBySlug(slug: string): Promise<FeaturedProfessional | undefined>;
+  getFeaturedProfessionalById(id: string): Promise<FeaturedProfessional | undefined>;
+  updateFeaturedProfessional(id: string, data: Partial<InsertFeaturedProfessional>): Promise<FeaturedProfessional>;
+  deleteFeaturedProfessional(id: string): Promise<void>;
+  getFeaturedOfWeek(opts?: { includeSamples?: boolean }): Promise<FeaturedProfessional | undefined>;
+  getFeaturedCategories(opts?: { includeSamples?: boolean }): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -489,6 +497,61 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEmployee(id: string): Promise<void> {
     await db.delete(employees).where(eq(employees.id, id));
+  }
+
+  async createFeaturedProfessional(data: InsertFeaturedProfessional): Promise<FeaturedProfessional> {
+    const [result] = await db.insert(featuredProfessionals).values(data).returning();
+    return result;
+  }
+
+  async getFeaturedProfessionals(opts?: { category?: string; includeSamples?: boolean }): Promise<FeaturedProfessional[]> {
+    const conditions = [];
+    if (!opts?.includeSamples) {
+      conditions.push(eq(featuredProfessionals.isSample, 0));
+    }
+    if (opts?.category) {
+      conditions.push(eq(featuredProfessionals.category, opts.category));
+    }
+    if (conditions.length > 0) {
+      return db.select().from(featuredProfessionals).where(and(...conditions)).orderBy(desc(featuredProfessionals.createdAt));
+    }
+    return db.select().from(featuredProfessionals).orderBy(desc(featuredProfessionals.createdAt));
+  }
+
+  async getFeaturedProfessionalBySlug(slug: string): Promise<FeaturedProfessional | undefined> {
+    const [result] = await db.select().from(featuredProfessionals).where(eq(featuredProfessionals.slug, slug));
+    return result;
+  }
+
+  async getFeaturedProfessionalById(id: string): Promise<FeaturedProfessional | undefined> {
+    const [result] = await db.select().from(featuredProfessionals).where(eq(featuredProfessionals.id, id));
+    return result;
+  }
+
+  async updateFeaturedProfessional(id: string, data: Partial<InsertFeaturedProfessional>): Promise<FeaturedProfessional> {
+    const [result] = await db.update(featuredProfessionals).set(data).where(eq(featuredProfessionals.id, id)).returning();
+    return result;
+  }
+
+  async deleteFeaturedProfessional(id: string): Promise<void> {
+    await db.delete(featuredProfessionals).where(eq(featuredProfessionals.id, id));
+  }
+
+  async getFeaturedOfWeek(opts?: { includeSamples?: boolean }): Promise<FeaturedProfessional | undefined> {
+    const conditions = [eq(featuredProfessionals.isFeaturedOfWeek, 1)];
+    if (!opts?.includeSamples) conditions.push(eq(featuredProfessionals.isSample, 0));
+    const [result] = await db.select().from(featuredProfessionals).where(and(...conditions));
+    return result;
+  }
+
+  async getFeaturedCategories(opts?: { includeSamples?: boolean }): Promise<string[]> {
+    const conditions = [];
+    if (!opts?.includeSamples) conditions.push(eq(featuredProfessionals.isSample, 0));
+    const query = db.selectDistinct({ category: featuredProfessionals.category })
+      .from(featuredProfessionals)
+      .orderBy(featuredProfessionals.category);
+    const rows = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
+    return rows.map(r => r.category);
   }
 }
 

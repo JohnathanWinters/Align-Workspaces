@@ -253,3 +253,38 @@ export const insertEmployeeSchema = createInsertSchema(employees).omit({
 
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type Employee = typeof employees.$inferSelect;
+
+export const featuredProfessionals = pgTable("featured_professionals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  profession: text("profession").notNull(),
+  location: text("location").notNull(),
+  category: text("category").notNull(),
+  slug: text("slug").notNull().unique(),
+  portraitImageUrl: text("portrait_image_url"),
+  headline: text("headline").notNull(),
+  quote: text("quote").notNull(),
+  storySections: jsonb("story_sections").notNull().$type<{
+    whyStarted: string;
+    whatTheyLove: string;
+    misunderstanding: string;
+  }>(),
+  socialLinks: jsonb("social_links").$type<{
+    linkedin?: string;
+    facebook?: string;
+    twitter?: string;
+  }>(),
+  isFeaturedOfWeek: integer("is_featured_of_week").notNull().default(0),
+  isSample: integer("is_sample").notNull().default(0),
+  seoTitle: text("seo_title"),
+  metaDescription: text("meta_description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertFeaturedProfessionalSchema = createInsertSchema(featuredProfessionals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFeaturedProfessional = z.infer<typeof insertFeaturedProfessionalSchema>;
+export type FeaturedProfessional = typeof featuredProfessionals.$inferSelect;

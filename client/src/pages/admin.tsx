@@ -35,6 +35,8 @@ import {
   BellRing,
   Download,
   ImagePlus,
+  Star,
+  ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -1588,6 +1590,335 @@ interface EmployeeData {
   createdAt: string;
 }
 
+interface FeaturedProfessional {
+  id: string;
+  name: string;
+  profession: string;
+  location: string;
+  category: string;
+  slug: string;
+  portraitImageUrl: string | null;
+  headline: string;
+  quote: string;
+  storySections: { whyStarted: string; whatTheyLove: string; misunderstanding: string };
+  socialLinks: { linkedin?: string; facebook?: string; twitter?: string } | null;
+  isFeaturedOfWeek: number;
+  isSample: number;
+  seoTitle: string | null;
+  metaDescription: string | null;
+  createdAt: string;
+}
+
+const defaultFeaturedForm = {
+  name: "", profession: "", location: "", category: "",
+  headline: "", quote: "",
+  whyStarted: "", whatTheyLove: "", misunderstanding: "",
+  linkedin: "", facebook: "", twitter: "",
+  isFeaturedOfWeek: false,
+  seoTitle: "", metaDescription: "",
+};
+
+const FEATURED_CATEGORIES = [
+  "Therapists", "Lawyers", "Real Estate Agents", "Chefs",
+  "Artists", "Trainers", "Barbers", "Designers", "Entrepreneurs",
+];
+
+function FeaturedManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [professionals, setProfessionals] = useState<FeaturedProfessional[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<FeaturedProfessional | null>(null);
+  const [form, setForm] = useState(defaultFeaturedForm);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
+
+  const adminFetch = useCallback(async (url: string, opts: any = {}) => {
+    const { isFormData, ...rest } = opts;
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (!isFormData) headers["Content-Type"] = "application/json";
+    return fetch(url, { ...rest, headers: { ...headers, ...rest.headers } });
+  }, [token]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminFetch("/api/admin/featured");
+      if (res.ok) setProfessionals(await res.json());
+    } catch {}
+    setLoading(false);
+  }, [adminFetch]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const generateSlug = (name: string, profession: string) => {
+    return `${name}-${profession}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  };
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.profession || !form.category || !form.headline || !form.quote) {
+      toast({ title: "Missing fields", description: "Please fill in name, profession, category, headline, and quote", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const body = {
+        name: form.name,
+        profession: form.profession,
+        location: form.location,
+        category: form.category,
+        slug: editing?.slug || generateSlug(form.name, form.profession),
+        headline: form.headline,
+        quote: form.quote,
+        storySections: { whyStarted: form.whyStarted, whatTheyLove: form.whatTheyLove, misunderstanding: form.misunderstanding },
+        socialLinks: { linkedin: form.linkedin || undefined, facebook: form.facebook || undefined, twitter: form.twitter || undefined },
+        isFeaturedOfWeek: form.isFeaturedOfWeek ? 1 : 0,
+        seoTitle: form.seoTitle || `${form.name} - ${form.profession} | Align`,
+        metaDescription: form.metaDescription || form.headline,
+      };
+
+      const url = editing ? `/api/admin/featured/${editing.id}` : "/api/admin/featured";
+      const method = editing ? "PATCH" : "POST";
+      const res = await adminFetch(url, { method, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(await res.text());
+      toast({ title: editing ? "Updated" : "Created" });
+      setShowForm(false);
+      setEditing(null);
+      setForm(defaultFeaturedForm);
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this professional?")) return;
+    try {
+      await adminFetch(`/api/admin/featured/${id}`, { method: "DELETE" });
+      toast({ title: "Deleted" });
+      loadData();
+    } catch {}
+  };
+
+  const handleUploadPortrait = async (id: string, file: File) => {
+    setUploading(id);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/admin/featured/${id}/upload-portrait`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      toast({ title: "Portrait uploaded" });
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setUploading(null);
+  };
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    try {
+      const res = await adminFetch("/api/admin/featured/seed", { method: "POST" });
+      const data = await res.json();
+      toast({ title: "Samples seeded", description: `Created ${data.created} of ${data.total} sample profiles` });
+      loadData();
+    } catch {}
+    setSeeding(false);
+  };
+
+  const startEdit = (pro: FeaturedProfessional) => {
+    setEditing(pro);
+    setForm({
+      name: pro.name, profession: pro.profession, location: pro.location,
+      category: pro.category, headline: pro.headline, quote: pro.quote,
+      whyStarted: pro.storySections.whyStarted,
+      whatTheyLove: pro.storySections.whatTheyLove,
+      misunderstanding: pro.storySections.misunderstanding,
+      linkedin: pro.socialLinks?.linkedin || "",
+      facebook: pro.socialLinks?.facebook || "",
+      twitter: pro.socialLinks?.twitter || "",
+      isFeaturedOfWeek: pro.isFeaturedOfWeek === 1,
+      seoTitle: pro.seoTitle || "",
+      metaDescription: pro.metaDescription || "",
+    });
+    setShowForm(true);
+  };
+
+  if (showForm) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7]">
+        <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="font-serif text-xl font-semibold">{editing ? "Edit Professional" : "Add Professional"}</h1>
+          </div>
+        </header>
+        <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Maria Gonzalez" data-testid="input-featured-name" /></div>
+            <div><Label>Profession *</Label><Input value={form.profession} onChange={e => setForm({ ...form, profession: e.target.value })} placeholder="Licensed Therapist" data-testid="input-featured-profession" /></div>
+            <div><Label>Location</Label><Input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="Coral Gables, FL" data-testid="input-featured-location" /></div>
+            <div>
+              <Label>Category *</Label>
+              <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
+                <SelectTrigger data-testid="select-featured-category"><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  {FEATURED_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div><Label>Headline *</Label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value })} placeholder="Helping people heal through conversation" data-testid="input-featured-headline" /></div>
+          <div><Label>Quote *</Label><Textarea value={form.quote} onChange={e => setForm({ ...form, quote: e.target.value })} placeholder="A memorable quote from this professional..." data-testid="input-featured-quote" rows={2} /></div>
+
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Story Sections</h3>
+            <div><Label>Why They Started</Label><Textarea value={form.whyStarted} onChange={e => setForm({ ...form, whyStarted: e.target.value })} placeholder="The story of how they began..." rows={4} data-testid="input-featured-why" /></div>
+            <div><Label>What They Love About Their Work</Label><Textarea value={form.whatTheyLove} onChange={e => setForm({ ...form, whatTheyLove: e.target.value })} placeholder="What drives them every day..." rows={4} data-testid="input-featured-love" /></div>
+            <div><Label>One Thing People Misunderstand</Label><Textarea value={form.misunderstanding} onChange={e => setForm({ ...form, misunderstanding: e.target.value })} placeholder="A common misconception about their profession..." rows={4} data-testid="input-featured-misunderstand" /></div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Social Links</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div><Label>LinkedIn</Label><Input value={form.linkedin} onChange={e => setForm({ ...form, linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." data-testid="input-featured-linkedin" /></div>
+              <div><Label>Facebook</Label><Input value={form.facebook} onChange={e => setForm({ ...form, facebook: e.target.value })} placeholder="https://facebook.com/..." data-testid="input-featured-facebook" /></div>
+              <div><Label>X (Twitter)</Label><Input value={form.twitter} onChange={e => setForm({ ...form, twitter: e.target.value })} placeholder="https://twitter.com/..." data-testid="input-featured-twitter" /></div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">SEO</h3>
+            <div><Label>SEO Title</Label><Input value={form.seoTitle} onChange={e => setForm({ ...form, seoTitle: e.target.value })} placeholder="Auto-generated if left blank" data-testid="input-featured-seo-title" /></div>
+            <div><Label>Meta Description</Label><Textarea value={form.metaDescription} onChange={e => setForm({ ...form, metaDescription: e.target.value })} placeholder="Auto-generated from headline if left blank" rows={2} data-testid="input-featured-meta" /></div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={form.isFeaturedOfWeek} onChange={e => setForm({ ...form, isFeaturedOfWeek: e.target.checked })} className="rounded" data-testid="checkbox-featured-week" />
+              <Star className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-medium">Professional of the Week</span>
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button onClick={handleSubmit} disabled={saving} data-testid="button-save-featured">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {editing ? "Update" : "Create"}
+            </Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); }}>Cancel</Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-featured-back">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="font-serif text-xl font-semibold">Featured Professionals</h1>
+            <span className="text-sm text-gray-500">{professionals.length} profiles</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleSeed} disabled={seeding} data-testid="button-seed-featured">
+              {seeding ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+              Seed Samples
+            </Button>
+            <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); }} data-testid="button-add-featured">
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              Add
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={e => {
+        const file = e.target.files?.[0];
+        if (file && uploadTargetId) handleUploadPortrait(uploadTargetId, file);
+        e.target.value = "";
+      }} />
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        ) : professionals.length === 0 ? (
+          <Card className="border-dashed border-2 bg-white/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Star className="w-10 h-10 text-gray-300 mb-3" />
+              <h3 className="font-serif text-lg text-gray-900 mb-1">No featured professionals yet</h3>
+              <p className="text-gray-500 text-sm mb-4">Add your first professional or seed sample data</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleSeed}>Seed Samples</Button>
+                <Button size="sm" onClick={() => setShowForm(true)}>Add Professional</Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {professionals.map(pro => {
+              const initials = pro.name.split(" ").map(n => n[0]).join("").slice(0, 2);
+              return (
+                <Card key={pro.id} className="overflow-hidden" data-testid={`admin-featured-card-${pro.id}`}>
+                  <div className="aspect-[3/4] relative overflow-hidden bg-stone-200 group cursor-pointer"
+                    onClick={() => { setUploadTargetId(pro.id); fileInputRef.current?.click(); }}>
+                    {pro.portraitImageUrl ? (
+                      <img src={pro.portraitImageUrl} alt={pro.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-300 to-stone-400">
+                        <span className="text-4xl font-serif text-white/80">{initials}</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      {uploading === pro.id ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Upload className="w-6 h-6 text-white" />}
+                    </div>
+                    {pro.isSample ? (
+                      <Badge className="absolute top-2 left-2 bg-amber-500 text-white text-[10px]" variant="secondary">Sample</Badge>
+                    ) : null}
+                    {pro.isFeaturedOfWeek ? (
+                      <div className="absolute top-2 right-2"><Star className="w-5 h-5 text-amber-400 fill-amber-400" /></div>
+                    ) : null}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm mb-0.5">{pro.name}</h3>
+                    <p className="text-xs text-gray-500 mb-1">{pro.profession} · {pro.location}</p>
+                    <p className="text-xs text-gray-400 mb-3 truncate italic">"{pro.headline}"</p>
+                    <div className="flex items-center gap-1.5">
+                      <Button variant="outline" size="sm" className="h-7 text-xs flex-1" onClick={() => startEdit(pro)} data-testid={`button-edit-featured-${pro.id}`}>
+                        <Edit className="w-3 h-3 mr-1" /> Edit
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => window.open(`/featured/${pro.slug}`, "_blank")} data-testid={`button-view-featured-${pro.id}`}>
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                      <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDelete(pro.id)} data-testid={`button-delete-featured-${pro.id}`}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function EmployeeManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
@@ -1863,7 +2194,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -2097,6 +2428,10 @@ function AdminDashboard({ token }: { token: string }) {
     return <EmployeeManager token={token} onBack={() => setView("clients")} />;
   }
 
+  if (view === "featured") {
+    return <FeaturedManager token={token} onBack={() => setView("clients")} />;
+  }
+
   if (view === "create" || view === "edit") {
     const isEdit = view === "edit";
     return (
@@ -2314,6 +2649,16 @@ function AdminDashboard({ token }: { token: string }) {
               <Camera className="w-4 h-4" />
               <span data-testid="text-shoot-count">{shoots.length} shoots</span>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("featured")}
+              data-testid="button-manage-featured"
+              className="h-8 text-xs border-gray-200 text-gray-600"
+            >
+              <Star className="w-3.5 h-3.5 mr-1.5" />
+              Featured
+            </Button>
             <Button
               variant="outline"
               size="sm"
