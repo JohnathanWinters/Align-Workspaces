@@ -14,6 +14,7 @@ interface FeaturedProfessional {
   category: string;
   slug: string;
   portraitImageUrl: string | null;
+  portraitCropPosition: { x: number; y: number } | null;
   headline: string;
   quote: string;
   storySections: {
@@ -99,6 +100,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
             src={pro.portraitImageUrl}
             alt={`${pro.name} - ${pro.profession}`}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
+            style={pro.portraitCropPosition ? { objectPosition: `${pro.portraitCropPosition.x}% ${pro.portraitCropPosition.y}%` } : undefined}
           />
         ) : (
           <Initials name={pro.name} />
@@ -154,6 +156,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             loading="lazy"
             decoding="async"
+            style={pro.portraitCropPosition ? { objectPosition: `${pro.portraitCropPosition.x}% ${pro.portraitCropPosition.y}%` } : undefined}
           />
         ) : (
           <Initials name={pro.name} />
@@ -438,7 +441,8 @@ function ProfilePage({ slug }: { slug: string }) {
           <img
             src={pro.portraitImageUrl}
             alt={`${pro.name} - ${pro.profession}`}
-            className="w-full h-full object-cover object-top"
+            className="w-full h-full object-cover"
+            style={{ objectPosition: pro.portraitCropPosition ? `${pro.portraitCropPosition.x}% ${pro.portraitCropPosition.y}%` : "50% 20%" }}
           />
         ) : (
           <Initials name={pro.name} />
