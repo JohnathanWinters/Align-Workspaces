@@ -262,7 +262,7 @@ export const featuredProfessionals = pgTable("featured_professionals", {
   category: text("category").notNull(),
   slug: text("slug").notNull().unique(),
   portraitImageUrl: text("portrait_image_url"),
-  portraitCropPosition: jsonb("portrait_crop_position").$type<{ x: number; y: number }>(),
+  portraitCropPosition: jsonb("portrait_crop_position").$type<{ x: number; y: number; zoom?: number }>(),
   headline: text("headline").notNull(),
   quote: text("quote").notNull(),
   storySections: jsonb("story_sections").notNull().$type<{

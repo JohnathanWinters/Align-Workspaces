@@ -1599,7 +1599,7 @@ interface FeaturedProfessional {
   category: string;
   slug: string;
   portraitImageUrl: string | null;
-  portraitCropPosition: { x: number; y: number } | null;
+  portraitCropPosition: { x: number; y: number; zoom?: number } | null;
   headline: string;
   quote: string;
   storySections: { whyStarted: string; whatTheyLove: string; misunderstanding: string };
@@ -1674,7 +1674,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [seeding, setSeeding] = useState(false);
   const [formPortraitPreview, setFormPortraitPreview] = useState<string | null>(null);
   const [formPortraitFile, setFormPortraitFile] = useState<File | null>(null);
-  const [cropPosition, setCropPosition] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const [cropPosition, setCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const cropContainerRef = useRef<HTMLDivElement>(null);
 
@@ -1739,7 +1739,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       setForm(defaultFeaturedForm);
       setFormPortraitFile(null);
       setFormPortraitPreview(null);
-      setCropPosition({ x: 50, y: 50 });
+      setCropPosition({ x: 50, y: 50, zoom: 1 });
       loadData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -1815,7 +1815,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     });
     setFormPortraitPreview(pro.portraitImageUrl || null);
     setFormPortraitFile(null);
-    setCropPosition(pro.portraitCropPosition || { x: 50, y: 50 });
+    setCropPosition({ x: pro.portraitCropPosition?.x ?? 50, y: pro.portraitCropPosition?.y ?? 50, zoom: pro.portraitCropPosition?.zoom ?? 1 });
     setShowForm(true);
   };
 
@@ -1824,7 +1824,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       <div className="min-h-screen bg-[#faf9f7]">
         <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50 }); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="font-serif text-xl font-semibold">{editing ? "Edit Professional" : "Add Professional"}</h1>
@@ -1837,7 +1837,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             setFormPortraitFile(file);
             const url = URL.createObjectURL(file);
             setFormPortraitPreview(url);
-            setCropPosition({ x: 50, y: 50 });
+            setCropPosition({ x: 50, y: 50, zoom: 1 });
           }
           e.target.value = "";
         }} />
@@ -1854,16 +1854,14 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     if (!formPortraitPreview) return;
                     e.preventDefault();
                     setIsDragging(true);
-                    const startX = e.clientX;
                     const startY = e.clientY;
                     const startPos = { ...cropPosition };
                     const handleMove = (ev: MouseEvent) => {
-                      const dx = ev.clientX - startX;
                       const dy = ev.clientY - startY;
-                      setCropPosition({
-                        x: Math.max(0, Math.min(100, startPos.x - (dx / 1.6))),
+                      setCropPosition(prev => ({
+                        ...prev,
                         y: Math.max(0, Math.min(100, startPos.y - (dy / 2.08))),
-                      });
+                      }));
                     };
                     const handleUp = () => {
                       setIsDragging(false);
@@ -1878,18 +1876,16 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     e.preventDefault();
                     const touch = e.touches[0];
                     setIsDragging(true);
-                    const startX = touch.clientX;
                     const startY = touch.clientY;
                     const startPos = { ...cropPosition };
                     const handleMove = (ev: TouchEvent) => {
                       ev.preventDefault();
                       const t = ev.touches[0];
-                      const dx = t.clientX - startX;
                       const dy = t.clientY - startY;
-                      setCropPosition({
-                        x: Math.max(0, Math.min(100, startPos.x - (dx / 1.6))),
+                      setCropPosition(prev => ({
+                        ...prev,
                         y: Math.max(0, Math.min(100, startPos.y - (dy / 2.08))),
-                      });
+                      }));
                     };
                     const cleanup = () => {
                       setIsDragging(false);
@@ -1908,14 +1904,20 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                         src={formPortraitPreview}
                         alt="Portrait preview"
                         className="w-full h-full object-cover pointer-events-none"
-                        style={{ objectPosition: `${cropPosition.x}% ${cropPosition.y}%` }}
+                        style={{
+                          objectPosition: `${cropPosition.x}% ${cropPosition.y}%`,
+                          transform: `scale(${cropPosition.zoom})`,
+                          transformOrigin: `${cropPosition.x}% ${cropPosition.y}%`,
+                        }}
                         draggable={false}
                       />
-                      <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${isDragging ? "opacity-0" : "opacity-100 hover:opacity-100"}`}>
-                        <div className="bg-black/50 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 hover:!opacity-100 transition-opacity pointer-events-none" style={{ opacity: isDragging ? 0 : undefined }}>
-                          <Move className="w-4 h-4 text-white" />
+                      {!isDragging && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+                            <Move className="w-4 h-4 text-white" />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-300 to-stone-400">
@@ -1924,34 +1926,68 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                   )}
                 </div>
                 {formPortraitPreview && (
-                  <p className="text-[11px] text-gray-400 text-center">Drag to reposition</p>
+                  <p className="text-[11px] text-gray-400 text-center">Drag up/down to reposition</p>
                 )}
               </div>
-              <div className="flex flex-col gap-2 pt-1">
+              <div className="flex flex-col gap-3 pt-1 flex-1">
                 <Button variant="outline" size="sm" onClick={() => formFileInputRef.current?.click()} data-testid="button-upload-portrait-form">
                   <Upload className="w-3.5 h-3.5 mr-1.5" />
                   {formPortraitPreview ? "Change Photo" : "Upload Photo"}
                 </Button>
                 {formPortraitPreview && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => {
-                      if (formPortraitPreview?.startsWith("blob:")) URL.revokeObjectURL(formPortraitPreview);
-                      setFormPortraitFile(null);
-                      setFormPortraitPreview(null);
-                      setCropPosition({ x: 50, y: 50 });
-                      if (editing?.portraitImageUrl) {
-                        handleRemovePortrait(editing.id);
-                        setEditing({ ...editing, portraitImageUrl: null, portraitCropPosition: null });
-                      }
-                    }}
-                    data-testid="button-remove-portrait-form"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                    Remove Photo
-                  </Button>
+                  <>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-500">Zoom</Label>
+                        <span className="text-xs text-gray-400 tabular-nums">{Math.round(cropPosition.zoom * 100)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="2"
+                        step="0.05"
+                        value={cropPosition.zoom}
+                        onChange={e => setCropPosition(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                        data-testid="slider-crop-zoom"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-500">Vertical Position</Label>
+                        <span className="text-xs text-gray-400 tabular-nums">{Math.round(cropPosition.y)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={cropPosition.y}
+                        onChange={e => setCropPosition(prev => ({ ...prev, y: parseFloat(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                        data-testid="slider-crop-vertical"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => {
+                        if (formPortraitPreview?.startsWith("blob:")) URL.revokeObjectURL(formPortraitPreview);
+                        setFormPortraitFile(null);
+                        setFormPortraitPreview(null);
+                        setCropPosition({ x: 50, y: 50, zoom: 1 });
+                        if (editing?.portraitImageUrl) {
+                          handleRemovePortrait(editing.id);
+                          setEditing({ ...editing, portraitImageUrl: null, portraitCropPosition: null });
+                        }
+                      }}
+                      data-testid="button-remove-portrait-form"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Remove Photo
+                    </Button>
+                  </>
                 )}
                 <p className="text-xs text-gray-400">Recommended: 3:4 portrait ratio</p>
               </div>
@@ -2079,7 +2115,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               {editing ? "Update" : "Create"}
             </Button>
-            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50 }); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }}>Cancel</Button>
           </div>
         </main>
       </div>
@@ -2102,7 +2138,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               {seeding ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
               Seed Samples
             </Button>
-            <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50 }); }} data-testid="button-add-featured">
+            <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }} data-testid="button-add-featured">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Add
             </Button>
@@ -2127,7 +2163,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               <p className="text-gray-500 text-sm mb-4">Add your first professional or seed sample data</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleSeed}>Seed Samples</Button>
-                <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50 }); }}>Add Professional</Button>
+                <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }}>Add Professional</Button>
               </div>
             </CardContent>
           </Card>
