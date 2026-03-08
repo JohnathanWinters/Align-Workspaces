@@ -120,7 +120,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
   return (
     <section
-      className="relative w-full min-h-[70vh] sm:min-h-[80vh] flex items-end cursor-pointer group"
+      className="relative w-full min-h-[70vh] sm:min-h-[80vh] lg:min-h-[85vh] xl:aspect-[16/10] flex items-end cursor-pointer group"
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid="card-professional-of-week"
     >
@@ -466,7 +466,7 @@ function ProfilePage({ slug }: { slug: string }) {
     <div className="min-h-screen bg-background">
       <FeaturedNav />
 
-      <section className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] overflow-hidden">
+      <section className="relative w-full h-[55vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
         {pro.portraitImageUrl ? (
           <img
             src={pro.portraitImageUrl}
