@@ -1581,8 +1581,15 @@ export async function registerRoutes(
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
       const ext = path.extname(req.file.originalname || ".jpg");
       const objectKey = `uploads/featured-${randomUUID()}${ext}`;
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const fullPath = `${privateDir}/${objectKey}`;
+      const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
+      const bucketName = parts[0];
+      const objectName = parts.slice(1).join("/");
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
       const fileBuffer = fs.readFileSync(req.file.path);
-      await objectStorageClient.uploadFromBytes(objectKey, fileBuffer);
+      await file.save(fileBuffer, { resumable: false });
       fs.unlinkSync(req.file.path);
       const imageUrl = `/objects/${objectKey}`;
       const pro = await storage.updateFeaturedProfessional(req.params.id, { portraitImageUrl: imageUrl });
