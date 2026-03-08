@@ -270,11 +270,7 @@ export const featuredProfessionals = pgTable("featured_professionals", {
     whatTheyLove: string;
     misunderstanding: string;
   }>(),
-  socialLinks: jsonb("social_links").$type<{
-    linkedin?: string;
-    facebook?: string;
-    twitter?: string;
-  }>(),
+  socialLinks: jsonb("social_links").$type<Array<{ platform: string; url: string }>>(),
   isFeaturedOfWeek: integer("is_featured_of_week").notNull().default(0),
   isSample: integer("is_sample").notNull().default(0),
   seoTitle: text("seo_title"),

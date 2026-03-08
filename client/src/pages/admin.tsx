@@ -1603,7 +1603,7 @@ interface FeaturedProfessional {
   headline: string;
   quote: string;
   storySections: { whyStarted: string; whatTheyLove: string; misunderstanding: string };
-  socialLinks: { linkedin?: string; facebook?: string; twitter?: string } | null;
+  socialLinks: Array<{ platform: string; url: string }> | null;
   isFeaturedOfWeek: number;
   isSample: number;
   seoTitle: string | null;
@@ -1615,10 +1615,43 @@ const defaultFeaturedForm = {
   name: "", profession: "", location: "", category: "",
   headline: "", quote: "",
   whyStarted: "", whatTheyLove: "", misunderstanding: "",
-  linkedin: "", facebook: "", twitter: "",
+  socialLinks: [] as Array<{ platform: string; url: string }>,
   isFeaturedOfWeek: false,
   seoTitle: "", metaDescription: "",
 };
+
+const SOCIAL_PLATFORMS = [
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "facebook", label: "Facebook" },
+  { value: "instagram", label: "Instagram" },
+  { value: "x", label: "X (Twitter)" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "youtube", label: "YouTube" },
+  { value: "pinterest", label: "Pinterest" },
+  { value: "snapchat", label: "Snapchat" },
+  { value: "threads", label: "Threads" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "telegram", label: "Telegram" },
+  { value: "spotify", label: "Spotify" },
+  { value: "reddit", label: "Reddit" },
+  { value: "behance", label: "Behance" },
+  { value: "dribbble", label: "Dribbble" },
+  { value: "medium", label: "Medium" },
+  { value: "yelp", label: "Yelp" },
+  { value: "github", label: "GitHub" },
+  { value: "vimeo", label: "Vimeo" },
+  { value: "tumblr", label: "Tumblr" },
+];
+
+function normalizeSocialLinksAdmin(links: any): Array<{ platform: string; url: string }> {
+  if (Array.isArray(links)) return links;
+  if (links && typeof links === "object") {
+    return Object.entries(links)
+      .filter(([, url]) => typeof url === "string" && url)
+      .map(([platform, url]) => ({ platform, url: url as string }));
+  }
+  return [];
+}
 
 const FEATURED_CATEGORIES = [
   "Therapists", "Chefs", "Personal Trainers",
@@ -1684,7 +1717,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         quote: form.quote,
         portraitCropPosition: cropPosition,
         storySections: { whyStarted: form.whyStarted, whatTheyLove: form.whatTheyLove, misunderstanding: form.misunderstanding },
-        socialLinks: { linkedin: form.linkedin || undefined, facebook: form.facebook || undefined, twitter: form.twitter || undefined },
+        socialLinks: form.socialLinks.filter(s => s.platform && s.url.trim()),
         isFeaturedOfWeek: form.isFeaturedOfWeek ? 1 : 0,
         seoTitle: form.seoTitle || `${form.name} - ${form.profession} | Align`,
         metaDescription: form.metaDescription || form.headline,
@@ -1775,9 +1808,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       whyStarted: pro.storySections.whyStarted,
       whatTheyLove: pro.storySections.whatTheyLove,
       misunderstanding: pro.storySections.misunderstanding,
-      linkedin: pro.socialLinks?.linkedin || "",
-      facebook: pro.socialLinks?.facebook || "",
-      twitter: pro.socialLinks?.twitter || "",
+      socialLinks: normalizeSocialLinksAdmin(pro.socialLinks),
       isFeaturedOfWeek: pro.isFeaturedOfWeek === 1,
       seoTitle: pro.seoTitle || "",
       metaDescription: pro.metaDescription || "",
@@ -1952,11 +1983,80 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
           </div>
 
           <div className="space-y-4">
-            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Social Links</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div><Label>LinkedIn</Label><Input value={form.linkedin} onChange={e => setForm({ ...form, linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." data-testid="input-featured-linkedin" /></div>
-              <div><Label>Facebook</Label><Input value={form.facebook} onChange={e => setForm({ ...form, facebook: e.target.value })} placeholder="https://facebook.com/..." data-testid="input-featured-facebook" /></div>
-              <div><Label>X (Twitter)</Label><Input value={form.twitter} onChange={e => setForm({ ...form, twitter: e.target.value })} placeholder="https://twitter.com/..." data-testid="input-featured-twitter" /></div>
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Social Links</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setForm({ ...form, socialLinks: [...form.socialLinks, { platform: "", url: "" }] })}
+                data-testid="button-add-social"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Add Link
+              </Button>
+            </div>
+            {form.socialLinks.length === 0 && (
+              <p className="text-sm text-gray-400 italic">No social links added yet. Click "Add Link" to get started.</p>
+            )}
+            <div className="space-y-3">
+              {form.socialLinks.map((link, idx) => {
+                const usedPlatforms = form.socialLinks.map((s, i) => i !== idx ? s.platform : "").filter(Boolean);
+                const availablePlatforms = SOCIAL_PLATFORMS.filter(p => !usedPlatforms.includes(p.value));
+                return (
+                  <div key={idx} className="flex items-start gap-2">
+                    <div className="w-40 shrink-0">
+                      <Select
+                        value={link.platform}
+                        onValueChange={v => {
+                          const updated = [...form.socialLinks];
+                          updated[idx] = { ...updated[idx], platform: v };
+                          setForm({ ...form, socialLinks: updated });
+                        }}
+                      >
+                        <SelectTrigger data-testid={`select-social-platform-${idx}`}>
+                          <SelectValue placeholder="Platform" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePlatforms.map(p => (
+                            <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                          ))}
+                          {link.platform && !availablePlatforms.find(p => p.value === link.platform) && (
+                            <SelectItem value={link.platform}>
+                              {SOCIAL_PLATFORMS.find(p => p.value === link.platform)?.label || link.platform}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        value={link.url}
+                        onChange={e => {
+                          const updated = [...form.socialLinks];
+                          updated[idx] = { ...updated[idx], url: e.target.value };
+                          setForm({ ...form, socialLinks: updated });
+                        }}
+                        placeholder="https://..."
+                        data-testid={`input-social-url-${idx}`}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-600 hover:bg-red-50 mt-0.5 px-2"
+                      onClick={() => {
+                        const updated = form.socialLinks.filter((_, i) => i !== idx);
+                        setForm({ ...form, socialLinks: updated });
+                      }}
+                      data-testid={`button-remove-social-${idx}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

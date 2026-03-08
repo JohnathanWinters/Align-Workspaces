@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin } from "lucide-react";
-import { SiLinkedin, SiFacebook, SiX } from "react-icons/si";
+import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 
 interface FeaturedProfessional {
@@ -22,16 +22,46 @@ interface FeaturedProfessional {
     whatTheyLove: string;
     misunderstanding: string;
   };
-  socialLinks: {
-    linkedin?: string;
-    facebook?: string;
-    twitter?: string;
-  } | null;
+  socialLinks: Array<{ platform: string; url: string }> | null;
   isFeaturedOfWeek: number;
   isSample: number;
   seoTitle: string | null;
   metaDescription: string | null;
   createdAt: string;
+}
+
+const SOCIAL_ICON_MAP: Record<string, any> = {
+  linkedin: SiLinkedin,
+  facebook: SiFacebook,
+  x: SiX,
+  twitter: SiX,
+  instagram: SiInstagram,
+  tiktok: SiTiktok,
+  youtube: SiYoutube,
+  pinterest: SiPinterest,
+  snapchat: SiSnapchat,
+  threads: SiThreads,
+  whatsapp: SiWhatsapp,
+  telegram: SiTelegram,
+  spotify: SiSpotify,
+  reddit: SiReddit,
+  behance: SiBehance,
+  dribbble: SiDribbble,
+  medium: SiMedium,
+  yelp: SiYelp,
+  github: SiGithub,
+  vimeo: SiVimeo,
+  tumblr: SiTumblr,
+};
+
+function normalizeSocialLinks(links: any): Array<{ platform: string; url: string }> {
+  if (Array.isArray(links)) return links;
+  if (links && typeof links === "object") {
+    return Object.entries(links)
+      .filter(([, url]) => typeof url === "string" && url)
+      .map(([platform, url]) => ({ platform, url: url as string }));
+  }
+  return [];
 }
 
 const CATEGORY_ORDER = ["Therapists", "Chefs", "Personal Trainers"];
@@ -478,21 +508,15 @@ function ProfilePage({ slug }: { slug: string }) {
           </p>
 
           <div className="flex items-center gap-3 mb-10">
-            {pro.socialLinks?.linkedin && (
-              <a href={pro.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" data-testid="link-linkedin" className="p-2.5 rounded-full bg-muted/60 hover:bg-muted transition-colors">
-                <SiLinkedin className="w-4 h-4" />
-              </a>
-            )}
-            {pro.socialLinks?.facebook && (
-              <a href={pro.socialLinks.facebook} target="_blank" rel="noopener noreferrer" data-testid="link-facebook" className="p-2.5 rounded-full bg-muted/60 hover:bg-muted transition-colors">
-                <SiFacebook className="w-4 h-4" />
-              </a>
-            )}
-            {pro.socialLinks?.twitter && (
-              <a href={pro.socialLinks.twitter} target="_blank" rel="noopener noreferrer" data-testid="link-twitter" className="p-2.5 rounded-full bg-muted/60 hover:bg-muted transition-colors">
-                <SiX className="w-4 h-4" />
-              </a>
-            )}
+            {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
+              const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
+              if (!Icon || !url) return null;
+              return (
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-muted/60 hover:bg-muted transition-colors">
+                  <Icon className="w-4 h-4" />
+                </a>
+              );
+            })}
             <button
               onClick={() => {
                 if (navigator.share) {

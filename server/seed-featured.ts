@@ -14,7 +14,7 @@ const sampleProfessionals = [
       whatTheyLove: "Maria lights up when talking about breakthrough moments with her clients. 'When someone walks in carrying the weight of years of unspoken pain, and then one day they laugh — really laugh — that's everything,' she says. She specializes in family dynamics and culturally sensitive therapy, often conducting sessions in both English and Spanish.",
       misunderstanding: "People think therapy is only for people in crisis. Maria wants everyone to know that therapy is for growth, self-awareness, and resilience — not just emergencies. 'You don't wait until your car breaks down to get an oil change,' she says with a smile."
     },
-    socialLinks: { linkedin: "https://linkedin.com/in/example", twitter: "https://twitter.com/example" },
+    socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "instagram", url: "https://instagram.com/example" }],
     isFeaturedOfWeek: 1,
     isSample: 1,
     seoTitle: "Why Maria Gonzalez Became a Therapist | Align",
@@ -33,7 +33,7 @@ const sampleProfessionals = [
       whatTheyLove: "The moment a family that came in barely speaking to each other starts laughing together in session. 'That shift — when defensiveness turns into curiosity — that's when the real work begins,' Daniel says. He uses a blend of structural and narrative therapy techniques tailored to each family's culture.",
       misunderstanding: "That family therapy means someone is 'broken.' Daniel is quick to reframe: 'Seeking help is a sign of strength, not weakness. Every family hits rough patches. The brave ones show up and do the work.'"
     },
-    socialLinks: { linkedin: "https://linkedin.com/in/example" },
+    socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }],
     isFeaturedOfWeek: 0,
     isSample: 1,
     seoTitle: "Why Daniel Reyes Became a Family Therapist | Align",
@@ -52,7 +52,7 @@ const sampleProfessionals = [
       whatTheyLove: "The energy of a packed dining room on a Saturday night — that's what drives Carlos. 'Cooking is connection. When someone takes a bite and closes their eyes, I know I've done my job.' He sources ingredients from local farms and changes his menu with the seasons.",
       misunderstanding: "People think being a chef is glamorous. Carlos is quick to correct that notion. 'It's 14-hour days, burns, and exhaustion. But when you're passionate about feeding people, you wouldn't trade it for anything.'"
     },
-    socialLinks: { linkedin: "https://linkedin.com/in/example", facebook: "https://facebook.com/example" },
+    socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "instagram", url: "https://instagram.com/example" }, { platform: "facebook", url: "https://facebook.com/example" }],
     isFeaturedOfWeek: 0,
     isSample: 1,
     seoTitle: "Why Carlos Medina Became a Chef | Align",
@@ -71,7 +71,7 @@ const sampleProfessionals = [
       whatTheyLove: "The artistry. 'Pastry is where science meets creativity. Every temperature, every texture, every flavor pairing matters.' Isabella especially loves custom orders — wedding cakes that tell a couple's story, birthday desserts that capture a personality. 'When someone cries happy tears over a cake, that's my favorite moment.'",
       misunderstanding: "That pastry is less serious than savory cooking. 'Pastry requires precision that most line cooks would find maddening. One degree off, one gram too much — the whole thing falls apart. It's chemistry, physics, and art all at once.'"
     },
-    socialLinks: { linkedin: "https://linkedin.com/in/example", twitter: "https://twitter.com/example" },
+    socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "tiktok", url: "https://tiktok.com/@example" }],
     isFeaturedOfWeek: 0,
     isSample: 1,
     seoTitle: "Why Isabella Santos Became a Pastry Chef | Align",
@@ -90,7 +90,7 @@ const sampleProfessionals = [
       whatTheyLove: "Watching clients surprise themselves. 'When someone who said they could never do a pull-up does five in a row — the look on their face is priceless.' Marcus specializes in working with professionals over 35 who want to reclaim their health without burning out.",
       misunderstanding: "That personal trainers just count reps. 'I'm a coach, a motivator, and sometimes the only person in my client's life who holds them accountable. The workout is just the vehicle — the real work is mental.'"
     },
-    socialLinks: { linkedin: "https://linkedin.com/in/example", facebook: "https://facebook.com/example" },
+    socialLinks: [{ platform: "instagram", url: "https://instagram.com/example" }, { platform: "youtube", url: "https://youtube.com/@example" }],
     isFeaturedOfWeek: 0,
     isSample: 1,
     seoTitle: "Why Marcus Johnson Became a Personal Trainer | Align",
@@ -109,7 +109,7 @@ const sampleProfessionals = [
       whatTheyLove: "The confidence shift. 'I've had clients come to me apologizing for their bodies, and within months they're standing taller, speaking louder, taking up space. The physical changes are great, but watching someone reclaim their confidence? That's everything.' Adriana combines strength training with mindset coaching for lasting results.",
       misunderstanding: "That women who lift weights will get 'bulky.' 'I hear it every week. But once clients see how strong and lean they feel after a few months of consistent training, they never look back. Strength is feminine, period.'"
     },
-    socialLinks: { linkedin: "https://linkedin.com/in/example", twitter: "https://twitter.com/example" },
+    socialLinks: [{ platform: "instagram", url: "https://instagram.com/example" }, { platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "x", url: "https://x.com/example" }],
     isFeaturedOfWeek: 0,
     isSample: 1,
     seoTitle: "Why Adriana Vega Became a Fitness Coach | Align",
@@ -118,13 +118,15 @@ const sampleProfessionals = [
 ];
 
 export async function seedFeaturedProfessionals() {
+  const existing = await storage.getFeaturedProfessionals({ includeSamples: true });
+  const existingSlugs = new Set(existing.map((p) => p.slug));
   let created = 0;
+
   for (const pro of sampleProfessionals) {
-    const existing = await storage.getFeaturedProfessionalBySlug(pro.slug);
-    if (!existing) {
-      await storage.createFeaturedProfessional(pro as any);
-      created++;
-    }
+    if (existingSlugs.has(pro.slug)) continue;
+    await storage.createFeaturedProfessional(pro);
+    created++;
   }
+
   return { created, total: sampleProfessionals.length };
 }
