@@ -1619,8 +1619,9 @@ const defaultFeaturedForm = {
 };
 
 const FEATURED_CATEGORIES = [
-  "Therapists", "Lawyers", "Real Estate Agents", "Chefs",
-  "Artists", "Trainers", "Barbers", "Designers", "Entrepreneurs",
+  "Therapists", "Chefs", "Personal Trainers",
+  "Lawyers", "Real Estate Agents",
+  "Artists", "Barbers", "Designers", "Entrepreneurs",
 ];
 
 function FeaturedManager({ token, onBack }: { token: string; onBack: () => void }) {
@@ -1633,8 +1634,11 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formFileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [formPortraitPreview, setFormPortraitPreview] = useState<string | null>(null);
+  const [formPortraitFile, setFormPortraitFile] = useState<File | null>(null);
 
   const adminFetch = useCallback(async (url: string, opts: any = {}) => {
     const { isFormData, ...rest } = opts;
@@ -1684,10 +1688,18 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       const method = editing ? "PATCH" : "POST";
       const res = await adminFetch(url, { method, body: JSON.stringify(body) });
       if (!res.ok) throw new Error(await res.text());
+      const savedPro = await res.json();
+
+      if (formPortraitFile && savedPro.id) {
+        await handleUploadPortrait(savedPro.id, formPortraitFile);
+      }
+
       toast({ title: editing ? "Updated" : "Created" });
       setShowForm(false);
       setEditing(null);
       setForm(defaultFeaturedForm);
+      setFormPortraitFile(null);
+      setFormPortraitPreview(null);
       loadData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -1734,6 +1746,20 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     setSeeding(false);
   };
 
+  const handleRemovePortrait = async (id: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/featured/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ portraitImageUrl: null }),
+      });
+      if (!res.ok) throw new Error("Failed to remove portrait");
+      toast({ title: "Portrait removed" });
+      loadData();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   const startEdit = (pro: FeaturedProfessional) => {
     setEditing(pro);
     setForm({
@@ -1749,6 +1775,8 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       seoTitle: pro.seoTitle || "",
       metaDescription: pro.metaDescription || "",
     });
+    setFormPortraitPreview(pro.portraitImageUrl || null);
+    setFormPortraitFile(null);
     setShowForm(true);
   };
 
@@ -1757,13 +1785,65 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       <div className="min-h-screen bg-[#faf9f7]">
         <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="font-serif text-xl font-semibold">{editing ? "Edit Professional" : "Add Professional"}</h1>
           </div>
         </header>
+        <input type="file" ref={formFileInputRef} className="hidden" accept="image/*" onChange={e => {
+          const file = e.target.files?.[0];
+          if (file) {
+            if (formPortraitPreview?.startsWith("blob:")) URL.revokeObjectURL(formPortraitPreview);
+            setFormPortraitFile(file);
+            const url = URL.createObjectURL(file);
+            setFormPortraitPreview(url);
+          }
+          e.target.value = "";
+        }} />
         <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Portrait Photo</h3>
+            <div className="flex items-start gap-4">
+              <div className="w-32 h-40 rounded-lg overflow-hidden bg-stone-200 shrink-0 relative group">
+                {formPortraitPreview ? (
+                  <img src={formPortraitPreview} alt="Portrait preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-300 to-stone-400">
+                    <Camera className="w-8 h-8 text-white/60" />
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={() => formFileInputRef.current?.click()} data-testid="button-upload-portrait-form">
+                  <Upload className="w-3.5 h-3.5 mr-1.5" />
+                  {formPortraitPreview ? "Change Photo" : "Upload Photo"}
+                </Button>
+                {formPortraitPreview && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => {
+                      if (formPortraitPreview?.startsWith("blob:")) URL.revokeObjectURL(formPortraitPreview);
+                      setFormPortraitFile(null);
+                      setFormPortraitPreview(null);
+                      if (editing?.portraitImageUrl) {
+                        handleRemovePortrait(editing.id);
+                        setEditing({ ...editing, portraitImageUrl: null });
+                      }
+                    }}
+                    data-testid="button-remove-portrait-form"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    Remove Photo
+                  </Button>
+                )}
+                <p className="text-xs text-gray-400">Recommended: 3:4 portrait ratio</p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Maria Gonzalez" data-testid="input-featured-name" /></div>
             <div><Label>Profession *</Label><Input value={form.profession} onChange={e => setForm({ ...form, profession: e.target.value })} placeholder="Licensed Therapist" data-testid="input-featured-profession" /></div>
@@ -1816,7 +1896,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               {editing ? "Update" : "Create"}
             </Button>
-            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); }}>Cancel</Button>
           </div>
         </main>
       </div>
@@ -1839,7 +1919,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               {seeding ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
               Seed Samples
             </Button>
-            <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); }} data-testid="button-add-featured">
+            <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); }} data-testid="button-add-featured">
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Add
             </Button>
@@ -1864,7 +1944,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               <p className="text-gray-500 text-sm mb-4">Add your first professional or seed sample data</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleSeed}>Seed Samples</Button>
-                <Button size="sm" onClick={() => setShowForm(true)}>Add Professional</Button>
+                <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); }}>Add Professional</Button>
               </div>
             </CardContent>
           </Card>
