@@ -1859,13 +1859,13 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             </div>
           </div>
           <div><Label>Headline *</Label><Input value={form.headline} onChange={e => setForm({ ...form, headline: e.target.value })} placeholder="Helping people heal through conversation" data-testid="input-featured-headline" /></div>
-          <div><Label>Quote *</Label><Textarea value={form.quote} onChange={e => setForm({ ...form, quote: e.target.value })} placeholder="A memorable quote from this professional..." data-testid="input-featured-quote" rows={2} /></div>
+          <div><Label>Personal Quote *</Label><Textarea value={form.quote} onChange={e => setForm({ ...form, quote: e.target.value })} placeholder="A short statement that captures how they see their work..." data-testid="input-featured-quote" rows={2} /></div>
 
           <div className="space-y-4">
             <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Story Sections</h3>
-            <div><Label>Why They Started</Label><Textarea value={form.whyStarted} onChange={e => setForm({ ...form, whyStarted: e.target.value })} placeholder="The story of how they began..." rows={4} data-testid="input-featured-why" /></div>
-            <div><Label>What They Love About Their Work</Label><Textarea value={form.whatTheyLove} onChange={e => setForm({ ...form, whatTheyLove: e.target.value })} placeholder="What drives them every day..." rows={4} data-testid="input-featured-love" /></div>
-            <div><Label>One Thing People Misunderstand</Label><Textarea value={form.misunderstanding} onChange={e => setForm({ ...form, misunderstanding: e.target.value })} placeholder="A common misconception about their profession..." rows={4} data-testid="input-featured-misunderstand" /></div>
+            <div><Label>Why They Do This Work</Label><Textarea value={form.whyStarted} onChange={e => setForm({ ...form, whyStarted: e.target.value })} placeholder="The deeper reason they chose this path..." rows={4} data-testid="input-featured-why" /></div>
+            <div><Label>What Makes It Meaningful</Label><Textarea value={form.whatTheyLove} onChange={e => setForm({ ...form, whatTheyLove: e.target.value })} placeholder="The part of the work that matters most to them..." rows={4} data-testid="input-featured-love" /></div>
+            <div><Label>A Common Misconception (optional)</Label><Textarea value={form.misunderstanding} onChange={e => setForm({ ...form, misunderstanding: e.target.value })} placeholder="Something people often misunderstand about their profession..." rows={4} data-testid="input-featured-misunderstand" /></div>
           </div>
 
           <div className="space-y-4">

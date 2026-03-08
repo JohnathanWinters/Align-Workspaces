@@ -513,26 +513,28 @@ function ProfilePage({ slug }: { slug: string }) {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="space-y-12"
         >
-          <div data-testid="section-why-started">
-            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">Why They Started</h2>
-            <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.whyStarted}</p>
-          </div>
-
           <blockquote className="py-8 sm:py-12 border-y border-foreground/10" data-testid="text-profile-quote">
             <p className="font-serif text-2xl sm:text-3xl md:text-4xl italic text-foreground/90 leading-[1.3] text-center max-w-2xl mx-auto">
               "{pro.quote}"
             </p>
           </blockquote>
 
+          <div data-testid="section-why-started">
+            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">Why They Do This Work</h2>
+            <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.whyStarted}</p>
+          </div>
+
           <div data-testid="section-what-they-love">
-            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">What They Love</h2>
+            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">What Makes It Meaningful</h2>
             <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.whatTheyLove}</p>
           </div>
 
-          <div data-testid="section-misunderstanding">
-            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">One Thing People Get Wrong</h2>
-            <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.misunderstanding}</p>
-          </div>
+          {pro.storySections.misunderstanding && (
+            <div data-testid="section-misunderstanding">
+              <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">A Common Misconception</h2>
+              <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.misunderstanding}</p>
+            </div>
+          )}
         </motion.div>
       </section>
 
