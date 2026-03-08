@@ -174,23 +174,24 @@ function WeeklySpotlight({ pro }: { pro: FeaturedProfessional }) {
   );
 }
 
+const CATEGORY_ORDER = ["Therapists", "Chefs", "Personal Trainers"];
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  "Therapists": "Mental health professionals helping Miami's community heal, grow, and thrive.",
+  "Chefs": "Culinary artists bringing Miami's diverse flavors to life in kitchens across the city.",
+  "Personal Trainers": "Fitness professionals empowering Miami's workforce to feel strong and confident.",
+};
+
 function FeaturedListingPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const { data: professionals = [], isLoading } = useQuery<FeaturedProfessional[]>({
-    queryKey: ["/api/featured", activeCategory],
+    queryKey: ["/api/featured"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (activeCategory) params.set("category", activeCategory);
-      const res = await fetch(`/api/featured?${params}`);
+      const res = await fetch(`/api/featured`);
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
-  });
-
-  const { data: categories = [] } = useQuery<string[]>({
-    queryKey: ["/api/featured/categories"],
   });
 
   const { data: weeklyPro } = useQuery<FeaturedProfessional | null>({
@@ -201,9 +202,27 @@ function FeaturedListingPage() {
     ? professionals.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.profession.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.headline.toLowerCase().includes(searchQuery.toLowerCase())
+        p.headline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : professionals;
+
+  const groupedByCategory: Record<string, FeaturedProfessional[]> = {};
+  for (const pro of filtered) {
+    if (!groupedByCategory[pro.category]) {
+      groupedByCategory[pro.category] = [];
+    }
+    groupedByCategory[pro.category].push(pro);
+  }
+
+  const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 
   useEffect(() => {
     document.title = "Featured Professionals | Align";
@@ -229,30 +248,7 @@ function FeaturedListingPage() {
       <div className="max-w-6xl mx-auto px-4 pb-20">
         {weeklyPro && <WeeklySpotlight pro={weeklyPro} />}
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setActiveCategory(null)}
-              className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                !activeCategory ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-              data-testid="filter-all"
-            >
-              All
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  activeCategory === cat ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-                data-testid={`filter-${cat.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center justify-end mb-8">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -266,16 +262,24 @@ function FeaturedListingPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-16">
             {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-[3/4] bg-muted rounded-lg mb-4" />
-                <div className="h-5 bg-muted rounded w-3/4 mb-2" />
-                <div className="h-4 bg-muted rounded w-1/2" />
+              <div key={i}>
+                <div className="h-7 bg-muted rounded w-40 mb-2 animate-pulse" />
+                <div className="h-4 bg-muted rounded w-72 mb-6 animate-pulse" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2].map(j => (
+                    <div key={j} className="animate-pulse">
+                      <div className="aspect-[3/4] bg-muted rounded-lg mb-4" />
+                      <div className="h-5 bg-muted rounded w-3/4 mb-2" />
+                      <div className="h-4 bg-muted rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : sortedCategories.length === 0 ? (
           <div className="text-center py-16">
             <Users className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
             <h3 className="font-serif text-xl mb-2">No professionals found</h3>
@@ -284,9 +288,31 @@ function FeaturedListingPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map(pro => (
-              <ProfessionalCard key={pro.id} pro={pro} />
+          <div className="space-y-16">
+            {sortedCategories.map((category, idx) => (
+              <motion.section
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                data-testid={`section-category-${category.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <div className="mb-6">
+                  <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-1" data-testid={`text-category-${category.toLowerCase().replace(/\s+/g, '-')}`}>
+                    {category}
+                  </h2>
+                  {CATEGORY_DESCRIPTIONS[category] && (
+                    <p className="text-muted-foreground text-sm sm:text-base">
+                      {CATEGORY_DESCRIPTIONS[category]}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {groupedByCategory[category].map(pro => (
+                    <ProfessionalCard key={pro.id} pro={pro} />
+                  ))}
+                </div>
+              </motion.section>
             ))}
           </div>
         )}
