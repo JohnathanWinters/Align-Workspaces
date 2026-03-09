@@ -1950,7 +1950,20 @@ export async function registerRoutes(
   app.get("/api/admin/spaces/all", isAdmin, async (_req, res) => {
     try {
       const allSpaces = await storage.getAllSpaces();
-      res.json(allSpaces);
+      const enriched = await Promise.all(allSpaces.map(async (space) => {
+        let ownerInfo = null;
+        if (space.userId) {
+          try {
+            const { authStorage } = await import("./replit_integrations/auth");
+            const user = await authStorage.getUser(space.userId);
+            if (user) {
+              ownerInfo = { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl };
+            }
+          } catch {}
+        }
+        return { ...space, ownerInfo };
+      }));
+      res.json(enriched);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

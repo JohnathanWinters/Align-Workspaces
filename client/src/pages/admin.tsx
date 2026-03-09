@@ -1767,7 +1767,10 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
       (s.neighborhood || "").toLowerCase().includes(q) ||
       (s.type || "").toLowerCase().includes(q) ||
       (s.hostName || "").toLowerCase().includes(q) ||
-      (s.targetProfession || "").toLowerCase().includes(q);
+      (s.targetProfession || "").toLowerCase().includes(q) ||
+      (s.ownerInfo?.firstName || "").toLowerCase().includes(q) ||
+      (s.ownerInfo?.lastName || "").toLowerCase().includes(q) ||
+      (s.ownerInfo?.email || "").toLowerCase().includes(q);
   });
   const counts = {
     all: spaces.length,
@@ -1931,6 +1934,25 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             Type: {space.type} | ${space.pricePerHour}/hr | Host: {space.hostName || "N/A"}
                             {space.isSample ? " | Sample" : ""}
                           </p>
+                          {space.ownerInfo ? (
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <User className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                              <span className="text-xs text-blue-600">
+                                {[space.ownerInfo.firstName, space.ownerInfo.lastName].filter(Boolean).join(" ") || "Unknown"}
+                                {space.ownerInfo.email && <span className="text-gray-400 ml-1">({space.ownerInfo.email})</span>}
+                              </span>
+                            </div>
+                          ) : space.userId ? (
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <User className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                              <span className="text-xs text-gray-400">User ID: {space.userId}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <User className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                              <span className="text-xs text-gray-400">No owner (system/sample)</span>
+                            </div>
+                          )}
                         </div>
                         {statusBadge(space.approvalStatus)}
                       </div>
