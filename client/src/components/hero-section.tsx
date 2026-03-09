@@ -91,7 +91,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-20 sm:pb-24 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-28 sm:pb-24 relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
