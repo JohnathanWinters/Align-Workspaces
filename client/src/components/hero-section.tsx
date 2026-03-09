@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback } from "react";
-import { User } from "lucide-react";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { User, Menu, X, Building2, Camera, Star } from "lucide-react";
+import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 
 interface HeroSectionProps {
@@ -8,6 +8,7 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onStart }: HeroSectionProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const scrollOffset = useSpring(0, { stiffness: 400, damping: 35 });
   const y = useTransform(scrollOffset, (v) => v);
@@ -77,16 +78,46 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
+            className="relative"
           >
-            <Link href="/portal">
-              <button
-                data-testid="button-client-portal"
-                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
-              >
-                <User className="w-3.5 h-3.5" />
-                Client Portal
-              </button>
-            </Link>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              data-testid="button-hero-menu"
+              className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
+            >
+              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              Menu
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
+                >
+                  <Link href="/spaces">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
+                      <Building2 className="w-4 h-4" />
+                      Align Spaces
+                    </button>
+                  </Link>
+                  <Link href="/portal">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-portal-hero">
+                      <User className="w-4 h-4" />
+                      Client Portal
+                    </button>
+                  </Link>
+                  <Link href="/featured">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-featured-hero">
+                      <Star className="w-4 h-4" />
+                      Featured Pros
+                    </button>
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </nav>

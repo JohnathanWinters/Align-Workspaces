@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback } from "react";
-import { User } from "lucide-react";
-import { motion, useSpring, useTransform } from "framer-motion";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { User, Menu, X, Camera, Star } from "lucide-react";
+import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 
 export default function AlignSpacesPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const scrollOffset = useSpring(0, { stiffness: 400, damping: 35 });
   const y = useTransform(scrollOffset, (v) => v);
@@ -67,35 +68,51 @@ export default function AlignSpacesPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/75" />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
+            className="relative"
           >
-            <Link href="/">
-              <button
-                data-testid="button-back-home"
-                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
-              >
-                Align Portraits
-              </button>
-            </Link>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
-          >
-            <Link href="/portal">
-              <button
-                data-testid="button-client-portal-spaces"
-                className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
-              >
-                <User className="w-3.5 h-3.5" />
-                Client Portal
-              </button>
-            </Link>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              data-testid="button-spaces-menu"
+              className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
+            >
+              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              Menu
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
+                >
+                  <Link href="/">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-portraits-spaces">
+                      <Camera className="w-4 h-4" />
+                      Align Portraits
+                    </button>
+                  </Link>
+                  <Link href="/portal">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-portal-spaces">
+                      <User className="w-4 h-4" />
+                      Client Portal
+                    </button>
+                  </Link>
+                  <Link href="/featured">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-featured-spaces">
+                      <Star className="w-4 h-4" />
+                      Featured Pros
+                    </button>
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </nav>
