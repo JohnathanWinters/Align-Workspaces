@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 
@@ -407,9 +407,160 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
   );
 }
 
+function ShareYourStoryModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [form, setForm] = useState({ name: "", profession: "", location: "", email: "", story: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.profession.trim() || !form.story.trim() || !form.email.trim()) return;
+    setSubmitting(true);
+    try {
+      await fetch("/api/nominations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomineeName: form.name.trim(),
+          nomineeProfession: form.profession.trim(),
+          reason: `[SELF-SUBMISSION] ${form.story.trim()}`,
+          nomineeContact: form.email.trim(),
+          nominatorName: `${form.name.trim()} (self)`,
+        }),
+      });
+      setSubmitted(true);
+    } catch {}
+    setSubmitting(false);
+  };
+
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => {
+      setForm({ name: "", profession: "", location: "", email: "", story: "" });
+      setSubmitted(false);
+    }, 300);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={handleClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl relative"
+        onClick={e => e.stopPropagation()}
+      >
+        <button onClick={handleClose} className="absolute top-4 right-4 text-stone-400 hover:text-stone-600" data-testid="button-close-share-story">
+          <X className="w-5 h-5" />
+        </button>
+
+        {submitted ? (
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <h3 className="font-serif text-2xl mb-2">Thank you for sharing</h3>
+            <p className="text-stone-500 text-sm leading-relaxed max-w-sm mx-auto">
+              We'll review your story and reach out if we'd love to feature you. If selected, we'll schedule a complimentary portrait session to bring your story to life.
+            </p>
+            <Button onClick={handleClose} className="mt-6 rounded-full px-8" variant="outline" data-testid="button-share-story-done">
+              Close
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <p className="text-xs uppercase tracking-[0.2em] text-stone-400">Share Your Story</p>
+              </div>
+              <h3 className="font-serif text-2xl sm:text-3xl mb-3">We want to feature you</h3>
+              <p className="text-stone-500 text-sm leading-relaxed">
+                Tell us who you are, what you do, and why you love it. If we love your story, we'll schedule a portrait session to bring it to life.
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-stone-500 mb-1 block">Your Name *</label>
+                  <input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="Full name"
+                    data-testid="input-share-name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-stone-500 mb-1 block">Profession *</label>
+                  <input
+                    value={form.profession}
+                    onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="What you do"
+                    data-testid="input-share-profession"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-stone-500 mb-1 block">Location</label>
+                  <input
+                    value={form.location}
+                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="City, State"
+                    data-testid="input-share-location"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-stone-500 mb-1 block">Email *</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="you@email.com"
+                    data-testid="input-share-email"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">Your Story *</label>
+                <textarea
+                  value={form.story}
+                  onChange={e => setForm(f => ({ ...f, story: e.target.value }))}
+                  rows={4}
+                  className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none"
+                  placeholder="What drives you? What do you love about your work? What's something people don't know about your profession?"
+                  data-testid="input-share-story"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={submitting || !form.name.trim() || !form.profession.trim() || !form.story.trim() || !form.email.trim()}
+                className="w-full mt-4 rounded-full bg-stone-900 hover:bg-stone-800 text-white py-3"
+                data-testid="button-submit-share-story"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                Submit Your Story
+              </Button>
+              <p className="text-[11px] text-stone-400 text-center leading-relaxed">
+                No commitment required. We'll reach out if your story is selected for a feature.
+              </p>
+            </form>
+          </>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
 function FeaturedListingPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [nominationOpen, setNominationOpen] = useState(false);
+  const [shareStoryOpen, setShareStoryOpen] = useState(false);
 
   const { data: professionals = [], isLoading } = useQuery<FeaturedProfessional[]>({
     queryKey: ["/api/featured"],
@@ -521,23 +672,24 @@ function FeaturedListingPage() {
               <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
                 Every great community is built on the people in it. Help us tell their story.
               </p>
-              <Button
-                size="lg"
-                className="bg-white text-stone-900 hover:bg-white/90 rounded-full px-8"
-                onClick={() => setNominationOpen(true)}
-                data-testid="button-nominate-someone"
-              >
-                <Heart className="w-4 h-4 mr-2" />
-                Nominate Someone Inspiring
-              </Button>
-              <div className="mt-8">
-                <a
-                  href="/#configurator"
-                  className="text-white/40 hover:text-white/70 text-sm transition-colors cursor-pointer"
-                  data-testid="button-book-session-featured"
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Button
+                  size="lg"
+                  className="bg-[#c4956a] hover:bg-[#b8895e] text-white rounded-full px-8 shadow-lg shadow-amber-900/20"
+                  onClick={() => setNominationOpen(true)}
+                  data-testid="button-nominate-someone"
                 >
-                  Or share your own story <ArrowRight className="w-3.5 h-3.5 inline ml-1" />
-                </a>
+                  <Heart className="w-4 h-4 mr-2" />
+                  Nominate Someone Inspiring
+                </Button>
+                <button
+                  onClick={() => setShareStoryOpen(true)}
+                  className="text-white/50 hover:text-white/80 text-sm transition-colors cursor-pointer flex items-center gap-1.5"
+                  data-testid="button-share-your-story"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Share your own story <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
@@ -545,6 +697,7 @@ function FeaturedListingPage() {
       </div>
 
       <NominationModal open={nominationOpen} onClose={() => setNominationOpen(false)} />
+      <ShareYourStoryModal open={shareStoryOpen} onClose={() => setShareStoryOpen(false)} />
     </div>
   );
 }
