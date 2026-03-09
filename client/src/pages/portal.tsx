@@ -1665,7 +1665,7 @@ function PortalContent() {
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/">
+            <Link href="/portraits">
               <button
                 data-testid="button-back-home"
                 className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
@@ -1716,7 +1716,7 @@ function PortalContent() {
                 Manage your photoshoots and photo edits
               </p>
             </div>
-            <Link href="/?start=1">
+            <Link href="/buildmyphoto">
               <Button
                 data-testid="button-design-shoot"
                 className="bg-[#1a1a1a] text-white hover:bg-black"
@@ -1806,7 +1806,7 @@ function PortalContent() {
                   <p className="text-gray-500 text-sm max-w-sm mb-6">
                     Your photoshoot sessions will appear here once they've been set up. Design your shoot to get started!
                   </p>
-                  <Link href="/?start=1">
+                  <Link href="/buildmyphoto">
                     <Button
                       size="lg"
                       data-testid="button-design-shoot-empty"
@@ -1957,7 +1957,7 @@ export default function PortalPage() {
                 Sign In
               </Button>
             </a>
-            <Link href="/">
+            <Link href="/portraits">
               <Button
                 variant="outline"
                 size="lg"

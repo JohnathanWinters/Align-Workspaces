@@ -197,10 +197,10 @@ export default function PortfolioPage() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <Link href="/">
+            <Link href="/portraits">
               <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer" data-testid="link-home-from-portfolio">Align Portrait Designer</p>
             </Link>
-            <Link href="/?start=1">
+            <Link href="/buildmyphoto">
               <Button variant="ghost" data-testid="button-back-home">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back

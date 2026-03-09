@@ -92,7 +92,7 @@ export default function AlignSpacesPage() {
                   transition={{ duration: 0.2 }}
                   className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                 >
-                  <Link href="/">
+                  <Link href="/portraits">
                     <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-3" data-testid="link-portraits-spaces">
                       <Camera className="w-4 h-4" />
                       Align Portraits

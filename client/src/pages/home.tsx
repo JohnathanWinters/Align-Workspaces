@@ -68,8 +68,8 @@ const iconMap: Record<string, React.ReactNode> = {
   Home: <Home className="w-5 h-5" />,
 };
 
-export default function HomePage() {
-  const [currentStep, setCurrentStep] = useState(0);
+export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
+  const [currentStep, setCurrentStep] = useState(autoStart ? 1 : 0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [bookingData, setBookingData] = useState<Record<string, any> | null>(null);
