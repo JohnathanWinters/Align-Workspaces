@@ -1674,6 +1674,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const loadSpaces = async () => {
     setLoading(true);
@@ -1758,7 +1759,16 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     setSaving(false);
   };
 
-  const filtered = filter === "all" ? spaces : spaces.filter(s => s.approvalStatus === filter);
+  const filtered = (filter === "all" ? spaces : spaces.filter(s => s.approvalStatus === filter)).filter(s => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (s.name || "").toLowerCase().includes(q) ||
+      (s.address || "").toLowerCase().includes(q) ||
+      (s.neighborhood || "").toLowerCase().includes(q) ||
+      (s.type || "").toLowerCase().includes(q) ||
+      (s.hostName || "").toLowerCase().includes(q) ||
+      (s.targetProfession || "").toLowerCase().includes(q);
+  });
   const counts = {
     all: spaces.length,
     pending: spaces.filter(s => s.approvalStatus === "pending").length,
@@ -1783,6 +1793,22 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
         </div>
       </header>
       <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search by name, address, neighborhood, host, type..."
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-400 transition-colors"
+            data-testid="input-search-spaces"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
         <div className="flex gap-2 mb-6 flex-wrap">
           {(["all", "pending", "approved", "rejected"] as const).map(f => (
             <button
