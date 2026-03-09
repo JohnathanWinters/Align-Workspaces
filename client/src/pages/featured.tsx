@@ -805,7 +805,7 @@ function ProfilePage({ slug }: { slug: string }) {
         ) : (
           <Initials name={pro.name} />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
             Sample
@@ -820,8 +820,8 @@ function ProfilePage({ slug }: { slug: string }) {
           transition={{ duration: 0.6 }}
         >
           <Link href="/featured">
-            <button className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors mb-6" data-testid="link-back-featured">
-              <ArrowLeft className="w-3.5 h-3.5" />
+            <button className="inline-flex items-center gap-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors mb-6 group" data-testid="link-back-featured">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
               All Stories
             </button>
           </Link>
@@ -867,28 +867,28 @@ function ProfilePage({ slug }: { slug: string }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="space-y-12"
+          className="space-y-16"
         >
-          <blockquote className="py-8 sm:py-12 border-y border-foreground/10" data-testid="text-profile-quote">
+          <blockquote className="py-10 sm:py-14 border-y border-foreground/10" data-testid="text-profile-quote">
             <p className="font-serif text-2xl sm:text-3xl md:text-4xl italic text-foreground/90 leading-[1.3] text-center max-w-2xl mx-auto">
               "{pro.quote}"
             </p>
           </blockquote>
 
           <div data-testid="section-why-started">
-            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">Why They Do This Work</h2>
-            <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.whyStarted}</p>
+            <h2 className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 font-semibold mb-5">Why They Do This Work</h2>
+            <p className="text-foreground/80 text-base sm:text-lg md:text-xl leading-[1.85] sm:leading-[1.9]">{pro.storySections.whyStarted}</p>
           </div>
 
           <div data-testid="section-what-they-love">
-            <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">What Makes It Meaningful</h2>
-            <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.whatTheyLove}</p>
+            <h2 className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 font-semibold mb-5">What Makes It Meaningful</h2>
+            <p className="text-foreground/80 text-base sm:text-lg md:text-xl leading-[1.85] sm:leading-[1.9]">{pro.storySections.whatTheyLove}</p>
           </div>
 
           {pro.storySections.misunderstanding && (
             <div data-testid="section-misunderstanding">
-              <h2 className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-4">A Common Misconception</h2>
-              <p className="text-foreground/80 text-base sm:text-lg leading-[1.8]">{pro.storySections.misunderstanding}</p>
+              <h2 className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-foreground/50 font-semibold mb-5">A Common Misconception</h2>
+              <p className="text-foreground/80 text-base sm:text-lg md:text-xl leading-[1.85] sm:leading-[1.9]">{pro.storySections.misunderstanding}</p>
             </div>
           )}
         </motion.div>
