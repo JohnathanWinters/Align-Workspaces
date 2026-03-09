@@ -321,3 +321,35 @@ export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSub
 
 export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+export const spaces = pgTable("spaces", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  type: text("type").notNull(),
+  description: text("description").notNull(),
+  shortDescription: text("short_description"),
+  address: text("address").notNull(),
+  neighborhood: text("neighborhood"),
+  pricePerHour: integer("price_per_hour").notNull(),
+  pricePerDay: integer("price_per_day"),
+  capacity: integer("capacity"),
+  amenities: text("amenities").array(),
+  imageUrls: text("image_urls").array(),
+  targetProfession: text("target_profession"),
+  availableHours: text("available_hours"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  hostName: text("host_name"),
+  isSample: integer("is_sample").default(0),
+  isActive: integer("is_active").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSpaceSchema = createInsertSchema(spaces).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSpace = z.infer<typeof insertSpaceSchema>;
+export type Space = typeof spaces.$inferSelect;

@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull, ne, ilike } from "drizzle-orm";
 
@@ -76,6 +76,11 @@ export interface IStorage {
   deleteNomination(id: string): Promise<void>;
   createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
   getNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
+  getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]>;
+  getSpaceBySlug(slug: string): Promise<Space | undefined>;
+  createSpace(data: InsertSpace): Promise<Space>;
+  updateSpace(id: string, data: Partial<InsertSpace>): Promise<Space>;
+  deleteSpace(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -596,6 +601,36 @@ export class DatabaseStorage implements IStorage {
 
   async getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
     return db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.createdAt));
+  }
+
+  async getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]> {
+    const conditions = [eq(spaces.isActive, 1)];
+    if (!opts?.includeSamples) {
+      conditions.push(eq(spaces.isSample, 0));
+    }
+    if (opts?.type) {
+      conditions.push(eq(spaces.type, opts.type));
+    }
+    return db.select().from(spaces).where(and(...conditions)).orderBy(desc(spaces.createdAt));
+  }
+
+  async getSpaceBySlug(slug: string): Promise<Space | undefined> {
+    const [result] = await db.select().from(spaces).where(eq(spaces.slug, slug));
+    return result;
+  }
+
+  async createSpace(data: InsertSpace): Promise<Space> {
+    const [result] = await db.insert(spaces).values(data).returning();
+    return result;
+  }
+
+  async updateSpace(id: string, data: Partial<InsertSpace>): Promise<Space> {
+    const [result] = await db.update(spaces).set(data).where(eq(spaces.id, id)).returning();
+    return result;
+  }
+
+  async deleteSpace(id: string): Promise<void> {
+    await db.delete(spaces).where(eq(spaces.id, id));
   }
 }
 

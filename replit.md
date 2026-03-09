@@ -28,7 +28,7 @@ The application uses a monorepo structure, separating the React frontend (`clien
 
 ### Database
 - **PostgreSQL**: The primary data store, managed with Drizzle ORM.
-- **Schema**: Shared `schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, push subscriptions, and nominations.
+- **Schema**: Shared `schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, push subscriptions, nominations, and spaces.
 - **Pricing**: `shared/pricing.ts` contains server-authoritative pricing logic.
 
 ### Build System
@@ -74,6 +74,14 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Structured Data**: JSON-LD in `client/index.html` includes LocalBusiness (Photographer), FAQPage, and WebSite schemas.
 - **Meta Tags**: OG, Twitter Card, geo, classification, and descriptive meta tags in `client/index.html`.
 - **Canonical URL**: `https://alignphotodesign.com`
+
+## Align Spaces
+- **Landing Page**: `/align-spaces` — duplicate of main hero with workspace-focused messaging ("Your Space, Your Practice")
+- **Browse Page**: `/spaces/browse` — filterable grid of spaces by type (office, gym, meeting), each card expandable with amenities, pricing, and host info
+- **Database**: `spaces` table with fields for name, slug, type, description, address, neighborhood, price_per_hour, price_per_day, capacity, amenities array, image_urls array, target_profession, etc.
+- **API**: `GET /api/spaces`, `GET /api/spaces/:slug`, `POST /api/admin/spaces`, `POST /api/admin/spaces/seed`
+- **Sample Data**: 5 seeded spaces (2 therapy offices, 1 gym, 2 meeting rooms) in Miami neighborhoods
+- **Concept**: Airbnb-style workspace rental for small business professionals in Miami
 
 ## Data Migrations
 - `server/migrations.ts`: `fixPortfolioImageExtensions()` runs on startup — fixes `.jpg` → `.webp` in portfolio_photos table.
