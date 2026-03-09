@@ -37,6 +37,9 @@ import {
   X,
   UserPlus,
   Loader2 as Loader2Icon,
+  User,
+  Star,
+  Camera,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
@@ -346,34 +349,63 @@ export default function HomePage() {
 
       {currentStep > 0 && (
         <div ref={configuratorRef} id="configurator" className="min-h-screen">
-          <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-            <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer whitespace-nowrap" onClick={() => setCurrentStep(0)} data-testid="link-home-logo">Align Portrait Designer</p>
-                <div className="relative shrink-0">
+          <header className="lg:sticky lg:top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setCurrentStep(0)}
+                  className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
+                  data-testid="link-home-logo"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Back</span>
+                </button>
+                <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Portraits</span>
+                <div className="relative">
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
                     data-testid="button-menu-toggle"
-                    className="p-2 rounded-md hover:bg-black/5 transition-colors"
+                    className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
                   >
-                    {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                    <span className="hidden sm:inline">Menu</span>
                   </button>
-                  {menuOpen && (
-                    <div className="absolute right-0 top-full mt-2 bg-background border border-border rounded-lg shadow-lg py-2 min-w-[180px] z-50">
-                      <Link href="/featured">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-featured-header">Featured</button>
-                      </Link>
-                      <Link href="/portfolio">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portfolio-header">Our Work</button>
-                      </Link>
-                      <Link href="/about">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-about-header">Our Vision</button>
-                      </Link>
-                      <Link href="/portal">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portal-header">Client Portal</button>
-                      </Link>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {menuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-50"
+                      >
+                        <Link href="/spaces">
+                          <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-header">
+                            <Building2 className="w-4 h-4" />
+                            Align Spaces
+                          </button>
+                        </Link>
+                        <Link href="/portal">
+                          <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-header">
+                            <User className="w-4 h-4" />
+                            Client Portal
+                          </button>
+                        </Link>
+                        <Link href="/featured">
+                          <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-header">
+                            <Star className="w-4 h-4" />
+                            Featured Pros
+                          </button>
+                        </Link>
+                        <Link href="/portfolio">
+                          <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-header">
+                            <Camera className="w-4 h-4" />
+                            Our Work
+                          </button>
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
               <div className="mt-3 lg:hidden">
