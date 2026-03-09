@@ -64,7 +64,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: "url(/images/hero-bg-bright.webp)",
-          backgroundPosition: "43% 20%",
+          backgroundPosition: "43% 10%",
           filter: "brightness(0.85) contrast(1.05)",
           y,
           scale,
@@ -122,7 +122,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-16 sm:pb-24 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-6 sm:pb-20 relative z-10">
+        <div className="flex-1 min-h-[55vh] sm:min-h-0" />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -130,7 +131,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           className="text-center max-w-2xl mx-auto"
           style={{ y }}
         >
-          <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Portrait Is
             <br />
             <span className="italic font-normal">Your First</span>
@@ -142,7 +143,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-white/50 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-6 sm:mt-8 font-light"
+            className="text-white/50 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-4 sm:mt-8 font-light"
           >
             Design a photoshoot that aligns your work, character, and the impression you want your clients to feel.
           </motion.p>
@@ -151,7 +152,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.1 }}
-            className="mt-8 sm:mt-10 flex flex-col items-center gap-4"
+            className="mt-5 sm:mt-10 flex flex-col items-center gap-3"
           >
             <button
               onClick={onStart}
