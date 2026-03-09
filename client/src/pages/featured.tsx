@@ -15,6 +15,7 @@ interface FeaturedProfessional {
   slug: string;
   portraitImageUrl: string | null;
   portraitCropPosition: { x: number; y: number; zoom?: number } | null;
+  heroCropPosition: { x: number; y: number; zoom?: number } | null;
   headline: string;
   quote: string;
   storySections: {
@@ -141,7 +142,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
             src={pro.portraitImageUrl}
             alt={`${pro.name} - ${pro.profession}`}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
-            style={getCropStyle(pro.portraitCropPosition)}
+            style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
           />
         ) : (
           <Initials name={pro.name} />
@@ -646,7 +647,7 @@ function ProfilePage({ slug }: { slug: string }) {
             src={pro.portraitImageUrl}
             alt={`${pro.name} - ${pro.profession}`}
             className="w-full h-full object-cover"
-            style={getCropStyle(pro.portraitCropPosition, "50% 20%")}
+            style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
           />
         ) : (
           <Initials name={pro.name} />

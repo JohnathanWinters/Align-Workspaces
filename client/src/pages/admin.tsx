@@ -1601,6 +1601,7 @@ interface FeaturedProfessional {
   slug: string;
   portraitImageUrl: string | null;
   portraitCropPosition: { x: number; y: number; zoom?: number } | null;
+  heroCropPosition: { x: number; y: number; zoom?: number } | null;
   headline: string;
   quote: string;
   storySections: { whyStarted: string; whatTheyLove: string; misunderstanding: string };
@@ -1794,8 +1795,11 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [formPortraitPreview, setFormPortraitPreview] = useState<string | null>(null);
   const [formPortraitFile, setFormPortraitFile] = useState<File | null>(null);
   const [cropPosition, setCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
+  const [heroCropPosition, setHeroCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 20, zoom: 1 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isHeroDragging, setIsHeroDragging] = useState(false);
   const cropContainerRef = useRef<HTMLDivElement>(null);
+  const heroCropContainerRef = useRef<HTMLDivElement>(null);
   const formPortraitPreviewRef = useRef(formPortraitPreview);
   formPortraitPreviewRef.current = formPortraitPreview;
 
@@ -1812,7 +1816,23 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       }));
     };
     el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
+
+    const heroEl = heroCropContainerRef.current;
+    const handleHeroWheel = (e: WheelEvent) => {
+      if (!formPortraitPreviewRef.current) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.05 : 0.05;
+      setHeroCropPosition(prev => ({
+        ...prev,
+        zoom: Math.max(1, Math.min(2, prev.zoom + delta)),
+      }));
+    };
+    if (heroEl) heroEl.addEventListener("wheel", handleHeroWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      if (heroEl) heroEl.removeEventListener("wheel", handleHeroWheel);
+    };
   }, [showForm]);
 
   const adminFetch = useCallback(async (url: string, opts: any = {}) => {
@@ -1853,6 +1873,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         headline: form.headline,
         quote: form.quote,
         portraitCropPosition: cropPosition,
+        heroCropPosition: heroCropPosition,
         storySections: { whyStarted: form.whyStarted, whatTheyLove: form.whatTheyLove, misunderstanding: form.misunderstanding },
         socialLinks: form.socialLinks.filter(s => s.platform && s.url.trim()),
         isFeaturedOfWeek: form.isFeaturedOfWeek ? 1 : 0,
@@ -1877,6 +1898,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       setFormPortraitFile(null);
       setFormPortraitPreview(null);
       setCropPosition({ x: 50, y: 50, zoom: 1 });
+      setHeroCropPosition({ x: 50, y: 20, zoom: 1 });
       loadData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -1943,6 +1965,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     setFormPortraitPreview(pro.portraitImageUrl || null);
     setFormPortraitFile(null);
     setCropPosition({ x: pro.portraitCropPosition?.x ?? 50, y: pro.portraitCropPosition?.y ?? 50, zoom: pro.portraitCropPosition?.zoom ?? 1 });
+    setHeroCropPosition({ x: pro.heroCropPosition?.x ?? 50, y: pro.heroCropPosition?.y ?? 20, zoom: pro.heroCropPosition?.zoom ?? 1 });
     setShowForm(true);
   };
 
@@ -1951,7 +1974,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       <div className="min-h-screen bg-[#faf9f7]">
         <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+            <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h1 className="font-serif text-xl font-semibold">{editing ? "Edit Professional" : "Add Professional"}</h1>
@@ -1965,6 +1988,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             const url = URL.createObjectURL(file);
             setFormPortraitPreview(url);
             setCropPosition({ x: 50, y: 50, zoom: 1 });
+            setHeroCropPosition({ x: 50, y: 20, zoom: 1 });
           }
           e.target.value = "";
         }} />
@@ -2126,9 +2150,10 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                         setFormPortraitFile(null);
                         setFormPortraitPreview(null);
                         setCropPosition({ x: 50, y: 50, zoom: 1 });
+                        setHeroCropPosition({ x: 50, y: 20, zoom: 1 });
                         if (editing?.portraitImageUrl) {
                           handleRemovePortrait(editing.id);
-                          setEditing({ ...editing, portraitImageUrl: null, portraitCropPosition: null });
+                          setEditing({ ...editing, portraitImageUrl: null, portraitCropPosition: null, heroCropPosition: null });
                         }
                       }}
                       data-testid="button-remove-portrait-form"
@@ -2142,6 +2167,143 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               </div>
             </div>
           </div>
+
+          {formPortraitPreview && (
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Hero Crop (Profile & Featured)</h3>
+              <p className="text-xs text-gray-400 mb-2">Controls how the photo appears in the wide hero banner on the profile page and featured section.</p>
+              <div className="flex items-start gap-5">
+                <div className="space-y-3 shrink-0">
+                  <div
+                    ref={heroCropContainerRef}
+                    className="w-64 h-36 rounded-lg overflow-hidden bg-stone-200 relative select-none cursor-grab active:cursor-grabbing"
+                    data-testid="hero-crop-area"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setIsHeroDragging(true);
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      const startPos = { ...heroCropPosition };
+                      const handleMove = (ev: MouseEvent) => {
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+                        setHeroCropPosition(prev => ({
+                          ...prev,
+                          x: Math.max(0, Math.min(100, startPos.x - (dx / 2.56))),
+                          y: Math.max(0, Math.min(100, startPos.y - (dy / 1.44))),
+                        }));
+                      };
+                      const handleUp = () => {
+                        setIsHeroDragging(false);
+                        window.removeEventListener("mousemove", handleMove);
+                        window.removeEventListener("mouseup", handleUp);
+                      };
+                      window.addEventListener("mousemove", handleMove);
+                      window.addEventListener("mouseup", handleUp);
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      setIsHeroDragging(true);
+                      const startX = touch.clientX;
+                      const startY = touch.clientY;
+                      const startPos = { ...heroCropPosition };
+                      const handleMove = (ev: TouchEvent) => {
+                        ev.preventDefault();
+                        const t = ev.touches[0];
+                        const dx = t.clientX - startX;
+                        const dy = t.clientY - startY;
+                        setHeroCropPosition(prev => ({
+                          ...prev,
+                          x: Math.max(0, Math.min(100, startPos.x - (dx / 2.56))),
+                          y: Math.max(0, Math.min(100, startPos.y - (dy / 1.44))),
+                        }));
+                      };
+                      const cleanup = () => {
+                        setIsHeroDragging(false);
+                        window.removeEventListener("touchmove", handleMove);
+                        window.removeEventListener("touchend", cleanup);
+                        window.removeEventListener("touchcancel", cleanup);
+                      };
+                      window.addEventListener("touchmove", handleMove, { passive: false });
+                      window.addEventListener("touchend", cleanup);
+                      window.addEventListener("touchcancel", cleanup);
+                    }}
+                  >
+                    <img
+                      src={formPortraitPreview}
+                      alt="Hero preview"
+                      className="w-full h-full object-cover pointer-events-none"
+                      style={{
+                        objectPosition: `${heroCropPosition.x}% ${heroCropPosition.y}%`,
+                        transform: `scale(${heroCropPosition.zoom})`,
+                        transformOrigin: `${heroCropPosition.x}% ${heroCropPosition.y}%`,
+                      }}
+                      draggable={false}
+                    />
+                    {!isHeroDragging && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+                          <Move className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-400 text-center">Drag to reposition · Scroll to zoom</p>
+                </div>
+                <div className="flex flex-col gap-3 pt-1 flex-1">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-gray-500">Zoom</Label>
+                      <span className="text-xs text-gray-400 tabular-nums">{Math.round(heroCropPosition.zoom * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="2"
+                      step="0.05"
+                      value={heroCropPosition.zoom}
+                      onChange={e => setHeroCropPosition(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                      className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                      data-testid="slider-hero-zoom"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-gray-500">Vertical</Label>
+                      <span className="text-xs text-gray-400 tabular-nums">{Math.round(heroCropPosition.y)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={heroCropPosition.y}
+                      onChange={e => setHeroCropPosition(prev => ({ ...prev, y: parseFloat(e.target.value) }))}
+                      className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                      data-testid="slider-hero-vertical"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-gray-500">Horizontal</Label>
+                      <span className="text-xs text-gray-400 tabular-nums">{Math.round(heroCropPosition.x)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={heroCropPosition.x}
+                      onChange={e => setHeroCropPosition(prev => ({ ...prev, x: parseFloat(e.target.value) }))}
+                      className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                      data-testid="slider-hero-horizontal"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Maria Gonzalez" data-testid="input-featured-name" /></div>
@@ -2264,7 +2426,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               {editing ? "Update" : "Create"}
             </Button>
-            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }}>Cancel</Button>
           </div>
         </main>
       </div>
@@ -2282,7 +2444,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             <h1 className="font-serif text-xl font-semibold">Featured Professionals</h1>
             <span className="text-sm text-gray-500">{professionals.length} profiles</span>
           </div>
-          <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }} data-testid="button-add-featured">
+          <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }} data-testid="button-add-featured">
             <Plus className="w-3.5 h-3.5 mr-1.5" />
             Add
           </Button>
@@ -2304,7 +2466,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
               <Star className="w-10 h-10 text-gray-300 mb-3" />
               <h3 className="font-serif text-lg text-gray-900 mb-1">No featured professionals yet</h3>
               <p className="text-gray-500 text-sm mb-4">Add your first professional</p>
-              <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }}>Add Professional</Button>
+              <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }}>Add Professional</Button>
             </CardContent>
           </Card>
         ) : (
