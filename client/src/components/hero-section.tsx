@@ -87,6 +87,24 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </motion.div>
         </motion.div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 1.8 }}
+        className="absolute bottom-6 left-0 right-0 z-10 flex justify-center"
+      >
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/30">No scroll</span>
+          <div className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center pt-1.5">
+            <motion.div
+              className="w-1 h-1 rounded-full bg-white/40"
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 }
