@@ -720,12 +720,25 @@ export default function SpacesBrowsePage() {
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [showFilters, setShowFilters] = useState(false);
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const typeDropdownRef = useRef<HTMLDivElement>(null);
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [zipCode, setZipCode] = useState<string>("");
   const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!showTypeDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target as Node)) {
+        setShowTypeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showTypeDropdown]);
 
   const zipCoords = useMemo(() => {
     if (zipCode.length === 5) {
@@ -892,25 +905,56 @@ export default function SpacesBrowsePage() {
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 bg-background">
         <div className="flex items-center gap-2">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
-            {typeCounts.map(({ key, label, icon: Icon, count }) => (
-              <button
-                key={key}
-                onClick={() => setActiveType(key)}
-                data-testid={`button-filter-${key}`}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 ${
-                  activeType === key
-                    ? "bg-foreground text-background font-medium"
-                    : "bg-stone-100 text-foreground/60 hover:bg-stone-200"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-                <span className={`text-xs ${activeType === key ? "text-background/60" : "text-foreground/30"}`}>
-                  {count}
-                </span>
-              </button>
-            ))}
+          <div ref={typeDropdownRef} className="relative flex-shrink-0" data-testid="dropdown-space-type">
+            <button
+              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 bg-white text-sm font-medium text-foreground hover:border-stone-300 transition-colors"
+              data-testid="button-space-type-dropdown"
+            >
+              {(() => {
+                const active = typeCounts.find(t => t.key === activeType);
+                if (!active) return null;
+                const Icon = active.icon;
+                return (
+                  <>
+                    <Icon className="w-4 h-4 text-[#c4956a]" />
+                    <span>{active.label}</span>
+                    <span className="text-xs text-foreground/40 bg-stone-100 px-1.5 py-0.5 rounded-full">{active.count}</span>
+                  </>
+                );
+              })()}
+              <ChevronRight className={`w-4 h-4 text-foreground/40 transition-transform duration-200 ${showTypeDropdown ? "rotate-90" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {showTypeDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-stone-200 shadow-lg z-50 min-w-[200px] py-1 overflow-hidden"
+                >
+                  {typeCounts.map(({ key, label, icon: Icon, count }) => (
+                    <button
+                      key={key}
+                      onClick={() => { setActiveType(key); setShowTypeDropdown(false); }}
+                      data-testid={`button-filter-${key}`}
+                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
+                        activeType === key
+                          ? "bg-stone-50 text-foreground font-medium"
+                          : "text-foreground/60 hover:bg-stone-50 hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${activeType === key ? "text-[#c4956a]" : ""}`} />
+                      <span className="flex-1 text-left">{label}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeType === key ? "bg-[#c4956a]/10 text-[#c4956a]" : "bg-stone-100 text-foreground/30"}`}>
+                        {count}
+                      </span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
