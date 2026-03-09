@@ -1968,6 +1968,22 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                         data-testid="slider-crop-vertical"
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-500">Horizontal Position</Label>
+                        <span className="text-xs text-gray-400 tabular-nums">{Math.round(cropPosition.x)}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={cropPosition.x}
+                        onChange={e => setCropPosition(prev => ({ ...prev, x: parseFloat(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                        data-testid="slider-crop-horizontal"
+                      />
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
