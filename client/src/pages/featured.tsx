@@ -892,7 +892,7 @@ function ProfilePage({ slug }: { slug: string }) {
             <Initials name={pro.name} />
           )}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(30,15%,98%)] via-[hsl(30,15%,98%)]/15 via-25% to-transparent to-50%" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 80%, rgba(250, 248, 244, 1) 100%)' }} />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
             Sample
