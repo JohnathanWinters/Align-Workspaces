@@ -223,11 +223,11 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className="group cursor-pointer"
+      className="group cursor-pointer transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid={`card-featured-${pro.slug}`}
     >
-      <div className="aspect-[3/4] relative overflow-hidden rounded-sm mb-4">
+      <div className="aspect-[3/4] relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300">
         <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
           {pro.portraitImageUrl ? (
             <img
@@ -251,7 +251,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       </div>
       <div>
         <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-1.5">{pro.profession}</p>
-        <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground leading-tight mb-2 group-hover:text-foreground/80 transition-colors" data-testid={`text-name-${pro.slug}`}>
+        <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground leading-tight mb-2 group-hover:text-[#c4956a] transition-colors duration-300" data-testid={`text-name-${pro.slug}`}>
           {pro.name}
         </h3>
         <p className="text-sm text-foreground/60 leading-relaxed line-clamp-2 italic relative">
