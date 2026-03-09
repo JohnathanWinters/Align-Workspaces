@@ -345,6 +345,7 @@ export const spaces = pgTable("spaces", {
   hostName: text("host_name"),
   userId: text("user_id"),
   approvalStatus: text("approval_status").default("approved"),
+  colorPalette: text("color_palette"),
   isSample: integer("is_sample").default(0),
   isActive: integer("is_active").default(1),
   createdAt: timestamp("created_at").defaultNow(),

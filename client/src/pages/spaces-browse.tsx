@@ -336,6 +336,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
   const [showCarousel, setShowCarousel] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [authPending, setAuthPending] = useState(false);
+  const [activeColor, setActiveColor] = useState<number | null>(null);
   const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -547,6 +548,53 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
             >
               <div className="pt-4 border-t border-stone-100 mt-4 space-y-3">
                 <p className="text-sm text-foreground/60 leading-relaxed">{space.description}</p>
+
+                {(() => {
+                  let palette: { hex: string; name: string; feel: string }[] = [];
+                  try { if (space.colorPalette) palette = JSON.parse(space.colorPalette); } catch {}
+                  if (!palette.length) return null;
+                  return (
+                    <div data-testid={`palette-${space.id}`}>
+                      <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2">Color Palette</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        {palette.map((c, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setActiveColor(activeColor === i ? null : i)}
+                            className={`group relative w-10 h-10 rounded-full border-2 transition-all duration-200 ${activeColor === i ? "border-[#c4956a] scale-110 shadow-md" : "border-stone-200 hover:border-stone-300 hover:scale-105"}`}
+                            style={{ backgroundColor: c.hex }}
+                            data-testid={`palette-color-${space.id}-${i}`}
+                          >
+                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] text-foreground/40 font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                              {c.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <AnimatePresence mode="wait">
+                        {activeColor !== null && palette[activeColor] && (
+                          <motion.div
+                            key={activeColor}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-5 p-3 rounded-lg bg-stone-50 border border-stone-100">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: palette[activeColor].hex }} />
+                                <span className="text-xs font-semibold text-foreground/70">{palette[activeColor].name}</span>
+                                <span className="text-[10px] text-foreground/30 ml-auto font-mono">{palette[activeColor].hex}</span>
+                              </div>
+                              <p className="text-sm text-foreground/60 leading-relaxed italic">{palette[activeColor].feel}</p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })()}
 
                 {space.availableHours && (
                   <div className="flex items-start gap-2 text-sm text-foreground/60">
