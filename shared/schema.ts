@@ -331,6 +331,8 @@ export const spaces = pgTable("spaces", {
   shortDescription: text("short_description"),
   address: text("address").notNull(),
   neighborhood: text("neighborhood"),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
   pricePerHour: integer("price_per_hour").notNull(),
   pricePerDay: integer("price_per_day"),
   capacity: integer("capacity"),

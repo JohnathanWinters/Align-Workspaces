@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,12 +24,17 @@ import {
   User,
   Star,
   Camera,
+  Map as MapIcon,
+  List,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Space } from "@shared/schema";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const SPACE_TYPES = [
   { key: "all", label: "All Spaces", icon: Building2 },
@@ -49,6 +54,119 @@ const TYPE_COLORS: Record<string, string> = {
   gym: "bg-emerald-50 text-emerald-700",
   meeting: "bg-amber-50 text-amber-700",
 };
+
+const PRICE_MARKER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  office: { bg: "#dbeafe", text: "#1d4ed8", border: "#93c5fd" },
+  gym: { bg: "#d1fae5", text: "#047857", border: "#6ee7b7" },
+  meeting: { bg: "#fef3c7", text: "#b45309", border: "#fcd34d" },
+};
+
+function createPriceIcon(price: number, type: string, isActive: boolean) {
+  const colors = PRICE_MARKER_COLORS[type] || { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" };
+  return L.divIcon({
+    className: "price-marker",
+    html: `<div style="
+      background: ${isActive ? "#1a1a1a" : colors.bg};
+      color: ${isActive ? "white" : colors.text};
+      border: 2px solid ${isActive ? "#1a1a1a" : colors.border};
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,${isActive ? "0.3" : "0.15"});
+      transform: ${isActive ? "scale(1.15)" : "scale(1)"};
+      transition: all 0.2s ease;
+      cursor: pointer;
+    ">$${price}/hr</div>`,
+    iconSize: [0, 0],
+    iconAnchor: [30, 15],
+  });
+}
+
+function MapBoundsUpdater({ spaces }: { spaces: Space[] }) {
+  const map = useMap();
+  const boundsKey = useMemo(() => {
+    return spaces
+      .filter(s => s.latitude && s.longitude)
+      .map(s => `${s.id}`)
+      .sort()
+      .join(",");
+  }, [spaces]);
+
+  useEffect(() => {
+    const coords = spaces
+      .filter(s => s.latitude && s.longitude)
+      .map(s => {
+        const lat = parseFloat(s.latitude!);
+        const lng = parseFloat(s.longitude!);
+        return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] as [number, number] : null;
+      })
+      .filter((c): c is [number, number] => c !== null);
+    if (coords.length > 0) {
+      const bounds = L.latLngBounds(coords);
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
+  }, [boundsKey, map]);
+  return null;
+}
+
+function SpacesMap({ spaces, hoveredId, onMarkerClick }: { spaces: Space[]; hoveredId: string | null; onMarkerClick: (id: string) => void }) {
+  const mappable = useMemo(() => spaces.filter(s => {
+    if (!s.latitude || !s.longitude) return false;
+    const lat = parseFloat(s.latitude);
+    const lng = parseFloat(s.longitude);
+    return Number.isFinite(lat) && Number.isFinite(lng);
+  }), [spaces]);
+
+  if (mappable.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-stone-50">
+        <div className="text-center">
+          <MapIcon className="w-10 h-10 text-stone-300 mx-auto mb-2" />
+          <p className="text-sm text-stone-400">No locations to display</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <MapContainer
+      center={[25.76, -80.20]}
+      zoom={12}
+      className="w-full h-full"
+      zoomControl={false}
+      data-testid="spaces-map"
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      />
+      <MapBoundsUpdater spaces={mappable} />
+      {mappable.map(space => (
+        <Marker
+          key={space.id}
+          position={[parseFloat(space.latitude!), parseFloat(space.longitude!)]}
+          icon={createPriceIcon(space.pricePerHour, space.type, space.id === hoveredId)}
+          eventHandlers={{
+            click: () => onMarkerClick(space.id),
+          }}
+        >
+          <Popup>
+            <div className="min-w-[180px]" data-testid={`popup-space-${space.id}`}>
+              {space.imageUrls && space.imageUrls[0] && (
+                <img src={space.imageUrls[0]} alt={space.name} className="w-full h-24 object-cover rounded-md mb-2" />
+              )}
+              <p className="font-semibold text-sm mb-0.5">{space.name}</p>
+              <p className="text-xs text-gray-500 mb-1">{space.neighborhood || space.address}</p>
+              <p className="text-sm font-bold text-[#c4956a]">${space.pricePerHour}/hr</p>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+}
 
 function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; spaceName: string; onClose: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -164,7 +282,7 @@ function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; space
   );
 }
 
-function SpaceCard({ space }: { space: Space }) {
+function SpaceCard({ space, onHover, onLeave, isHighlighted }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
@@ -267,8 +385,10 @@ function SpaceCard({ space }: { space: Space }) {
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl border border-stone-200/80 overflow-hidden hover:shadow-md transition-shadow duration-300"
+      className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 ${isHighlighted ? "border-[#c4956a] shadow-md ring-1 ring-[#c4956a]/20" : "border-stone-200/80"}`}
       data-testid={`card-space-${space.id}`}
+      onMouseEnter={() => onHover?.(space.id)}
+      onMouseLeave={() => onLeave?.()}
     >
       <div
         className="relative h-48 bg-stone-100 overflow-hidden cursor-pointer group"
@@ -497,6 +617,9 @@ function SpaceCard({ space }: { space: Space }) {
 export default function SpacesBrowsePage() {
   const [activeType, setActiveType] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { data: allSpaces = [], isLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -508,23 +631,32 @@ export default function SpacesBrowsePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const filtered = activeType === "all"
-    ? allSpaces
-    : allSpaces.filter(s => s.type === activeType);
+  const filtered = useMemo(() =>
+    activeType === "all" ? allSpaces : allSpaces.filter(s => s.type === activeType),
+    [allSpaces, activeType]
+  );
 
   const typeCounts = SPACE_TYPES.map(t => ({
     ...t,
     count: t.key === "all" ? allSpaces.length : allSpaces.filter(s => s.type === t.key).length,
   }));
 
+  const handleMarkerClick = useCallback((id: string) => {
+    setHoveredCardId(id);
+    setMobileView("list");
+    setTimeout(() => {
+      cardRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  }, []);
+
   useEffect(() => {
     document.title = "Browse Spaces | Align Spaces — Miami Workspaces for Professionals";
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60 flex-shrink-0">
+        <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
           <Link href="/spaces">
             <button className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
               <ArrowLeft className="w-4 h-4" />
@@ -581,23 +713,8 @@ export default function SpacesBrowsePage() {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10"
-        >
-          <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold mb-3">Miami Workspaces</p>
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold mb-4" data-testid="text-spaces-heading">
-            Find Your Space
-          </h1>
-          <p className="text-foreground/50 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-            Professional workspaces in Miami built for therapists, trainers, consultants, and small business owners. Rent by the hour or the day.
-          </p>
-        </motion.div>
-
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+      <div className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3 border-b border-stone-100 bg-background">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {typeCounts.map(({ key, label, icon: Icon, count }) => (
             <button
               key={key}
@@ -617,63 +734,99 @@ export default function SpacesBrowsePage() {
             </button>
           ))}
         </div>
+      </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-xl border border-stone-200/80 overflow-hidden animate-pulse">
-                <div className="h-48 bg-stone-100" />
-                <div className="p-5 space-y-3">
-                  <div className="h-5 bg-stone-100 rounded w-3/4" />
-                  <div className="h-4 bg-stone-100 rounded w-1/2" />
-                  <div className="h-4 bg-stone-100 rounded w-full" />
-                </div>
+      <div className="flex-1 flex overflow-hidden relative">
+        <div className={`${mobileView === "list" ? "flex" : "hidden"} lg:flex flex-col w-full lg:w-[55%] xl:w-[60%] overflow-y-auto`}>
+          <div className="p-4 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-foreground/50">
+                <span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? "space" : "spaces"} in Miami
+              </p>
+            </div>
+
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-white rounded-xl border border-stone-200/80 overflow-hidden animate-pulse">
+                    <div className="h-48 bg-stone-100" />
+                    <div className="p-5 space-y-3">
+                      <div className="h-5 bg-stone-100 rounded w-3/4" />
+                      <div className="h-4 bg-stone-100 rounded w-1/2" />
+                      <div className="h-4 bg-stone-100 rounded w-full" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <Building2 className="w-12 h-12 text-stone-300 mx-auto mb-4" />
-            <p className="text-foreground/50 text-sm">No spaces found for this category yet.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((space, i) => (
-              <motion.div
-                key={space.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.05 }}
-              >
-                <SpaceCard space={space} />
-              </motion.div>
-            ))}
-          </div>
-        )}
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-20">
+                <Building2 className="w-12 h-12 text-stone-300 mx-auto mb-4" />
+                <p className="text-foreground/50 text-sm">No spaces found for this category yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                {filtered.map((space, i) => (
+                  <div
+                    key={space.id}
+                    ref={el => { cardRefs.current[space.id] = el; }}
+                  >
+                    <SpaceCard
+                      space={space}
+                      onHover={setHoveredCardId}
+                      onLeave={() => setHoveredCardId(null)}
+                      isHighlighted={hoveredCardId === space.id}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-16 pb-12"
-        >
-          <div className="bg-stone-50 rounded-2xl p-8 sm:p-12 max-w-2xl mx-auto">
-            <h2 className="font-serif text-xl sm:text-2xl font-semibold mb-3" data-testid="text-list-space-heading">
-              Have a space to share?
-            </h2>
-            <p className="text-foreground/50 text-sm mb-6 max-w-md mx-auto">
-              If you own a workspace in Miami that could serve small business professionals, we'd love to hear from you.
-            </p>
-            <Link href="/portal">
-              <button
-                className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity font-medium"
-                data-testid="button-list-space"
-              >
-                List Your Space
-              </button>
-            </Link>
+            <div className="pb-8 pt-4">
+              <div className="bg-stone-50 rounded-2xl p-6 sm:p-8 text-center">
+                <h2 className="font-serif text-lg sm:text-xl font-semibold mb-2" data-testid="text-list-space-heading">
+                  Have a space to share?
+                </h2>
+                <p className="text-foreground/50 text-sm mb-4 max-w-md mx-auto">
+                  List your workspace in Miami for professionals to discover.
+                </p>
+                <Link href="/portal">
+                  <button
+                    className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-6 py-3 rounded-full hover:opacity-90 transition-opacity font-medium"
+                    data-testid="button-list-space"
+                  >
+                    List Your Space
+                  </button>
+                </Link>
+              </div>
+            </div>
           </div>
-        </motion.div>
+        </div>
+
+        <div className={`${mobileView === "map" ? "flex" : "hidden"} lg:flex flex-col w-full lg:w-[45%] xl:w-[40%] border-l border-stone-200/60`}>
+          <div className="flex-1 relative">
+            {!isLoading && (
+              <SpacesMap
+                spaces={filtered}
+                hoveredId={hoveredCardId}
+                onMarkerClick={handleMarkerClick}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <button
+          onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
+          data-testid="button-toggle-map"
+          className="flex items-center gap-2 bg-foreground text-background px-5 py-3 rounded-full shadow-lg text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          {mobileView === "list" ? (
+            <><MapIcon className="w-4 h-4" /> Map</>
+          ) : (
+            <><List className="w-4 h-4" /> List</>
+          )}
+        </button>
       </div>
     </div>
   );

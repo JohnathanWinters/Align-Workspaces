@@ -77,11 +77,11 @@ The application uses a monorepo structure, separating the React frontend (`clien
 
 ## Align Spaces
 - **Landing Page**: `/spaces` — duplicate of main hero with workspace-focused messaging ("Your Space, Your Practice")
-- **Browse Page**: `/spaces/browse` — filterable grid of spaces by type (office, gym, meeting), each card expandable with amenities, pricing, and host info
-- **Database**: `spaces` table with fields for name, slug, type, description, address, neighborhood, price_per_hour, price_per_day, capacity, amenities array, image_urls array, target_profession, user_id (owner), approval_status (pending/approved/rejected), etc.
+- **Browse Page**: `/spaces/browse` — split-view layout with scrollable space cards on the left and an interactive Leaflet map on the right. Price markers on the map are color-coded by space type. Hovering a card highlights its map marker; clicking a map marker scrolls to the card. Mobile users toggle between list and map views via a floating button.
+- **Database**: `spaces` table with fields for name, slug, type, description, address, neighborhood, latitude, longitude, price_per_hour, price_per_day, capacity, amenities array, image_urls array, target_profession, user_id (owner), approval_status (pending/approved/rejected), etc.
 - **Booking System**: `space_bookings` table tracks booking requests (guest → host). `space_messages` table enables chat between guest and host per booking.
 - **Client Space Listing**: Authenticated clients can submit new space listings via the "Spaces" tab in the Client Portal (`/portal`). Submitted spaces start as `pending` and require admin approval. Admin receives email notification on new submissions.
-- **Booking Flow**: Users click "Request to Book" on a space card in `/spaces/browse`. If not logged in, they are redirected to login first. Once logged in, they write a message and submit a booking request. The host is notified via email. Both parties can chat in the Client Portal.
+- **Booking Flow**: Users click "Request to Book" on a space card in `/spaces/browse`. If not logged in, an inline "Register to Schedule" prompt appears within the card. Clicking "Create Account / Sign In" opens Replit Auth in a popup window; the page polls for auth completion and auto-shows the booking form once authenticated. The host is notified via email. Both parties can chat in the Client Portal.
 - **Admin Approval**: `GET /api/admin/spaces/pending`, `POST /api/admin/spaces/:id/approve`, `POST /api/admin/spaces/:id/reject`
 - **API**: `GET /api/spaces`, `GET /api/spaces/:slug`, `POST /api/spaces` (auth, creates pending listing), `GET /api/my-spaces` (auth), `POST /api/spaces/:id/book` (auth), `GET /api/space-bookings` (auth), `GET/POST /api/space-bookings/:id/messages` (auth), plus admin routes
 - **Sample Data**: 5 seeded spaces (2 therapy offices, 1 gym, 2 meeting rooms) in Miami neighborhoods, auto-seeded on startup via `server/seed-spaces.ts`
