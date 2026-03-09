@@ -1029,32 +1029,6 @@ function ProfilePage({ slug }: { slug: string }) {
         </section>
       )}
 
-      <section className="max-w-6xl mx-auto px-6 pb-16 sm:pb-24">
-        <div className="relative overflow-hidden rounded-lg bg-stone-900 text-white px-6 sm:px-12 py-14 sm:py-20 text-center">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_60%)]" />
-          </div>
-          <div className="relative z-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-6">Your story matters</p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 leading-tight">
-              Want Your Story Told?
-            </h2>
-            <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
-              Book a portrait session and we'll help you share the story behind your work with the world.
-            </p>
-            <Link href="/">
-              <Button
-                size="lg"
-                className="bg-white text-stone-900 hover:bg-white/90 rounded-full px-8"
-                data-testid="button-book-session-profile"
-              >
-                Book a Session
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
