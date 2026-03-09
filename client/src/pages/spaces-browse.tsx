@@ -885,29 +885,72 @@ export default function SpacesBrowsePage() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="pt-3 pb-1 flex flex-wrap items-end gap-3" data-testid="filter-panel">
-                <div className="flex items-end gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Min $/hr</label>
-                    <input
-                      type="number"
-                      value={priceMin}
-                      onChange={e => setPriceMin(e.target.value)}
-                      placeholder={`${priceRange.min}`}
-                      className="w-20 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
-                      data-testid="input-price-min"
-                    />
+              <div className="pt-3 pb-1 flex flex-wrap items-end gap-x-6 gap-y-3" data-testid="filter-panel">
+                <div className="w-full sm:w-auto">
+                  <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Price per hour</label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-foreground/30 text-sm">$</span>
+                      <input
+                        type="number"
+                        value={priceMin}
+                        onChange={e => setPriceMin(e.target.value)}
+                        placeholder={`${priceRange.min}`}
+                        min={priceRange.min}
+                        max={priceMax ? parseInt(priceMax) : priceRange.max}
+                        className="w-20 pl-5 pr-2 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
+                        data-testid="input-price-min"
+                      />
+                    </div>
+                    <span className="text-foreground/30 text-sm">–</span>
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-foreground/30 text-sm">$</span>
+                      <input
+                        type="number"
+                        value={priceMax}
+                        onChange={e => setPriceMax(e.target.value)}
+                        placeholder={`${priceRange.max}`}
+                        min={priceMin ? parseInt(priceMin) : priceRange.min}
+                        max={priceRange.max}
+                        className="w-20 pl-5 pr-2 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
+                        data-testid="input-price-max"
+                      />
+                    </div>
                   </div>
-                  <span className="text-foreground/30 text-sm pb-1.5">–</span>
-                  <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Max $/hr</label>
+                  <div className="relative h-5 w-full sm:w-52" data-testid="price-slider">
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-stone-200 rounded-full" />
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 h-1 bg-[#c4956a] rounded-full"
+                      style={{
+                        left: `${((parseInt(priceMin) || priceRange.min) - priceRange.min) / (priceRange.max - priceRange.min) * 100}%`,
+                        right: `${100 - ((parseInt(priceMax) || priceRange.max) - priceRange.min) / (priceRange.max - priceRange.min) * 100}%`,
+                      }}
+                    />
                     <input
-                      type="number"
-                      value={priceMax}
-                      onChange={e => setPriceMax(e.target.value)}
-                      placeholder={`${priceRange.max}`}
-                      className="w-20 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
-                      data-testid="input-price-max"
+                      type="range"
+                      min={priceRange.min}
+                      max={priceRange.max}
+                      value={parseInt(priceMin) || priceRange.min}
+                      onChange={e => {
+                        const v = parseInt(e.target.value);
+                        const maxV = parseInt(priceMax) || priceRange.max;
+                        setPriceMin(v <= priceRange.min ? "" : v >= maxV ? String(maxV - 1) : String(v));
+                      }}
+                      className="price-range-thumb absolute inset-0 w-full appearance-none bg-transparent cursor-pointer pointer-events-auto z-10"
+                      data-testid="slider-price-min"
+                    />
+                    <input
+                      type="range"
+                      min={priceRange.min}
+                      max={priceRange.max}
+                      value={parseInt(priceMax) || priceRange.max}
+                      onChange={e => {
+                        const v = parseInt(e.target.value);
+                        const minV = parseInt(priceMin) || priceRange.min;
+                        setPriceMax(v >= priceRange.max ? "" : v <= minV ? String(minV + 1) : String(v));
+                      }}
+                      className="price-range-thumb absolute inset-0 w-full appearance-none bg-transparent cursor-pointer pointer-events-auto z-20"
+                      data-testid="slider-price-max"
                     />
                   </div>
                 </div>
