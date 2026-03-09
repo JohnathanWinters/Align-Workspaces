@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification } from "./gmail";
@@ -1699,6 +1699,29 @@ export async function registerRoutes(
     try {
       await storage.deleteNomination(req.params.id);
       res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/newsletter/subscribe", async (req, res) => {
+    try {
+      const validated = insertNewsletterSubscriberSchema.parse(req.body);
+      const subscriber = await storage.createNewsletterSubscriber(validated);
+      res.json(subscriber);
+    } catch (err: any) {
+      if (err.code === "23505") {
+        return res.json({ alreadySubscribed: true });
+      }
+      if (err instanceof ZodError) return res.status(400).json({ message: fromZodError(err).message });
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/newsletter", isAdmin, async (_req, res) => {
+    try {
+      const subs = await storage.getNewsletterSubscribers();
+      res.json(subs);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull, ne, ilike } from "drizzle-orm";
 
@@ -74,6 +74,8 @@ export interface IStorage {
   getNominations(): Promise<Nomination[]>;
   updateNominationStatus(id: string, status: string): Promise<Nomination>;
   deleteNomination(id: string): Promise<void>;
+  createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
+  getNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -585,6 +587,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteNomination(id: string): Promise<void> {
     await db.delete(nominations).where(eq(nominations.id, id));
+  }
+
+  async createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
+    const [result] = await db.insert(newsletterSubscribers).values(data).returning();
+    return result;
+  }
+
+  async getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
+    return db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.createdAt));
   }
 }
 
