@@ -1780,6 +1780,359 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
   );
 }
 
+interface PortfolioPhoto {
+  id: string;
+  imageUrl: string;
+  environments: string[];
+  brandMessages: string[];
+  emotionalImpacts: string[];
+  colorPalette: Array<{ hex: string; keyword: string }>;
+  createdAt: string;
+}
+
+function PortfolioManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [photos, setPhotos] = useState<PortfolioPhoto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<PortfolioPhoto | null>(null);
+  const [tagForm, setTagForm] = useState<{
+    environments: string[];
+    brandMessages: string[];
+    emotionalImpacts: string[];
+    colorPalette: Array<{ hex: string; keyword: string }>;
+  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [] });
+  const [newColorHex, setNewColorHex] = useState("#8B7355");
+  const [newColorKeyword, setNewColorKeyword] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const adminFetch = useCallback(async (url: string, opts: RequestInit = {}) => {
+    return fetch(url, { ...opts, headers: { ...opts.headers as any, Authorization: `Bearer ${token}` } });
+  }, [token]);
+
+  const loadPhotos = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/portfolio-photos");
+      if (res.ok) setPhotos(await res.json());
+    } catch {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadPhotos(); }, [loadPhotos]);
+
+  const handleUpload = async (files: FileList) => {
+    setUploading(true);
+    for (const file of Array.from(files)) {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("environments", JSON.stringify([]));
+      fd.append("brandMessages", JSON.stringify([]));
+      fd.append("emotionalImpacts", JSON.stringify([]));
+      fd.append("colorPalette", JSON.stringify([]));
+      try {
+        const res = await adminFetch("/api/admin/portfolio/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Upload failed");
+      } catch {
+        toast({ title: "Upload failed", description: `Could not upload ${file.name}`, variant: "destructive" });
+      }
+    }
+    await loadPhotos();
+    setUploading(false);
+    toast({ title: "Upload complete" });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this portfolio photo?")) return;
+    try {
+      await adminFetch(`/api/admin/portfolio/${id}`, { method: "DELETE" });
+      setPhotos(prev => prev.filter(p => p.id !== id));
+      if (editingPhoto?.id === id) setEditingPhoto(null);
+      toast({ title: "Photo deleted" });
+    } catch {
+      toast({ title: "Delete failed", variant: "destructive" });
+    }
+  };
+
+  const startEdit = (photo: PortfolioPhoto) => {
+    setEditingPhoto(photo);
+    setTagForm({
+      environments: photo.environments || [],
+      brandMessages: photo.brandMessages || [],
+      emotionalImpacts: photo.emotionalImpacts || [],
+      colorPalette: photo.colorPalette || [],
+    });
+  };
+
+  const saveTagEdits = async () => {
+    if (!editingPhoto) return;
+    try {
+      const res = await adminFetch(`/api/admin/portfolio/${editingPhoto.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tagForm),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setPhotos(prev => prev.map(p => p.id === updated.id ? updated : p));
+        setEditingPhoto(null);
+        toast({ title: "Tags updated" });
+      }
+    } catch {
+      toast({ title: "Save failed", variant: "destructive" });
+    }
+  };
+
+  const toggleTag = (field: "environments" | "brandMessages" | "emotionalImpacts", value: string) => {
+    setTagForm(prev => ({
+      ...prev,
+      [field]: prev[field].includes(value)
+        ? prev[field].filter(v => v !== value)
+        : [...prev[field], value],
+    }));
+  };
+
+  const addColor = () => {
+    if (!newColorKeyword.trim()) return;
+    setTagForm(prev => ({
+      ...prev,
+      colorPalette: [...prev.colorPalette, { hex: newColorHex, keyword: newColorKeyword.trim() }],
+    }));
+    setNewColorKeyword("");
+    setNewColorHex("#8B7355");
+  };
+
+  const removeColor = (index: number) => {
+    setTagForm(prev => ({
+      ...prev,
+      colorPalette: prev.colorPalette.filter((_, i) => i !== index),
+    }));
+  };
+
+  const envOptions = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym", "kitchen"];
+  const brandOptions = ["assured", "empathy", "confidence", "motivation"];
+  const moodOptions = ["cozy", "bright", "powerful", "cinematic"];
+  const envLabels: Record<string, string> = { restaurant: "Restaurant", office: "Office", nature: "Nature", workvan: "Work Van", urban: "Urban", suburban: "Suburban", gym: "Gym", kitchen: "Kitchen" };
+  const brandLabels: Record<string, string> = { assured: "Welcoming", empathy: "Warm", confidence: "Confident", motivation: "Motivated" };
+  const moodLabels: Record<string, string> = { cozy: "Comfortable", bright: "Inspired", powerful: "Reassured", cinematic: "Cinematic" };
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-portfolio-back">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+          </Button>
+          <h1 className="font-serif text-xl font-semibold" data-testid="text-portfolio-title">Portfolio / Our Work</h1>
+          <Badge variant="secondary" className="text-xs">{photos.length} photos</Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={e => e.target.files && handleUpload(e.target.files)}
+            data-testid="input-portfolio-upload"
+          />
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="bg-stone-900 hover:bg-stone-800 text-white"
+            data-testid="button-upload-portfolio"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+            Upload Photos
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-20 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
+      ) : photos.length === 0 ? (
+        <div className="text-center py-20">
+          <Images className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 mb-2">No portfolio photos yet</p>
+          <p className="text-gray-400 text-sm">Upload photos to showcase your work</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {photos.map(photo => (
+              <div key={photo.id} className="group relative rounded-lg overflow-hidden bg-stone-100 aspect-[3/4]" data-testid={`card-portfolio-${photo.id}`}>
+                <img
+                  src={photo.imageUrl}
+                  alt="Portfolio"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end opacity-0 group-hover:opacity-100">
+                  <div className="w-full p-2 flex items-center justify-between">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-7 text-xs"
+                      onClick={() => startEdit(photo)}
+                      data-testid={`button-edit-portfolio-${photo.id}`}
+                    >
+                      <Edit className="w-3 h-3 mr-1" /> Tags
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-7 text-xs"
+                      onClick={() => handleDelete(photo.id)}
+                      data-testid={`button-delete-portfolio-${photo.id}`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+                {(photo.environments?.length > 0 || photo.brandMessages?.length > 0 || photo.emotionalImpacts?.length > 0) && (
+                  <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                    {photo.environments?.slice(0, 2).map(e => (
+                      <span key={e} className="bg-white/90 text-[10px] px-1.5 py-0.5 rounded font-medium">{envLabels[e] || e}</span>
+                    ))}
+                    {photo.brandMessages?.slice(0, 1).map(b => (
+                      <span key={b} className="bg-amber-100/90 text-[10px] px-1.5 py-0.5 rounded font-medium">{brandLabels[b] || b}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {editingPhoto && (
+            <Card className="border-stone-200">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-3">
+                    <img src={editingPhoto.imageUrl} alt="" className="w-12 h-12 rounded object-cover" />
+                    Edit Tags & Keywords
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingPhoto(null)} data-testid="button-close-tag-editor">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Environment</Label>
+                  <p className="text-xs text-gray-400 mb-2">Where was this shot taken?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {envOptions.map(env => (
+                      <button
+                        key={env}
+                        onClick={() => toggleTag("environments", env)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          tagForm.environments.includes(env)
+                            ? "bg-stone-900 text-white"
+                            : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                        }`}
+                        data-testid={`tag-env-${env}`}
+                      >
+                        {envLabels[env] || env}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Brand Message</Label>
+                  <p className="text-xs text-gray-400 mb-2">What feeling does this photo communicate?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {brandOptions.map(b => (
+                      <button
+                        key={b}
+                        onClick={() => toggleTag("brandMessages", b)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          tagForm.brandMessages.includes(b)
+                            ? "bg-amber-700 text-white"
+                            : "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                        }`}
+                        data-testid={`tag-brand-${b}`}
+                      >
+                        {brandLabels[b] || b}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Emotional Impact</Label>
+                  <p className="text-xs text-gray-400 mb-2">What mood does this photo evoke?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {moodOptions.map(m => (
+                      <button
+                        key={m}
+                        onClick={() => toggleTag("emotionalImpacts", m)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          tagForm.emotionalImpacts.includes(m)
+                            ? "bg-blue-700 text-white"
+                            : "bg-blue-50 text-blue-800 hover:bg-blue-100"
+                        }`}
+                        data-testid={`tag-mood-${m}`}
+                      >
+                        {moodLabels[m] || m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Color Palette</Label>
+                  <p className="text-xs text-gray-400 mb-2">Dominant colors in this photo</p>
+                  {tagForm.colorPalette.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {tagForm.colorPalette.map((c, i) => (
+                        <div key={i} className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 rounded-full pl-1 pr-2 py-0.5">
+                          <div className="w-5 h-5 rounded-full border border-stone-300" style={{ backgroundColor: c.hex }} />
+                          <span className="text-xs text-stone-700">{c.keyword}</span>
+                          <button onClick={() => removeColor(i)} className="text-stone-400 hover:text-red-500 ml-1" data-testid={`button-remove-color-${i}`}>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={newColorHex}
+                      onChange={e => setNewColorHex(e.target.value)}
+                      className="w-8 h-8 rounded cursor-pointer border-0"
+                      data-testid="input-color-picker"
+                    />
+                    <Input
+                      value={newColorKeyword}
+                      onChange={e => setNewColorKeyword(e.target.value)}
+                      placeholder="e.g., Warm Terracotta"
+                      className="flex-1 h-8 text-sm"
+                      onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addColor())}
+                      data-testid="input-color-keyword"
+                    />
+                    <Button size="sm" variant="outline" className="h-8" onClick={addColor} data-testid="button-add-color">
+                      <Plus className="w-3 h-3 mr-1" /> Add
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t">
+                  <Button variant="outline" onClick={() => setEditingPhoto(null)} data-testid="button-cancel-tags">Cancel</Button>
+                  <Button onClick={saveTagEdits} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-save-tags">
+                    <Save className="w-4 h-4 mr-2" /> Save Tags
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FeaturedManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [professionals, setProfessionals] = useState<FeaturedProfessional[]>([]);
@@ -2792,7 +3145,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -3026,6 +3379,10 @@ function AdminDashboard({ token }: { token: string }) {
     return <EmployeeManager token={token} onBack={() => setView("clients")} />;
   }
 
+  if (view === "portfolio") {
+    return <PortfolioManager token={token} onBack={() => setView("clients")} />;
+  }
+
   if (view === "featured") {
     return <FeaturedManager token={token} onBack={() => setView("clients")} />;
   }
@@ -3251,6 +3608,16 @@ function AdminDashboard({ token }: { token: string }) {
               <Camera className="w-4 h-4" />
               <span data-testid="text-shoot-count">{shoots.length} shoots</span>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("portfolio")}
+              data-testid="button-manage-portfolio"
+              className="h-8 text-xs border-gray-200 text-gray-600"
+            >
+              <Images className="w-3.5 h-3.5 mr-1.5" />
+              Portfolio
+            </Button>
             <Button
               variant="outline"
               size="sm"

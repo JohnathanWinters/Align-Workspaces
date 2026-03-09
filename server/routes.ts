@@ -288,6 +288,67 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/portfolio/upload", isAdmin, upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const objectKey = `uploads/portfolio-${randomUUID()}.webp`;
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const fullPath = `${privateDir}/${objectKey}`;
+      const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
+      const bucketName = parts[0];
+      const objectName = parts.slice(1).join("/");
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      const rawBuffer = fs.readFileSync(req.file.path);
+      const processedBuffer = await sharp(rawBuffer)
+        .rotate()
+        .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 90, effort: 4 })
+        .toBuffer();
+      await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
+      fs.unlinkSync(req.file.path);
+      const imageUrl = `/objects/${objectKey}`;
+      const environments = JSON.parse(req.body.environments || "[]");
+      const brandMessages = JSON.parse(req.body.brandMessages || "[]");
+      const emotionalImpacts = JSON.parse(req.body.emotionalImpacts || "[]");
+      const colorPalette = JSON.parse(req.body.colorPalette || "[]");
+      const photo = await storage.createPortfolioPhoto({
+        imageUrl,
+        environments,
+        brandMessages,
+        emotionalImpacts,
+        colorPalette,
+      });
+      res.json(photo);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
+    try {
+      const { environments, brandMessages, emotionalImpacts, colorPalette } = req.body;
+      const photo = await storage.updatePortfolioPhoto(req.params.id, {
+        environments,
+        brandMessages,
+        emotionalImpacts,
+        colorPalette,
+      });
+      res.json(photo);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deletePortfolioPhoto(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/stripe/publishable-key", async (_req, res) => {
     try {
       const key = await getStripePublishableKey();
