@@ -141,13 +141,14 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
           <img
             src={pro.portraitImageUrl}
             alt={`${pro.name} - ${pro.profession}`}
-            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
             style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
           />
         ) : (
           <Initials name={pro.name} />
         )}
       </div>
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-12 sm:pb-16 md:pb-20">
         <motion.div
