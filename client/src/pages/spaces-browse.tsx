@@ -551,42 +551,47 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
                 <p className="text-sm text-foreground/60 leading-relaxed">{space.description}</p>
 
                 {(() => {
-                  let palette: { hex: string; name: string; feel: string }[] = [];
-                  try { if (space.colorPalette) palette = JSON.parse(space.colorPalette); } catch {}
-                  if (!palette.length) return null;
+                  let paletteData: { colors: { hex: string; name: string }[]; feel: string } | null = null;
+                  try { if (space.colorPalette) paletteData = JSON.parse(space.colorPalette); } catch {}
+                  if (!paletteData || !paletteData.colors?.length) return null;
                   return (
                     <div data-testid={`palette-${space.id}`}>
-                      <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2">Color Palette</p>
-                      <div className="flex items-center gap-3">
-                        {palette.map((c, i) => (
-                          <div key={i} className="flex flex-col items-center gap-1.5">
-                            <button
-                              onClick={() => setActiveColor(activeColor === i ? null : i)}
-                              className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${activeColor === i ? "border-[#c4956a] scale-110 shadow-md" : "border-stone-200 hover:border-stone-300 hover:scale-105"}`}
-                              style={{ backgroundColor: c.hex }}
-                              data-testid={`palette-color-${space.id}-${i}`}
-                            />
-                            <span className="text-[9px] text-foreground/40 font-medium">{c.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <AnimatePresence mode="wait">
-                        {activeColor !== null && palette[activeColor] && (
+                      <button
+                        onClick={() => setActiveColor(activeColor === null ? 0 : null)}
+                        className="w-full text-left group"
+                        data-testid={`button-palette-${space.id}`}
+                      >
+                        <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2">Color Palette</p>
+                        <div className="flex items-center gap-3">
+                          {paletteData.colors.map((c, i) => (
+                            <div key={i} className="flex flex-col items-center gap-1.5">
+                              <div
+                                className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${activeColor !== null ? "border-[#c4956a] shadow-sm" : "border-stone-200 group-hover:border-stone-300 group-hover:scale-105"}`}
+                                style={{ backgroundColor: c.hex }}
+                              />
+                              <span className="text-[9px] text-foreground/40 font-medium">{c.name}</span>
+                            </div>
+                          ))}
+                          <ChevronRight className={`w-4 h-4 text-foreground/30 ml-auto transition-transform duration-200 ${activeColor !== null ? "rotate-90" : ""}`} />
+                        </div>
+                      </button>
+                      <AnimatePresence>
+                        {activeColor !== null && (
                           <motion.div
-                            key={activeColor}
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                           >
-                            <div className="mt-5 p-3 rounded-lg bg-stone-50 border border-stone-100">
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: palette[activeColor].hex }} />
-                                <span className="text-xs font-semibold text-foreground/70">{palette[activeColor].name}</span>
-                                <span className="text-[10px] text-foreground/30 ml-auto font-mono">{palette[activeColor].hex}</span>
+                            <div className="mt-3 p-3.5 rounded-lg bg-stone-50 border border-stone-100">
+                              <div className="flex items-center gap-1.5 mb-2">
+                                {paletteData.colors.map((c, i) => (
+                                  <div key={i} className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: c.hex }} />
+                                ))}
+                                <span className="text-[10px] text-foreground/30 ml-1 font-medium uppercase tracking-wider">Palette Mood</span>
                               </div>
-                              <p className="text-sm text-foreground/60 leading-relaxed italic">{palette[activeColor].feel}</p>
+                              <p className="text-sm text-foreground/60 leading-relaxed italic">{paletteData.feel}</p>
                             </div>
                           </motion.div>
                         )}
