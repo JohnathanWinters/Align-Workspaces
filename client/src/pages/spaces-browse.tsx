@@ -195,6 +195,7 @@ function SpacesMap({ spaces, hoveredId, onMarkerClick }: { spaces: Space[]; hove
           key={space.id}
           position={[parseFloat(space.latitude!), parseFloat(space.longitude!)]}
           icon={createPriceIcon(space.pricePerHour, space.type, space.id === hoveredId)}
+          zIndexOffset={space.id === hoveredId ? 1000 : 0}
           eventHandlers={{
             click: () => onMarkerClick(space.id),
           }}
