@@ -822,6 +822,11 @@ function FeaturedListingPage() {
 function ProfilePage({ slug }: { slug: string }) {
   const [, setLocation] = useLocation();
   const storyRef = useRef<HTMLDivElement>(null);
+  const [nominationOpen, setNominationOpen] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterName, setNewsletterName] = useState("");
+  const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "success" | "already">("idle");
 
   const { data: pro, isLoading, error } = useQuery<FeaturedProfessional>({
     queryKey: ["/api/featured", slug],
@@ -1029,6 +1034,101 @@ function ProfilePage({ slug }: { slug: string }) {
         </section>
       )}
 
+      <section className="py-16 sm:py-24 max-w-6xl mx-auto px-6">
+        <div className="relative overflow-hidden rounded-lg bg-stone-900 text-white px-6 sm:px-12 py-14 sm:py-20 text-center">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_60%)]" />
+          </div>
+          <div className="relative z-10">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-6">Your story matters</p>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 leading-tight">
+              Know Someone Inspiring?
+            </h2>
+            <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
+              Every great community is built on the people in it. Help us tell their story.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+              <Button
+                size="lg"
+                className="bg-[#c4956a] hover:bg-[#b8895e] text-white rounded-full px-8 shadow-lg shadow-amber-900/20"
+                onClick={() => setNominationOpen(true)}
+                data-testid="button-nominate-someone-profile"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Nominate Someone for a Story & Portrait Feature
+              </Button>
+            </div>
+
+            <div className="mt-6">
+              {newsletterStatus === "success" ? (
+                <div className="flex items-center justify-center gap-2 text-green-400 text-sm">
+                  <CheckCircle2 className="w-4 h-4" />
+                  You're in! We'll let you know when new stories drop.
+                </div>
+              ) : newsletterStatus === "already" ? (
+                <div className="flex items-center justify-center gap-2 text-amber-400 text-sm">
+                  <Mail className="w-4 h-4" />
+                  You're already subscribed — stay tuned!
+                </div>
+              ) : newsletterStatus === "idle" && !newsletterSubmitting && newsletterEmail === "" && newsletterName === "" ? (
+                <button
+                  onClick={() => setNewsletterStatus("form" as any)}
+                  className="text-white/50 hover:text-white/80 text-sm transition-colors cursor-pointer flex items-center gap-1.5 mx-auto"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Stay updated with new stories <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newsletterEmail.trim()) return;
+                    setNewsletterSubmitting(true);
+                    try {
+                      const res = await fetch("/api/newsletter/subscribe", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: newsletterEmail.trim(), firstName: newsletterName.trim() || null }),
+                      });
+                      const data = await res.json();
+                      setNewsletterStatus(data.alreadySubscribed ? "already" : "success");
+                    } catch {}
+                    setNewsletterSubmitting(false);
+                  }}
+                  className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-lg mx-auto"
+                >
+                  <input
+                    type="text"
+                    value={newsletterName}
+                    onChange={e => setNewsletterName(e.target.value)}
+                    placeholder="First name"
+                    className="w-full sm:w-36 px-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20"
+                  />
+                  <input
+                    type="email"
+                    required
+                    value={newsletterEmail}
+                    onChange={e => setNewsletterEmail(e.target.value)}
+                    placeholder="Your email"
+                    className="w-full sm:flex-1 px-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20"
+                    autoFocus
+                  />
+                  <Button
+                    type="submit"
+                    disabled={newsletterSubmitting || !newsletterEmail.trim()}
+                    size="sm"
+                    className="rounded-full px-6 bg-white/20 hover:bg-white/30 text-white border border-white/20"
+                  >
+                    {newsletterSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Mail className="w-3.5 h-3.5 mr-1.5" /> Subscribe</>}
+                  </Button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <NominationModal open={nominationOpen} onClose={() => setNominationOpen(false)} />
     </div>
   );
 }
