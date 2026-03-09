@@ -605,7 +605,7 @@ export class DatabaseStorage implements IStorage {
 
   async getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]> {
     const conditions = [eq(spaces.isActive, 1)];
-    if (!opts?.includeSamples) {
+    if (opts?.includeSamples === false) {
       conditions.push(eq(spaces.isSample, 0));
     }
     if (opts?.type) {

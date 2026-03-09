@@ -1743,8 +1743,7 @@ export async function registerRoutes(
   app.get("/api/spaces", async (req, res) => {
     try {
       const type = req.query.type as string | undefined;
-      const isDev = process.env.NODE_ENV !== "production";
-      const spacesList = await storage.getSpaces({ type, includeSamples: isDev });
+      const spacesList = await storage.getSpaces({ type, includeSamples: true });
       res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(spacesList);
     } catch (err: any) {
@@ -1756,9 +1755,6 @@ export async function registerRoutes(
     try {
       const space = await storage.getSpaceBySlug(req.params.slug);
       if (!space) return res.status(404).json({ message: "Space not found" });
-      if (space.isSample && process.env.NODE_ENV === "production") {
-        return res.status(404).json({ message: "Space not found" });
-      }
       res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(space);
     } catch (err: any) {
