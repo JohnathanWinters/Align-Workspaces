@@ -1677,6 +1677,24 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [cropPosition, setCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const cropContainerRef = useRef<HTMLDivElement>(null);
+  const formPortraitPreviewRef = useRef(formPortraitPreview);
+  formPortraitPreviewRef.current = formPortraitPreview;
+
+  useEffect(() => {
+    const el = cropContainerRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (!formPortraitPreviewRef.current) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.05 : 0.05;
+      setCropPosition(prev => ({
+        ...prev,
+        zoom: Math.max(1, Math.min(2, prev.zoom + delta)),
+      }));
+    };
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
 
   const adminFetch = useCallback(async (url: string, opts: any = {}) => {
     const { isFormData, ...rest } = opts;
@@ -1892,15 +1910,6 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     window.addEventListener("touchmove", handleMove, { passive: false });
                     window.addEventListener("touchend", cleanup);
                     window.addEventListener("touchcancel", cleanup);
-                  }}
-                  onWheel={(e) => {
-                    if (!formPortraitPreview) return;
-                    e.preventDefault();
-                    const delta = e.deltaY > 0 ? -0.05 : 0.05;
-                    setCropPosition(prev => ({
-                      ...prev,
-                      zoom: Math.max(1, Math.min(2, prev.zoom + delta)),
-                    }));
                   }}
                 >
                   {formPortraitPreview ? (
