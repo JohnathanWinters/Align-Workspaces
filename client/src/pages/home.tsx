@@ -80,6 +80,9 @@ export default function HomePage() {
 
   useEffect(() => {
     document.title = "Align | Portrait Photographer in Miami for Therapists & Small Business Professionals";
+    if (window.location.hash === "#configurator" && currentStep === 0) {
+      setCurrentStep(1);
+    }
   }, []);
 
   useEffect(() => {
@@ -342,7 +345,7 @@ export default function HomePage() {
       )}
 
       {currentStep > 0 && (
-        <div ref={configuratorRef} className="min-h-screen">
+        <div ref={configuratorRef} id="configurator" className="min-h-screen">
           <header className="lg:sticky lg:top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
             <div className="max-w-6xl mx-auto px-4 py-3 lg:py-4">
               <div className="flex items-center justify-between gap-2">

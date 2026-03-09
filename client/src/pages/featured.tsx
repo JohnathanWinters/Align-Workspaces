@@ -530,14 +530,13 @@ function FeaturedListingPage() {
                 Nominate Someone Inspiring
               </Button>
               <div className="mt-8">
-                <Link href="/">
-                  <span
-                    className="text-white/40 hover:text-white/70 text-sm transition-colors cursor-pointer"
-                    data-testid="button-book-session-featured"
-                  >
-                    Or share your own story <ArrowRight className="w-3.5 h-3.5 inline ml-1" />
-                  </span>
-                </Link>
+                <a
+                  href="/#configurator"
+                  className="text-white/40 hover:text-white/70 text-sm transition-colors cursor-pointer"
+                  data-testid="button-book-session-featured"
+                >
+                  Or share your own story <ArrowRight className="w-3.5 h-3.5 inline ml-1" />
+                </a>
               </div>
             </div>
           </div>
