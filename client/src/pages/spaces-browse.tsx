@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -169,8 +169,21 @@ function SpaceCard({ space }: { space: Space }) {
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
   const [showCarousel, setShowCarousel] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [authPending, setAuthPending] = useState(false);
+  const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+
+  const clearPolling = useCallback(() => {
+    if (pollRef.current.interval) clearInterval(pollRef.current.interval);
+    if (pollRef.current.timeout) clearTimeout(pollRef.current.timeout);
+    pollRef.current = {};
+  }, []);
+
+  useEffect(() => {
+    return () => clearPolling();
+  }, [clearPolling]);
 
   const bookMutation = useMutation({
     mutationFn: async () => {
@@ -179,6 +192,7 @@ function SpaceCard({ space }: { space: Space }) {
     onSuccess: () => {
       toast({ title: "Request sent!", description: "The host will be notified. Check your portal for updates." });
       setShowBooking(false);
+      setShowAuthPrompt(false);
       setBookingMessage("");
     },
     onError: (err: any) => {
@@ -188,11 +202,65 @@ function SpaceCard({ space }: { space: Space }) {
 
   const handleBookClick = () => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      setShowAuthPrompt(true);
+      setExpanded(true);
       return;
     }
     setShowBooking(true);
   };
+
+  const handleRegisterClick = () => {
+    setAuthPending(true);
+    const popup = window.open("/api/login", "alignAuth", "width=500,height=700,left=200,top=100");
+
+    if (!popup) {
+      setAuthPending(false);
+      toast({ title: "Popup blocked", description: "Please allow popups for this site, or use the button below.", variant: "destructive" });
+      return;
+    }
+
+    pollRef.current.interval = setInterval(async () => {
+      if (popup.closed) {
+        clearPolling();
+        setAuthPending(false);
+        return;
+      }
+      try {
+        const res = await fetch("/api/auth/user", { credentials: "include" });
+        if (res.ok) {
+          const userData = await res.json();
+          if (userData && userData.id) {
+            clearPolling();
+            setAuthPending(false);
+            setShowAuthPrompt(false);
+            setShowBooking(true);
+            queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+            if (!popup.closed) popup.close();
+          }
+        }
+      } catch {}
+    }, 1500);
+
+    pollRef.current.timeout = setTimeout(() => {
+      clearPolling();
+      setAuthPending(false);
+    }, 120000);
+  };
+
+  const handleDismissAuth = () => {
+    clearPolling();
+    setAuthPending(false);
+    setShowAuthPrompt(false);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && showAuthPrompt) {
+      clearPolling();
+      setAuthPending(false);
+      setShowAuthPrompt(false);
+      setShowBooking(true);
+    }
+  }, [isAuthenticated, showAuthPrompt, clearPolling]);
 
   return (
     <motion.div
@@ -343,7 +411,41 @@ function SpaceCard({ space }: { space: Space }) {
                   </div>
                 )}
 
-                {!showBooking ? (
+                {showAuthPrompt && !isAuthenticated ? (
+                  <div className="bg-gradient-to-br from-stone-50 to-amber-50/30 rounded-lg p-5 mt-2 space-y-4 border border-stone-200/60" data-testid={`auth-prompt-${space.id}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-[#c4956a]/10 flex items-center justify-center">
+                          <User className="w-4 h-4 text-[#c4956a]" />
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">Register to Schedule</p>
+                      </div>
+                      <button onClick={handleDismissAuth} className="text-foreground/40 hover:text-foreground/60">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-foreground/60 leading-relaxed">
+                      Create a free account to send booking requests, chat with hosts, and manage your reservations.
+                    </p>
+                    <Button
+                      onClick={handleRegisterClick}
+                      disabled={authPending}
+                      className="w-full bg-[#c4956a] text-white hover:bg-[#b3845d]"
+                      data-testid={`button-register-${space.id}`}
+                    >
+                      {authPending ? (
+                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Waiting for sign in...</>
+                      ) : (
+                        <><User className="w-4 h-4 mr-2" /> Create Account / Sign In</>
+                      )}
+                    </Button>
+                    {authPending && (
+                      <p className="text-[10px] text-foreground/40 text-center">
+                        Complete sign in in the popup window. This page will update automatically.
+                      </p>
+                    )}
+                  </div>
+                ) : !showBooking ? (
                   <button
                     onClick={handleBookClick}
                     className="inline-flex items-center gap-2 text-sm bg-foreground text-background px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity font-medium mt-2"
