@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,11 +13,13 @@ import {
   Dumbbell,
   Briefcase,
   ChevronRight,
+  ChevronLeft,
   Wifi,
   Check,
   Send,
   Loader2,
   X,
+  Images,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -44,10 +46,125 @@ const TYPE_COLORS: Record<string, string> = {
   meeting: "bg-amber-50 text-amber-700",
 };
 
+function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; spaceName: string; onClose: () => void }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const goNext = useCallback(() => {
+    setCurrentIndex((i) => (i + 1) % images.length);
+  }, [images.length]);
+
+  const goPrev = useCallback(() => {
+    setCurrentIndex((i) => (i - 1 + images.length) % images.length);
+  }, [images.length]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [onClose, goNext, goPrev]);
+
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? goNext() : goPrev();
+    }
+    setTouchStart(null);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      onClick={onClose}
+      data-testid="photo-carousel-overlay"
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+        data-testid="button-close-carousel"
+      >
+        <X className="w-6 h-6" />
+      </button>
+
+      <div className="absolute top-4 left-4 text-white/70 text-sm font-medium">
+        {currentIndex + 1} / {images.length}
+      </div>
+
+      <div
+        className="relative w-full h-full flex items-center justify-center px-4"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {images.length > 1 && (
+          <button
+            onClick={goPrev}
+            className="absolute left-2 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            data-testid="button-carousel-prev"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        )}
+
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentIndex}
+            src={images[currentIndex]}
+            alt={`${spaceName} - Photo ${currentIndex + 1}`}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            data-testid="img-carousel-photo"
+          />
+        </AnimatePresence>
+
+        {images.length > 1 && (
+          <button
+            onClick={goNext}
+            className="absolute right-2 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            data-testid="button-carousel-next"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
+      </div>
+
+      {images.length > 1 && (
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
+              className={`w-2 h-2 rounded-full transition-colors ${i === currentIndex ? "bg-white" : "bg-white/30"}`}
+              data-testid={`button-carousel-dot-${i}`}
+            />
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 function SpaceCard({ space }: { space: Space }) {
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
+  const [showCarousel, setShowCarousel] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
@@ -81,14 +198,25 @@ function SpaceCard({ space }: { space: Space }) {
       className="bg-white rounded-xl border border-stone-200/80 overflow-hidden hover:shadow-md transition-shadow duration-300"
       data-testid={`card-space-${space.id}`}
     >
-      <div className="relative h-48 bg-stone-100 overflow-hidden">
+      <div
+        className="relative h-48 bg-stone-100 overflow-hidden cursor-pointer group"
+        onClick={() => space.imageUrls && space.imageUrls.length > 0 && setShowCarousel(true)}
+        data-testid={`image-space-${space.id}`}
+      >
         {space.imageUrls && space.imageUrls.length > 0 ? (
-          <img
-            src={space.imageUrls[0]}
-            alt={space.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+          <>
+            <img
+              src={space.imageUrls[0]}
+              alt={space.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 text-white text-xs font-medium px-2.5 py-1.5 rounded-full backdrop-blur-sm" data-testid={`badge-photo-count-${space.id}`}>
+              <Images className="w-3.5 h-3.5" />
+              {space.imageUrls.length} {space.imageUrls.length === 1 ? "photo" : "photos"}
+            </div>
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
             <div className="text-center">
@@ -106,6 +234,16 @@ function SpaceCard({ space }: { space: Space }) {
           </div>
         ) : null}
       </div>
+
+      <AnimatePresence>
+        {showCarousel && space.imageUrls && space.imageUrls.length > 0 && (
+          <PhotoCarousel
+            images={space.imageUrls}
+            spaceName={space.name}
+            onClose={() => setShowCarousel(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="p-5">
         <h3 className="font-serif text-lg font-semibold text-foreground mb-1" data-testid={`text-space-name-${space.id}`}>
