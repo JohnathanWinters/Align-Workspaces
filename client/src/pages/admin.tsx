@@ -1843,12 +1843,15 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     if (!formPortraitPreview) return;
                     e.preventDefault();
                     setIsDragging(true);
+                    const startX = e.clientX;
                     const startY = e.clientY;
                     const startPos = { ...cropPosition };
                     const handleMove = (ev: MouseEvent) => {
+                      const dx = ev.clientX - startX;
                       const dy = ev.clientY - startY;
                       setCropPosition(prev => ({
                         ...prev,
+                        x: Math.max(0, Math.min(100, startPos.x - (dx / 1.6))),
                         y: Math.max(0, Math.min(100, startPos.y - (dy / 2.08))),
                       }));
                     };
@@ -1865,14 +1868,17 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     e.preventDefault();
                     const touch = e.touches[0];
                     setIsDragging(true);
+                    const startX = touch.clientX;
                     const startY = touch.clientY;
                     const startPos = { ...cropPosition };
                     const handleMove = (ev: TouchEvent) => {
                       ev.preventDefault();
                       const t = ev.touches[0];
+                      const dx = t.clientX - startX;
                       const dy = t.clientY - startY;
                       setCropPosition(prev => ({
                         ...prev,
+                        x: Math.max(0, Math.min(100, startPos.x - (dx / 1.6))),
                         y: Math.max(0, Math.min(100, startPos.y - (dy / 2.08))),
                       }));
                     };
@@ -1885,6 +1891,15 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     window.addEventListener("touchmove", handleMove, { passive: false });
                     window.addEventListener("touchend", cleanup);
                     window.addEventListener("touchcancel", cleanup);
+                  }}
+                  onWheel={(e) => {
+                    if (!formPortraitPreview) return;
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+                    setCropPosition(prev => ({
+                      ...prev,
+                      zoom: Math.max(1, Math.min(2, prev.zoom + delta)),
+                    }));
                   }}
                 >
                   {formPortraitPreview ? (
@@ -1915,7 +1930,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                   )}
                 </div>
                 {formPortraitPreview && (
-                  <p className="text-[11px] text-gray-400 text-center">Drag up/down to reposition</p>
+                  <p className="text-[11px] text-gray-400 text-center">Drag to reposition · Scroll to zoom</p>
                 )}
               </div>
               <div className="flex flex-col gap-3 pt-1 flex-1">
