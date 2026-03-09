@@ -699,9 +699,7 @@ function FeaturedListingPage() {
                 </Button>
               </div>
 
-              <div className="border-t border-white/10 pt-8">
-                <p className="text-white/40 text-xs uppercase tracking-[0.2em] mb-3">Stay in the loop</p>
-                <p className="text-white/50 text-sm mb-5 max-w-md mx-auto">Get notified when we publish new stories. No spam — just inspiring people doing great work.</p>
+              <div className="mt-6">
                 {newsletterStatus === "success" ? (
                   <div className="flex items-center justify-center gap-2 text-green-400 text-sm" data-testid="text-newsletter-success">
                     <CheckCircle2 className="w-4 h-4" />
@@ -712,6 +710,15 @@ function FeaturedListingPage() {
                     <Mail className="w-4 h-4" />
                     You're already subscribed — stay tuned!
                   </div>
+                ) : newsletterStatus === "idle" && !newsletterSubmitting && newsletterEmail === "" && newsletterName === "" ? (
+                  <button
+                    onClick={() => setNewsletterStatus("form" as any)}
+                    className="text-white/50 hover:text-white/80 text-sm transition-colors cursor-pointer flex items-center gap-1.5 mx-auto"
+                    data-testid="button-open-newsletter"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    Stay updated with new stories <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 ) : (
                   <form
                     onSubmit={async (e) => {
@@ -748,6 +755,7 @@ function FeaturedListingPage() {
                       placeholder="Your email"
                       className="w-full sm:flex-1 px-4 py-2.5 rounded-full bg-white/10 border border-white/15 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20"
                       data-testid="input-newsletter-email"
+                      autoFocus
                     />
                     <Button
                       type="submit"
