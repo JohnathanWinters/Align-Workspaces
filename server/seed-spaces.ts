@@ -1,0 +1,121 @@
+import { db } from "./db";
+import { spaces } from "@shared/schema";
+import { sql } from "drizzle-orm";
+
+const sampleSpaces = [
+  {
+    name: "Serenity Therapy Suite",
+    slug: "serenity-therapy-suite",
+    type: "office",
+    description: "A warm, calming therapy office designed for counselors and therapists. Features soft lighting, comfortable seating, and complete sound insulation for private sessions. Located in the heart of Coral Gables with easy parking.",
+    shortDescription: "Private therapy office with calming atmosphere in Coral Gables",
+    address: "245 Miracle Mile, Coral Gables, FL 33134",
+    neighborhood: "Coral Gables",
+    pricePerHour: 35,
+    pricePerDay: 200,
+    capacity: 4,
+    amenities: ["Sound insulated", "Comfortable seating", "Soft lighting", "Wi-Fi", "Waiting area", "Private restroom", "Climate control", "Street parking"],
+    imageUrls: ["/images/space-therapy-1.png"],
+    targetProfession: "Therapists & Counselors",
+    availableHours: "Mon-Sat 8:00 AM - 8:00 PM",
+    hostName: "Dr. Maria Santos",
+    isSample: 1,
+    isActive: 1,
+  },
+  {
+    name: "Mindful Space Therapy Room",
+    slug: "mindful-space-therapy-room",
+    type: "office",
+    description: "A modern, minimalist therapy room in Brickell perfect for licensed therapists and counselors. The space features natural light, plants, and a neutral palette designed to put clients at ease. Includes a small waiting area and private entrance.",
+    shortDescription: "Modern minimalist therapy room in Brickell with natural light",
+    address: "1200 Brickell Ave, Suite 310, Miami, FL 33131",
+    neighborhood: "Brickell",
+    pricePerHour: 45,
+    pricePerDay: 250,
+    capacity: 3,
+    amenities: ["Natural light", "Private entrance", "Waiting room", "Wi-Fi", "Sound machine", "Climate control", "Elevator access", "Valet parking available"],
+    imageUrls: ["/images/space-therapy-2.png"],
+    targetProfession: "Therapists & Counselors",
+    availableHours: "Mon-Fri 7:00 AM - 9:00 PM, Sat 9:00 AM - 5:00 PM",
+    hostName: "Wellness Center Brickell",
+    isSample: 1,
+    isActive: 1,
+  },
+  {
+    name: "Iron District Training Studio",
+    slug: "iron-district-training-studio",
+    type: "gym",
+    description: "A fully equipped private training studio in Wynwood for personal trainers and fitness coaches. Includes free weights, resistance bands, TRX system, battle ropes, and a turf area. Perfect for 1-on-1 or small group sessions up to 6 people. Industrial aesthetic with natural light.",
+    shortDescription: "Private training studio in Wynwood with full equipment",
+    address: "2520 NW 2nd Ave, Miami, FL 33127",
+    neighborhood: "Wynwood",
+    pricePerHour: 40,
+    pricePerDay: 220,
+    capacity: 6,
+    amenities: ["Free weights", "TRX system", "Battle ropes", "Turf area", "Mirrors", "Bluetooth speaker", "Shower", "Wi-Fi", "Parking lot", "Water station"],
+    imageUrls: ["/images/space-gym.png"],
+    targetProfession: "Personal Trainers & Fitness Coaches",
+    availableHours: "Mon-Sun 6:00 AM - 10:00 PM",
+    hostName: "Carlos Mendez",
+    isSample: 1,
+    isActive: 1,
+  },
+  {
+    name: "Elevate Meeting Room",
+    slug: "elevate-meeting-room",
+    type: "meeting",
+    description: "A professional meeting room in Downtown Miami ideal for client consultations, team meetings, and presentations. Features a large conference table seating 8, whiteboard, projector, and floor-to-ceiling windows with skyline views. Perfect for lawyers, realtors, and consultants.",
+    shortDescription: "Professional meeting room in Downtown Miami with skyline views",
+    address: "100 SE 2nd St, Suite 2400, Miami, FL 33131",
+    neighborhood: "Downtown Miami",
+    pricePerHour: 55,
+    pricePerDay: 300,
+    capacity: 8,
+    amenities: ["Conference table", "Projector", "Whiteboard", "Wi-Fi", "Coffee station", "Floor-to-ceiling windows", "Skyline views", "Elevator access", "Reception desk"],
+    imageUrls: ["/images/space-meeting-1.png"],
+    targetProfession: "Lawyers, Realtors & Consultants",
+    availableHours: "Mon-Fri 7:00 AM - 8:00 PM",
+    hostName: "Miami Business Hub",
+    isSample: 1,
+    isActive: 1,
+  },
+  {
+    name: "The Coconut Grove Boardroom",
+    slug: "coconut-grove-boardroom",
+    type: "meeting",
+    description: "An intimate, design-forward meeting space in Coconut Grove. Seats up to 6 people around a handcrafted wood table. Features a calming garden courtyard view, espresso machine, and dedicated Wi-Fi. Ideal for small team meetings, strategy sessions, and professional consultations.",
+    shortDescription: "Intimate design-forward boardroom in Coconut Grove",
+    address: "3390 Mary St, Suite 200, Coconut Grove, FL 33133",
+    neighborhood: "Coconut Grove",
+    pricePerHour: 40,
+    pricePerDay: 220,
+    capacity: 6,
+    amenities: ["Garden view", "Espresso machine", "Dedicated Wi-Fi", "Whiteboard", "Monitor for presentations", "Natural light", "Street parking", "Bike rack"],
+    imageUrls: ["/images/space-meeting-2.png"],
+    targetProfession: "Entrepreneurs & Small Business Owners",
+    availableHours: "Mon-Sat 8:00 AM - 7:00 PM",
+    hostName: "Grove Collective",
+    isSample: 1,
+    isActive: 1,
+  },
+];
+
+export async function seedSpacesIfEmpty() {
+  try {
+    const result = await db.select({ count: sql<number>`count(*)` }).from(spaces);
+    const count = Number(result[0]?.count ?? 0);
+
+    if (count > 0) {
+      console.log(`Spaces table already has ${count} rows, skipping seed`);
+      return;
+    }
+
+    console.log("Seeding spaces table with sample data...");
+    for (const s of sampleSpaces) {
+      await db.insert(spaces).values(s);
+    }
+    console.log(`Seeded ${sampleSpaces.length} sample spaces`);
+  } catch (err) {
+    console.error("Failed to seed spaces:", err);
+  }
+}
