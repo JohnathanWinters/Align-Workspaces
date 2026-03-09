@@ -1968,6 +1968,17 @@ export default function PortalPage() {
                 Back to Home
               </Button>
             </Link>
+            <Link href="/spaces/browse">
+              <Button
+                variant="outline"
+                size="lg"
+                data-testid="button-back-spaces-login"
+                className="w-full text-white border-white/20 bg-white/5 hover:bg-white/10 text-base"
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                Back to Spaces
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </div>
