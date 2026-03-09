@@ -65,7 +65,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden bg-black">
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden bg-stone-900">
       <motion.div
         className="absolute inset-0 bg-cover"
         style={{
