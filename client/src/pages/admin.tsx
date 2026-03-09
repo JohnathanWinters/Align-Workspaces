@@ -1694,7 +1694,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     };
     el.addEventListener("wheel", handleWheel, { passive: false });
     return () => el.removeEventListener("wheel", handleWheel);
-  }, []);
+  }, [showForm]);
 
   const adminFetch = useCallback(async (url: string, opts: any = {}) => {
     const { isFormData, ...rest } = opts;
