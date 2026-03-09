@@ -134,47 +134,79 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
   return (
     <section
-      className="relative w-full min-h-[60vh] sm:min-h-[65vh] lg:min-h-[70vh] 2xl:min-h-[75vh] max-w-[2000px] mx-auto 2xl:rounded-b-lg 2xl:overflow-hidden flex items-end cursor-pointer group"
+      className="cursor-pointer group max-w-[2000px] mx-auto"
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid="card-professional-of-week"
     >
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-          {pro.portraitImageUrl ? (
-            <img
-              src={pro.portraitImageUrl}
-              alt={`${pro.name} - ${pro.profession}`}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
-            />
-          ) : (
-            <Initials name={pro.name} />
-          )}
+      <div className="relative w-full aspect-[3/4] sm:aspect-auto sm:min-h-[65vh] lg:min-h-[70vh] 2xl:min-h-[75vh] 2xl:rounded-b-lg overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+            {pro.portraitImageUrl ? (
+              <img
+                src={pro.portraitImageUrl}
+                alt={`${pro.name} - ${pro.profession}`}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
+              />
+            ) : (
+              <Initials name={pro.name} />
+            )}
+          </div>
         </div>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+
+        <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="hidden sm:block relative z-10 w-full h-full">
+          <div className="absolute bottom-0 left-0 right-0 max-w-6xl mx-auto px-6 pb-16 md:pb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <p className="text-sm uppercase tracking-[0.2em] text-white/50 mb-3 flex items-center gap-2" data-testid="text-potw-heading">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                Featured Story
+              </p>
+              <h2 className="font-serif text-5xl md:text-6xl text-white leading-[1.1] mb-3 max-w-2xl" data-testid="text-potw-name">
+                {pro.name}
+              </h2>
+              <p className="text-white/60 text-lg mb-4">
+                {pro.profession} · {pro.location}
+              </p>
+              <p className="text-white/80 text-base max-w-xl leading-relaxed mb-6 font-light italic">
+                "{pro.headline}"
+              </p>
+              <span className="inline-flex items-center gap-2 text-sm text-white/70 group-hover:text-white group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
+                Read Their Story <ArrowRight className="w-4 h-4" />
+              </span>
+            </motion.div>
+          </div>
+        </div>
+
+        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(250, 248, 244, 0.5) 80%, rgba(250, 248, 244, 1) 100%)' }} />
       </div>
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-12 sm:pb-16 md:pb-20">
+
+      <div className="sm:hidden px-5 pt-4 pb-6">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <p className="text-xs sm:text-sm uppercase tracking-[0.2em] text-white/50 mb-3 flex items-center gap-2" data-testid="text-potw-heading">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/40 mb-2 flex items-center gap-1.5">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
             Featured Story
           </p>
-          <h2 className="font-serif text-3xl sm:text-5xl md:text-6xl text-white leading-[1.1] mb-3 max-w-2xl" data-testid="text-potw-name">
+          <h2 className="font-serif text-3xl text-foreground leading-[1.1] mb-2" data-testid="text-potw-name-mobile">
             {pro.name}
           </h2>
-          <p className="text-white/60 text-base sm:text-lg mb-4">
+          <p className="text-foreground/50 text-sm mb-3">
             {pro.profession} · {pro.location}
           </p>
-          <p className="text-white/80 text-sm sm:text-base max-w-xl leading-relaxed mb-6 font-light italic">
+          <p className="text-foreground/70 text-sm max-w-xl leading-relaxed mb-4 font-light italic">
             "{pro.headline}"
           </p>
-          <span className="inline-flex items-center gap-2 text-sm text-white/70 group-hover:text-white group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
-            Read Their Story <ArrowRight className="w-4 h-4" />
+          <span className="inline-flex items-center gap-2 text-xs text-foreground/50 group-hover:text-foreground group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
+            Read Their Story <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </motion.div>
       </div>
