@@ -26,6 +26,9 @@ import {
   Camera,
   Map as MapIcon,
   List,
+  SlidersHorizontal,
+  Navigation,
+  ArrowUpDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +38,44 @@ import type { Space } from "@shared/schema";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3959;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const MIAMI_ZIP_COORDS: Record<string, [number, number]> = {
+  "33101": [25.7743, -80.1937], "33109": [25.7617, -80.1367], "33125": [25.7743, -80.2234],
+  "33126": [25.7743, -80.2972], "33127": [25.7985, -80.1996], "33128": [25.7743, -80.1937],
+  "33129": [25.7529, -80.2011], "33130": [25.7650, -80.2011], "33131": [25.7650, -80.1899],
+  "33132": [25.7850, -80.1860], "33133": [25.7270, -80.2417], "33134": [25.7496, -80.2584],
+  "33135": [25.7640, -80.2234], "33136": [25.7850, -80.2011], "33137": [25.8100, -80.1899],
+  "33138": [25.8200, -80.1780], "33139": [25.7823, -80.1340], "33140": [25.8120, -80.1300],
+  "33141": [25.8480, -80.1410], "33142": [25.8120, -80.2234], "33143": [25.7100, -80.2800],
+  "33144": [25.7600, -80.2972], "33145": [25.7500, -80.2400], "33146": [25.7200, -80.2800],
+  "33147": [25.8400, -80.2400], "33149": [25.7250, -80.1600], "33150": [25.8500, -80.2000],
+  "33154": [25.8780, -80.1410], "33155": [25.7350, -80.3100], "33156": [25.6700, -80.3100],
+  "33157": [25.6200, -80.3500], "33158": [25.6400, -80.3100], "33160": [25.9300, -80.1500],
+  "33161": [25.8900, -80.1780], "33162": [25.9200, -80.1780], "33165": [25.7400, -80.3500],
+  "33166": [25.8200, -80.3200], "33167": [25.8800, -80.2200], "33168": [25.8700, -80.2100],
+  "33169": [25.9400, -80.2200], "33170": [25.5600, -80.4000], "33172": [25.7700, -80.3700],
+  "33173": [25.7000, -80.3500], "33174": [25.7600, -80.3500], "33175": [25.7200, -80.3700],
+  "33176": [25.6600, -80.3500], "33177": [25.6000, -80.3700], "33178": [25.7900, -80.3700],
+  "33179": [25.9600, -80.2000], "33180": [25.9400, -80.1500], "33181": [25.9000, -80.1500],
+  "33182": [25.7200, -80.3900], "33183": [25.7000, -80.3700], "33184": [25.7600, -80.3700],
+  "33185": [25.7200, -80.3700], "33186": [25.6600, -80.3700], "33187": [25.6200, -80.3900],
+  "33189": [25.5800, -80.3500], "33190": [25.5600, -80.3200], "33193": [25.6800, -80.3900],
+  "33194": [25.7200, -80.4200], "33196": [25.6600, -80.4200], "33199": [25.7550, -80.3730],
+};
+
+function getZipCoords(zip: string): [number, number] | null {
+  return MIAMI_ZIP_COORDS[zip] || null;
+}
 
 const SPACE_TYPES = [
   { key: "all", label: "All Spaces", icon: Building2 },
@@ -282,7 +323,7 @@ function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; space
   );
 }
 
-function SpaceCard({ space, onHover, onLeave, isHighlighted }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean }) {
+function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null }) {
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
@@ -445,6 +486,11 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted }: { space: Space; o
         <div className="flex items-center gap-1.5 text-foreground/50 text-sm mb-3">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="truncate">{space.neighborhood || space.address}</span>
+          {distance != null && (
+            <span className="ml-auto text-xs text-[#c4956a] font-medium whitespace-nowrap flex-shrink-0" data-testid={`text-distance-${space.id}`}>
+              {distance < 0.1 ? "< 0.1" : distance.toFixed(1)} mi
+            </span>
+          )}
         </div>
 
         <p className="text-foreground/60 text-sm leading-relaxed mb-4 line-clamp-2">
@@ -619,7 +665,21 @@ export default function SpacesBrowsePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
+  const [showFilters, setShowFilters] = useState(false);
+  const [priceMin, setPriceMin] = useState<string>("");
+  const [priceMax, setPriceMax] = useState<string>("");
+  const [zipCode, setZipCode] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
+  const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const zipCoords = useMemo(() => {
+    if (zipCode.length === 5) {
+      const coords = getZipCoords(zipCode);
+      return coords;
+    }
+    return null;
+  }, [zipCode]);
 
   const { data: allSpaces = [], isLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -631,15 +691,57 @@ export default function SpacesBrowsePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const filtered = useMemo(() =>
-    activeType === "all" ? allSpaces : allSpaces.filter(s => s.type === activeType),
-    [allSpaces, activeType]
-  );
+  const priceRange = useMemo(() => {
+    if (allSpaces.length === 0) return { min: 0, max: 100 };
+    const prices = allSpaces.map(s => s.pricePerHour);
+    return { min: Math.min(...prices), max: Math.max(...prices) };
+  }, [allSpaces]);
+
+  const filtered = useMemo(() => {
+    let result = activeType === "all" ? allSpaces : allSpaces.filter(s => s.type === activeType);
+
+    const minVal = priceMin ? parseInt(priceMin) : null;
+    const maxVal = priceMax ? parseInt(priceMax) : null;
+    if (minVal !== null) result = result.filter(s => s.pricePerHour >= minVal);
+    if (maxVal !== null) result = result.filter(s => s.pricePerHour <= maxVal);
+
+    if (sortBy === "price-low") {
+      result = [...result].sort((a, b) => a.pricePerHour - b.pricePerHour);
+    } else if (sortBy === "price-high") {
+      result = [...result].sort((a, b) => b.pricePerHour - a.pricePerHour);
+    } else if (sortBy === "distance" && zipCoords) {
+      result = [...result].sort((a, b) => {
+        const distA = a.latitude && a.longitude
+          ? haversineDistance(zipCoords[0], zipCoords[1], parseFloat(a.latitude), parseFloat(a.longitude))
+          : Infinity;
+        const distB = b.latitude && b.longitude
+          ? haversineDistance(zipCoords[0], zipCoords[1], parseFloat(b.latitude), parseFloat(b.longitude))
+          : Infinity;
+        return distA - distB;
+      });
+    }
+
+    return result;
+  }, [allSpaces, activeType, priceMin, priceMax, sortBy, zipCoords]);
+
+  const getDistanceForSpace = useCallback((space: Space): number | null => {
+    if (!zipCoords || !space.latitude || !space.longitude) return null;
+    return haversineDistance(zipCoords[0], zipCoords[1], parseFloat(space.latitude), parseFloat(space.longitude));
+  }, [zipCoords]);
 
   const typeCounts = SPACE_TYPES.map(t => ({
     ...t,
     count: t.key === "all" ? allSpaces.length : allSpaces.filter(s => s.type === t.key).length,
   }));
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (priceMin) count++;
+    if (priceMax) count++;
+    if (zipCode.length === 5) count++;
+    if (sortBy !== "default") count++;
+    return count;
+  }, [priceMin, priceMax, zipCode, sortBy]);
 
   const handleMarkerClick = useCallback((id: string) => {
     setHoveredCardId(id);
@@ -647,6 +749,27 @@ export default function SpacesBrowsePage() {
     setTimeout(() => {
       cardRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
+  }, []);
+
+  const handleZipChange = useCallback((val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 5);
+    setZipCode(digits);
+    if (digits.length === 5 && !getZipCoords(digits)) {
+      setZipError("Zip code not in Miami area");
+    } else {
+      setZipError("");
+    }
+    if (digits.length === 5 && getZipCoords(digits)) {
+      setSortBy("distance");
+    }
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setPriceMin("");
+    setPriceMax("");
+    setZipCode("");
+    setSortBy("default");
+    setZipError("");
   }, []);
 
   useEffect(() => {
@@ -713,27 +836,132 @@ export default function SpacesBrowsePage() {
         </div>
       </nav>
 
-      <div className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3 border-b border-stone-100 bg-background">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {typeCounts.map(({ key, label, icon: Icon, count }) => (
-            <button
-              key={key}
-              onClick={() => setActiveType(key)}
-              data-testid={`button-filter-${key}`}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 ${
-                activeType === key
-                  ? "bg-foreground text-background font-medium"
-                  : "bg-stone-100 text-foreground/60 hover:bg-stone-200"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-              <span className={`text-xs ${activeType === key ? "text-background/60" : "text-foreground/30"}`}>
-                {count}
+      <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 bg-background">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
+            {typeCounts.map(({ key, label, icon: Icon, count }) => (
+              <button
+                key={key}
+                onClick={() => setActiveType(key)}
+                data-testid={`button-filter-${key}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 ${
+                  activeType === key
+                    ? "bg-foreground text-background font-medium"
+                    : "bg-stone-100 text-foreground/60 hover:bg-stone-200"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+                <span className={`text-xs ${activeType === key ? "text-background/60" : "text-foreground/30"}`}>
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            data-testid="button-toggle-filters"
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
+              showFilters || activeFilterCount > 0
+                ? "bg-foreground text-background border-foreground"
+                : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-[#c4956a] text-white text-[10px] font-bold flex items-center justify-center">
+                {activeFilterCount}
               </span>
-            </button>
-          ))}
+            )}
+          </button>
         </div>
+
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 pb-1 flex flex-wrap items-end gap-3" data-testid="filter-panel">
+                <div className="flex items-end gap-2">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Min $/hr</label>
+                    <input
+                      type="number"
+                      value={priceMin}
+                      onChange={e => setPriceMin(e.target.value)}
+                      placeholder={`${priceRange.min}`}
+                      className="w-20 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
+                      data-testid="input-price-min"
+                    />
+                  </div>
+                  <span className="text-foreground/30 text-sm pb-1.5">–</span>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Max $/hr</label>
+                    <input
+                      type="number"
+                      value={priceMax}
+                      onChange={e => setPriceMax(e.target.value)}
+                      placeholder={`${priceRange.max}`}
+                      className="w-20 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
+                      data-testid="input-price-max"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-end gap-2">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Your Zip Code</label>
+                    <div className="relative">
+                      <Navigation className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+                      <input
+                        type="text"
+                        value={zipCode}
+                        onChange={e => handleZipChange(e.target.value)}
+                        placeholder="33131"
+                        maxLength={5}
+                        className={`w-28 pl-8 pr-2.5 py-1.5 rounded-lg border text-sm bg-white focus:outline-none transition-colors ${
+                          zipError ? "border-red-300 focus:border-red-400" : "border-stone-200 focus:border-[#c4956a]"
+                        }`}
+                        data-testid="input-zip-code"
+                      />
+                    </div>
+                    {zipError && <p className="text-[10px] text-red-400 mt-0.5">{zipError}</p>}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Sort By</label>
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    className="px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors cursor-pointer"
+                    data-testid="select-sort"
+                  >
+                    <option value="default">Default</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="distance" disabled={!zipCoords}>Distance (nearest)</option>
+                  </select>
+                </div>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-xs text-[#c4956a] hover:text-[#b3845d] font-medium pb-1.5 transition-colors"
+                    data-testid="button-clear-filters"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="flex-1 flex overflow-hidden relative">
@@ -775,6 +1003,7 @@ export default function SpacesBrowsePage() {
                       onHover={setHoveredCardId}
                       onLeave={() => setHoveredCardId(null)}
                       isHighlighted={hoveredCardId === space.id}
+                      distance={getDistanceForSpace(space)}
                     />
                   </div>
                 ))}
