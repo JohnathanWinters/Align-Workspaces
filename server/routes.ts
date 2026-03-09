@@ -1790,7 +1790,7 @@ export async function registerRoutes(
           pricePerDay: 200,
           capacity: 4,
           amenities: ["Sound insulated", "Comfortable seating", "Soft lighting", "Wi-Fi", "Waiting area", "Private restroom", "Climate control", "Street parking"],
-          imageUrls: [],
+          imageUrls: ["/images/space-therapy-1.png"],
           targetProfession: "Therapists & Counselors",
           availableHours: "Mon-Sat 8:00 AM - 8:00 PM",
           hostName: "Dr. Maria Santos",
@@ -1809,7 +1809,7 @@ export async function registerRoutes(
           pricePerDay: 250,
           capacity: 3,
           amenities: ["Natural light", "Private entrance", "Waiting room", "Wi-Fi", "Sound machine", "Climate control", "Elevator access", "Valet parking available"],
-          imageUrls: [],
+          imageUrls: ["/images/space-therapy-2.png"],
           targetProfession: "Therapists & Counselors",
           availableHours: "Mon-Fri 7:00 AM - 9:00 PM, Sat 9:00 AM - 5:00 PM",
           hostName: "Wellness Center Brickell",
@@ -1828,7 +1828,7 @@ export async function registerRoutes(
           pricePerDay: 220,
           capacity: 6,
           amenities: ["Free weights", "TRX system", "Battle ropes", "Turf area", "Mirrors", "Bluetooth speaker", "Shower", "Wi-Fi", "Parking lot", "Water station"],
-          imageUrls: [],
+          imageUrls: ["/images/space-gym.png"],
           targetProfession: "Personal Trainers & Fitness Coaches",
           availableHours: "Mon-Sun 6:00 AM - 10:00 PM",
           hostName: "Carlos Mendez",
@@ -1847,7 +1847,7 @@ export async function registerRoutes(
           pricePerDay: 300,
           capacity: 8,
           amenities: ["Conference table", "Projector", "Whiteboard", "Wi-Fi", "Coffee station", "Floor-to-ceiling windows", "Skyline views", "Elevator access", "Reception desk"],
-          imageUrls: [],
+          imageUrls: ["/images/space-meeting-1.png"],
           targetProfession: "Lawyers, Realtors & Consultants",
           availableHours: "Mon-Fri 7:00 AM - 8:00 PM",
           hostName: "Miami Business Hub",
@@ -1866,7 +1866,7 @@ export async function registerRoutes(
           pricePerDay: 220,
           capacity: 6,
           amenities: ["Garden view", "Espresso machine", "Dedicated Wi-Fi", "Whiteboard", "Monitor for presentations", "Natural light", "Street parking", "Bike rack"],
-          imageUrls: [],
+          imageUrls: ["/images/space-meeting-2.png"],
           targetProfession: "Entrepreneurs & Small Business Owners",
           availableHours: "Mon-Sat 8:00 AM - 7:00 PM",
           hostName: "Grove Collective",
@@ -1881,6 +1881,8 @@ export async function registerRoutes(
         if (!existing) {
           const created = await storage.createSpace(s);
           results.push(created);
+        } else {
+          await storage.updateSpace(existing.id, { imageUrls: s.imageUrls, amenities: s.amenities });
         }
       }
       res.json({ seeded: results.length, total: sampleSpaces.length });

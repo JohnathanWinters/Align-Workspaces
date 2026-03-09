@@ -23,7 +23,7 @@ function Router() {
       <Route path="/portal" component={PortalPage} />
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />
-      <Route path="/align-spaces" component={AlignSpacesPage} />
+      <Route path="/spaces" component={AlignSpacesPage} />
       <Route path="/spaces/browse" component={SpacesBrowsePage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/team" component={EmployeePage} />

@@ -76,7 +76,7 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Canonical URL**: `https://alignphotodesign.com`
 
 ## Align Spaces
-- **Landing Page**: `/align-spaces` — duplicate of main hero with workspace-focused messaging ("Your Space, Your Practice")
+- **Landing Page**: `/spaces` — duplicate of main hero with workspace-focused messaging ("Your Space, Your Practice")
 - **Browse Page**: `/spaces/browse` — filterable grid of spaces by type (office, gym, meeting), each card expandable with amenities, pricing, and host info
 - **Database**: `spaces` table with fields for name, slug, type, description, address, neighborhood, price_per_hour, price_per_day, capacity, amenities array, image_urls array, target_profession, etc.
 - **API**: `GET /api/spaces`, `GET /api/spaces/:slug`, `POST /api/admin/spaces`, `POST /api/admin/spaces/seed`

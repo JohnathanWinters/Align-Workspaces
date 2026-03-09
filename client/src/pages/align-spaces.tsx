@@ -57,9 +57,9 @@ export default function AlignSpacesPage() {
       <motion.div
         className="absolute inset-0 bg-cover"
         style={{
-          backgroundImage: "url(/images/hero-bg-bright.webp)",
-          backgroundPosition: "43% center",
-          filter: "brightness(0.75) contrast(1.05)",
+          backgroundImage: "url(/images/spaces-hero.png)",
+          backgroundPosition: "center center",
+          filter: "brightness(0.7) contrast(1.05)",
           y,
           scale,
         }}

@@ -215,13 +215,13 @@ export default function SpacesBrowsePage() {
     <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Link href="/align-spaces">
+          <Link href="/spaces">
             <button className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Align Spaces</span>
             </button>
           </Link>
-          <Link href="/align-spaces">
+          <Link href="/spaces">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
           </Link>
           <Link href="/featured">
