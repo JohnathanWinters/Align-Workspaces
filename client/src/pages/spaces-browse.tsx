@@ -24,6 +24,7 @@ import {
   User,
   Star,
   Camera,
+  Palette,
   Map as MapIcon,
   List,
   SlidersHorizontal,
@@ -82,18 +83,24 @@ const SPACE_TYPES = [
   { key: "office", label: "Offices", icon: Briefcase },
   { key: "gym", label: "Training Studios", icon: Dumbbell },
   { key: "meeting", label: "Meeting Rooms", icon: Building2 },
+  { key: "art_studio", label: "Art Studios", icon: Palette },
+  { key: "photo_studio", label: "Photo/Video Studios", icon: Camera },
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = {
   office: "Office",
   gym: "Training Studio",
   meeting: "Meeting Room",
+  art_studio: "Art Studio",
+  photo_studio: "Photo/Video Studio",
 };
 
 const TYPE_COLORS: Record<string, string> = {
   office: "bg-blue-50 text-blue-700",
   gym: "bg-emerald-50 text-emerald-700",
   meeting: "bg-amber-50 text-amber-700",
+  art_studio: "bg-purple-50 text-purple-700",
+  photo_studio: "bg-rose-50 text-rose-700",
 };
 
 function createPriceIcon(price: number, _type: string, isActive: boolean) {
