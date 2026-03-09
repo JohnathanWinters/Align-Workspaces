@@ -892,9 +892,9 @@ function ProfilePage({ slug }: { slug: string }) {
             <Initials name={pro.name} />
           )}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 via-40% to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 via-50% to-transparent" />
         {pro.isSample ? (
-          <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
+          <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
             Sample
           </div>
         ) : null}
@@ -907,17 +907,17 @@ function ProfilePage({ slug }: { slug: string }) {
             className="max-w-3xl mx-auto px-6 pb-10 sm:pb-14"
           >
             <Link href="/featured">
-              <button className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors mb-5 group" data-testid="link-back-featured">
+              <button className="inline-flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors mb-5 group" data-testid="link-back-featured">
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                 All Stories
               </button>
             </Link>
 
-            <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-2">{pro.profession}</p>
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-white" data-testid="text-profile-name">
+            <p className="text-xs uppercase tracking-[0.15em] text-foreground/50 mb-2">{pro.profession}</p>
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
               {pro.name}
             </h1>
-            <p className="text-white/60 text-sm flex items-center gap-1.5 mb-6">
+            <p className="text-foreground/60 text-sm flex items-center gap-1.5 mb-6">
               <MapPin className="w-3.5 h-3.5" />
               {pro.location}
             </p>
@@ -927,7 +927,7 @@ function ProfilePage({ slug }: { slug: string }) {
                 const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
                 if (!Icon || !url) return null;
                 return (
-                  <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white">
+                  <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground">
                     <Icon className="w-4 h-4" />
                   </a>
                 );
@@ -940,7 +940,7 @@ function ProfilePage({ slug }: { slug: string }) {
                     navigator.clipboard.writeText(shareUrl);
                   }
                 }}
-                className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+                className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground"
                 data-testid="button-share"
               >
                 <Share2 className="w-4 h-4" />
