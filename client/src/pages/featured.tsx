@@ -146,6 +146,8 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
                 src={pro.portraitImageUrl}
                 alt={`${pro.name} - ${pro.profession}`}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                fetchPriority="high"
+                decoding="sync"
                 style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
               />
             ) : (
@@ -622,10 +624,12 @@ function FeaturedListingPage() {
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: weeklyPro } = useQuery<FeaturedProfessional | null>({
     queryKey: ["/api/featured/professional-of-the-week"],
+    staleTime: 5 * 60 * 1000,
   });
 
   const availableCategories = CATEGORY_ORDER.filter(cat =>
@@ -647,6 +651,18 @@ function FeaturedListingPage() {
   useEffect(() => {
     document.title = "Featured Professionals | Align";
   }, []);
+
+  useEffect(() => {
+    if (weeklyPro?.portraitImageUrl) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = weeklyPro.portraitImageUrl;
+      link.fetchPriority = "high";
+      document.head.appendChild(link);
+      return () => { document.head.removeChild(link); };
+    }
+  }, [weeklyPro?.portraitImageUrl]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -834,6 +850,7 @@ function ProfilePage({ slug }: { slug: string }) {
       if (!res.ok) throw new Error("Not found");
       return res.json();
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: allProfessionals = [] } = useQuery<FeaturedProfessional[]>({
@@ -843,7 +860,20 @@ function ProfilePage({ slug }: { slug: string }) {
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json();
     },
+    staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (pro?.portraitImageUrl) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = pro.portraitImageUrl;
+      link.fetchPriority = "high";
+      document.head.appendChild(link);
+      return () => { document.head.removeChild(link); };
+    }
+  }, [pro?.portraitImageUrl]);
 
   useEffect(() => {
     if (pro) {
@@ -922,6 +952,8 @@ function ProfilePage({ slug }: { slug: string }) {
               src={pro.portraitImageUrl}
               alt={`${pro.name} - ${pro.profession}`}
               className="w-full h-full object-cover"
+              fetchPriority="high"
+              decoding="sync"
               style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
             />
           ) : (

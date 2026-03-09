@@ -1558,6 +1558,7 @@ export async function registerRoutes(
     try {
       const isDev = process.env.NODE_ENV !== "production";
       const pro = await storage.getFeaturedOfWeek({ includeSamples: isDev });
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(pro || null);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -1571,6 +1572,7 @@ export async function registerRoutes(
       if (pro.isSample && process.env.NODE_ENV === "production") {
         return res.status(404).json({ message: "Professional not found" });
       }
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(pro);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -1583,6 +1585,7 @@ export async function registerRoutes(
       const isDev = process.env.NODE_ENV !== "production";
       const includeSamples = isDev;
       const pros = await storage.getFeaturedProfessionals({ category, includeSamples });
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(pros);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
