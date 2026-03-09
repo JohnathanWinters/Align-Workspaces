@@ -117,7 +117,7 @@ export default function AlignSpacesPage() {
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-36 sm:pb-24 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -125,7 +125,6 @@ export default function AlignSpacesPage() {
           className="text-center max-w-2xl mx-auto"
           style={{ y }}
         >
-          <p className="text-[10px] uppercase tracking-[0.3em] text-[#c4956a] font-semibold mb-4">Align Spaces</p>
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Space,
             <br />
@@ -136,7 +135,7 @@ export default function AlignSpacesPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-white/50 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-6 sm:mt-8 font-light"
+            className="text-white/50 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-6 sm:mt-8 font-light text-center"
           >
             Find and rent professional workspaces in Miami — therapy offices, training studios, meeting rooms, and more. Built for small business professionals.
           </motion.p>
