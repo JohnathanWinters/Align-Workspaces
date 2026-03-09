@@ -9,6 +9,7 @@ export interface IStorage {
   getPortfolioPhotos(): Promise<PortfolioPhoto[]>;
   getPortfolioPhotosByTags(environment: string, brandMessage: string, emotionalImpact: string): Promise<PortfolioPhoto[]>;
   updatePortfolioPhoto(id: string, data: Partial<InsertPortfolioPhoto>): Promise<PortfolioPhoto>;
+  getPortfolioPhotosBySpace(spaceId: string): Promise<PortfolioPhoto[]>;
   deletePortfolioPhoto(id: string): Promise<void>;
   createShoot(shoot: InsertShoot): Promise<Shoot>;
   getShootsByUser(userId: string): Promise<Shoot[]>;
@@ -122,6 +123,10 @@ export class DatabaseStorage implements IStorage {
   async updatePortfolioPhoto(id: string, data: Partial<InsertPortfolioPhoto>): Promise<PortfolioPhoto> {
     const [result] = await db.update(portfolioPhotos).set(data).where(eq(portfolioPhotos.id, id)).returning();
     return result;
+  }
+
+  async getPortfolioPhotosBySpace(spaceId: string): Promise<PortfolioPhoto[]> {
+    return db.select().from(portfolioPhotos).where(eq(portfolioPhotos.locationSpaceId, spaceId)).orderBy(desc(portfolioPhotos.createdAt));
   }
 
   async deletePortfolioPhoto(id: string): Promise<void> {

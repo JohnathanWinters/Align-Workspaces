@@ -339,6 +339,10 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [authPending, setAuthPending] = useState(false);
   const [activeColor, setActiveColor] = useState<number | null>(null);
+  const [spacePhotos, setSpacePhotos] = useState<Array<{ id: string; imageUrl: string }>>([]);
+  const [showSpacePhotos, setShowSpacePhotos] = useState(false);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [spacePhotoIndex, setSpacePhotoIndex] = useState(0);
   const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -367,6 +371,29 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
+
+  const handleViewPhotos = async () => {
+    if (spacePhotos.length > 0) {
+      setShowSpacePhotos(true);
+      setSpacePhotoIndex(0);
+      return;
+    }
+    setLoadingPhotos(true);
+    try {
+      const res = await fetch(`/api/portfolio-photos/by-space/${space.id}`);
+      if (res.ok) {
+        const photos = await res.json();
+        setSpacePhotos(photos);
+        if (photos.length > 0) {
+          setShowSpacePhotos(true);
+          setSpacePhotoIndex(0);
+        } else {
+          toast({ title: "No photos yet", description: "No portfolio photos have been linked to this space yet." });
+        }
+      }
+    } catch {}
+    setLoadingPhotos(false);
+  };
 
   const handleBookClick = () => {
     if (!isAuthenticated) {
@@ -508,6 +535,64 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
             spaceName={space.name}
             onClose={() => setShowCarousel(false)}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSpacePhotos && spacePhotos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] bg-black/90 flex flex-col"
+            onClick={() => setShowSpacePhotos(false)}
+          >
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
+              <div>
+                <p className="text-white font-serif text-lg">{space.name}</p>
+                <p className="text-white/60 text-xs">{spacePhotos.length} photo{spacePhotos.length !== 1 ? "s" : ""} taken at this space</p>
+              </div>
+              <button onClick={() => setShowSpacePhotos(false)} className="text-white/60 hover:text-white p-2" data-testid="button-close-space-photos">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 flex items-center justify-center relative px-4" onClick={e => e.stopPropagation()}>
+              <img
+                src={spacePhotos[spacePhotoIndex].imageUrl}
+                alt={`Photo at ${space.name}`}
+                className="max-h-[75vh] max-w-full object-contain rounded-lg"
+              />
+              {spacePhotos.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setSpacePhotoIndex(i => (i - 1 + spacePhotos.length) % spacePhotos.length)}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+                    data-testid="button-prev-space-photo"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setSpacePhotoIndex(i => (i + 1) % spacePhotos.length)}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+                    data-testid="button-next-space-photo"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
+            {spacePhotos.length > 1 && (
+              <div className="flex justify-center gap-1.5 pb-4 pt-2" onClick={e => e.stopPropagation()}>
+                {spacePhotos.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSpacePhotoIndex(i)}
+                    className={`w-2 h-2 rounded-full transition-all ${i === spacePhotoIndex ? "bg-white scale-125" : "bg-white/40"}`}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -659,6 +744,16 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
                     </div>
                   </div>
                 )}
+
+                <button
+                  onClick={handleViewPhotos}
+                  disabled={loadingPhotos}
+                  className="inline-flex items-center gap-2 text-sm bg-stone-100 text-stone-700 px-4 py-2 rounded-full hover:bg-stone-200 transition-colors font-medium"
+                  data-testid={`button-view-photos-${space.id}`}
+                >
+                  {loadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                  View Photos Taken Here
+                </button>
 
                 {showAuthPrompt && !isAuthenticated ? (
                   <div className="bg-gradient-to-br from-stone-50 to-amber-50/30 rounded-lg p-5 mt-2 space-y-4 border border-stone-200/60" data-testid={`auth-prompt-${space.id}`}>

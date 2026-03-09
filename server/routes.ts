@@ -288,6 +288,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/portfolio-photos/by-space/:spaceId", async (req, res) => {
+    try {
+      const photos = await storage.getPortfolioPhotosBySpace(req.params.spaceId);
+      res.json(photos);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch photos for space" });
+    }
+  });
+
   app.post("/api/admin/portfolio/upload", isAdmin, upload.single("file"), async (req: any, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
@@ -327,12 +336,13 @@ export async function registerRoutes(
 
   app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
     try {
-      const { environments, brandMessages, emotionalImpacts, colorPalette } = req.body;
+      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId } = req.body;
       const photo = await storage.updatePortfolioPhoto(req.params.id, {
         environments,
         brandMessages,
         emotionalImpacts,
         colorPalette,
+        locationSpaceId: locationSpaceId || null,
       });
       res.json(photo);
     } catch (err: any) {

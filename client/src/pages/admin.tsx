@@ -2122,6 +2122,7 @@ interface PortfolioPhoto {
   brandMessages: string[];
   emotionalImpacts: string[];
   colorPalette: Array<{ hex: string; keyword: string }>;
+  locationSpaceId: string | null;
   createdAt: string;
 }
 
@@ -2136,10 +2137,12 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     brandMessages: string[];
     emotionalImpacts: string[];
     colorPalette: Array<{ hex: string; keyword: string }>;
-  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [] });
+    locationSpaceId: string | null;
+  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null });
   const [newColorHex, setNewColorHex] = useState("#8B7355");
   const [newColorKeyword, setNewColorKeyword] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [availableSpaces, setAvailableSpaces] = useState<Array<{ id: string; name: string; neighborhood: string | null }>>([]);
 
   const adminFetch = useCallback(async (url: string, opts: RequestInit = {}) => {
     return fetch(url, { ...opts, headers: { ...opts.headers as any, Authorization: `Bearer ${token}` } });
@@ -2154,7 +2157,10 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadPhotos(); }, [loadPhotos]);
+  useEffect(() => {
+    loadPhotos();
+    fetch("/api/spaces").then(r => r.ok ? r.json() : []).then(setAvailableSpaces).catch(() => {});
+  }, [loadPhotos]);
 
   const handleUpload = async (files: FileList) => {
     setUploading(true);
@@ -2196,6 +2202,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       brandMessages: photo.brandMessages || [],
       emotionalImpacts: photo.emotionalImpacts || [],
       colorPalette: photo.colorPalette || [],
+      locationSpaceId: photo.locationSpaceId || null,
     });
   };
 
@@ -2324,8 +2331,12 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                     </Button>
                   </div>
                 </div>
-                {(photo.environments?.length > 0 || photo.brandMessages?.length > 0 || photo.emotionalImpacts?.length > 0) && (
+                {(photo.environments?.length > 0 || photo.brandMessages?.length > 0 || photo.emotionalImpacts?.length > 0 || photo.locationSpaceId) && (
                   <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                    {photo.locationSpaceId && (() => {
+                      const sp = availableSpaces.find((s: any) => s.id === photo.locationSpaceId);
+                      return sp ? <span className="bg-blue-100/90 text-blue-700 text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{sp.name}</span> : null;
+                    })()}
                     {photo.environments?.slice(0, 2).map(e => (
                       <span key={e} className="bg-white/90 text-[10px] px-1.5 py-0.5 rounded font-medium">{envLabels[e] || e}</span>
                     ))}
@@ -2413,6 +2424,22 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Location (Space)</Label>
+                  <p className="text-xs text-gray-400 mb-2">Link this photo to a space where it was taken</p>
+                  <select
+                    value={tagForm.locationSpaceId || ""}
+                    onChange={e => setTagForm(prev => ({ ...prev, locationSpaceId: e.target.value || null }))}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-400"
+                    data-testid="select-location-space"
+                  >
+                    <option value="">No space linked</option>
+                    {availableSpaces.map((s: any) => (
+                      <option key={s.id} value={s.id}>{s.name}{s.neighborhood ? ` — ${s.neighborhood}` : ""}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
