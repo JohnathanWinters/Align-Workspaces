@@ -59,7 +59,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden bg-stone-900">
+    <section ref={sectionRef} className="relative h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-stone-900">
       <motion.div
         className="absolute inset-0 bg-cover"
         style={{
@@ -123,7 +123,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       </nav>
 
       <div className="flex-1 flex flex-col items-center justify-end px-6 pb-6 sm:pb-20 relative z-10">
-        <div className="flex-1 min-h-[43vh] sm:min-h-0" />
+        <div className="flex-1 min-h-[38dvh] sm:min-h-0" />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
