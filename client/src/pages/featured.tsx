@@ -682,25 +682,15 @@ function FeaturedListingPage() {
               <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
                 Every great community is built on the people in it. Help us tell their story.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button
-                  size="lg"
-                  className="bg-[#c4956a] hover:bg-[#b8895e] text-white rounded-full px-8 shadow-lg shadow-amber-900/20"
-                  onClick={() => setNominationOpen(true)}
-                  data-testid="button-nominate-someone"
-                >
-                  <Heart className="w-4 h-4 mr-2" />
-                  Nominate Someone Inspiring
-                </Button>
-                <button
-                  onClick={() => setShareStoryOpen(true)}
-                  className="text-white/50 hover:text-white/80 text-sm transition-colors cursor-pointer flex items-center gap-1.5"
-                  data-testid="button-share-your-story"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Share your own story <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              <Button
+                size="lg"
+                className="bg-[#c4956a] hover:bg-[#b8895e] text-white rounded-full px-8 shadow-lg shadow-amber-900/20"
+                onClick={() => setNominationOpen(true)}
+                data-testid="button-nominate-someone"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Nominate Someone for a Story & Portrait Feature
+              </Button>
             </div>
           </div>
         </section>
