@@ -1655,7 +1655,7 @@ function normalizeSocialLinksAdmin(links: any): Array<{ platform: string; url: s
 }
 
 const FEATURED_CATEGORIES = [
-  "Therapists", "Chefs", "Personal Trainers",
+  "Therapists", "Counselors", "Chefs", "Personal Trainers",
   "Lawyers", "Real Estate Agents",
   "Artists", "Barbers", "Designers", "Entrepreneurs",
 ];

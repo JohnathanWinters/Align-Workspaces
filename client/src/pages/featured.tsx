@@ -75,7 +75,7 @@ function getCropStyle(crop: { x: number; y: number; zoom?: number } | null | und
   };
 }
 
-const CATEGORY_ORDER = ["Therapists", "Chefs", "Personal Trainers"];
+const CATEGORY_ORDER = ["Therapists", "Counselors", "Chefs", "Personal Trainers"];
 
 function FeaturedNav() {
   const [menuOpen, setMenuOpen] = useState(false);
