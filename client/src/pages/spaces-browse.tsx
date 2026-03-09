@@ -557,19 +557,17 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
                   return (
                     <div data-testid={`palette-${space.id}`}>
                       <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-2">Color Palette</p>
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-3">
                         {palette.map((c, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setActiveColor(activeColor === i ? null : i)}
-                            className={`group relative w-10 h-10 rounded-full border-2 transition-all duration-200 ${activeColor === i ? "border-[#c4956a] scale-110 shadow-md" : "border-stone-200 hover:border-stone-300 hover:scale-105"}`}
-                            style={{ backgroundColor: c.hex }}
-                            data-testid={`palette-color-${space.id}-${i}`}
-                          >
-                            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] text-foreground/40 font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                              {c.name}
-                            </span>
-                          </button>
+                          <div key={i} className="flex flex-col items-center gap-1.5">
+                            <button
+                              onClick={() => setActiveColor(activeColor === i ? null : i)}
+                              className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${activeColor === i ? "border-[#c4956a] scale-110 shadow-md" : "border-stone-200 hover:border-stone-300 hover:scale-105"}`}
+                              style={{ backgroundColor: c.hex }}
+                              data-testid={`palette-color-${space.id}-${i}`}
+                            />
+                            <span className="text-[9px] text-foreground/40 font-medium">{c.name}</span>
+                          </div>
                         ))}
                       </div>
                       <AnimatePresence mode="wait">
