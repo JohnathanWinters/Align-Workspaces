@@ -215,8 +215,9 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
         <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground leading-tight mb-2 group-hover:text-foreground/80 transition-colors" data-testid={`text-name-${pro.slug}`}>
           {pro.name}
         </h3>
-        <p className="text-sm text-foreground/60 leading-relaxed line-clamp-2 italic">
+        <p className="text-sm text-foreground/60 leading-relaxed line-clamp-2 italic relative">
           "{pro.headline}"
+          <span className="absolute bottom-0 right-0 w-16 h-5 bg-gradient-to-l from-background to-transparent pointer-events-none" />
         </p>
       </div>
     </motion.article>
@@ -794,7 +795,7 @@ function ProfilePage({ slug }: { slug: string }) {
     <div className="min-h-screen bg-background">
       <FeaturedNav />
 
-      <section className="relative w-full h-[55vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
+      <section className="relative w-full max-w-[2000px] mx-auto h-[55vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
         {pro.portraitImageUrl ? (
           <img
             src={pro.portraitImageUrl}
@@ -805,64 +806,65 @@ function ProfilePage({ slug }: { slug: string }) {
         ) : (
           <Initials name={pro.name} />
         )}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 via-40% to-transparent" />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
             Sample
           </div>
         ) : null}
+
+        <div className="absolute bottom-0 left-0 right-0 z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-3xl mx-auto px-6 pb-10 sm:pb-14"
+          >
+            <Link href="/featured">
+              <button className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors mb-5 group" data-testid="link-back-featured">
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                All Stories
+              </button>
+            </Link>
+
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50 mb-2">{pro.profession}</p>
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-white" data-testid="text-profile-name">
+              {pro.name}
+            </h1>
+            <p className="text-white/60 text-sm flex items-center gap-1.5 mb-6">
+              <MapPin className="w-3.5 h-3.5" />
+              {pro.location}
+            </p>
+
+            <div className="flex items-center gap-3">
+              {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
+                const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
+                if (!Icon || !url) return null;
+                return (
+                  <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white">
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              })}
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: pro.name, text: shareText, url: shareUrl });
+                  } else {
+                    navigator.clipboard.writeText(shareUrl);
+                  }
+                }}
+                className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+                data-testid="button-share"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        </div>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 -mt-20 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <Link href="/featured">
-            <button className="inline-flex items-center gap-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors mb-6 group" data-testid="link-back-featured">
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-              All Stories
-            </button>
-          </Link>
-
-          <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground mb-2">{pro.profession}</p>
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3" data-testid="text-profile-name">
-            {pro.name}
-          </h1>
-          <p className="text-muted-foreground text-sm flex items-center gap-1.5 mb-6">
-            <MapPin className="w-3.5 h-3.5" />
-            {pro.location}
-          </p>
-
-          <div className="flex items-center gap-3 mb-10">
-            {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
-              const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
-              if (!Icon || !url) return null;
-              return (
-                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-muted/60 hover:bg-muted transition-colors">
-                  <Icon className="w-4 h-4" />
-                </a>
-              );
-            })}
-            <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: pro.name, text: shareText, url: shareUrl });
-                } else {
-                  navigator.clipboard.writeText(shareUrl);
-                }
-              }}
-              className="p-2.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
-              data-testid="button-share"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-        </motion.div>
-      </section>
-
-      <section className="max-w-3xl mx-auto px-6 pb-8" ref={storyRef}>
+      <section className="max-w-3xl mx-auto px-6 pt-12 sm:pt-16 pb-8" ref={storyRef}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
