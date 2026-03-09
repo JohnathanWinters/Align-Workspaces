@@ -183,29 +183,29 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
           </div>
         </div>
 
-        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(28,25,23,0.4) 75%, rgba(28,25,23,1) 100%)' }} />
+        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250,248,244,0.5) 82%, rgba(250,248,244,1) 100%)' }} />
       </div>
 
-      <div className="sm:hidden bg-stone-900 rounded-b-lg px-5 pt-5 pb-6 -mt-px">
+      <div className="sm:hidden mx-4 -mt-6 relative z-10 bg-white/80 backdrop-blur-sm border border-stone-200/60 rounded-lg px-5 pt-5 pb-5 shadow-sm border-l-[3px] border-l-[#c4956a]">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-2 flex items-center gap-1.5">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/40 mb-2 flex items-center gap-1.5">
             <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
             Featured Story
           </p>
-          <h2 className="font-serif text-3xl text-white leading-[1.1] mb-2" data-testid="text-potw-name-mobile">
+          <h2 className="font-serif text-3xl text-foreground leading-[1.1] mb-2" data-testid="text-potw-name-mobile">
             {pro.name}
           </h2>
-          <p className="text-white/50 text-sm mb-3">
+          <p className="text-foreground/50 text-sm mb-3">
             {pro.profession} · {pro.location}
           </p>
-          <p className="text-white/70 text-sm max-w-xl leading-relaxed mb-4 font-light italic">
+          <p className="text-foreground/70 text-sm max-w-xl leading-relaxed mb-4 font-light italic">
             "{pro.headline}"
           </p>
-          <span className="inline-flex items-center gap-2 text-xs text-white/50 group-hover:text-white group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
+          <span className="inline-flex items-center gap-2 text-xs text-[#c4956a] group-hover:text-[#b8895e] group-hover:gap-3 transition-all duration-300 uppercase tracking-widest font-medium">
             Read Their Story <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </motion.div>
@@ -929,8 +929,7 @@ function ProfilePage({ slug }: { slug: string }) {
             <Initials name={pro.name} />
           )}
         </div>
-        <div className="hidden sm:block absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 80%, rgba(250, 248, 244, 1) 100%)' }} />
-        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(28,25,23,0.4) 75%, rgba(28,25,23,1) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 80%, rgba(250, 248, 244, 1) 100%)' }} />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
             Sample
@@ -947,17 +946,17 @@ function ProfilePage({ slug }: { slug: string }) {
         </div>
       </section>
 
-      <div className="sm:hidden bg-stone-900 px-5 pt-5 pb-6 -mt-px">
+      <div className="sm:hidden mx-4 -mt-6 relative z-10 bg-white/80 backdrop-blur-sm border border-stone-200/60 rounded-lg px-5 pt-5 pb-5 shadow-sm border-l-[3px] border-l-[#c4956a]">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <p className="text-xs uppercase tracking-[0.15em] text-white/40 mb-2">{pro.profession}</p>
-          <h1 className="font-serif text-3xl font-semibold leading-[1.05] mb-3 text-white" data-testid="text-profile-name-mobile">
+          <p className="text-xs uppercase tracking-[0.15em] text-foreground/40 mb-2">{pro.profession}</p>
+          <h1 className="font-serif text-3xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name-mobile">
             {pro.name}
           </h1>
-          <p className="text-white/50 text-sm flex items-center gap-1.5 mb-5">
+          <p className="text-foreground/50 text-sm flex items-center gap-1.5 mb-5">
             <MapPin className="w-3.5 h-3.5" />
             {pro.location}
           </p>
@@ -966,7 +965,7 @@ function ProfilePage({ slug }: { slug: string }) {
               const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
               if (!Icon || !url) return null;
               return (
-                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white">
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground">
                   <Icon className="w-4 h-4" />
                 </a>
               );
@@ -979,7 +978,7 @@ function ProfilePage({ slug }: { slug: string }) {
                   navigator.clipboard.writeText(shareUrl);
                 }
               }}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+              className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground"
               data-testid="button-share"
             >
               <Share2 className="w-4 h-4" />

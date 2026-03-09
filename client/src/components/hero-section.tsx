@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { User } from "lucide-react";
 import { motion, useSpring, useTransform } from "framer-motion";
 import { Link } from "wouter";
@@ -9,23 +9,18 @@ interface HeroSectionProps {
 
 export function HeroSection({ onStart }: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const scrollOffset = useSpring(0, { stiffness: 300, damping: 30 });
+  const scrollOffset = useSpring(0, { stiffness: 400, damping: 35 });
   const y = useTransform(scrollOffset, (v) => v);
-  const scale = useTransform(scrollOffset, [-25, 0, 25], [0.99, 1, 0.99]);
-  const [edgeGlow, setEdgeGlow] = useState<"top" | "bottom" | null>(null);
+  const scale = useTransform(scrollOffset, [-10, 0, 10], [0.997, 1, 0.997]);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
-    const delta = Math.max(-25, Math.min(25, e.deltaY * 0.2));
+    const delta = Math.max(-10, Math.min(10, e.deltaY * 0.1));
     scrollOffset.set(delta);
-    setEdgeGlow(delta < 0 ? "top" : "bottom");
 
     setTimeout(() => {
       scrollOffset.set(0);
-    }, 150);
-    setTimeout(() => {
-      setEdgeGlow(null);
-    }, 400);
+    }, 120);
   }, [scrollOffset]);
 
   const touchStartY = useRef(0);
@@ -37,14 +32,12 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   const handleTouchMove = useCallback((e: TouchEvent) => {
     e.preventDefault();
     const delta = (touchStartY.current - e.touches[0].clientY) * 0.5;
-    const clamped = Math.max(-25, Math.min(25, delta * 0.5));
+    const clamped = Math.max(-10, Math.min(10, delta * 0.3));
     scrollOffset.set(clamped);
-    setEdgeGlow(clamped < 0 ? "top" : "bottom");
   }, [scrollOffset]);
 
   const handleTouchEnd = useCallback(() => {
     scrollOffset.set(0);
-    setTimeout(() => setEdgeGlow(null), 400);
   }, [scrollOffset]);
 
   useEffect(() => {
@@ -77,15 +70,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
-
-      <div
-        className="absolute top-0 left-0 right-0 h-40 z-30 pointer-events-none transition-opacity duration-300"
-        style={{ opacity: edgeGlow === "top" ? 1 : 0, background: 'linear-gradient(to bottom, rgb(28,25,23) 0%, rgba(28,25,23,0.6) 40%, transparent 100%)' }}
-      />
-      <div
-        className="absolute bottom-0 left-0 right-0 h-40 z-30 pointer-events-none transition-opacity duration-300"
-        style={{ opacity: edgeGlow === "bottom" ? 1 : 0, background: 'linear-gradient(to top, rgb(28,25,23) 0%, rgba(28,25,23,0.6) 40%, transparent 100%)' }}
-      />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-center">
