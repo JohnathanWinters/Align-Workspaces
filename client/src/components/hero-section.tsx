@@ -64,7 +64,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: "url(/images/hero-bg-bright.webp)",
-          backgroundPosition: "43% 30%",
+          backgroundPosition: "43% 20%",
           filter: "brightness(0.85) contrast(1.05)",
           y,
           scale,
@@ -83,9 +83,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               data-testid="button-hero-menu"
-              className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
+              className="flex items-center gap-2.5 text-sm tracking-widest uppercase text-white font-medium px-5 py-2.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 hover:bg-white/25 transition-all duration-300"
             >
-              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {menuOpen ? <X className="w-4.5 h-4.5" /> : <Menu className="w-4.5 h-4.5" />}
               Menu
             </button>
             <AnimatePresence>
