@@ -737,7 +737,7 @@ export default function SpacesBrowsePage() {
       </div>
 
       <div className="flex-1 flex overflow-hidden relative">
-        <div className={`${mobileView === "list" ? "flex" : "hidden"} lg:flex flex-col w-full lg:w-[55%] xl:w-[60%] overflow-y-auto`}>
+        <div className={`${mobileView === "list" ? "flex" : "hidden"} lg:flex flex-col w-full lg:w-[60%] xl:w-[65%] overflow-y-auto`}>
           <div className="p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-foreground/50">
@@ -764,7 +764,7 @@ export default function SpacesBrowsePage() {
                 <p className="text-foreground/50 text-sm">No spaces found for this category yet.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filtered.map((space, i) => (
                   <div
                     key={space.id}
@@ -802,7 +802,7 @@ export default function SpacesBrowsePage() {
           </div>
         </div>
 
-        <div className={`${mobileView === "map" ? "flex" : "hidden"} lg:flex flex-col w-full lg:w-[45%] xl:w-[40%] border-l border-stone-200/60`}>
+        <div className={`${mobileView === "map" ? "flex" : "hidden"} lg:flex flex-col w-full lg:w-[40%] xl:w-[35%] border-l border-stone-200/60`}>
           <div className="flex-1 relative">
             {!isLoading && (
               <SpacesMap
