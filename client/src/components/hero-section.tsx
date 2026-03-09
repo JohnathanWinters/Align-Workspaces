@@ -1,5 +1,6 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import { User } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useSpring, useTransform } from "framer-motion";
 import { Link } from "wouter";
 
 interface HeroSectionProps {
@@ -7,17 +8,84 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onStart }: HeroSectionProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const scrollOffset = useSpring(0, { stiffness: 300, damping: 30 });
+  const y = useTransform(scrollOffset, (v) => v);
+  const scale = useTransform(scrollOffset, [-60, 0, 60], [0.98, 1, 0.98]);
+  const [edgeGlow, setEdgeGlow] = useState<"top" | "bottom" | null>(null);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = Math.max(-60, Math.min(60, e.deltaY * 0.4));
+    scrollOffset.set(delta);
+    setEdgeGlow(delta < 0 ? "top" : "bottom");
+
+    setTimeout(() => {
+      scrollOffset.set(0);
+    }, 150);
+    setTimeout(() => {
+      setEdgeGlow(null);
+    }, 400);
+  }, [scrollOffset]);
+
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    e.preventDefault();
+    const delta = (touchStartY.current - e.touches[0].clientY) * 0.5;
+    const clamped = Math.max(-60, Math.min(60, delta));
+    scrollOffset.set(clamped);
+    setEdgeGlow(clamped < 0 ? "top" : "bottom");
+  }, [scrollOffset]);
+
+  const handleTouchEnd = useCallback(() => {
+    scrollOffset.set(0);
+    setTimeout(() => setEdgeGlow(null), 400);
+  }, [scrollOffset]);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
+
   return (
-    <section className="relative min-h-screen flex flex-col overflow-hidden">
-      <div
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col overflow-hidden">
+      <motion.div
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: "url(/images/hero-bg-bright.webp)",
           backgroundPosition: "43% center",
           filter: "brightness(0.85) contrast(1.05)",
+          y,
+          scale,
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
+
+      <div
+        className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-white/20 to-transparent z-30 pointer-events-none transition-opacity duration-300"
+        style={{ opacity: edgeGlow === "top" ? 1 : 0 }}
+      />
+      <div
+        className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/20 to-transparent z-30 pointer-events-none transition-opacity duration-300"
+        style={{ opacity: edgeGlow === "bottom" ? 1 : 0 }}
+      />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-center">
@@ -45,6 +113,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, delay: 0.2 }}
           className="text-center max-w-2xl mx-auto"
+          style={{ y }}
         >
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Portrait Is
@@ -87,24 +156,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </motion.div>
         </motion.div>
       </div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 1.8 }}
-        className="absolute bottom-6 left-0 right-0 z-10 flex justify-center"
-      >
-        <div className="flex flex-col items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-white/30">No scroll</span>
-          <div className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center pt-1.5">
-            <motion.div
-              className="w-1 h-1 rounded-full bg-white/40"
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
-        </div>
-      </motion.div>
     </section>
   );
 }
