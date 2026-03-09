@@ -20,6 +20,7 @@ import {
   Image,
   Save,
   X,
+  Pencil,
   Upload,
   FolderPlus,
   Folder,
@@ -1669,11 +1670,15 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   const { toast } = useToast();
   const [spaces, setSpaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   const loadSpaces = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/spaces/pending", {
+      const res = await fetch("/api/admin/spaces/all", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -1703,6 +1708,70 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     }
   };
 
+  const startEdit = (space: any) => {
+    setEditingId(space.id);
+    setEditForm({
+      name: space.name || "",
+      type: space.type || "",
+      description: space.description || "",
+      shortDescription: space.shortDescription || "",
+      address: space.address || "",
+      neighborhood: space.neighborhood || "",
+      pricePerHour: space.pricePerHour || 0,
+      pricePerDay: space.pricePerDay || 0,
+      capacity: space.capacity || 0,
+      targetProfession: space.targetProfession || "",
+      availableHours: space.availableHours || "",
+      hostName: space.hostName || "",
+      contactEmail: space.contactEmail || "",
+      amenities: (space.amenities || []).join(", "),
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    setSaving(true);
+    try {
+      const payload: any = {
+        ...editForm,
+        pricePerHour: parseInt(editForm.pricePerHour) || 0,
+        pricePerDay: parseInt(editForm.pricePerDay) || null,
+        capacity: parseInt(editForm.capacity) || null,
+        amenities: editForm.amenities.split(",").map((a: string) => a.trim()).filter(Boolean),
+      };
+      const res = await fetch(`/api/admin/spaces/${editingId}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        toast({ title: "Space updated successfully" });
+        setEditingId(null);
+        loadSpaces();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const filtered = filter === "all" ? spaces : spaces.filter(s => s.approvalStatus === filter);
+  const counts = {
+    all: spaces.length,
+    pending: spaces.filter(s => s.approvalStatus === "pending").length,
+    approved: spaces.filter(s => s.approvalStatus === "approved").length,
+    rejected: spaces.filter(s => s.approvalStatus === "rejected").length,
+  };
+
+  const statusBadge = (status: string) => {
+    if (status === "approved") return <Badge className="bg-emerald-50 text-emerald-700">Approved</Badge>;
+    if (status === "rejected") return <Badge className="bg-red-50 text-red-700">Rejected</Badge>;
+    return <Badge className="bg-amber-50 text-amber-700">Pending</Badge>;
+  };
+
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
@@ -1710,57 +1779,166 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
           <button onClick={onBack} className="text-gray-500 hover:text-gray-900" data-testid="button-back-spaces">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-serif text-lg text-gray-900">Pending Space Listings</h1>
+          <h1 className="font-serif text-lg text-gray-900">Manage Spaces</h1>
         </div>
       </header>
       <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {(["all", "pending", "approved", "rejected"] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filter === f ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              data-testid={`button-filter-spaces-${f}`}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
-        ) : spaces.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-sm">No pending space listings to review.</p>
+            <p className="text-gray-500 text-sm">No spaces found.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {spaces.map((space) => (
+            {filtered.map((space) => (
               <Card key={space.id} className="bg-white" data-testid={`admin-space-${space.id}`}>
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{space.name}</h3>
-                      <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {space.address}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Type: {space.type} | Host: {space.hostName}</p>
+                  {editingId === space.id ? (
+                    <div className="space-y-4" data-testid={`edit-form-space-${space.id}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-medium text-gray-900">Editing Space</h3>
+                        <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                          <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-name" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                          <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white" data-testid="select-edit-type">
+                            <option value="office">Office</option>
+                            <option value="gym">Training Studio</option>
+                            <option value="meeting">Meeting Room</option>
+                            <option value="art_studio">Art Studio</option>
+                            <option value="photo_studio">Photo/Video Studio</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
+                          <input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-address" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Neighborhood</label>
+                          <input value={editForm.neighborhood} onChange={e => setEditForm({ ...editForm, neighborhood: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-neighborhood" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Price/Hour ($)</label>
+                          <input type="number" value={editForm.pricePerHour} onChange={e => setEditForm({ ...editForm, pricePerHour: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-price-hour" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Price/Day ($)</label>
+                          <input type="number" value={editForm.pricePerDay} onChange={e => setEditForm({ ...editForm, pricePerDay: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-price-day" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Capacity</label>
+                          <input type="number" value={editForm.capacity} onChange={e => setEditForm({ ...editForm, capacity: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-capacity" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Host Name</label>
+                          <input value={editForm.hostName} onChange={e => setEditForm({ ...editForm, hostName: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-host" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Target Profession</label>
+                          <input value={editForm.targetProfession} onChange={e => setEditForm({ ...editForm, targetProfession: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-profession" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Available Hours</label>
+                          <input value={editForm.availableHours} onChange={e => setEditForm({ ...editForm, availableHours: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-hours" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Contact Email</label>
+                          <input value={editForm.contactEmail} onChange={e => setEditForm({ ...editForm, contactEmail: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-email" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Short Description</label>
+                        <input value={editForm.shortDescription} onChange={e => setEditForm({ ...editForm, shortDescription: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-short-desc" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                        <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm min-h-[80px]" data-testid="input-edit-description" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Amenities (comma-separated)</label>
+                        <input value={editForm.amenities} onChange={e => setEditForm({ ...editForm, amenities: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-amenities" />
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button size="sm" onClick={saveEdit} disabled={saving} className="bg-gray-900 text-white hover:bg-gray-800" data-testid="button-save-space">
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                          Save Changes
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingId(null)} data-testid="button-cancel-edit">
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                    <Badge className="bg-amber-50 text-amber-700">Pending</Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{space.description}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAction(space.id, "approve")}
-                      className="bg-emerald-600 text-white hover:bg-emerald-700"
-                      data-testid={`button-approve-space-${space.id}`}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAction(space.id, "reject")}
-                      className="border-red-200 text-red-600 hover:bg-red-50"
-                      data-testid={`button-reject-space-${space.id}`}
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Reject
-                    </Button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900">{space.name}</h3>
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate">{space.address}</span>
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Type: {space.type} | ${space.pricePerHour}/hr | Host: {space.hostName || "N/A"}
+                            {space.isSample ? " | Sample" : ""}
+                          </p>
+                        </div>
+                        {statusBadge(space.approvalStatus)}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{space.description}</p>
+                      {space.amenities?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {space.amenities.slice(0, 5).map((a: string, i: number) => (
+                            <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{a}</span>
+                          ))}
+                          {space.amenities.length > 5 && (
+                            <span className="text-[10px] text-gray-400">+{space.amenities.length - 5} more</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex gap-2 flex-wrap">
+                        <Button size="sm" variant="outline" onClick={() => startEdit(space)} className="border-gray-200 text-gray-700 hover:bg-gray-50" data-testid={`button-edit-space-${space.id}`}>
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
+                          Edit
+                        </Button>
+                        {space.approvalStatus !== "approved" && (
+                          <Button size="sm" onClick={() => handleAction(space.id, "approve")} className="bg-emerald-600 text-white hover:bg-emerald-700" data-testid={`button-approve-space-${space.id}`}>
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </Button>
+                        )}
+                        {space.approvalStatus !== "rejected" && (
+                          <Button size="sm" variant="outline" onClick={() => handleAction(space.id, "reject")} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-reject-space-${space.id}`}>
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             ))}

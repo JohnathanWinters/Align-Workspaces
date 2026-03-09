@@ -1947,6 +1947,24 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/spaces/all", isAdmin, async (_req, res) => {
+    try {
+      const allSpaces = await storage.getAllSpaces();
+      res.json(allSpaces);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/spaces/:id", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.updateSpace(req.params.id, req.body);
+      res.json(space);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/admin/spaces/pending", isAdmin, async (_req, res) => {
     try {
       const pending = await storage.getPendingSpaces();

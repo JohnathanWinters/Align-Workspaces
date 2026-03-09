@@ -82,6 +82,7 @@ export interface IStorage {
   getSpacesByUser(userId: string): Promise<Space[]>;
   getPendingSpaces(): Promise<Space[]>;
   createSpace(data: InsertSpace): Promise<Space>;
+  getAllSpaces(): Promise<Space[]>;
   updateSpace(id: string, data: Partial<InsertSpace>): Promise<Space>;
   deleteSpace(id: string): Promise<void>;
   createSpaceBooking(data: InsertSpaceBooking): Promise<SpaceBooking>;
@@ -645,6 +646,10 @@ export class DatabaseStorage implements IStorage {
   async createSpace(data: InsertSpace): Promise<Space> {
     const [result] = await db.insert(spaces).values(data).returning();
     return result;
+  }
+
+  async getAllSpaces(): Promise<Space[]> {
+    return db.select().from(spaces).orderBy(desc(spaces.createdAt));
   }
 
   async updateSpace(id: string, data: Partial<InsertSpace>): Promise<Space> {
