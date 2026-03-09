@@ -11,12 +11,12 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const scrollOffset = useSpring(0, { stiffness: 300, damping: 30 });
   const y = useTransform(scrollOffset, (v) => v);
-  const scale = useTransform(scrollOffset, [-60, 0, 60], [0.98, 1, 0.98]);
+  const scale = useTransform(scrollOffset, [-25, 0, 25], [0.99, 1, 0.99]);
   const [edgeGlow, setEdgeGlow] = useState<"top" | "bottom" | null>(null);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
-    const delta = Math.max(-60, Math.min(60, e.deltaY * 0.4));
+    const delta = Math.max(-25, Math.min(25, e.deltaY * 0.2));
     scrollOffset.set(delta);
     setEdgeGlow(delta < 0 ? "top" : "bottom");
 
@@ -37,7 +37,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
   const handleTouchMove = useCallback((e: TouchEvent) => {
     e.preventDefault();
     const delta = (touchStartY.current - e.touches[0].clientY) * 0.5;
-    const clamped = Math.max(-60, Math.min(60, delta));
+    const clamped = Math.max(-25, Math.min(25, delta * 0.5));
     scrollOffset.set(clamped);
     setEdgeGlow(clamped < 0 ? "top" : "bottom");
   }, [scrollOffset]);
@@ -79,11 +79,11 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
 
       <div
-        className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-white/20 to-transparent z-30 pointer-events-none transition-opacity duration-300"
+        className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent z-30 pointer-events-none transition-opacity duration-300"
         style={{ opacity: edgeGlow === "top" ? 1 : 0 }}
       />
       <div
-        className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/20 to-transparent z-30 pointer-events-none transition-opacity duration-300"
+        className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent z-30 pointer-events-none transition-opacity duration-300"
         style={{ opacity: edgeGlow === "bottom" ? 1 : 0 }}
       />
 
