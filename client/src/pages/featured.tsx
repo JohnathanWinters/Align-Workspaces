@@ -130,7 +130,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
   return (
     <section
-      className="relative w-full min-h-[70vh] sm:min-h-[80vh] lg:min-h-[85vh] xl:aspect-[16/10] flex items-end cursor-pointer group"
+      className="relative w-full min-h-[50vh] sm:min-h-[55vh] lg:min-h-[60vh] flex items-end cursor-pointer group"
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid="card-professional-of-week"
     >
