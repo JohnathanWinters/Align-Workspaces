@@ -1621,6 +1621,7 @@ const defaultFeaturedForm = {
 };
 
 const SOCIAL_PLATFORMS = [
+  { value: "website", label: "Website" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "facebook", label: "Facebook" },
   { value: "instagram", label: "Instagram" },
