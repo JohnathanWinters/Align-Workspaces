@@ -227,7 +227,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid={`card-featured-${pro.slug}`}
     >
-      <div className="aspect-[3/4] relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300">
+      <div className="aspect-[3/4] relative overflow-hidden rounded-t-md sm:rounded-md sm:mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300">
         <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
           {pro.portraitImageUrl ? (
             <img
@@ -248,8 +248,9 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
           </div>
         ) : null}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(28,25,23,0.4) 82%, rgba(28,25,23,1) 100%)' }} />
       </div>
-      <div>
+      <div className="hidden sm:block">
         <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-1.5">{pro.profession}</p>
         <h3 className="font-serif text-xl sm:text-2xl font-semibold text-foreground leading-tight mb-2 group-hover:text-[#c4956a] transition-colors duration-300" data-testid={`text-name-${pro.slug}`}>
           {pro.name}
@@ -257,6 +258,15 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
         <p className="text-sm text-foreground/60 leading-relaxed line-clamp-2 italic relative">
           "{pro.headline}"
           <span className="absolute bottom-0 right-0 w-16 h-5 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+        </p>
+      </div>
+      <div className="sm:hidden bg-stone-900 rounded-b-md px-4 pt-3 pb-4 -mt-px shadow-md">
+        <p className="text-[11px] uppercase tracking-[0.15em] text-white/40 mb-1.5">{pro.profession}</p>
+        <h3 className="font-serif text-xl font-semibold text-white leading-tight mb-2 group-hover:text-[#c4956a] transition-colors duration-300" data-testid={`text-name-mobile-${pro.slug}`}>
+          {pro.name}
+        </h3>
+        <p className="text-sm text-white/60 leading-relaxed line-clamp-2 italic">
+          "{pro.headline}"
         </p>
       </div>
     </motion.article>
