@@ -147,11 +147,11 @@ function SpaceCard({ space }: { space: Space }) {
 
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-foreground/50 hover:text-foreground transition-colors flex items-center gap-1"
+          className="mt-2 w-full py-2.5 rounded-lg border border-stone-300 bg-white text-sm font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-400 active:bg-stone-100 transition-all flex items-center justify-center gap-1.5 shadow-sm"
           data-testid={`button-expand-space-${space.id}`}
         >
           {expanded ? "Show less" : "View details"}
-          <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} />
+          <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} />
         </button>
 
         <AnimatePresence>
