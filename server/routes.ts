@@ -1745,10 +1745,19 @@ export async function registerRoutes(
   app.get("/robots.txt", (_req, res) => {
     res.type("text/plain").send(`User-agent: *
 Allow: /
+Allow: /featured
+Allow: /featured/
+Allow: /portfolio
 Disallow: /admin
 Disallow: /portal
 Disallow: /employee
 Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
 
 User-agent: GPTBot
 Allow: /
@@ -1774,28 +1783,53 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: FacebookExternalHit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
 Sitemap: ${SITE_URL}/sitemap.xml
 `);
   });
 
   app.get("/sitemap.xml", async (_req, res) => {
     const includeSamples = process.env.NODE_ENV !== "production" ? true : false;
-    let featuredSlugs: string[] = [];
+    let featuredPros: { slug: string; name: string; profession: string }[] = [];
     try {
       const pros = await storage.getFeaturedProfessionals(includeSamples);
-      featuredSlugs = pros.map((p: any) => p.slug);
+      featuredPros = pros.map((p: any) => ({ slug: p.slug, name: p.name, profession: p.profession }));
     } catch {}
 
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
       { loc: "/portfolio", priority: "0.8", changefreq: "weekly" },
-      { loc: "/featured", priority: "0.8", changefreq: "weekly" },
+      { loc: "/featured", priority: "0.9", changefreq: "daily" },
     ];
 
     const today = new Date().toISOString().split("T")[0];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 `;
     for (const page of staticPages) {
       xml += `  <url>
@@ -1807,61 +1841,74 @@ Sitemap: ${SITE_URL}/sitemap.xml
 `;
     }
 
-    for (const slug of featuredSlugs) {
-      const encodedSlug = encodeURIComponent(slug).replace(/&/g, '&amp;').replace(/'/g, '&apos;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    for (const pro of featuredPros) {
+      const encodedSlug = encodeURIComponent(pro.slug).replace(/&/g, '&amp;').replace(/'/g, '&apos;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       xml += `  <url>
     <loc>${SITE_URL}/featured/${encodedSlug}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
 `;
     }
 
     xml += `</urlset>`;
+    res.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
     res.type("application/xml").send(xml);
   });
 
   app.get("/llms.txt", (_req, res) => {
-    res.type("text/plain").send(`# Align — Personal Branding Portrait Photographer in Miami
+    res.set("Cache-Control", "public, max-age=86400");
+    res.type("text/plain").send(`# Align — Portrait Photographer in Miami, Florida
 
-## About
-Align is a personal branding portrait photography studio based in Miami, Florida. We specialize in creating professional portraits and headshots for therapists, chefs, electricians, plumbers, personal trainers, realtors, and other small business professionals. Our mission is to help professionals look as trustworthy and competent as they are, so their portrait makes the right first impression before any conversation begins.
+> Design your portrait photoshoot online. A storytelling platform for Miami small business owners.
 
-## Services
-- Personal Branding Portraits: Custom portrait sessions designed around a client's brand identity, environment, and emotional tone.
-- Professional Headshots: High-quality headshots for websites, social media, and professional directories.
-- Small Business Photography: Branding photography packages for chefs, trainers, tradespeople, and service professionals.
+## What Is Align?
+Align is a portrait photographer based in Miami, Florida. What makes Align different is that clients design their photoshoot online before booking. Using an interactive 6-step configurator, you choose your environment, brand message, and emotional tone — then book your session. No guesswork, no generic shoots.
 
-## How It Works
-Clients use an interactive online configurator to design their photoshoot in 6 steps:
-1. Choose profession/industry
-2. Select an environment (office, kitchen, gym, urban, nature, restaurant, studio)
-3. Define a brand message (assured, confidence, approachable, bold, warmth)
+Align is also a storytelling platform for Miami's small business community. Through the Featured Professionals directory, local business owners share their stories, mission, and work with the Miami community in an editorial magazine-style format.
+
+## Who We Photograph
+Small business owners and professionals in Miami, Florida:
+- Therapists & Counselors
+- Chefs & Culinary Professionals
+- Personal Trainers & Fitness Coaches
+- Real Estate Agents & Realtors
+- Barbers & Hairstylists
+- Lawyers & Legal Professionals
+- Entrepreneurs & Startup Founders
+- Artists & Designers
+- Electricians, Plumbers, HVAC Technicians
+- Any small business professional in Miami
+
+## How to Design Your Portrait
+1. Select your profession/industry
+2. Choose an environment (office, kitchen, gym, urban, nature, restaurant, studio)
+3. Define your brand message (assured, confidence, approachable, bold, warmth)
 4. Pick an emotional impact (bright, cozy, cinematic, powerful)
-5. Review a personalized concept summary with clothing recommendations
-6. Book a session or request a collaboration
+5. Review your personalized concept with clothing recommendations
+6. Book your session with a 50% downpayment or request a collaboration
 
-## Pricing
-- Indoor sessions (office, kitchen, studio): Starting at $200
-- Outdoor sessions (urban, nature): Starting at $250
-- Premium environments (restaurant, gym): Starting at $300
-- Edit tokens available for individual photo retouching
+## Pricing (Miami Portrait Sessions)
+- Indoor (office, kitchen, studio): Starting at $200
+- Outdoor (urban, nature): Starting at $250
+- Premium (restaurant, gym): Starting at $300
 
-## Location
-Miami, Florida (serving the greater Miami-Dade area)
+## Featured Professionals — Miami Small Business Stories
+Align profiles Miami small business owners through portrait photography and editorial storytelling. Each featured professional gets a dedicated page with their portrait, story, profession, and social links. Anyone can nominate a Miami professional to be featured.
+
+## Service Area
+Miami, Florida — serving all of Miami-Dade County:
+Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Kendall, Homestead
 
 ## Contact
-Website: ${SITE_URL}
-Email: ArmandoRamirezRomero89@gmail.com
-
-## Featured Professionals
-Align showcases a community directory of featured professionals who have completed portrait sessions. Visit ${SITE_URL}/featured to see their profiles and portfolios.
+- Website: ${SITE_URL}
+- Email: ArmandoRamirezRomero89@gmail.com
 
 ## Key Pages
-- Home / Configurator: ${SITE_URL}/
+- Home / Design Your Portrait: ${SITE_URL}/
 - Portfolio: ${SITE_URL}/portfolio
-- Featured Professionals: ${SITE_URL}/featured
+- Featured Professionals (Miami Stories): ${SITE_URL}/featured
 `);
   });
 
@@ -1871,59 +1918,92 @@ Align showcases a community directory of featured professionals who have complet
     try {
       const pros = await storage.getFeaturedProfessionals(includeSamples);
       if (pros.length > 0) {
-        featuredSection = "\n## Featured Professionals Directory\n\n";
+        featuredSection = "\n## Featured Professionals — Miami Small Business Stories Directory\n\n";
+        featuredSection += "The following Miami small business owners have been featured on Align with portrait photography and editorial storytelling:\n\n";
         for (const p of pros) {
-          featuredSection += `### ${(p as any).name} — ${(p as any).profession}\n`;
+          featuredSection += `### ${(p as any).name} — ${(p as any).profession}`;
+          if ((p as any).location) featuredSection += ` (${(p as any).location})`;
+          featuredSection += `\n`;
+          if ((p as any).headline) featuredSection += `"${(p as any).headline}"\n`;
           featuredSection += `${(p as any).bio}\n`;
           featuredSection += `Profile: ${SITE_URL}/featured/${(p as any).slug}\n\n`;
         }
       }
     } catch {}
 
-    res.type("text/plain").send(`# Align — Personal Branding Portrait Photographer in Miami (Full Context)
+    res.set("Cache-Control", "public, max-age=86400");
+    res.type("text/plain").send(`# Align — Portrait Photographer in Miami, Florida (Full Context)
 
-## About
-Align is a personal branding portrait photography studio in Miami, Florida, helping professionals create portraits that make the right first impression. We work with therapists, counselors, chefs, culinary professionals, electricians, plumbers, HVAC technicians, personal trainers, fitness coaches, realtors, barbers, hairstylists, graphic designers, creative professionals, and other small business owners.
+> Design your portrait photoshoot online. A storytelling platform for Miami small business owners.
 
-## Service Details
+## What Is Align?
+Align is a portrait photographer based in Miami, Florida with two core functions:
 
-### Interactive Photoshoot Configurator
-Our website features a 6-step interactive tool that lets clients design their photoshoot concept:
-1. Profession selection (therapist, chef, trainer, tradesperson, creative, etc.)
-2. Environment (office, kitchen, gym, urban, nature, restaurant, studio)
-3. Brand message (assured, confidence, approachable, bold, warmth)
-4. Emotional impact (bright, cozy, cinematic, powerful)
-5. Concept review with AI-generated clothing recommendations based on selections
-6. Booking with 50% downpayment via Stripe or collaboration request
+1. **Portrait Photography Service**: Clients design their photoshoot online using a 6-step interactive configurator, then book their session. No generic shoots — every portrait is designed around the client's profession, brand, and personality.
 
-### Client Portal
+2. **Miami Small Business Storytelling Platform**: Through the Featured Professionals directory, Align profiles local small business owners with portrait photography and editorial storytelling, sharing their journey, mission, and work with the Miami community.
+
+## Who We Photograph
+Small business owners and professionals in Miami, Florida:
+- Therapists & Counselors
+- Chefs & Culinary Professionals
+- Personal Trainers & Fitness Coaches
+- Real Estate Agents & Realtors
+- Barbers & Hairstylists
+- Lawyers & Legal Professionals
+- Entrepreneurs & Startup Founders
+- Artists & Designers
+- Electricians, Plumbers, HVAC Technicians
+- Any small business professional in the Miami area
+
+## How to Design Your Portrait Online
+Align's website features a 6-step interactive configurator that guides you through designing your photoshoot:
+1. **Profession**: Select your industry (therapist, chef, trainer, tradesperson, creative, etc.)
+2. **Environment**: Choose where you want to be photographed (office, kitchen, gym, urban, nature, restaurant, studio)
+3. **Brand Message**: Define how you want to come across (assured, confident, approachable, bold, warm)
+4. **Emotional Impact**: Pick the mood of your photos (bright, cozy, cinematic, powerful)
+5. **Concept Review**: See a personalized concept summary with clothing recommendations tailored to your selections
+6. **Book**: Reserve your session with a 50% downpayment via Stripe, or request a collaboration
+
+The configurator updates a visual preview gallery in real time as you make selections.
+
+## Client Portal
 After booking, clients receive access to a private portal where they can:
 - View their finished photos in a side-by-side comparison gallery
 - Purchase edit tokens for additional retouching
 - Chat directly with their photographer
 - Download their final images
 
-### Pricing
+## Pricing (Miami Portrait Sessions)
 - Indoor environments (office, kitchen, studio): Starting at $200
 - Outdoor environments (urban, nature): Starting at $250
 - Premium environments (restaurant, gym): Starting at $300
-- Edit tokens: Available for individual photo retouching requests
+- Edit tokens available for individual photo retouching
 - 50% downpayment required at booking, remainder due at session
 
+## Featured Professionals Platform
+Align's Featured Professionals is more than a client gallery — it's a storytelling platform for Miami's small business community. Each featured professional receives:
+- A dedicated editorial-style profile page
+- Professional portrait photography
+- A written story about their work, mission, and impact
+- Links to their social media and business profiles
+- Exposure to the Align community and newsletter subscribers
+
+Anyone can nominate a Miami small business owner to be featured through the nomination form.
+
 ## Location & Service Area
-Based in Miami, Florida, serving all of Miami-Dade County and surrounding areas including:
-- Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Kendall, Homestead
+Based in Miami, Florida, serving all of Miami-Dade County and surrounding areas:
+Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Kendall, Homestead, and beyond.
 ${featuredSection}
 ## Contact Information
 - Website: ${SITE_URL}
 - Email: ArmandoRamirezRomero89@gmail.com
-- Hours: Monday-Sunday 8:00 AM - 8:00 PM
+- Hours: Monday–Sunday 8:00 AM – 8:00 PM
 
-## Technical Details
-- Built with React, Express, PostgreSQL
-- Mobile-first responsive design
-- Stripe-powered secure payments
-- Real-time push notifications
+## Key Pages
+- Home / Design Your Portrait: ${SITE_URL}/
+- Portfolio: ${SITE_URL}/portfolio
+- Featured Professionals (Miami Stories): ${SITE_URL}/featured
 `);
   });
 
