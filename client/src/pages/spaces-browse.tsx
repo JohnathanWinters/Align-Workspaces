@@ -20,6 +20,10 @@ import {
   Loader2,
   X,
   Images,
+  Menu,
+  User,
+  Star,
+  Camera,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -390,6 +394,7 @@ function SpaceCard({ space }: { space: Space }) {
 
 export default function SpacesBrowsePage() {
   const [activeType, setActiveType] = useState<string>("all");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { data: allSpaces = [], isLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -417,21 +422,60 @@ export default function SpacesBrowsePage() {
   return (
     <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-3 items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/spaces">
             <button className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Align Spaces</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
           </Link>
-          <Link href="/spaces" className="justify-self-center">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
-          </Link>
-          <Link href="/featured" className="justify-self-end">
-            <button className="text-xs text-foreground/50 hover:text-foreground transition-colors" data-testid="link-featured-from-spaces">
-              Featured
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              data-testid="button-browse-menu"
+              className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+            >
+              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <span className="hidden sm:inline">Menu</span>
             </button>
-          </Link>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-50"
+                >
+                  <Link href="/">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
+                      <Camera className="w-4 h-4" />
+                      Align Portraits
+                    </button>
+                  </Link>
+                  <Link href="/spaces">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-browse">
+                      <Building2 className="w-4 h-4" />
+                      Align Spaces
+                    </button>
+                  </Link>
+                  <Link href="/portal">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
+                      <User className="w-4 h-4" />
+                      Client Portal
+                    </button>
+                  </Link>
+                  <Link href="/featured">
+                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-browse">
+                      <Star className="w-4 h-4" />
+                      Featured Pros
+                    </button>
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </nav>
 

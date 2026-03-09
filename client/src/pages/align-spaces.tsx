@@ -78,9 +78,9 @@ export default function AlignSpacesPage() {
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               data-testid="button-spaces-menu"
-              className="flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white/90 transition-colors duration-300"
+              className="flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-white/60 hover:text-white/90 font-semibold transition-colors duration-300"
             >
-              {menuOpen ? <X className="w-4.5 h-4.5" /> : <Menu className="w-4.5 h-4.5" />}
+              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               Menu
             </button>
             <AnimatePresence>
