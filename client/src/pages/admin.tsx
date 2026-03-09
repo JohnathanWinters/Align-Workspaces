@@ -38,6 +38,7 @@ import {
   Star,
   ExternalLink,
   Move,
+  Heart,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -1660,6 +1661,124 @@ const FEATURED_CATEGORIES = [
   "Artists", "Barbers", "Designers", "Entrepreneurs",
 ];
 
+function NominationsManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [nominations, setNominations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const adminFetch = useCallback(async (url: string, opts: any = {}) => {
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (!opts.isFormData) headers["Content-Type"] = "application/json";
+    return fetch(url, { ...opts, headers: { ...headers, ...opts.headers } });
+  }, [token]);
+
+  const loadData = useCallback(async () => {
+    try {
+      const res = await adminFetch("/api/admin/nominations");
+      setNominations(await res.json());
+    } catch {}
+    setLoading(false);
+  }, [adminFetch]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      await adminFetch(`/api/admin/nominations/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      toast({ title: `Marked as ${status}` });
+      loadData();
+    } catch {}
+  };
+
+  const deleteNom = async (id: string) => {
+    if (!confirm("Delete this nomination?")) return;
+    try {
+      await adminFetch(`/api/admin/nominations/${id}`, { method: "DELETE" });
+      toast({ title: "Deleted" });
+      loadData();
+    } catch {}
+  };
+
+  const statusColor = (s: string) => {
+    if (s === "reviewed") return "bg-blue-100 text-blue-700";
+    if (s === "contacted") return "bg-green-100 text-green-700";
+    if (s === "declined") return "bg-red-100 text-red-700";
+    return "bg-amber-100 text-amber-700";
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-nominations-back">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="font-serif text-xl font-semibold">Nominations</h1>
+            <span className="text-sm text-gray-500">{nominations.length} total</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        ) : nominations.length === 0 ? (
+          <Card className="border-dashed border-2 bg-white/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Heart className="w-10 h-10 text-gray-300 mb-3" />
+              <h3 className="font-serif text-lg text-gray-900 mb-1">No nominations yet</h3>
+              <p className="text-gray-500 text-sm">Nominations from the featured page will appear here</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {nominations.map((nom: any) => (
+              <Card key={nom.id} className="bg-white">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-base" data-testid={`text-nominee-name-${nom.id}`}>{nom.nomineeName}</h3>
+                        <span className="text-sm text-gray-500">{nom.nomineeProfession}</span>
+                        <Badge className={`text-[10px] ${statusColor(nom.status)}`} variant="secondary" data-testid={`badge-nomination-status-${nom.id}`}>
+                          {nom.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-3 leading-relaxed" data-testid={`text-nominee-reason-${nom.id}`}>"{nom.reason}"</p>
+                      <div className="flex flex-wrap gap-4 text-xs text-gray-400">
+                        {nom.nominatorName && <span>Nominated by: {nom.nominatorName}</span>}
+                        {nom.nomineeContact && <span>Contact: {nom.nomineeContact}</span>}
+                        <span>{new Date(nom.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Select value={nom.status} onValueChange={(val) => updateStatus(nom.id, val)}>
+                        <SelectTrigger className="h-8 w-[120px] text-xs" data-testid={`select-nomination-status-${nom.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="reviewed">Reviewed</SelectItem>
+                          <SelectItem value="contacted">Contacted</SelectItem>
+                          <SelectItem value="declined">Declined</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 h-8 w-8 p-0" onClick={() => deleteNom(nom.id)} data-testid={`button-delete-nomination-${nom.id}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function FeaturedManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [professionals, setProfessionals] = useState<FeaturedProfessional[]>([]);
@@ -2511,7 +2630,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -2749,6 +2868,10 @@ function AdminDashboard({ token }: { token: string }) {
     return <FeaturedManager token={token} onBack={() => setView("clients")} />;
   }
 
+  if (view === "nominations") {
+    return <NominationsManager token={token} onBack={() => setView("clients")} />;
+  }
+
   if (view === "create" || view === "edit") {
     const isEdit = view === "edit";
     return (
@@ -2975,6 +3098,16 @@ function AdminDashboard({ token }: { token: string }) {
             >
               <Star className="w-3.5 h-3.5 mr-1.5" />
               Featured
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("nominations")}
+              data-testid="button-manage-nominations"
+              className="h-8 text-xs border-gray-200 text-gray-600"
+            >
+              <Heart className="w-3.5 h-3.5 mr-1.5" />
+              Nominations
             </Button>
             <Button
               variant="outline"

@@ -285,3 +285,23 @@ export const insertFeaturedProfessionalSchema = createInsertSchema(featuredProfe
 
 export type InsertFeaturedProfessional = z.infer<typeof insertFeaturedProfessionalSchema>;
 export type FeaturedProfessional = typeof featuredProfessionals.$inferSelect;
+
+export const nominations = pgTable("nominations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nomineeName: text("nominee_name").notNull(),
+  nomineeProfession: text("nominee_profession").notNull(),
+  reason: text("reason").notNull(),
+  nomineeContact: text("nominee_contact"),
+  nominatorName: text("nominator_name"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertNominationSchema = createInsertSchema(nominations).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+});
+
+export type InsertNomination = z.infer<typeof insertNominationSchema>;
+export type Nomination = typeof nominations.$inferSelect;

@@ -28,7 +28,7 @@ The application uses a monorepo structure, separating the React frontend (`clien
 
 ### Database
 - **PostgreSQL**: The primary data store, managed with Drizzle ORM.
-- **Schema**: Shared `schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, and push subscriptions.
+- **Schema**: Shared `schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, push subscriptions, and nominations.
 - **Pricing**: `shared/pricing.ts` contains server-authoritative pricing logic.
 
 ### Build System

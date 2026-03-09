@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification } from "./gmail";
@@ -1599,6 +1599,45 @@ export async function registerRoutes(
       const imageUrl = `/objects/${objectKey}`;
       const pro = await storage.updateFeaturedProfessional(req.params.id, { portraitImageUrl: imageUrl });
       res.json(pro);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/nominations", async (req, res) => {
+    try {
+      const validated = insertNominationSchema.parse(req.body);
+      const nomination = await storage.createNomination(validated);
+      res.json(nomination);
+    } catch (err: any) {
+      if (err instanceof ZodError) return res.status(400).json({ message: fromZodError(err).message });
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/nominations", isAdmin, async (_req, res) => {
+    try {
+      const noms = await storage.getNominations();
+      res.json(noms);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/nominations/:id", isAdmin, async (req, res) => {
+    try {
+      const { status } = req.body;
+      const nom = await storage.updateNominationStatus(req.params.id, status);
+      res.json(nom);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/nominations/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteNomination(req.params.id);
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe } from "lucide-react";
+import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2 } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 
@@ -254,8 +254,161 @@ function CategoryFilter({ categories, active, onChange }: { categories: string[]
   );
 }
 
+function NominationModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [form, setForm] = useState({ nomineeName: "", nomineeProfession: "", reason: "", nomineeContact: "", nominatorName: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [savedName, setSavedName] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.nomineeName.trim() || !form.nomineeProfession.trim() || !form.reason.trim()) return;
+    setSubmitting(true);
+    try {
+      await fetch("/api/nominations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomineeName: form.nomineeName.trim(),
+          nomineeProfession: form.nomineeProfession.trim(),
+          reason: form.reason.trim(),
+          nomineeContact: form.nomineeContact.trim() || null,
+          nominatorName: form.nominatorName.trim() || null,
+        }),
+      });
+      setSavedName(form.nomineeName.trim());
+      setSubmitted(true);
+    } catch {}
+    setSubmitting(false);
+  };
+
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => {
+      setForm({ nomineeName: "", nomineeProfession: "", reason: "", nomineeContact: "", nominatorName: "" });
+      setSubmitted(false);
+      setSavedName("");
+    }, 300);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+      >
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 transition-colors z-10"
+          data-testid="button-close-nomination"
+        >
+          <X className="w-5 h-5 text-gray-400" />
+        </button>
+
+        {submitted ? (
+          <div className="px-8 py-16 text-center">
+            <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-5" />
+            <h3 className="font-serif text-2xl font-semibold mb-3">Thank you!</h3>
+            <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto">
+              We'll reach out to {savedName} soon. Maybe their story will be featured next!
+            </p>
+            <Button onClick={handleClose} className="mt-8 rounded-full px-8" data-testid="button-nomination-done">
+              Done
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="px-8 py-8">
+            <div className="text-center mb-8">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Community</p>
+              <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">Who inspires your community?</h2>
+              <p className="text-muted-foreground text-sm">Know someone whose story deserves to be told? Nominate them.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominee Name <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Full name of the professional"
+                  value={form.nomineeName}
+                  onChange={e => setForm(f => ({ ...f, nomineeName: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  required
+                  data-testid="input-nominee-name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Profession <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Chef, Therapist, Lawyer..."
+                  value={form.nomineeProfession}
+                  onChange={e => setForm(f => ({ ...f, nomineeProfession: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  required
+                  data-testid="input-nominee-profession"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Why They Inspire You <span className="text-red-400">*</span></label>
+                <textarea
+                  placeholder="What makes them remarkable? What story should people know?"
+                  value={form.reason}
+                  onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
+                  rows={4}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all resize-none"
+                  required
+                  data-testid="input-nominee-reason"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input
+                  type="text"
+                  placeholder="Who is nominating them?"
+                  value={form.nominatorName}
+                  onChange={e => setForm(f => ({ ...f, nominatorName: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  data-testid="input-nominator-name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Info <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input
+                  type="text"
+                  placeholder="Email, LinkedIn, or website"
+                  value={form.nomineeContact}
+                  onChange={e => setForm(f => ({ ...f, nomineeContact: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  data-testid="input-nominee-contact"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={submitting || !form.nomineeName.trim() || !form.nomineeProfession.trim() || !form.reason.trim()}
+              className="w-full mt-8 rounded-full bg-stone-900 hover:bg-stone-800 text-white py-3"
+              data-testid="button-submit-nomination"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Heart className="w-4 h-4 mr-2" />}
+              Share Their Story
+            </Button>
+          </form>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
 function FeaturedListingPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [nominationOpen, setNominationOpen] = useState(false);
 
   const { data: professionals = [], isLoading } = useQuery<FeaturedProfessional[]>({
     queryKey: ["/api/featured"],
@@ -367,20 +520,34 @@ function FeaturedListingPage() {
               <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
                 Book a portrait session and we'll help you share the story behind your work with the world.
               </p>
-              <Link href="/">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/">
+                  <Button
+                    size="lg"
+                    className="bg-white text-stone-900 hover:bg-white/90 rounded-full px-8"
+                    data-testid="button-book-session-featured"
+                  >
+                    Book a Session
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
                 <Button
                   size="lg"
-                  className="bg-white text-stone-900 hover:bg-white/90 rounded-full px-8"
-                  data-testid="button-book-session-featured"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 rounded-full px-8"
+                  onClick={() => setNominationOpen(true)}
+                  data-testid="button-nominate-someone"
                 >
-                  Book a Session
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <Heart className="w-4 h-4 mr-2" />
+                  Nominate Someone Inspiring
                 </Button>
-              </Link>
+              </div>
             </div>
           </div>
         </section>
       </div>
+
+      <NominationModal open={nominationOpen} onClose={() => setNominationOpen(false)} />
     </div>
   );
 }

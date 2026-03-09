@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull, ne, ilike } from "drizzle-orm";
 
@@ -68,6 +68,10 @@ export interface IStorage {
   deleteFeaturedProfessional(id: string): Promise<void>;
   getFeaturedOfWeek(opts?: { includeSamples?: boolean }): Promise<FeaturedProfessional | undefined>;
   getFeaturedCategories(opts?: { includeSamples?: boolean }): Promise<string[]>;
+  createNomination(data: InsertNomination): Promise<Nomination>;
+  getNominations(): Promise<Nomination[]>;
+  updateNominationStatus(id: string, status: string): Promise<Nomination>;
+  deleteNomination(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -552,6 +556,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(featuredProfessionals.category);
     const rows = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
     return rows.map(r => r.category);
+  }
+
+  async createNomination(data: InsertNomination): Promise<Nomination> {
+    const [result] = await db.insert(nominations).values(data).returning();
+    return result;
+  }
+
+  async getNominations(): Promise<Nomination[]> {
+    return db.select().from(nominations).orderBy(desc(nominations.createdAt));
+  }
+
+  async updateNominationStatus(id: string, status: string): Promise<Nomination> {
+    const [result] = await db.update(nominations).set({ status }).where(eq(nominations.id, id)).returning();
+    return result;
+  }
+
+  async deleteNomination(id: string): Promise<void> {
+    await db.delete(nominations).where(eq(nominations.id, id));
   }
 }
 
