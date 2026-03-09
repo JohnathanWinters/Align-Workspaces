@@ -122,7 +122,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </nav>
 
-      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-36 sm:pb-24 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-end px-6 pb-16 sm:pb-24 relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -130,7 +130,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           className="text-center max-w-2xl mx-auto"
           style={{ y }}
         >
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
+          <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Portrait Is
             <br />
             <span className="italic font-normal">Your First</span>
