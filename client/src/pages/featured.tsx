@@ -314,7 +314,7 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
         {submitted ? (
           <div className="px-8 py-16 text-center">
             <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-5" />
-            <h3 className="font-serif text-2xl font-semibold mb-3">Thank you!</h3>
+            <h3 className="font-serif text-2xl font-semibold mb-3">Thanks!</h3>
             <p className="text-muted-foreground leading-relaxed max-w-sm mx-auto">
               We'll reach out to {savedName} soon. Maybe their story will be featured next!
             </p>
@@ -323,34 +323,33 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="px-8 py-8">
+          <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-8">
             <div className="text-center mb-8">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Community</p>
-              <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">Who inspires your community?</h2>
-              <p className="text-muted-foreground text-sm">Know someone whose story deserves to be told? Nominate them.</p>
+              <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">Nominate Someone Inspiring</h2>
+              <p className="text-muted-foreground text-sm">Help us tell the stories of the people who make our community extraordinary.</p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominee Name <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominee's Full Name <span className="text-red-400">*</span></label>
                 <input
                   type="text"
-                  placeholder="Full name of the professional"
+                  placeholder="e.g., Maria Gonzalez"
                   value={form.nomineeName}
                   onChange={e => setForm(f => ({ ...f, nomineeName: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
                   required
                   data-testid="input-nominee-name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Profession <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominee's Profession <span className="text-red-400">*</span></label>
                 <input
                   type="text"
-                  placeholder="Chef, Therapist, Lawyer..."
+                  placeholder="e.g., Pastry Chef, Therapist, Lawyer"
                   value={form.nomineeProfession}
                   onChange={e => setForm(f => ({ ...f, nomineeProfession: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
                   required
                   data-testid="input-nominee-profession"
                 />
@@ -358,34 +357,38 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Why They Inspire You <span className="text-red-400">*</span></label>
                 <textarea
-                  placeholder="What makes them remarkable? What story should people know?"
+                  placeholder="Share a brief story or moment that makes them stand out"
                   value={form.reason}
                   onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
                   rows={4}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all resize-none"
+                  maxLength={1200}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all resize-none"
                   required
                   data-testid="input-nominee-reason"
                 />
+                <p className="text-[11px] text-stone-400 mt-1 text-right">
+                  {form.reason.trim().split(/\s+/).filter(Boolean).length > 0 ? form.reason.trim().split(/\s+/).filter(Boolean).length : 0} words · 150–200 words max
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name <span className="text-gray-400 font-normal">(optional)</span></label>
                 <input
                   type="text"
-                  placeholder="Who is nominating them?"
+                  placeholder="e.g., Alex Rivera"
                   value={form.nominatorName}
                   onChange={e => setForm(f => ({ ...f, nominatorName: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
                   data-testid="input-nominator-name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Contact Info <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nominee Contact Info <span className="text-gray-400 font-normal">(optional)</span></label>
                 <input
                   type="text"
-                  placeholder="Email, LinkedIn, or website"
+                  placeholder="e.g., maria@email.com, LinkedIn.com/in/maria"
                   value={form.nomineeContact}
                   onChange={e => setForm(f => ({ ...f, nomineeContact: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400/40 focus:border-stone-400 transition-all"
                   data-testid="input-nominee-contact"
                 />
               </div>
@@ -400,6 +403,9 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
               {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Heart className="w-4 h-4 mr-2" />}
               Share Their Story
             </Button>
+            <p className="text-[11px] text-stone-400 text-center mt-4 italic">
+              Brought to you by Align Portraits — telling the stories behind your work.
+            </p>
           </form>
         )}
       </motion.div>
@@ -481,61 +487,65 @@ function ShareYourStoryModal({ open, onClose }: { open: boolean; onClose: () => 
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-stone-500 mb-1 block">Your Name *</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Your Name <span className="text-red-400">*</span></label>
                   <input
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
-                    placeholder="Full name"
+                    className="w-full border border-stone-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="e.g., Maria Gonzalez"
                     data-testid="input-share-name"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-stone-500 mb-1 block">Profession *</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Profession <span className="text-red-400">*</span></label>
                   <input
                     value={form.profession}
                     onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
-                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
-                    placeholder="What you do"
+                    className="w-full border border-stone-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="e.g., Pastry Chef, Therapist"
                     data-testid="input-share-profession"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-stone-500 mb-1 block">Location</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Location</label>
                   <input
                     value={form.location}
                     onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
-                    placeholder="City, State"
+                    className="w-full border border-stone-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    placeholder="e.g., Miami, Florida"
                     data-testid="input-share-location"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-stone-500 mb-1 block">Email *</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Email <span className="text-red-400">*</span></label>
                   <input
                     type="email"
                     value={form.email}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    className="w-full border border-stone-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
                     placeholder="you@email.com"
                     data-testid="input-share-email"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-stone-500 mb-1 block">Your Story *</label>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Your Story <span className="text-red-400">*</span></label>
                 <textarea
                   value={form.story}
                   onChange={e => setForm(f => ({ ...f, story: e.target.value }))}
-                  rows={4}
-                  className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none"
+                  rows={5}
+                  maxLength={1200}
+                  className="w-full border border-stone-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none"
                   placeholder="What drives you? What do you love about your work? What's something people don't know about your profession?"
                   data-testid="input-share-story"
                 />
+                <p className="text-[11px] text-stone-400 mt-1 text-right">
+                  {form.story.trim().split(/\s+/).filter(Boolean).length > 0 ? form.story.trim().split(/\s+/).filter(Boolean).length : 0} words · 150–200 words max
+                </p>
               </div>
               <Button
                 type="submit"
@@ -544,10 +554,10 @@ function ShareYourStoryModal({ open, onClose }: { open: boolean; onClose: () => 
                 data-testid="button-submit-share-story"
               >
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                Submit Your Story
+                Share Your Story
               </Button>
-              <p className="text-[11px] text-stone-400 text-center leading-relaxed">
-                No commitment required. We'll reach out if your story is selected for a feature.
+              <p className="text-[11px] text-stone-400 text-center mt-3 italic">
+                Brought to you by Align Portraits — telling the stories behind your work.
               </p>
             </form>
           </>
