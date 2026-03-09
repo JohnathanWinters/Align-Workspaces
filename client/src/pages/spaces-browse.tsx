@@ -97,13 +97,19 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 function createPriceIcon(price: number, _type: string, isActive: boolean) {
+  const priceStr = `$${price}`;
+  const width = priceStr.length * 9 + 20;
   return L.divIcon({
     className: "price-marker",
     html: `<div style="
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: ${width}px;
+      height: 28px;
       background: ${isActive ? "#c4956a" : "#faf6f1"};
       color: ${isActive ? "#fff" : "#c4956a"};
       border: 1.5px solid ${isActive ? "#b3845d" : "#d4b896"};
-      padding: 4px 10px;
       border-radius: 9999px;
       font-size: 12px;
       font-weight: 700;
@@ -112,9 +118,9 @@ function createPriceIcon(price: number, _type: string, isActive: boolean) {
       transform: ${isActive ? "scale(1.15)" : "scale(1)"};
       transition: all 0.2s ease;
       cursor: pointer;
-    ">$${price}</div>`,
-    iconSize: [0, 0],
-    iconAnchor: [25, 15],
+    ">${priceStr}</div>`,
+    iconSize: [width, 28],
+    iconAnchor: [width / 2, 14],
   });
 }
 
