@@ -939,7 +939,8 @@ function ProfilePage({ slug }: { slug: string }) {
             <Initials name={pro.name} />
           )}
         </div>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 80%, rgba(250, 248, 244, 1) 100%)' }} />
+        <div className="hidden sm:block absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 80%, rgba(250, 248, 244, 1) 100%)' }} />
+        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(28,25,23,0.4) 75%, rgba(28,25,23,1) 100%)' }} />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
             Sample
@@ -956,21 +957,61 @@ function ProfilePage({ slug }: { slug: string }) {
         </div>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 pt-8 sm:pt-12">
+      <div className="sm:hidden bg-stone-900 px-5 pt-5 pb-6 -mt-px">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="text-xs uppercase tracking-[0.15em] text-white/40 mb-2">{pro.profession}</p>
+          <h1 className="font-serif text-3xl font-semibold leading-[1.05] mb-3 text-white" data-testid="text-profile-name-mobile">
+            {pro.name}
+          </h1>
+          <p className="text-white/50 text-sm flex items-center gap-1.5 mb-5">
+            <MapPin className="w-3.5 h-3.5" />
+            {pro.location}
+          </p>
+          <div className="flex items-center gap-3">
+            {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
+              const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
+              if (!Icon || !url) return null;
+              return (
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white">
+                  <Icon className="w-4 h-4" />
+                </a>
+              );
+            })}
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: pro.name, text: shareText, url: shareUrl });
+                } else {
+                  navigator.clipboard.writeText(shareUrl);
+                }
+              }}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+              data-testid="button-share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
+      <section className="hidden sm:block max-w-3xl mx-auto px-6 pt-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <p className="text-xs uppercase tracking-[0.15em] text-foreground/50 mb-2">{pro.profession}</p>
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
+          <h1 className="font-serif text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
             {pro.name}
           </h1>
           <p className="text-foreground/60 text-sm flex items-center gap-1.5 mb-6">
             <MapPin className="w-3.5 h-3.5" />
             {pro.location}
           </p>
-
           <div className="flex items-center gap-3">
             {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
               const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
