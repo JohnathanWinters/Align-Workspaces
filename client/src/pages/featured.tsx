@@ -899,58 +899,59 @@ function ProfilePage({ slug }: { slug: string }) {
           </div>
         ) : null}
 
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto px-6 pb-10 sm:pb-14"
-          >
-            <Link href="/featured">
-              <button className="inline-flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors mb-5 group" data-testid="link-back-featured">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                All Stories
-              </button>
-            </Link>
-
-            <p className="text-xs uppercase tracking-[0.15em] text-foreground/50 mb-2">{pro.profession}</p>
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
-              {pro.name}
-            </h1>
-            <p className="text-foreground/60 text-sm flex items-center gap-1.5 mb-6">
-              <MapPin className="w-3.5 h-3.5" />
-              {pro.location}
-            </p>
-
-            <div className="flex items-center gap-3">
-              {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
-                const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
-                if (!Icon || !url) return null;
-                return (
-                  <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground">
-                    <Icon className="w-4 h-4" />
-                  </a>
-                );
-              })}
-              <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: pro.name, text: shareText, url: shareUrl });
-                  } else {
-                    navigator.clipboard.writeText(shareUrl);
-                  }
-                }}
-                className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground"
-                data-testid="button-share"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
+        <div className="absolute top-6 left-6 z-10">
+          <Link href="/featured">
+            <button className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              All Stories
+            </button>
+          </Link>
         </div>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 pt-12 sm:pt-16 pb-8" ref={storyRef}>
+      <section className="max-w-3xl mx-auto px-6 pt-8 sm:pt-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <p className="text-xs uppercase tracking-[0.15em] text-foreground/50 mb-2">{pro.profession}</p>
+          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
+            {pro.name}
+          </h1>
+          <p className="text-foreground/60 text-sm flex items-center gap-1.5 mb-6">
+            <MapPin className="w-3.5 h-3.5" />
+            {pro.location}
+          </p>
+
+          <div className="flex items-center gap-3">
+            {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
+              const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
+              if (!Icon || !url) return null;
+              return (
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground">
+                  <Icon className="w-4 h-4" />
+                </a>
+              );
+            })}
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: pro.name, text: shareText, url: shareUrl });
+                } else {
+                  navigator.clipboard.writeText(shareUrl);
+                }
+              }}
+              className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground"
+              data-testid="button-share"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
+      </section>
+
+      <section className="max-w-3xl mx-auto px-6 pt-10 sm:pt-14 pb-8" ref={storyRef}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
