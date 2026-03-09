@@ -1774,16 +1774,6 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     setUploading(null);
   };
 
-  const handleSeed = async () => {
-    setSeeding(true);
-    try {
-      const res = await adminFetch("/api/admin/featured/seed", { method: "POST" });
-      const data = await res.json();
-      toast({ title: "Samples seeded", description: `Created ${data.created} of ${data.total} sample profiles` });
-      loadData();
-    } catch {}
-    setSeeding(false);
-  };
 
   const handleRemovePortrait = async (id: string) => {
     try {
@@ -2148,16 +2138,10 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             <h1 className="font-serif text-xl font-semibold">Featured Professionals</h1>
             <span className="text-sm text-gray-500">{professionals.length} profiles</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleSeed} disabled={seeding} data-testid="button-seed-featured">
-              {seeding ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
-              Seed Samples
-            </Button>
-            <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }} data-testid="button-add-featured">
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Add
-            </Button>
-          </div>
+          <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }} data-testid="button-add-featured">
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            Add
+          </Button>
         </div>
       </header>
 
@@ -2175,11 +2159,8 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Star className="w-10 h-10 text-gray-300 mb-3" />
               <h3 className="font-serif text-lg text-gray-900 mb-1">No featured professionals yet</h3>
-              <p className="text-gray-500 text-sm mb-4">Add your first professional or seed sample data</p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleSeed}>Seed Samples</Button>
-                <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }}>Add Professional</Button>
-              </div>
+              <p className="text-gray-500 text-sm mb-4">Add your first professional</p>
+              <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); }}>Add Professional</Button>
             </CardContent>
           </Card>
         ) : (
@@ -2200,9 +2181,6 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                       {uploading === pro.id ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Upload className="w-6 h-6 text-white" />}
                     </div>
-                    {pro.isSample ? (
-                      <Badge className="absolute top-2 left-2 bg-amber-500 text-white text-[10px]" variant="secondary">Sample</Badge>
-                    ) : null}
                     {pro.isFeaturedOfWeek ? (
                       <div className="absolute top-2 right-2"><Star className="w-5 h-5 text-amber-400 fill-amber-400" /></div>
                     ) : null}
