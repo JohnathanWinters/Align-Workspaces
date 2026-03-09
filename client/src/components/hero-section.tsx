@@ -79,12 +79,12 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
 
       <div
-        className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent z-30 pointer-events-none transition-opacity duration-300"
-        style={{ opacity: edgeGlow === "top" ? 1 : 0 }}
+        className="absolute top-0 left-0 right-0 h-40 z-30 pointer-events-none transition-opacity duration-300"
+        style={{ opacity: edgeGlow === "top" ? 1 : 0, background: 'linear-gradient(to bottom, rgb(28,25,23) 0%, rgba(28,25,23,0.6) 40%, transparent 100%)' }}
       />
       <div
-        className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent z-30 pointer-events-none transition-opacity duration-300"
-        style={{ opacity: edgeGlow === "bottom" ? 1 : 0 }}
+        className="absolute bottom-0 left-0 right-0 h-40 z-30 pointer-events-none transition-opacity duration-300"
+        style={{ opacity: edgeGlow === "bottom" ? 1 : 0, background: 'linear-gradient(to top, rgb(28,25,23) 0%, rgba(28,25,23,0.6) 40%, transparent 100%)' }}
       />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
