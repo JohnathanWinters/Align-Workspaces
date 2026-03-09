@@ -183,29 +183,29 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
           </div>
         </div>
 
-        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(250, 248, 244, 0.5) 80%, rgba(250, 248, 244, 1) 100%)' }} />
+        <div className="sm:hidden absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(28,25,23,0.4) 75%, rgba(28,25,23,1) 100%)' }} />
       </div>
 
-      <div className="sm:hidden px-5 pt-4 pb-6">
+      <div className="sm:hidden bg-stone-900 rounded-b-lg px-5 pt-5 pb-6 -mt-px">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/40 mb-2 flex items-center gap-1.5">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-2 flex items-center gap-1.5">
             <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
             Featured Story
           </p>
-          <h2 className="font-serif text-3xl text-foreground leading-[1.1] mb-2" data-testid="text-potw-name-mobile">
+          <h2 className="font-serif text-3xl text-white leading-[1.1] mb-2" data-testid="text-potw-name-mobile">
             {pro.name}
           </h2>
-          <p className="text-foreground/50 text-sm mb-3">
+          <p className="text-white/50 text-sm mb-3">
             {pro.profession} · {pro.location}
           </p>
-          <p className="text-foreground/70 text-sm max-w-xl leading-relaxed mb-4 font-light italic">
+          <p className="text-white/70 text-sm max-w-xl leading-relaxed mb-4 font-light italic">
             "{pro.headline}"
           </p>
-          <span className="inline-flex items-center gap-2 text-xs text-foreground/50 group-hover:text-foreground group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
+          <span className="inline-flex items-center gap-2 text-xs text-white/50 group-hover:text-white group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
             Read Their Story <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </motion.div>
