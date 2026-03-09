@@ -13,6 +13,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import archiver from "archiver";
+import sharp from "sharp";
 import { randomUUID, createHash, scryptSync, randomBytes } from "crypto";
 import { objectStorageClient, ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
 import { authStorage } from "./replit_integrations/auth";
@@ -1579,8 +1580,7 @@ export async function registerRoutes(
   app.post("/api/admin/featured/:id/upload-portrait", isAdmin, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-      const ext = path.extname(req.file.originalname || ".jpg");
-      const objectKey = `uploads/featured-${randomUUID()}${ext}`;
+      const objectKey = `uploads/featured-${randomUUID()}.webp`;
       const privateDir = objectStorageService.getPrivateObjectDir();
       const fullPath = `${privateDir}/${objectKey}`;
       const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
@@ -1588,8 +1588,13 @@ export async function registerRoutes(
       const objectName = parts.slice(1).join("/");
       const bucket = objectStorageClient.bucket(bucketName);
       const file = bucket.file(objectName);
-      const fileBuffer = fs.readFileSync(req.file.path);
-      await file.save(fileBuffer, { resumable: false });
+      const rawBuffer = fs.readFileSync(req.file.path);
+      const processedBuffer = await sharp(rawBuffer)
+        .rotate()
+        .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 90, effort: 4 })
+        .toBuffer();
+      await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
       fs.unlinkSync(req.file.path);
       const imageUrl = `/objects/${objectKey}`;
       const pro = await storage.updateFeaturedProfessional(req.params.id, { portraitImageUrl: imageUrl });
