@@ -1671,7 +1671,6 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formFileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
-  const [seeding, setSeeding] = useState(false);
   const [formPortraitPreview, setFormPortraitPreview] = useState<string | null>(null);
   const [formPortraitFile, setFormPortraitFile] = useState<File | null>(null);
   const [cropPosition, setCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
