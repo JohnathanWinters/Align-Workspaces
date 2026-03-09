@@ -96,32 +96,25 @@ const TYPE_COLORS: Record<string, string> = {
   meeting: "bg-amber-50 text-amber-700",
 };
 
-const PRICE_MARKER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  office: { bg: "#dbeafe", text: "#1d4ed8", border: "#93c5fd" },
-  gym: { bg: "#d1fae5", text: "#047857", border: "#6ee7b7" },
-  meeting: { bg: "#fef3c7", text: "#b45309", border: "#fcd34d" },
-};
-
-function createPriceIcon(price: number, type: string, isActive: boolean) {
-  const colors = PRICE_MARKER_COLORS[type] || { bg: "#f3f4f6", text: "#374151", border: "#d1d5db" };
+function createPriceIcon(price: number, _type: string, isActive: boolean) {
   return L.divIcon({
     className: "price-marker",
     html: `<div style="
-      background: ${isActive ? "#1a1a1a" : colors.bg};
-      color: ${isActive ? "white" : colors.text};
-      border: 2px solid ${isActive ? "#1a1a1a" : colors.border};
+      background: ${isActive ? "#c4956a" : "#faf6f1"};
+      color: ${isActive ? "#fff" : "#c4956a"};
+      border: 1.5px solid ${isActive ? "#b3845d" : "#d4b896"};
       padding: 4px 10px;
       border-radius: 9999px;
       font-size: 12px;
       font-weight: 700;
       white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,${isActive ? "0.3" : "0.15"});
+      box-shadow: 0 2px 8px rgba(0,0,0,${isActive ? "0.25" : "0.1"});
       transform: ${isActive ? "scale(1.15)" : "scale(1)"};
       transition: all 0.2s ease;
       cursor: pointer;
-    ">$${price}/hr</div>`,
+    ">$${price}</div>`,
     iconSize: [0, 0],
-    iconAnchor: [30, 15],
+    iconAnchor: [25, 15],
   });
 }
 
