@@ -892,7 +892,7 @@ function ProfilePage({ slug }: { slug: string }) {
             <Initials name={pro.name} />
           )}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 via-20% to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white from-5% via-white/20 via-25% to-transparent to-45%" />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
             Sample
