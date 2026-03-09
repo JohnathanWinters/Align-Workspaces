@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification } from "./gmail";
+import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification } from "./gmail";
 import { sendPushToUser, sendPushToRole } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing } from "@shared/pricing";
@@ -1754,7 +1754,9 @@ export async function registerRoutes(
   app.get("/api/spaces/:slug", async (req, res) => {
     try {
       const space = await storage.getSpaceBySlug(req.params.slug);
-      if (!space) return res.status(404).json({ message: "Space not found" });
+      if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) {
+        return res.status(404).json({ message: "Space not found" });
+      }
       res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(space);
     } catch (err: any) {
@@ -1882,6 +1884,206 @@ export async function registerRoutes(
         }
       }
       res.json({ seeded: results.length, total: sampleSpaces.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/spaces", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, capacity, amenities, targetProfession, availableHours, hostName } = req.body;
+
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+      const space = await storage.createSpace({
+        name,
+        slug,
+        type,
+        description,
+        shortDescription: shortDescription || null,
+        address,
+        neighborhood: neighborhood || null,
+        pricePerHour: parseInt(pricePerHour),
+        pricePerDay: pricePerDay ? parseInt(pricePerDay) : null,
+        capacity: capacity ? parseInt(capacity) : null,
+        amenities: amenities || [],
+        imageUrls: [],
+        targetProfession: targetProfession || null,
+        availableHours: availableHours || null,
+        contactEmail: user.email || null,
+        hostName: hostName || user.username || "Space Host",
+        userId: user.id,
+        approvalStatus: "pending",
+        isSample: 0,
+        isActive: 1,
+      });
+
+      try {
+        await sendNewSpaceSubmissionNotification({
+          spaceName: name,
+          spaceType: type,
+          address,
+          hostName: hostName || user.username || "Space Host",
+          submitterName: user.username || "Unknown",
+          submitterEmail: user.email || "",
+        });
+      } catch (emailErr) {
+        console.error("Failed to send space submission email:", emailErr);
+      }
+
+      res.json(space);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/my-spaces", isAuthenticated, async (req: any, res) => {
+    try {
+      const userSpaces = await storage.getSpacesByUser(req.user.id);
+      res.json(userSpaces);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/spaces/pending", isAdmin, async (_req, res) => {
+    try {
+      const pending = await storage.getPendingSpaces();
+      res.json(pending);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/spaces/:id/approve", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.updateSpace(req.params.id, { approvalStatus: "approved" });
+      res.json(space);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/spaces/:id/reject", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.updateSpace(req.params.id, { approvalStatus: "rejected" });
+      res.json(space);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/spaces/:id/book", isAuthenticated, async (req: any, res) => {
+    try {
+      const user = req.user;
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) {
+        return res.status(404).json({ message: "Space not found" });
+      }
+
+      const booking = await storage.createSpaceBooking({
+        spaceId: space.id,
+        userId: user.id,
+        userName: user.username || "Guest",
+        userEmail: user.email || null,
+        status: "pending",
+        message: req.body.message || null,
+      });
+
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: user.id,
+        senderName: user.username || "Guest",
+        senderRole: "guest",
+        message: req.body.message || `Hi, I'm interested in booking ${space.name}.`,
+      });
+
+      try {
+        await sendSpaceBookingNotification({
+          spaceName: space.name,
+          guestName: user.username || "Guest",
+          guestEmail: user.email || "",
+          message: req.body.message || "",
+          hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
+        });
+      } catch (emailErr) {
+        console.error("Failed to send booking notification:", emailErr);
+      }
+
+      res.json(booking);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/space-bookings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const guestBookings = await storage.getSpaceBookingsByUser(userId);
+
+      const userSpaces = await storage.getSpacesByUser(userId);
+      const hostBookings: any[] = [];
+      for (const space of userSpaces) {
+        const bookings = await storage.getSpaceBookingsBySpace(space.id);
+        for (const b of bookings) {
+          hostBookings.push({ ...b, spaceName: space.name });
+        }
+      }
+
+      res.json({ guestBookings, hostBookings });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/space-bookings/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.id;
+      if (booking.userId !== userId) {
+        const space = await storage.getSpaceById(booking.spaceId);
+        if (!space || space.userId !== userId) {
+          return res.status(403).json({ message: "Not authorized" });
+        }
+      }
+
+      const messages = await storage.getSpaceMessages(req.params.id);
+      res.json(messages);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.id;
+      let senderRole = "guest";
+
+      if (booking.userId === userId) {
+        senderRole = "guest";
+      } else {
+        const space = await storage.getSpaceById(booking.spaceId);
+        if (!space || space.userId !== userId) {
+          return res.status(403).json({ message: "Not authorized" });
+        }
+        senderRole = "host";
+      }
+
+      const msg = await storage.createSpaceMessage({
+        spaceBookingId: req.params.id,
+        senderId: userId,
+        senderName: req.user.username || (senderRole === "host" ? "Host" : "Guest"),
+        senderRole,
+        message: req.body.message,
+      });
+
+      res.json(msg);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

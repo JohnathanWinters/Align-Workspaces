@@ -335,3 +335,106 @@ export async function sendEditRequestNotification(data: EditRequestNotificationD
     },
   });
 }
+
+export async function sendNewSpaceSubmissionNotification(data: {
+  spaceName: string;
+  spaceType: string;
+  address: string;
+  hostName: string;
+  submitterName: string;
+  submitterEmail: string;
+}) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `New Space Listing: ${data.spaceName} — Pending Approval`;
+
+  const body = [
+    `A new space listing has been submitted on Align Spaces and is pending your approval.`,
+    ``,
+    `--- Space Details ---`,
+    `Name: ${data.spaceName}`,
+    `Type: ${data.spaceType}`,
+    `Address: ${data.address}`,
+    `Host: ${data.hostName}`,
+    ``,
+    `--- Submitted By ---`,
+    `Name: ${data.submitterName}`,
+    `Email: ${data.submitterEmail}`,
+    ``,
+    `Log in to the admin panel to review and approve this listing.`,
+  ].join('\n');
+
+  const to = 'ArmandoRamirezRomero89@gmail.com';
+
+  const rawMessage = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}
+
+export async function sendSpaceBookingNotification(data: {
+  spaceName: string;
+  guestName: string;
+  guestEmail: string;
+  message: string;
+  hostEmail: string;
+}) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `New Booking Request: ${data.spaceName} — from ${data.guestName}`;
+
+  const body = [
+    `Someone is interested in booking your space on Align Spaces!`,
+    ``,
+    `--- Space ---`,
+    `${data.spaceName}`,
+    ``,
+    `--- Guest ---`,
+    `Name: ${data.guestName}`,
+    `Email: ${data.guestEmail}`,
+    ``,
+    `--- Message ---`,
+    data.message || '(No message provided)',
+    ``,
+    `Log in to your Align client portal to view the request and start a conversation.`,
+  ].join('\n');
+
+  const to = data.hostEmail || 'ArmandoRamirezRomero89@gmail.com';
+
+  const rawMessage = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}

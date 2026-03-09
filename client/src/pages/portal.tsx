@@ -44,8 +44,10 @@ import {
   MessageCircle,
   Bell,
   BellRing,
+  Building2,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
+import PortalSpacesSection from "@/components/portal-spaces";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { playNotificationSound } from "@/lib/notification-sound";
@@ -1638,7 +1640,7 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
-  const [activeTab, setActiveTab] = useState<"shoots" | "edits">("shoots");
+  const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "spaces">("shoots");
 
   const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
     queryKey: ["/api/shoots"],
@@ -1761,9 +1763,29 @@ function PortalContent() {
                 />
               )}
             </button>
+            <button
+              onClick={() => setActiveTab("spaces")}
+              data-testid="tab-my-spaces"
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === "spaces"
+                  ? "text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              Spaces
+              {activeTab === "spaces" && (
+                <motion.div
+                  layoutId="portal-tab-indicator"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                />
+              )}
+            </button>
           </div>
 
-          {activeTab === "edits" ? (
+          {activeTab === "spaces" ? (
+            <PortalSpacesSection userId={user?.id || ""} />
+          ) : activeTab === "edits" ? (
             <EditTokenSection />
           ) : isLoading ? (
             <div className="flex items-center justify-center py-20">

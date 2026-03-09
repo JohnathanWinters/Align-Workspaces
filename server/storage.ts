@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, and, isNull, ne, ilike } from "drizzle-orm";
 
@@ -78,9 +78,19 @@ export interface IStorage {
   getNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
   getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]>;
   getSpaceBySlug(slug: string): Promise<Space | undefined>;
+  getSpaceById(id: string): Promise<Space | undefined>;
+  getSpacesByUser(userId: string): Promise<Space[]>;
+  getPendingSpaces(): Promise<Space[]>;
   createSpace(data: InsertSpace): Promise<Space>;
   updateSpace(id: string, data: Partial<InsertSpace>): Promise<Space>;
   deleteSpace(id: string): Promise<void>;
+  createSpaceBooking(data: InsertSpaceBooking): Promise<SpaceBooking>;
+  getSpaceBookingsByUser(userId: string): Promise<SpaceBooking[]>;
+  getSpaceBookingsBySpace(spaceId: string): Promise<SpaceBooking[]>;
+  getSpaceBookingById(id: string): Promise<SpaceBooking | undefined>;
+  updateSpaceBookingStatus(id: string, status: string): Promise<SpaceBooking>;
+  getSpaceMessages(spaceBookingId: string): Promise<SpaceMessage[]>;
+  createSpaceMessage(msg: InsertSpaceMessage): Promise<SpaceMessage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -604,7 +614,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]> {
-    const conditions = [eq(spaces.isActive, 1)];
+    const conditions = [eq(spaces.isActive, 1), eq(spaces.approvalStatus, "approved")];
     if (opts?.includeSamples === false) {
       conditions.push(eq(spaces.isSample, 0));
     }
@@ -619,6 +629,19 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getSpaceById(id: string): Promise<Space | undefined> {
+    const [result] = await db.select().from(spaces).where(eq(spaces.id, id));
+    return result;
+  }
+
+  async getSpacesByUser(userId: string): Promise<Space[]> {
+    return db.select().from(spaces).where(eq(spaces.userId, userId)).orderBy(desc(spaces.createdAt));
+  }
+
+  async getPendingSpaces(): Promise<Space[]> {
+    return db.select().from(spaces).where(eq(spaces.approvalStatus, "pending")).orderBy(desc(spaces.createdAt));
+  }
+
   async createSpace(data: InsertSpace): Promise<Space> {
     const [result] = await db.insert(spaces).values(data).returning();
     return result;
@@ -631,6 +654,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSpace(id: string): Promise<void> {
     await db.delete(spaces).where(eq(spaces.id, id));
+  }
+
+  async createSpaceBooking(data: InsertSpaceBooking): Promise<SpaceBooking> {
+    const [result] = await db.insert(spaceBookings).values(data).returning();
+    return result;
+  }
+
+  async getSpaceBookingsByUser(userId: string): Promise<SpaceBooking[]> {
+    return db.select().from(spaceBookings).where(eq(spaceBookings.userId, userId)).orderBy(desc(spaceBookings.createdAt));
+  }
+
+  async getSpaceBookingsBySpace(spaceId: string): Promise<SpaceBooking[]> {
+    return db.select().from(spaceBookings).where(eq(spaceBookings.spaceId, spaceId)).orderBy(desc(spaceBookings.createdAt));
+  }
+
+  async getSpaceBookingById(id: string): Promise<SpaceBooking | undefined> {
+    const [result] = await db.select().from(spaceBookings).where(eq(spaceBookings.id, id));
+    return result;
+  }
+
+  async updateSpaceBookingStatus(id: string, status: string): Promise<SpaceBooking> {
+    const [result] = await db.update(spaceBookings).set({ status }).where(eq(spaceBookings.id, id)).returning();
+    return result;
+  }
+
+  async getSpaceMessages(spaceBookingId: string): Promise<SpaceMessage[]> {
+    return db.select().from(spaceMessages).where(eq(spaceMessages.spaceBookingId, spaceBookingId)).orderBy(spaceMessages.createdAt);
+  }
+
+  async createSpaceMessage(msg: InsertSpaceMessage): Promise<SpaceMessage> {
+    const [result] = await db.insert(spaceMessages).values(msg).returning();
+    return result;
   }
 }
 

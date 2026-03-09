@@ -341,6 +341,8 @@ export const spaces = pgTable("spaces", {
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   hostName: text("host_name"),
+  userId: text("user_id"),
+  approvalStatus: text("approval_status").default("approved"),
   isSample: integer("is_sample").default(0),
   isActive: integer("is_active").default(1),
   createdAt: timestamp("created_at").defaultNow(),
@@ -353,3 +355,40 @@ export const insertSpaceSchema = createInsertSchema(spaces).omit({
 
 export type InsertSpace = z.infer<typeof insertSpaceSchema>;
 export type Space = typeof spaces.$inferSelect;
+
+export const spaceBookings = pgTable("space_bookings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  userId: text("user_id").notNull(),
+  userName: text("user_name"),
+  userEmail: text("user_email"),
+  status: text("status").default("pending"),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSpaceBookingSchema = createInsertSchema(spaceBookings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSpaceBooking = z.infer<typeof insertSpaceBookingSchema>;
+export type SpaceBooking = typeof spaceBookings.$inferSelect;
+
+export const spaceMessages = pgTable("space_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceBookingId: varchar("space_booking_id").notNull(),
+  senderId: text("sender_id").notNull(),
+  senderName: text("sender_name"),
+  senderRole: text("sender_role").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSpaceMessageSchema = createInsertSchema(spaceMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSpaceMessage = z.infer<typeof insertSpaceMessageSchema>;
+export type SpaceMessage = typeof spaceMessages.$inferSelect;

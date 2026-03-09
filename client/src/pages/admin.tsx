@@ -39,6 +39,9 @@ import {
   ExternalLink,
   Move,
   Heart,
+  Building2,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -1662,6 +1665,112 @@ const FEATURED_CATEGORIES = [
   "Artists", "Barbers", "Designers", "Entrepreneurs",
 ];
 
+function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [spaces, setSpaces] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadSpaces = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/spaces/pending", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSpaces(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadSpaces(); }, []);
+
+  const handleAction = async (id: string, action: "approve" | "reject") => {
+    try {
+      const res = await fetch(`/api/admin/spaces/${id}/${action}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast({ title: `Space ${action}d successfully` });
+        loadSpaces();
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+          <button onClick={onBack} className="text-gray-500 hover:text-gray-900" data-testid="button-back-spaces">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="font-serif text-lg text-gray-900">Pending Space Listings</h1>
+        </div>
+      </header>
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : spaces.length === 0 ? (
+          <div className="text-center py-20">
+            <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-sm">No pending space listings to review.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {spaces.map((space) => (
+              <Card key={space.id} className="bg-white" data-testid={`admin-space-${space.id}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-medium text-gray-900">{space.name}</h3>
+                      <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {space.address}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">Type: {space.type} | Host: {space.hostName}</p>
+                    </div>
+                    <Badge className="bg-amber-50 text-amber-700">Pending</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{space.description}</p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleAction(space.id, "approve")}
+                      className="bg-emerald-600 text-white hover:bg-emerald-700"
+                      data-testid={`button-approve-space-${space.id}`}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAction(space.id, "reject")}
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                      data-testid={`button-reject-space-${space.id}`}
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function NominationsManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [nominations, setNominations] = useState<any[]>([]);
@@ -3145,7 +3254,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -3389,6 +3498,10 @@ function AdminDashboard({ token }: { token: string }) {
 
   if (view === "nominations") {
     return <NominationsManager token={token} onBack={() => setView("clients")} />;
+  }
+
+  if (view === "spaces") {
+    return <AdminSpacesManager token={token} onBack={() => setView("clients")} />;
   }
 
   if (view === "create" || view === "edit") {
@@ -3647,6 +3760,16 @@ function AdminDashboard({ token }: { token: string }) {
             >
               <Users className="w-3.5 h-3.5 mr-1.5" />
               Team
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("spaces")}
+              data-testid="button-manage-spaces"
+              className="h-8 text-xs border-gray-200 text-gray-600"
+            >
+              <Building2 className="w-3.5 h-3.5 mr-1.5" />
+              Spaces
             </Button>
           </div>
         </div>

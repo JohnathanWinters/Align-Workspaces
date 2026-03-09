@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import {
@@ -14,7 +15,14 @@ import {
   ChevronRight,
   Wifi,
   Check,
+  Send,
+  Loader2,
+  X,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import type { Space } from "@shared/schema";
 
 const SPACE_TYPES = [
@@ -38,6 +46,32 @@ const TYPE_COLORS: Record<string, string> = {
 
 function SpaceCard({ space }: { space: Space }) {
   const [expanded, setExpanded] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [bookingMessage, setBookingMessage] = useState("");
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  const bookMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/spaces/${space.id}/book`, { message: bookingMessage });
+    },
+    onSuccess: () => {
+      toast({ title: "Request sent!", description: "The host will be notified. Check your portal for updates." });
+      setShowBooking(false);
+      setBookingMessage("");
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleBookClick = () => {
+    if (!isAuthenticated) {
+      window.location.href = "/api/login";
+      return;
+    }
+    setShowBooking(true);
+  };
 
   return (
     <motion.div
@@ -167,14 +201,45 @@ function SpaceCard({ space }: { space: Space }) {
                   </div>
                 )}
 
-                {space.contactEmail && (
-                  <a
-                    href={`mailto:${space.contactEmail}`}
+                {!showBooking ? (
+                  <button
+                    onClick={handleBookClick}
                     className="inline-flex items-center gap-2 text-sm bg-foreground text-background px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity font-medium mt-2"
-                    data-testid={`button-contact-space-${space.id}`}
+                    data-testid={`button-book-space-${space.id}`}
                   >
-                    Contact Host
-                  </a>
+                    <Send className="w-3.5 h-3.5" />
+                    Request to Book
+                  </button>
+                ) : (
+                  <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-foreground">Send a message to the host</p>
+                      <button onClick={() => setShowBooking(false)} className="text-foreground/40 hover:text-foreground/60">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <Textarea
+                      value={bookingMessage}
+                      onChange={(e) => setBookingMessage(e.target.value)}
+                      placeholder={`Hi, I'm interested in booking ${space.name}. I'd like to discuss available dates and times.`}
+                      rows={3}
+                      className="text-sm bg-white"
+                      data-testid={`input-booking-message-${space.id}`}
+                    />
+                    <Button
+                      onClick={() => bookMutation.mutate()}
+                      disabled={bookMutation.isPending}
+                      className="w-full bg-foreground text-background hover:opacity-90"
+                      data-testid={`button-submit-booking-${space.id}`}
+                    >
+                      {bookMutation.isPending ? (
+                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</>
+                      ) : (
+                        <><Send className="w-4 h-4 mr-2" /> Send Request</>
+                      )}
+                    </Button>
+                    <p className="text-[10px] text-foreground/40 text-center">You'll be able to chat with the host in your client portal.</p>
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -214,17 +279,17 @@ export default function SpacesBrowsePage() {
   return (
     <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-3 items-center">
           <Link href="/spaces">
             <button className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Align Spaces</span>
             </button>
           </Link>
-          <Link href="/spaces">
+          <Link href="/spaces" className="justify-self-center">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
           </Link>
-          <Link href="/featured">
+          <Link href="/featured" className="justify-self-end">
             <button className="text-xs text-foreground/50 hover:text-foreground transition-colors" data-testid="link-featured-from-spaces">
               Featured
             </button>
@@ -315,13 +380,14 @@ export default function SpacesBrowsePage() {
             <p className="text-foreground/50 text-sm mb-6 max-w-md mx-auto">
               If you own a workspace in Miami that could serve small business professionals, we'd love to hear from you.
             </p>
-            <a
-              href="mailto:ArmandoRamirezRomero89@gmail.com?subject=List my space on Align Spaces"
-              className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity font-medium"
-              data-testid="button-list-space"
-            >
-              List Your Space
-            </a>
+            <Link href="/portal">
+              <button
+                className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity font-medium"
+                data-testid="button-list-space"
+              >
+                List Your Space
+              </button>
+            </Link>
           </div>
         </motion.div>
       </div>
