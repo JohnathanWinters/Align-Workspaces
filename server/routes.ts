@@ -1911,9 +1911,9 @@ export async function registerRoutes(
         imageUrls: [],
         targetProfession: targetProfession || null,
         availableHours: availableHours || null,
-        contactEmail: user.email || null,
-        hostName: hostName || user.username || "Space Host",
-        userId: user.id,
+        contactEmail: user.claims?.email || null,
+        hostName: hostName || user.claims?.first_name || "Space Host",
+        userId: user.claims.sub,
         approvalStatus: "pending",
         isSample: 0,
         isActive: 1,
@@ -1924,9 +1924,9 @@ export async function registerRoutes(
           spaceName: name,
           spaceType: type,
           address,
-          hostName: hostName || user.username || "Space Host",
-          submitterName: user.username || "Unknown",
-          submitterEmail: user.email || "",
+          hostName: hostName || user.claims?.first_name || "Space Host",
+          submitterName: user.claims?.first_name || "Unknown",
+          submitterEmail: user.claims?.email || "",
         });
       } catch (emailErr) {
         console.error("Failed to send space submission email:", emailErr);
@@ -1940,7 +1940,7 @@ export async function registerRoutes(
 
   app.get("/api/my-spaces", isAuthenticated, async (req: any, res) => {
     try {
-      const userSpaces = await storage.getSpacesByUser(req.user.id);
+      const userSpaces = await storage.getSpacesByUser(req.user.claims.sub);
       res.json(userSpaces);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -1984,17 +1984,17 @@ export async function registerRoutes(
 
       const booking = await storage.createSpaceBooking({
         spaceId: space.id,
-        userId: user.id,
-        userName: user.username || "Guest",
-        userEmail: user.email || null,
+        userId: user.claims.sub,
+        userName: user.claims?.first_name || "Guest",
+        userEmail: user.claims?.email || null,
         status: "pending",
         message: req.body.message || null,
       });
 
       await storage.createSpaceMessage({
         spaceBookingId: booking.id,
-        senderId: user.id,
-        senderName: user.username || "Guest",
+        senderId: user.claims.sub,
+        senderName: user.claims?.first_name || "Guest",
         senderRole: "guest",
         message: req.body.message || `Hi, I'm interested in booking ${space.name}.`,
       });
@@ -2002,8 +2002,8 @@ export async function registerRoutes(
       try {
         await sendSpaceBookingNotification({
           spaceName: space.name,
-          guestName: user.username || "Guest",
-          guestEmail: user.email || "",
+          guestName: user.claims?.first_name || "Guest",
+          guestEmail: user.claims?.email || "",
           message: req.body.message || "",
           hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
         });
@@ -2019,7 +2019,7 @@ export async function registerRoutes(
 
   app.get("/api/space-bookings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const guestBookings = await storage.getSpaceBookingsByUser(userId);
 
       const userSpaces = await storage.getSpacesByUser(userId);
@@ -2042,7 +2042,7 @@ export async function registerRoutes(
       const booking = await storage.getSpaceBookingById(req.params.id);
       if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       if (booking.userId !== userId) {
         const space = await storage.getSpaceById(booking.spaceId);
         if (!space || space.userId !== userId) {
@@ -2062,7 +2062,7 @@ export async function registerRoutes(
       const booking = await storage.getSpaceBookingById(req.params.id);
       if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       let senderRole = "guest";
 
       if (booking.userId === userId) {
@@ -2078,7 +2078,7 @@ export async function registerRoutes(
       const msg = await storage.createSpaceMessage({
         spaceBookingId: req.params.id,
         senderId: userId,
-        senderName: req.user.username || (senderRole === "host" ? "Host" : "Guest"),
+        senderName: req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest"),
         senderRole,
         message: req.body.message,
       });
