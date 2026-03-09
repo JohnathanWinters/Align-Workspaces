@@ -69,11 +69,13 @@ function normalizeSocialLinks(links: any): Array<{ platform: string; url: string
 function getCropStyle(crop: { x: number; y: number; zoom?: number } | null | undefined, fallbackPosition?: string) {
   if (!crop && !fallbackPosition) return undefined;
   const pos = crop ? `${crop.x}% ${crop.y}%` : fallbackPosition!;
-  const zoom = crop?.zoom && crop.zoom !== 1 ? crop.zoom : null;
-  return {
-    objectPosition: pos,
-    ...(zoom ? { transform: `scale(${zoom})`, transformOrigin: pos } : {}),
-  };
+  return { objectPosition: pos };
+}
+
+function getCropZoom(crop: { x: number; y: number; zoom?: number } | null | undefined): { transform: string; transformOrigin: string } | undefined {
+  if (!crop?.zoom || crop.zoom === 1) return undefined;
+  const pos = `${crop.x}% ${crop.y}%`;
+  return { transform: `scale(${crop.zoom})`, transformOrigin: pos };
 }
 
 const CATEGORY_ORDER = ["Therapists", "Counselors", "Chefs", "Personal Trainers"];
@@ -137,16 +139,18 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
       data-testid="card-professional-of-week"
     >
       <div className="absolute inset-0 overflow-hidden">
-        {pro.portraitImageUrl ? (
-          <img
-            src={pro.portraitImageUrl}
-            alt={`${pro.name} - ${pro.profession}`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
-          />
-        ) : (
-          <Initials name={pro.name} />
-        )}
+        <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+          {pro.portraitImageUrl ? (
+            <img
+              src={pro.portraitImageUrl}
+              alt={`${pro.name} - ${pro.profession}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
+            />
+          ) : (
+            <Initials name={pro.name} />
+          )}
+        </div>
       </div>
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -192,18 +196,20 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       data-testid={`card-featured-${pro.slug}`}
     >
       <div className="aspect-[3/4] relative overflow-hidden rounded-sm mb-4">
-        {pro.portraitImageUrl ? (
-          <img
-            src={pro.portraitImageUrl}
-            alt={`${pro.name} - ${pro.profession}`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            loading="lazy"
-            decoding="async"
-            style={getCropStyle(pro.portraitCropPosition)}
-          />
-        ) : (
-          <Initials name={pro.name} />
-        )}
+        <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
+          {pro.portraitImageUrl ? (
+            <img
+              src={pro.portraitImageUrl}
+              alt={`${pro.name} - ${pro.profession}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              loading="lazy"
+              decoding="async"
+              style={getCropStyle(pro.portraitCropPosition)}
+            />
+          ) : (
+            <Initials name={pro.name} />
+          )}
+        </div>
         {pro.isSample ? (
           <div className="absolute top-3 left-3 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
             Sample
@@ -874,16 +880,18 @@ function ProfilePage({ slug }: { slug: string }) {
       <FeaturedNav />
 
       <section className="relative w-full max-w-[2000px] mx-auto h-[55vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
-        {pro.portraitImageUrl ? (
-          <img
-            src={pro.portraitImageUrl}
-            alt={`${pro.name} - ${pro.profession}`}
-            className="w-full h-full object-cover"
-            style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
-          />
-        ) : (
-          <Initials name={pro.name} />
-        )}
+        <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+          {pro.portraitImageUrl ? (
+            <img
+              src={pro.portraitImageUrl}
+              alt={`${pro.name} - ${pro.profession}`}
+              className="w-full h-full object-cover"
+              style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
+            />
+          ) : (
+            <Initials name={pro.name} />
+          )}
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 via-40% to-transparent" />
         {pro.isSample ? (
           <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
