@@ -335,6 +335,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
   const [showCarousel, setShowCarousel] = useState(false);
+  const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [authPending, setAuthPending] = useState(false);
   const [activeColor, setActiveColor] = useState<number | null>(null);
@@ -440,23 +441,47 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
       onMouseLeave={() => onLeave?.()}
     >
       <div
-        className="relative h-48 bg-stone-100 overflow-hidden cursor-pointer group"
-        onClick={() => space.imageUrls && space.imageUrls.length > 0 && setShowCarousel(true)}
+        className="relative h-48 bg-stone-100 overflow-hidden group"
         data-testid={`image-space-${space.id}`}
       >
         {space.imageUrls && space.imageUrls.length > 0 ? (
           <>
             <img
-              src={space.imageUrls[0]}
-              alt={space.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              src={space.imageUrls[cardPhotoIndex] || space.imageUrls[0]}
+              alt={`${space.name} - Photo ${cardPhotoIndex + 1}`}
+              className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
+              onClick={() => setShowCarousel(true)}
             />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-            <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 text-white text-xs font-medium px-2.5 py-1.5 rounded-full backdrop-blur-sm" data-testid={`badge-photo-count-${space.id}`}>
-              <Images className="w-3.5 h-3.5" />
-              {space.imageUrls.length} {space.imageUrls.length === 1 ? "photo" : "photos"}
-            </div>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+            {space.imageUrls.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCardPhotoIndex((cardPhotoIndex - 1 + space.imageUrls!.length) % space.imageUrls!.length); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+                  data-testid={`button-photo-prev-${space.id}`}
+                >
+                  <ChevronLeft className="w-4 h-4 text-stone-700" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCardPhotoIndex((cardPhotoIndex + 1) % space.imageUrls!.length); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+                  data-testid={`button-photo-next-${space.id}`}
+                >
+                  <ChevronRight className="w-4 h-4 text-stone-700" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                  {space.imageUrls.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setCardPhotoIndex(i); }}
+                      className={`rounded-full transition-all duration-200 ${i === cardPhotoIndex ? "w-2 h-2 bg-white shadow-sm" : "w-1.5 h-1.5 bg-white/60 hover:bg-white/80"}`}
+                      data-testid={`button-photo-dot-${space.id}-${i}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
