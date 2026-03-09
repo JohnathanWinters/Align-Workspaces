@@ -131,7 +131,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
   return (
     <section
-      className="relative w-full min-h-[50vh] sm:min-h-[55vh] lg:min-h-[60vh] flex items-end cursor-pointer group"
+      className="relative w-full min-h-[60vh] sm:min-h-[65vh] lg:min-h-[70vh] flex items-end cursor-pointer group"
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid="card-professional-of-week"
     >
@@ -469,7 +469,7 @@ function FeaturedListingPage() {
             )}
             {weeklyPro && !activeCategory && (
               <>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">More Stories</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-3">Meet the Community</p>
                 <div className="w-12 h-px bg-foreground/20 mb-8" />
               </>
             )}
@@ -515,32 +515,29 @@ function FeaturedListingPage() {
             <div className="relative z-10">
               <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-6">Your story matters</p>
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 leading-tight" data-testid="text-get-featured-heading">
-                Want Your Story Told?
+                Know Someone Inspiring?
               </h2>
               <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
-                Book a portrait session and we'll help you share the story behind your work with the world.
+                Every great community is built on the people in it. Help us tell their story.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                size="lg"
+                className="bg-white text-stone-900 hover:bg-white/90 rounded-full px-8"
+                onClick={() => setNominationOpen(true)}
+                data-testid="button-nominate-someone"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Nominate Someone Inspiring
+              </Button>
+              <div className="mt-8">
                 <Link href="/">
-                  <Button
-                    size="lg"
-                    className="bg-white text-stone-900 hover:bg-white/90 rounded-full px-8"
+                  <span
+                    className="text-white/40 hover:text-white/70 text-sm transition-colors cursor-pointer"
                     data-testid="button-book-session-featured"
                   >
-                    Book a Session
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                    Or share your own story <ArrowRight className="w-3.5 h-3.5 inline ml-1" />
+                  </span>
                 </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 rounded-full px-8"
-                  onClick={() => setNominationOpen(true)}
-                  data-testid="button-nominate-someone"
-                >
-                  <Heart className="w-4 h-4 mr-2" />
-                  Nominate Someone Inspiring
-                </Button>
               </div>
             </div>
           </div>
