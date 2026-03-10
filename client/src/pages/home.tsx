@@ -798,9 +798,21 @@ function StepContent({
 }) {
   return (
     <div>
-      <h2 className={`font-serif mb-2 ${heroTitle ? "text-3xl sm:text-4xl font-bold" : "text-2xl sm:text-3xl"} ${centerTitle ? "text-center" : ""}`}>{title}</h2>
-      <p className={`text-sm sm:text-base mb-8 ${heroTitle ? "text-base sm:text-lg text-foreground/70" : "text-muted-foreground"} ${centerTitle ? "text-center" : ""}`}>{subtitle}</p>
-      {children}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <h2 className={`font-serif mb-2 ${heroTitle ? "text-3xl sm:text-4xl font-bold" : "text-2xl sm:text-3xl"} ${centerTitle ? "text-center" : ""}`}>{title}</h2>
+        <p className={`text-sm sm:text-base mb-8 ${heroTitle ? "text-base sm:text-lg text-foreground/70" : "text-muted-foreground"} ${centerTitle ? "text-center" : ""}`}>{subtitle}</p>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.7 }}
+      >
+        {children}
+      </motion.div>
     </div>
   );
 }
