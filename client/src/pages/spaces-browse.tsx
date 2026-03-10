@@ -462,7 +462,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col ${isHighlighted ? "border-[#c4956a] shadow-md ring-1 ring-[#c4956a]/20" : "border-stone-200/80"}`}
+      className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full ${isHighlighted ? "border-[#c4956a] shadow-md ring-1 ring-[#c4956a]/20" : "border-stone-200/80"}`}
       data-testid={`card-space-${space.id}`}
       onMouseEnter={() => onHover?.(space.id)}
       onMouseLeave={() => onLeave?.()}
@@ -1459,6 +1459,7 @@ export default function SpacesBrowsePage() {
                   <div
                     key={space.id}
                     ref={el => { cardRefs.current[space.id] = el; }}
+                    className="h-full"
                   >
                     <SpaceCard
                       space={space}
