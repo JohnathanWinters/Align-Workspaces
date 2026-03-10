@@ -462,7 +462,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 ${isHighlighted ? "border-[#c4956a] shadow-md ring-1 ring-[#c4956a]/20" : "border-stone-200/80"}`}
+      className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col ${isHighlighted ? "border-[#c4956a] shadow-md ring-1 ring-[#c4956a]/20" : "border-stone-200/80"}`}
       data-testid={`card-space-${space.id}`}
       onMouseEnter={() => onHover?.(space.id)}
       onMouseLeave={() => onLeave?.()}
@@ -596,7 +596,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
         )}
       </AnimatePresence>
 
-      <div className="p-5">
+      <div className="p-5 flex flex-col flex-1">
         <h3 className="font-serif text-lg font-semibold text-foreground mb-1" data-testid={`text-space-name-${space.id}`}>
           {space.name}
         </h3>
@@ -639,6 +639,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
           </p>
         )}
 
+        <div className="mt-auto">
         <button
           onClick={() => setExpanded(!expanded)}
           className="mt-2 w-full py-2.5 rounded-lg border border-stone-300 bg-white text-sm font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-400 active:bg-stone-100 transition-all flex items-center justify-center gap-1.5 shadow-sm"
@@ -833,6 +834,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </motion.div>
   );
