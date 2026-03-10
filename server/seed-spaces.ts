@@ -171,16 +171,43 @@ export async function seedSpacesIfEmpty() {
     const result = await db.select({ count: sql<number>`count(*)` }).from(spaces);
     const count = Number(result[0]?.count ?? 0);
 
-    if (count > 0) {
-      console.log(`Spaces table already has ${count} rows, skipping seed`);
-      return;
+    if (count === 0) {
+      console.log("Seeding spaces table with sample data...");
+      for (const s of sampleSpaces) {
+        await db.insert(spaces).values(s);
+      }
+      console.log(`Seeded ${sampleSpaces.length} sample spaces`);
+    } else {
+      console.log(`Spaces table has ${count} rows, checking for updates...`);
+      for (const s of sampleSpaces) {
+        const existing = await db.select().from(spaces).where(sql`${spaces.slug} = ${s.slug}`);
+        if (existing.length === 0) {
+          await db.insert(spaces).values(s);
+          console.log(`Added missing sample space: ${s.name}`);
+        } else {
+          const row = existing[0];
+          if (!row.latitude || !row.longitude) {
+            await db.update(spaces).set({
+              latitude: s.latitude,
+              longitude: s.longitude,
+            }).where(sql`${spaces.slug} = ${s.slug}`);
+            console.log(`Updated coordinates for: ${s.name}`);
+          }
+          if (!row.colorPalette && s.colorPalette) {
+            await db.update(spaces).set({
+              colorPalette: s.colorPalette,
+            }).where(sql`${spaces.slug} = ${s.slug}`);
+            console.log(`Updated color palette for: ${s.name}`);
+          }
+          if (row.imageUrls && row.imageUrls.length < 2 && s.imageUrls.length >= 2) {
+            await db.update(spaces).set({
+              imageUrls: s.imageUrls,
+            }).where(sql`${spaces.slug} = ${s.slug}`);
+            console.log(`Updated images for: ${s.name}`);
+          }
+        }
+      }
     }
-
-    console.log("Seeding spaces table with sample data...");
-    for (const s of sampleSpaces) {
-      await db.insert(spaces).values(s);
-    }
-    console.log(`Seeded ${sampleSpaces.length} sample spaces`);
   } catch (err) {
     console.error("Failed to seed spaces:", err);
   }

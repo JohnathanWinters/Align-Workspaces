@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Space } from "@shared/schema";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -408,9 +409,8 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
     setAuthPending(true);
     const popup = window.open("/api/login", "alignAuth", "width=500,height=700,left=200,top=100");
 
-    if (!popup) {
-      setAuthPending(false);
-      toast({ title: "Popup blocked", description: "Please allow popups for this site, or use the button below.", variant: "destructive" });
+    if (!popup || popup.closed) {
+      window.location.href = "/api/login";
       return;
     }
 
@@ -838,12 +838,207 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
   );
 }
 
+const LIST_SPACE_TYPES = [
+  { value: "office", label: "Office / Therapy Room" },
+  { value: "gym", label: "Training Studio" },
+  { value: "meeting", label: "Meeting Room" },
+  { value: "art_studio", label: "Art Studio" },
+  { value: "photo_studio", label: "Photo/Video Studio" },
+];
+
+function ListSpaceModal({ onClose }: { onClose: () => void }) {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [authPending, setAuthPending] = useState(false);
+  const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
+  const [formData, setFormData] = useState({
+    name: "", type: "office", description: "", shortDescription: "",
+    address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
+    capacity: "", amenities: "", targetProfession: "", availableHours: "", hostName: "",
+  });
+
+  const clearPolling = useCallback(() => {
+    if (pollRef.current.interval) clearInterval(pollRef.current.interval);
+    if (pollRef.current.timeout) clearTimeout(pollRef.current.timeout);
+    pollRef.current = {};
+  }, []);
+
+  useEffect(() => () => clearPolling(), [clearPolling]);
+
+  const handleAuthClick = () => {
+    setAuthPending(true);
+    const popup = window.open("/api/login", "alignAuth", "width=500,height=700,left=200,top=100");
+    if (!popup || popup.closed) {
+      window.location.href = "/api/login";
+      return;
+    }
+    pollRef.current.interval = setInterval(async () => {
+      if (popup.closed) { clearPolling(); setAuthPending(false); return; }
+      try {
+        const res = await fetch("/api/auth/user", { credentials: "include" });
+        if (res.ok) {
+          const userData = await res.json();
+          if (userData?.id) {
+            clearPolling(); setAuthPending(false);
+            queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+            if (!popup.closed) popup.close();
+          }
+        }
+      } catch {}
+    }, 1500);
+    pollRef.current.timeout = setTimeout(() => { clearPolling(); setAuthPending(false); }, 120000);
+  };
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const payload = { ...formData, amenities: formData.amenities.split(",").map(a => a.trim()).filter(Boolean) };
+      await apiRequest("POST", "/api/spaces", payload);
+    },
+    onSuccess: () => {
+      toast({ title: "Space submitted!", description: "Your space listing is pending admin approval." });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      onClose();
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const update = (field: string, value: string) => setFormData(prev => ({ ...prev, [field]: value }));
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[9998] bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.97 }}
+        transition={{ duration: 0.25 }}
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+          <h2 className="font-serif text-lg font-semibold text-foreground">List Your Space</h2>
+          <button onClick={onClose} className="text-foreground/40 hover:text-foreground/70 p-1" data-testid="button-close-list-modal">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {!isAuthenticated ? (
+          <div className="p-6 space-y-5">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                <User className="w-7 h-7 text-[#c4956a]" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold mb-2">Create an Account First</h3>
+              <p className="text-sm text-foreground/50 max-w-sm mx-auto">
+                Sign in to list your workspace. It takes just a moment and your listing will be reviewed by our team.
+              </p>
+            </div>
+            <Button
+              onClick={handleAuthClick}
+              disabled={authPending}
+              className="w-full bg-[#c4956a] text-white hover:bg-[#b3845d] py-3"
+              data-testid="button-auth-list-space"
+            >
+              {authPending ? (
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Waiting for sign in...</>
+              ) : (
+                <><User className="w-4 h-4 mr-2" /> Create Account / Sign In</>
+              )}
+            </Button>
+            {authPending && (
+              <p className="text-[10px] text-foreground/40 text-center">
+                Complete sign in in the popup window. This page will update automatically.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Space Name *</label>
+                <Input value={formData.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-list-name" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Type *</label>
+                <select value={formData.type} onChange={e => update("type", e.target.value)} className="w-full border border-stone-200 rounded-md px-3 py-2 text-sm bg-white" data-testid="select-list-type">
+                  {LIST_SPACE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Your Name / Business *</label>
+                <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-list-host" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Address *</label>
+                <Input value={formData.address} onChange={e => update("address", e.target.value)} placeholder="Full address" data-testid="input-list-address" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Neighborhood</label>
+                <Input value={formData.neighborhood} onChange={e => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid="input-list-neighborhood" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Price per Hour ($) *</label>
+                <Input type="number" value={formData.pricePerHour} onChange={e => update("pricePerHour", e.target.value)} placeholder="35" data-testid="input-list-price" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Price per Day ($)</label>
+                <Input type="number" value={formData.pricePerDay} onChange={e => update("pricePerDay", e.target.value)} placeholder="200" data-testid="input-list-price-day" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Capacity</label>
+                <Input type="number" value={formData.capacity} onChange={e => update("capacity", e.target.value)} placeholder="6" data-testid="input-list-capacity" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Target Profession</label>
+                <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists" data-testid="input-list-target" />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/50 mb-1 block">Available Hours</label>
+                <Input value={formData.availableHours} onChange={e => update("availableHours", e.target.value)} placeholder="Mon-Fri 9am-5pm" data-testid="input-list-hours" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-foreground/50 mb-1 block">Short Description</label>
+              <Input value={formData.shortDescription} onChange={e => update("shortDescription", e.target.value)} placeholder="Brief one-liner" data-testid="input-list-short-desc" />
+            </div>
+            <div>
+              <label className="text-xs text-foreground/50 mb-1 block">Description *</label>
+              <Textarea value={formData.description} onChange={e => update("description", e.target.value)} placeholder="Describe your space in detail..." rows={3} data-testid="input-list-description" />
+            </div>
+            <div>
+              <label className="text-xs text-foreground/50 mb-1 block">Amenities (comma-separated)</label>
+              <Input value={formData.amenities} onChange={e => update("amenities", e.target.value)} placeholder="Wi-Fi, Parking, AC" data-testid="input-list-amenities" />
+            </div>
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending}
+              className="w-full bg-foreground text-background hover:opacity-90 py-3"
+              data-testid="button-submit-list-space"
+            >
+              {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit for Approval"}
+            </Button>
+            <p className="text-xs text-foreground/40 text-center">Your listing will be reviewed by our team before going live.</p>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function SpacesBrowsePage() {
   const [activeType, setActiveType] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [showFilters, setShowFilters] = useState(false);
+  const [showListModal, setShowListModal] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const typeDropdownRef = useRef<HTMLDivElement>(null);
   const [priceMin, setPriceMin] = useState<string>("");
@@ -1283,14 +1478,13 @@ export default function SpacesBrowsePage() {
                 <p className="text-foreground/50 text-sm mb-4 max-w-md mx-auto">
                   List your workspace in Miami for professionals to discover.
                 </p>
-                <Link href="/portal">
-                  <button
-                    className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-6 py-3 rounded-full hover:opacity-90 transition-opacity font-medium"
-                    data-testid="button-list-space"
-                  >
-                    List Your Space
-                  </button>
-                </Link>
+                <button
+                  onClick={() => setShowListModal(true)}
+                  className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-6 py-3 rounded-full hover:opacity-90 transition-opacity font-medium"
+                  data-testid="button-list-space"
+                >
+                  List Your Space
+                </button>
               </div>
             </div>
           </div>
@@ -1322,6 +1516,12 @@ export default function SpacesBrowsePage() {
           )}
         </button>
       </div>
+
+      <AnimatePresence>
+        {showListModal && (
+          <ListSpaceModal onClose={() => setShowListModal(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
