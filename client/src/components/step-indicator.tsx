@@ -11,7 +11,7 @@ interface StepIndicatorProps {
 
 export function StepIndicator({ currentStep, totalSteps, onStepClick }: StepIndicatorProps) {
   return (
-    <div className="flex items-center justify-center gap-1.5 sm:gap-3 mb-0 lg:mb-10">
+    <div className="flex items-center justify-center gap-1.5 sm:gap-3 mb-0 lg:mb-10 pb-5 sm:pb-6">
       {Array.from({ length: totalSteps }).map((_, i) => {
         const stepNum = i + 1;
         const isActive = stepNum === currentStep;
@@ -20,7 +20,7 @@ export function StepIndicator({ currentStep, totalSteps, onStepClick }: StepIndi
 
         return (
           <div key={i} className="flex items-center gap-1.5 sm:gap-3">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 relative">
               <motion.button
                 layout
                 onClick={() => onStepClick?.(stepNum)}
@@ -41,7 +41,7 @@ export function StepIndicator({ currentStep, totalSteps, onStepClick }: StepIndi
               </motion.button>
               <span
                 data-testid={`text-step-label-${stepNum}`}
-                className={`text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-300 ${
+                className={`text-[10px] sm:text-xs font-medium leading-tight text-center whitespace-nowrap absolute top-full mt-1 left-1/2 -translate-x-1/2 transition-colors duration-300 ${
                   isActive
                     ? "text-foreground sm:block"
                     : isCompleted
