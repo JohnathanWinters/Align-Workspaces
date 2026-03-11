@@ -343,7 +343,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
   const [spacePhotos, setSpacePhotos] = useState<Array<{ id: string; imageUrl: string }>>([]);
   const [showSpacePhotos, setShowSpacePhotos] = useState(false);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
-  const [spacePhotoIndex, setSpacePhotoIndex] = useState(0);
   const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -556,42 +555,19 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 flex items-center justify-center relative px-4" onClick={e => e.stopPropagation()}>
-              <img
-                src={spacePhotos[spacePhotoIndex].imageUrl}
-                alt={`Photo at ${space.name}`}
-                className="max-h-[75vh] max-w-full object-contain rounded-lg"
-              />
-              {spacePhotos.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setSpacePhotoIndex(i => (i - 1 + spacePhotos.length) % spacePhotos.length)}
-                    className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
-                    data-testid="button-prev-space-photo"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setSpacePhotoIndex(i => (i + 1) % spacePhotos.length)}
-                    className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
-                    data-testid="button-next-space-photo"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-            </div>
-            {spacePhotos.length > 1 && (
-              <div className="flex justify-center gap-1.5 pb-4 pt-2" onClick={e => e.stopPropagation()}>
-                {spacePhotos.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSpacePhotoIndex(i)}
-                    className={`w-2 h-2 rounded-full transition-all ${i === spacePhotoIndex ? "bg-white scale-125" : "bg-white/40"}`}
-                  />
+            <div className="flex-1 overflow-y-auto px-4 pb-6" onClick={e => e.stopPropagation()}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-4xl mx-auto">
+                {spacePhotos.map((photo, i) => (
+                  <div key={photo.id} className="aspect-[3/4] rounded-lg overflow-hidden bg-white/5" data-testid={`grid-space-photo-${i}`}>
+                    <img
+                      src={photo.imageUrl}
+                      alt={`Photo ${i + 1} at ${space.name}`}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                 ))}
               </div>
-            )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -611,7 +587,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
           )}
         </div>
 
-        <p className="text-foreground/60 text-sm leading-relaxed mb-4 line-clamp-2">
+        <p className="text-foreground/60 text-sm leading-relaxed mb-4 line-clamp-2 whitespace-pre-line">
           {space.shortDescription || space.description}
         </p>
 
@@ -659,7 +635,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
               className="overflow-hidden"
             >
               <div className="pt-4 border-t border-stone-100 mt-4 space-y-3">
-                <p className="text-sm text-foreground/60 leading-relaxed">{space.description}</p>
+                <p className="text-sm text-foreground/60 leading-relaxed whitespace-pre-line">{space.description}</p>
 
                 {(() => {
                   let paletteData: { colors: { hex: string; name: string }[]; feel: string } | null = null;
