@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ import {
   ChevronUp,
   MessageCircle,
   X,
+  Camera,
+  ImagePlus,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space, SpaceBooking, SpaceMessage } from "@shared/schema";
@@ -150,6 +153,124 @@ function BookingCard({ booking, currentUserId, spaceName, role }: {
         {showChat ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       {showChat && <SpaceChat bookingId={booking.id} currentUserId={currentUserId} />}
+    </div>
+  );
+}
+
+function SpacePhotoManager({ space }: { space: Space }) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadMutation = useMutation({
+    mutationFn: async (files: FileList) => {
+      setUploading(true);
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append("photos", f));
+      const res = await fetch(`/api/spaces/${space.id}/photos`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Upload failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Photos uploaded" });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-spaces"] });
+      setUploading(false);
+    },
+    onError: (err: any) => {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      setUploading(false);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (imageUrl: string) => {
+      const res = await fetch(`/api/spaces/${space.id}/photos`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Photo removed" });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-spaces"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadMutation.mutate(e.target.files);
+      e.target.value = "";
+    }
+  }, []);
+
+  const images = space.imageUrls || [];
+
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-100" data-testid={`space-photos-${space.id}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
+          <Camera className="w-3 h-3" /> Photos ({images.length})
+        </span>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="text-xs text-[#c4956a] hover:text-[#b3845c] font-medium flex items-center gap-1 disabled:opacity-50"
+          data-testid={`button-add-photos-${space.id}`}
+        >
+          {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImagePlus className="w-3 h-3" />}
+          {uploading ? "Uploading..." : "Add Photos"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFiles}
+          data-testid={`input-space-photos-${space.id}`}
+        />
+      </div>
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {images.map((url, i) => (
+            <div key={url} className="relative group rounded-lg overflow-hidden aspect-[4/3] bg-gray-100" data-testid={`space-photo-${space.id}-${i}`}>
+              <img src={url} alt="" className="w-full h-full object-cover" />
+              <button
+                onClick={() => deleteMutation.mutate(url)}
+                disabled={deleteMutation.isPending}
+                className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                data-testid={`button-delete-photo-${space.id}-${i}`}
+              >
+                <Trash2 className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {images.length === 0 && (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="w-full py-6 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-2 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a] transition-colors"
+          data-testid={`button-upload-first-photo-${space.id}`}
+        >
+          <ImagePlus className="w-6 h-6" />
+          <span className="text-xs">Add photos of your space</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -384,6 +505,7 @@ export default function PortalSpacesSection({ userId }: { userId: string }) {
                     {space.approvalStatus || "pending"}
                   </Badge>
                 </div>
+                <SpacePhotoManager space={space} />
               </CardContent>
             </Card>
           ))}
