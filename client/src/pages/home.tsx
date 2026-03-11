@@ -458,6 +458,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                       <StepContent
                         title="Environment"
                         subtitle="Where clients expect to see you."
+                        centerTitle
                       >
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {environments.map((env) => (
@@ -499,6 +500,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                       <StepContent
                         title="Presence"
                         subtitle="What should they understand about you instantly?"
+                        centerTitle
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {brandMessages.map((msg) => (
@@ -519,6 +521,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                       <StepContent
                         title="Impact"
                         subtitle="How should clients feel when they see you?"
+                        centerTitle
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {emotionalImpacts.map((imp) => (
@@ -561,6 +564,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                       <StepContent
                         title="Placement"
                         subtitle="Where will this image attract attention?"
+                        centerTitle
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {shootIntents.map((intent) => (
