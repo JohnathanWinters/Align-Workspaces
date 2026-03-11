@@ -1233,9 +1233,9 @@ export default function SpacesBrowsePage() {
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       <nav className="sticky top-0 z-[9001] bg-background/95 backdrop-blur-sm border-b border-stone-200/60 flex-shrink-0">
         <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
-          <button onClick={() => window.history.back()} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
+          <button onClick={() => { if (mobileView === "map") { setMobileView("list"); } else { window.history.back(); } }} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back</span>
+            <span className="hidden sm:inline">{mobileView === "map" ? "List" : "Back"}</span>
           </button>
           <div className="flex items-center gap-3">
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
