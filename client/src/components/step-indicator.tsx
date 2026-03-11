@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
-const STEP_LABELS = ["Environment", "Presence", "Impact", "Our Work", "Placement", "Book"];
+const STEP_LABELS = ["Setting", "First Impression", "Client Experience", "Our Work", "Placement", "Book"];
 
 interface StepIndicatorProps {
   currentStep: number;
