@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { User, Menu, X, Building2, Camera, Star } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { SiteFooter } from "./site-footer";
 
 interface HeroSectionProps {
@@ -9,6 +9,7 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onStart }: HeroSectionProps) {
+  const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const scrollOffset = useSpring(0, { stiffness: 400, damping: 35 });
@@ -98,30 +99,22 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                   transition={{ duration: 0.2 }}
                   className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                 >
-                  <Link href="/spaces/browse">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
-                      <Building2 className="w-4 h-4" />
-                      Align Spaces
-                    </button>
-                  </Link>
-                  <Link href="/portal">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-hero">
-                      <User className="w-4 h-4" />
-                      Client Portal
-                    </button>
-                  </Link>
-                  <Link href="/featured">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-hero">
-                      <Star className="w-4 h-4" />
-                      Featured Pros
-                    </button>
-                  </Link>
-                  <Link href="/portfolio">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
-                      <Camera className="w-4 h-4" />
-                      Our Work
-                    </button>
-                  </Link>
+                  <button onClick={() => { setLocation("/spaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
+                    <Building2 className="w-4 h-4" />
+                    Align Spaces
+                  </button>
+                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-hero">
+                    <User className="w-4 h-4" />
+                    Client Portal
+                  </button>
+                  <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-hero">
+                    <Star className="w-4 h-4" />
+                    Featured Pros
+                  </button>
+                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
+                    <Camera className="w-4 h-4" />
+                    Our Work
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>

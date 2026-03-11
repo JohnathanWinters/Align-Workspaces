@@ -28,8 +28,8 @@ function Router() {
       <Route path="/portal" component={PortalPage} />
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />
-      <Route path="/spaces" component={AlignSpacesPage} />
       <Route path="/spaces/browse" component={SpacesBrowsePage} />
+      <Route path="/spaces" component={AlignSpacesPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/team" component={EmployeePage} />
       <Route component={NotFound} />
