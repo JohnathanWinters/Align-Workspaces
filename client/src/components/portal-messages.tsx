@@ -371,7 +371,7 @@ function ConversationView({
           </div>
         )}
 
-        {isHost && booking.status === "approved" && booking.paymentStatus !== "paid" && (
+        {isHost && booking.status === "approved" && !booking.paymentAmount && booking.paymentStatus !== "paid" && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             {!showPaymentForm ? (
               <Button
