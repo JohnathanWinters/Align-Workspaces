@@ -368,6 +368,11 @@ export const spaceBookings = pgTable("space_bookings", {
   userEmail: text("user_email"),
   status: text("status").default("pending"),
   message: text("message"),
+  paymentAmount: integer("payment_amount"),
+  paymentStatus: text("payment_status"),
+  stripeSessionId: text("stripe_session_id"),
+  lastReadGuest: timestamp("last_read_guest"),
+  lastReadHost: timestamp("last_read_host"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -386,6 +391,7 @@ export const spaceMessages = pgTable("space_messages", {
   senderName: text("sender_name"),
   senderRole: text("sender_role").notNull(),
   message: text("message").notNull(),
+  messageType: text("message_type").default("text"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
