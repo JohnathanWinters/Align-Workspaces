@@ -2147,6 +2147,28 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/spaces/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteSpace(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/spaces/purge-samples", isAdmin, async (_req, res) => {
+    try {
+      const allSpaces = await storage.getAllSpaces();
+      const samples = allSpaces.filter((s: any) => s.isSample === 1);
+      for (const s of samples) {
+        await storage.deleteSpace(s.id);
+      }
+      res.json({ deleted: samples.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/admin/spaces/:id/approve", isAdmin, async (req, res) => {
     try {
       const space = await storage.updateSpace(req.params.id, { approvalStatus: "approved" });

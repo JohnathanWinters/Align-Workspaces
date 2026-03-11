@@ -1875,6 +1875,44 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     }
   };
 
+  const handleDeleteSpace = async (id: string, name: string) => {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/spaces/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast({ title: "Space deleted" });
+        loadSpaces();
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handlePurgeSamples = async () => {
+    const sampleCount = spaces.filter(s => s.isSample === 1).length;
+    if (sampleCount === 0) {
+      toast({ title: "No sample spaces found" });
+      return;
+    }
+    if (!confirm(`Delete all ${sampleCount} sample spaces? This cannot be undone.`)) return;
+    try {
+      const res = await fetch("/api/admin/spaces/purge-samples", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: `Deleted ${data.deleted} sample spaces` });
+        loadSpaces();
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   const startEdit = (space: any) => {
     setEditingId(space.id);
     setEditForm({
@@ -1958,7 +1996,12 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
           <button onClick={onBack} className="text-gray-500 hover:text-gray-900" data-testid="button-back-spaces">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-serif text-lg text-gray-900">Manage Spaces</h1>
+          <h1 className="font-serif text-lg text-gray-900 flex-1">Manage Spaces</h1>
+          {spaces.some(s => s.isSample === 1) && (
+            <Button size="sm" variant="outline" onClick={handlePurgeSamples} className="border-red-200 text-red-600 hover:bg-red-50 text-xs" data-testid="button-purge-samples">
+              <Trash2 className="w-3 h-3 mr-1" /> Purge Samples ({spaces.filter(s => s.isSample === 1).length})
+            </Button>
+          )}
         </div>
       </header>
       <main className="max-w-5xl mx-auto px-6 py-8">
@@ -2150,6 +2193,10 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             Reject
                           </Button>
                         )}
+                        <Button size="sm" variant="outline" onClick={() => handleDeleteSpace(space.id, space.name)} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-delete-space-${space.id}`}>
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          Delete
+                        </Button>
                       </div>
                       <AdminSpacePhotos space={space} token={token} onUpdate={loadSpaces} />
                       <AdminTransferOwnership space={space} token={token} onUpdate={loadSpaces} />
