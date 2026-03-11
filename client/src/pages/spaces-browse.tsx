@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   ArrowLeft,
   MapPin,
@@ -1061,6 +1061,7 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function SpacesBrowsePage() {
+  const [, setLocation] = useLocation();
   const [activeType, setActiveType] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
@@ -1239,24 +1240,18 @@ export default function SpacesBrowsePage() {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9000]"
                 >
-                  <Link href="/portraits">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
-                      <Camera className="w-4 h-4" />
-                      Align Portraits
-                    </button>
-                  </Link>
-                  <Link href="/portal">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
-                      <User className="w-4 h-4" />
-                      Client Portal
-                    </button>
-                  </Link>
-                  <Link href="/featured">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-browse">
-                      <Star className="w-4 h-4" />
-                      Featured Pros
-                    </button>
-                  </Link>
+                  <button onClick={() => { setMenuOpen(false); setLocation("/"); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
+                    <Camera className="w-4 h-4" />
+                    Align Portraits
+                  </button>
+                  <button onClick={() => { setMenuOpen(false); setLocation("/portal"); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
+                    <User className="w-4 h-4" />
+                    Client Portal
+                  </button>
+                  <button onClick={() => { setMenuOpen(false); setLocation("/featured"); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-browse">
+                    <Star className="w-4 h-4" />
+                    Featured Pros
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
