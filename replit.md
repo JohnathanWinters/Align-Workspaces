@@ -8,6 +8,10 @@ Align is a premium, mobile-first interactive website designed to help profession
 
 Preferred communication style: Simple, everyday language.
 
+### Terminology
+- **Portraits Landing Page**: The hero page at `/` with the "Your Portrait Is Your First Impression" heading. Component: `client/src/components/hero-section.tsx`.
+- **Spaces Landing Page**: The hero page at `/spaces` with the "Your Space, Your Practice" heading. Component: `client/src/pages/align-spaces.tsx`.
+
 ## System Architecture
 
 ### Monorepo Structure
