@@ -487,12 +487,14 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                             testId="input-env-custom"
                           />
                         )}
-                        <div className="mt-6">
-                          <ImageGallery
-                            environment={state.environment}
-                            emotionalImpact={state.emotionalImpact}
-                          />
-                        </div>
+                        {state.environment && state.environment !== "other" && (
+                          <div className="mt-6">
+                            <ImageGallery
+                              environment={state.environment}
+                              emotionalImpact={state.emotionalImpact}
+                            />
+                          </div>
+                        )}
                       </StepContent>
                     )}
 
