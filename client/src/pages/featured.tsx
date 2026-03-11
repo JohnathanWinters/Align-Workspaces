@@ -968,12 +968,10 @@ function ProfilePage({ slug }: { slug: string }) {
         ) : null}
 
         <div className="absolute top-6 left-6 z-10">
-          <Link href="/featured">
-            <button className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-              All Stories
-            </button>
-          </Link>
+          <button onClick={() => window.history.back()} className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            Back
+          </button>
         </div>
       </section>
 

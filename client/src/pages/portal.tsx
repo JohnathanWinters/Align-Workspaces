@@ -1685,15 +1685,14 @@ function PortalContent() {
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/portraits">
-              <button
-                data-testid="button-back-home"
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Home
-              </button>
-            </Link>
+            <button
+              onClick={() => window.history.back()}
+              data-testid="button-back-home"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
             <div className="h-4 w-px bg-gray-200" />
             <p className="font-serif text-lg text-gray-900" data-testid="text-portal-title">Client Portal</p>
           </div>

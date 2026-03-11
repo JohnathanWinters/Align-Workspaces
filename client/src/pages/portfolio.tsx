@@ -200,12 +200,10 @@ export default function PortfolioPage() {
             <Link href="/portraits">
               <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer" data-testid="link-home-from-portfolio">Align Portrait Designer</p>
             </Link>
-            <Link href="/buildmyphoto">
-              <Button variant="ghost" data-testid="button-back-home">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            </Link>
+            <Button variant="ghost" data-testid="button-back-home" onClick={() => window.history.back()}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
           </div>
         </div>
       </header>

@@ -354,7 +354,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
                 <button
-                  onClick={() => autoStart ? setLocation("/portraits") : setCurrentStep(0)}
+                  onClick={() => autoStart ? window.history.back() : setCurrentStep(0)}
                   className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
                   data-testid="link-home-logo"
                 >
