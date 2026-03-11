@@ -23,6 +23,8 @@ import {
   Camera,
   ImagePlus,
   Trash2,
+  Upload,
+  GripVertical,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space, SpaceBooking, SpaceMessage } from "@shared/schema";
@@ -161,33 +163,45 @@ function SpacePhotoManager({ space }: { space: Space }) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  const uploadMutation = useMutation({
-    mutationFn: async (files: FileList) => {
-      setUploading(true);
-      const formData = new FormData();
-      Array.from(files).forEach((f) => formData.append("photos", f));
-      const res = await fetch(`/api/spaces/${space.id}/photos`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Upload failed");
+  const images: string[] = (space.imageUrls || []) as string[];
+  const BATCH_SIZE = 2;
+
+  const handleUpload = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    setUploading(true);
+    let uploaded = 0;
+    try {
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = files.slice(i, i + BATCH_SIZE);
+        setUploadProgress(`${uploaded}/${files.length}`);
+        const formData = new FormData();
+        batch.forEach((f) => formData.append("photos", f));
+        const res = await fetch(`/api/spaces/${space.id}/photos`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Upload failed");
+        }
+        uploaded += batch.length;
       }
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Photos uploaded" });
+      toast({ title: `${uploaded} photo${uploaded > 1 ? "s" : ""} uploaded` });
       queryClient.invalidateQueries({ queryKey: ["/api/my-spaces"] });
-      setUploading(false);
-    },
-    onError: (err: any) => {
+    } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-      setUploading(false);
-    },
-  });
+      if (uploaded > 0) queryClient.invalidateQueries({ queryKey: ["/api/my-spaces"] });
+    }
+    setUploading(false);
+    setUploadProgress("");
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (imageUrl: string) => {
@@ -209,17 +223,46 @@ function SpacePhotoManager({ space }: { space: Space }) {
     },
   });
 
-  const handleFiles = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      uploadMutation.mutate(e.target.files);
-      e.target.value = "";
+  const handleReorder = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const reordered = [...images];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    try {
+      const res = await fetch(`/api/spaces/${space.id}/photos/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrls: reordered }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Reorder failed");
+      queryClient.invalidateQueries({ queryKey: ["/api/my-spaces"] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     }
+  };
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files?.length > 0) {
+      handleUpload(e.dataTransfer.files);
+    }
+  }, [space.id]);
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
   }, []);
 
-  const images = space.imageUrls || [];
-
   return (
-    <div className="mt-3 pt-3 border-t border-gray-100" data-testid={`space-photos-${space.id}`}>
+    <div
+      className="mt-3 pt-3 border-t border-gray-100"
+      data-testid={`space-photos-${space.id}`}
+      onDragOver={onDragOver}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={onDrop}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
           <Camera className="w-3 h-3" /> Photos ({images.length})
@@ -231,7 +274,7 @@ function SpacePhotoManager({ space }: { space: Space }) {
           data-testid={`button-add-photos-${space.id}`}
         >
           {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImagePlus className="w-3 h-3" />}
-          {uploading ? "Uploading..." : "Add Photos"}
+          {uploading ? `Uploading ${uploadProgress}...` : "Add Photos"}
         </button>
         <input
           ref={fileInputRef}
@@ -239,26 +282,55 @@ function SpacePhotoManager({ space }: { space: Space }) {
           accept="image/*"
           multiple
           className="hidden"
-          onChange={handleFiles}
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) handleUpload(e.target.files);
+            e.target.value = "";
+          }}
           data-testid={`input-space-photos-${space.id}`}
         />
       </div>
-      {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {images.map((url, i) => (
-            <div key={url} className="relative group rounded-lg overflow-hidden aspect-[4/3] bg-gray-100" data-testid={`space-photo-${space.id}-${i}`}>
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => deleteMutation.mutate(url)}
-                disabled={deleteMutation.isPending}
-                className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                data-testid={`button-delete-photo-${space.id}-${i}`}
-              >
-                <Trash2 className="w-3 h-3 text-white" />
-              </button>
-            </div>
-          ))}
+      {dragOver && (
+        <div className="mb-2 py-6 border-2 border-dashed border-[#c4956a] rounded-lg flex flex-col items-center gap-1 text-[#c4956a] bg-[#c4956a]/5 transition-colors">
+          <Upload className="w-5 h-5" />
+          <span className="text-xs font-medium">Drop photos here</span>
         </div>
+      )}
+      {images.length > 0 && (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {images.map((url, i) => (
+              <div
+                key={url}
+                draggable
+                onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(i)); setDragIdx(i); }}
+                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(i); }}
+                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); const from = parseInt(e.dataTransfer.getData("text/plain")); if (!isNaN(from)) handleReorder(from, i); setDragIdx(null); setDragOverIdx(null); }}
+                className={`relative group rounded-lg overflow-hidden aspect-[4/3] bg-gray-100 cursor-grab active:cursor-grabbing transition-all ${
+                  dragIdx === i ? "opacity-40 scale-95" : ""
+                } ${dragOverIdx === i && dragIdx !== null && dragIdx !== i ? "ring-2 ring-[#c4956a] scale-105" : ""}`}
+                data-testid={`space-photo-${space.id}-${i}`}
+              >
+                <img src={url} alt="" className="w-full h-full object-cover pointer-events-none" />
+                {i === 0 && (
+                  <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Cover</span>
+                )}
+                <button
+                  onClick={() => deleteMutation.mutate(url)}
+                  disabled={deleteMutation.isPending}
+                  className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  data-testid={`button-delete-photo-${space.id}-${i}`}
+                >
+                  <Trash2 className="w-3 h-3 text-white" />
+                </button>
+                <div className="absolute bottom-1 left-1 w-5 h-5 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <GripVertical className="w-3 h-3 text-white" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5">Drag to reorder. First photo is the cover image.</p>
+        </>
       )}
       {images.length === 0 && (
         <button
@@ -267,8 +339,8 @@ function SpacePhotoManager({ space }: { space: Space }) {
           className="w-full py-6 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-2 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a] transition-colors"
           data-testid={`button-upload-first-photo-${space.id}`}
         >
-          <ImagePlus className="w-6 h-6" />
-          <span className="text-xs">Add photos of your space</span>
+          <Upload className="w-6 h-6" />
+          <span className="text-xs">Drop photos here or click to upload</span>
         </button>
       )}
     </div>

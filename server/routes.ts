@@ -2043,6 +2043,28 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/spaces/:id/photos/reorder", isAuthenticated, async (req: any, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+      if (space.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+
+      const { imageUrls } = req.body;
+      if (!Array.isArray(imageUrls)) return res.status(400).json({ message: "imageUrls must be an array" });
+
+      const existing = space.imageUrls || [];
+      const existingSet = new Set(existing);
+      const submittedSet = new Set(imageUrls);
+      if (imageUrls.length !== existing.length || submittedSet.size !== existing.length) return res.status(400).json({ message: "Must provide exact same photos in new order" });
+      for (const url of imageUrls) { if (!existingSet.has(url)) return res.status(400).json({ message: "Unknown photo URL in reorder list" }); }
+
+      const updated = await storage.updateSpace(space.id, { imageUrls });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/my-spaces", isAuthenticated, async (req: any, res) => {
     try {
       const userSpaces = await storage.getSpacesByUser(req.user.claims.sub);
@@ -2191,6 +2213,27 @@ export async function registerRoutes(
         await objectStorageClient.bucket(parts[0]).file(parts.slice(1).join("/")).delete();
       } catch {}
 
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.put("/api/admin/spaces/:id/photos/reorder", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const { imageUrls } = req.body;
+      if (!Array.isArray(imageUrls)) return res.status(400).json({ message: "imageUrls must be an array" });
+
+      const existing = space.imageUrls || [];
+      const existingSet = new Set(existing);
+      const submittedSet = new Set(imageUrls);
+      if (imageUrls.length !== existing.length || submittedSet.size !== existing.length) return res.status(400).json({ message: "Must provide exact same photos in new order" });
+      for (const url of imageUrls) { if (!existingSet.has(url)) return res.status(400).json({ message: "Unknown photo URL in reorder list" }); }
+
+      const updated = await storage.updateSpace(space.id, { imageUrls });
       res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });

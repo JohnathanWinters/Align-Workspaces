@@ -1670,26 +1670,42 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  const images = space.imageUrls || [];
+  const images: string[] = space.imageUrls || [];
 
-  const handleUpload = async (files: FileList) => {
+  const BATCH_SIZE = 2;
+
+  const handleUpload = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
     setUploading(true);
+    let uploaded = 0;
     try {
-      const formData = new FormData();
-      Array.from(files).forEach((f) => formData.append("photos", f));
-      const res = await fetch(`/api/admin/spaces/${space.id}/photos`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (!res.ok) throw new Error((await res.json()).message || "Upload failed");
-      toast({ title: "Photos uploaded" });
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = files.slice(i, i + BATCH_SIZE);
+        setUploadProgress(`${uploaded}/${files.length}`);
+        const formData = new FormData();
+        batch.forEach((f) => formData.append("photos", f));
+        const res = await fetch(`/api/admin/spaces/${space.id}/photos`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        if (!res.ok) throw new Error((await res.json()).message || "Upload failed");
+        uploaded += batch.length;
+      }
+      toast({ title: `${uploaded} photo${uploaded > 1 ? "s" : ""} uploaded` });
       onUpdate();
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      if (uploaded > 0) onUpdate();
     }
     setUploading(false);
+    setUploadProgress("");
   };
 
   const handleDelete = async (imageUrl: string) => {
@@ -1707,8 +1723,45 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
     }
   };
 
+  const handleReorder = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const reordered = [...images];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    try {
+      const res = await fetch(`/api/admin/spaces/${space.id}/photos/reorder`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrls: reordered }),
+      });
+      if (!res.ok) throw new Error("Reorder failed");
+      onUpdate();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files?.length > 0) {
+      handleUpload(e.dataTransfer.files);
+    }
+  }, [space.id, token]);
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100" data-testid={`admin-space-photos-${space.id}`}>
+    <div
+      className="mt-4 pt-4 border-t border-gray-100"
+      data-testid={`admin-space-photos-${space.id}`}
+      onDragOver={onDragOver}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={onDrop}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
           <Camera className="w-3 h-3" /> Photos ({images.length})
@@ -1720,7 +1773,7 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
           data-testid={`admin-add-photos-${space.id}`}
         >
           {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImagePlus className="w-3 h-3" />}
-          {uploading ? "Uploading..." : "Add Photos"}
+          {uploading ? `Uploading ${uploadProgress}...` : "Add Photos"}
         </button>
         <input
           ref={fileInputRef}
@@ -1728,33 +1781,62 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
           accept="image/*"
           multiple
           className="hidden"
-          onChange={(e) => e.target.files && e.target.files.length > 0 && handleUpload(e.target.files)}
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) handleUpload(e.target.files);
+            e.target.value = "";
+          }}
         />
       </div>
-      {images.length > 0 ? (
-        <div className="grid grid-cols-4 gap-2">
-          {images.map((url: string, i: number) => (
-            <div key={url} className="relative group rounded-lg overflow-hidden aspect-[4/3] bg-gray-100" data-testid={`admin-space-photo-${space.id}-${i}`}>
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => handleDelete(url)}
-                className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                data-testid={`admin-delete-photo-${space.id}-${i}`}
-              >
-                <Trash2 className="w-3 h-3 text-white" />
-              </button>
-            </div>
-          ))}
+      {dragOver && (
+        <div className="mb-2 py-6 border-2 border-dashed border-[#c4956a] rounded-lg flex flex-col items-center gap-1 text-[#c4956a] bg-[#c4956a]/5 transition-colors">
+          <Upload className="w-5 h-5" />
+          <span className="text-xs font-medium">Drop photos here</span>
         </div>
+      )}
+      {images.length > 0 ? (
+        <>
+          <div className="grid grid-cols-4 gap-2">
+            {images.map((url: string, i: number) => (
+              <div
+                key={url}
+                draggable
+                onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(i)); setDragIdx(i); }}
+                onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverIdx(i); }}
+                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); const from = parseInt(e.dataTransfer.getData("text/plain")); if (!isNaN(from)) handleReorder(from, i); setDragIdx(null); setDragOverIdx(null); }}
+                className={`relative group rounded-lg overflow-hidden aspect-[4/3] bg-gray-100 cursor-grab active:cursor-grabbing transition-all ${
+                  dragIdx === i ? "opacity-40 scale-95" : ""
+                } ${dragOverIdx === i && dragIdx !== null && dragIdx !== i ? "ring-2 ring-[#c4956a] scale-105" : ""}`}
+                data-testid={`admin-space-photo-${space.id}-${i}`}
+              >
+                <img src={url} alt="" className="w-full h-full object-cover pointer-events-none" />
+                {i === 0 && (
+                  <span className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">Cover</span>
+                )}
+                <button
+                  onClick={() => handleDelete(url)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  data-testid={`admin-delete-photo-${space.id}-${i}`}
+                >
+                  <Trash2 className="w-3 h-3 text-white" />
+                </button>
+                <div className="absolute bottom-1 left-1 w-5 h-5 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <Move className="w-3 h-3 text-white" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1.5">Drag to reorder. First photo is the cover image.</p>
+        </>
       ) : (
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-1.5 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a] transition-colors"
+          className="w-full py-6 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-1.5 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a] transition-colors"
           data-testid={`admin-upload-first-photo-${space.id}`}
         >
-          <ImagePlus className="w-5 h-5" />
-          <span className="text-xs">Add photos</span>
+          <Upload className="w-5 h-5" />
+          <span className="text-xs">Drop photos here or click to upload</span>
         </button>
       )}
     </div>
@@ -2257,24 +2339,40 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex gap-4 mb-3">
+                        {space.imageUrls?.[0] ? (
+                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            <img src={space.imageUrls[0]} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <Camera className="w-6 h-6 text-gray-300" />
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900">{space.name}</h3>
-                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-medium text-gray-900">{space.name}</h3>
+                            {statusBadge(space.approvalStatus)}
+                          </div>
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
                             <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                             <span className="truncate">{space.address}</span>
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Type: {space.type} | ${space.pricePerHour}/hr | Host: {space.hostName || "N/A"}
-                            {space.isSample ? " | Sample" : ""}
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-400">
+                            <span>{space.type}</span>
+                            <span>${space.pricePerHour}/hr</span>
+                            {space.pricePerDay > 0 && <span>${space.pricePerDay}/day</span>}
+                            <span>Cap: {space.capacity || "N/A"}</span>
+                            {space.isSample === 1 && <span className="text-amber-500">Sample</span>}
                             {space.latitude && space.longitude ? (
-                              <span className="text-emerald-500 ml-1">| Mapped</span>
+                              <span className="text-emerald-500">Mapped</span>
                             ) : (
-                              <span className="text-amber-500 ml-1">| No coordinates</span>
+                              <span className="text-amber-500">No coords</span>
                             )}
-                          </p>
+                            {space.imageUrls?.length > 0 && <span>{space.imageUrls.length} photo{space.imageUrls.length > 1 ? "s" : ""}</span>}
+                          </div>
                           {space.ownerInfo ? (
-                            <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className="flex items-center gap-1.5 mt-1">
                               <User className="w-3 h-3 text-blue-400 flex-shrink-0" />
                               <span className="text-xs text-blue-600">
                                 {[space.ownerInfo.firstName, space.ownerInfo.lastName].filter(Boolean).join(" ") || "Unknown"}
@@ -2282,27 +2380,28 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                               </span>
                             </div>
                           ) : space.userId ? (
-                            <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className="flex items-center gap-1.5 mt-1">
                               <User className="w-3 h-3 text-gray-300 flex-shrink-0" />
                               <span className="text-xs text-gray-400">User ID: {space.userId}</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className="flex items-center gap-1.5 mt-1">
                               <User className="w-3 h-3 text-gray-300 flex-shrink-0" />
-                              <span className="text-xs text-gray-400">No owner (system/sample)</span>
+                              <span className="text-xs text-gray-400">No owner</span>
                             </div>
                           )}
                         </div>
-                        {statusBadge(space.approvalStatus)}
                       </div>
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{space.description}</p>
+                      {space.description && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{space.description}</p>
+                      )}
                       {space.amenities?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-3">
-                          {space.amenities.slice(0, 5).map((a: string, i: number) => (
+                          {space.amenities.slice(0, 6).map((a: string, i: number) => (
                             <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{a}</span>
                           ))}
-                          {space.amenities.length > 5 && (
-                            <span className="text-[10px] text-gray-400">+{space.amenities.length - 5} more</span>
+                          {space.amenities.length > 6 && (
+                            <span className="text-[10px] text-gray-400">+{space.amenities.length - 6} more</span>
                           )}
                         </div>
                       )}
