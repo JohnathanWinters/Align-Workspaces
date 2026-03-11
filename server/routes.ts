@@ -2119,20 +2119,43 @@ export async function registerRoutes(
       const space = await storage.getSpaceById(req.params.id);
       if (!space) return res.status(404).json({ message: "Space not found" });
 
-      const { newUserId } = req.body;
-      if (!newUserId) return res.status(400).json({ message: "newUserId required" });
+      const { newUserId, email } = req.body;
+      let targetUserId = newUserId;
+
+      if (email && !newUserId) {
+        const user = await storage.getUserByEmail(email.trim().toLowerCase());
+        if (!user) return res.status(404).json({ message: "No user found with that email" });
+        targetUserId = user.id;
+      }
+
+      if (!targetUserId) return res.status(400).json({ message: "email or newUserId required" });
 
       let newOwnerInfo = null;
       try {
         const { authStorage } = await import("./replit_integrations/auth");
-        const user = await authStorage.getUser(newUserId);
+        const user = await authStorage.getUser(targetUserId);
         if (user) {
           newOwnerInfo = { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName };
         }
       } catch {}
 
-      const updated = await storage.updateSpace(space.id, { userId: newUserId });
+      const updated = await storage.updateSpace(space.id, { userId: targetUserId });
       res.json({ ...updated, ownerInfo: newOwnerInfo });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/users/search", isAdmin, async (req, res) => {
+    try {
+      const q = ((req.query.q as string) || "").trim().toLowerCase();
+      if (q.length < 2) return res.json([]);
+      const allUsers = await storage.getAllUsers();
+      const matches = allUsers
+        .filter(u => u.email?.toLowerCase().includes(q) || u.firstName?.toLowerCase().includes(q) || u.lastName?.toLowerCase().includes(q))
+        .slice(0, 8)
+        .map(u => ({ id: u.id, email: u.email, firstName: u.firstName, lastName: u.lastName }));
+      res.json(matches);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
