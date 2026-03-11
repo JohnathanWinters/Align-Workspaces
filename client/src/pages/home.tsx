@@ -15,7 +15,7 @@ import { PhotographersSection } from "@/components/photographers-section";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   UtensilsCrossed,
   Building2,
@@ -69,6 +69,7 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
+  const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(autoStart ? 1 : 0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
@@ -353,7 +354,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
                 <button
-                  onClick={() => setCurrentStep(0)}
+                  onClick={() => autoStart ? setLocation("/portraits") : setCurrentStep(0)}
                   className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
                   data-testid="link-home-logo"
                 >
