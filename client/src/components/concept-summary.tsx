@@ -27,7 +27,7 @@ export function ConceptSummary({ state }: ConceptSummaryProps) {
       <h3 className="font-serif text-lg mb-5 text-card-foreground">Your Shoot Concept</h3>
 
       <div className="space-y-4">
-        <SummaryRow label="Location" value={envLabel} />
+        <SummaryRow label="Setting" value={envLabel} />
         <SummaryRow label="Message" value={msgLabel} />
         <SummaryRow label="Feeling" value={impLabel} />
       </div>

@@ -426,7 +426,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                     data-testid={`chip-step-${s.step}`}
                   >
                     <span className="text-[#c4956a] font-medium">
-                      {s.step === 1 ? "Location" : s.step === 2 ? "First Impression" : s.step === 3 ? "Client Experience" : "Placement"}:
+                      {s.step === 1 ? "Setting" : s.step === 2 ? "First Impression" : s.step === 3 ? "Client Experience" : "Placement"}:
                     </span>
                     <span>{s.label}</span>
                   </button>
@@ -449,7 +449,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                     {currentStep === 1 && (
                       <StepContent
                         title="Setting"
-                        subtitle="Where the story happens."
+                        subtitle="Choose the environment that represents where clients expect to find you."
                         centerTitle
                       >
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -493,7 +493,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                     {currentStep === 2 && (
                       <StepContent
                         title="First Impression"
-                        subtitle="What people understand about you instantly."
+                        subtitle="What should people understand about you instantly?"
                         centerTitle
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -514,7 +514,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                     {currentStep === 3 && (
                       <StepContent
                         title="Client Experience"
-                        subtitle="How clients feel after interacting with you."
+                        subtitle="How should clients feel working with you?"
                         centerTitle
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
