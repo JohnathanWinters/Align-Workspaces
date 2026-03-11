@@ -1731,7 +1731,7 @@ function PortalContent() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                   >
-                    <Link href="/buildmyphoto">
+                    <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-portal">
                         <Camera className="w-4 h-4" />
                         Align Portraits
@@ -1778,7 +1778,7 @@ function PortalContent() {
                 Manage your photoshoots and photo edits
               </p>
             </div>
-            <Link href="/buildmyphoto">
+            <Link href="/portraits">
               <Button
                 data-testid="button-design-shoot"
                 className="bg-[#1a1a1a] text-white hover:bg-black"
@@ -1868,7 +1868,7 @@ function PortalContent() {
                   <p className="text-gray-500 text-sm max-w-sm mb-6">
                     Once your first session is booked, it'll appear right here. Let's design something you'll be proud to share.
                   </p>
-                  <Link href="/buildmyphoto">
+                  <Link href="/portraits">
                     <Button
                       size="lg"
                       data-testid="button-design-shoot-empty"
