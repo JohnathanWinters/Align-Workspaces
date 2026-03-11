@@ -350,7 +350,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
 
       {currentStep > 0 && (
         <div ref={configuratorRef} id="configurator" className="min-h-screen">
-          <header className="lg:sticky lg:top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
+          <header className="sticky top-0 z-[9000] bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
               <div className="flex items-center justify-between">
                 <button
@@ -378,7 +378,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-50"
+                        className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                       >
                         <Link href="/spaces/browse">
                           <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-header">
