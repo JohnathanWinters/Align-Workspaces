@@ -260,9 +260,6 @@ export default function PortfolioPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
-            Our Work
-          </p>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-portfolio-title">
             First Impressions
           </h1>
