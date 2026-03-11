@@ -20,9 +20,20 @@ import { authStorage } from "./replit_integrations/auth";
 
 const objectStorageService = new ObjectStorageService();
 
+function cleanAddressForGeocoding(address: string): string {
+  let cleaned = address
+    .replace(/(\d)([A-Z][a-z])/g, "$1, $2")
+    .replace(/\b(suite|ste|unit|apt|apartment|bldg|building|floor|rm|room|#)\s*[0-9]+[a-z]?(?:\s*,|\s|$)/gi, " ")
+    .replace(/,\s*,/g, ",")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cleaned;
+}
+
 async function geocodeAddress(address: string): Promise<{ lat: string; lng: string } | null> {
   try {
-    const encoded = encodeURIComponent(address);
+    const cleaned = cleanAddressForGeocoding(address);
+    const encoded = encodeURIComponent(cleaned);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`;
     const res = await fetch(url, {
       headers: { "User-Agent": "AlignSpaces/1.0 (alignphotodesign.com)" },
