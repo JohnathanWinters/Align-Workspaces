@@ -143,7 +143,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-white/50 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-4 sm:mt-8 font-light"
+            className="text-white/80 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-4 sm:mt-8 font-normal"
           >
             Design a photoshoot that aligns your work, character, and the impression you want your clients to feel.
           </motion.p>
