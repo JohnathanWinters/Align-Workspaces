@@ -66,7 +66,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: "url(/images/hero-bg-bright.webp)",
-          backgroundPosition: "43% 10%",
+          backgroundPosition: "43% 25%",
           filter: "brightness(0.85) contrast(1.05)",
           y,
           scale,
