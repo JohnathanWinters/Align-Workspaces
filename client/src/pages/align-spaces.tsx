@@ -94,19 +94,19 @@ export default function AlignSpacesPage() {
                   transition={{ duration: 0.2 }}
                   className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                 >
-                  <button onClick={() => { setMenuOpen(false); setLocation("/"); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-spaces">
+                  <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-spaces">
                     <Camera className="w-4 h-4" />
                     Align Portraits
                   </button>
-                  <button onClick={() => { setMenuOpen(false); setLocation("/portal"); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-spaces">
+                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-spaces">
                     <User className="w-4 h-4" />
                     Client Portal
                   </button>
-                  <button onClick={() => { setMenuOpen(false); setLocation("/featured"); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-spaces">
+                  <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-spaces">
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
-                  <button onClick={() => { setMenuOpen(false); setLocation("/portfolio"); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-spaces">
+                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-spaces">
                     <Camera className="w-4 h-4" />
                     Our Work
                   </button>
