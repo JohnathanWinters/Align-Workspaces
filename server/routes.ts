@@ -2054,6 +2054,75 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/spaces/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+      if (space.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+
+      const body = req.body;
+      const updates: Record<string, any> = {};
+
+      if (body.name !== undefined) {
+        const v = String(body.name).trim();
+        if (!v) return res.status(400).json({ message: "Name cannot be empty" });
+        updates.name = v;
+      }
+      if (body.type !== undefined) updates.type = String(body.type).trim();
+      if (body.description !== undefined) {
+        const v = String(body.description).trim();
+        if (!v) return res.status(400).json({ message: "Description cannot be empty" });
+        updates.description = v;
+      }
+      if (body.shortDescription !== undefined) updates.shortDescription = String(body.shortDescription).trim();
+      if (body.address !== undefined) {
+        const v = String(body.address).trim();
+        if (!v) return res.status(400).json({ message: "Address cannot be empty" });
+        updates.address = v;
+      }
+      if (body.neighborhood !== undefined) updates.neighborhood = String(body.neighborhood).trim();
+      if (body.hostName !== undefined) updates.hostName = String(body.hostName).trim();
+      if (body.contactEmail !== undefined) updates.contactEmail = String(body.contactEmail).trim();
+      if (body.targetProfession !== undefined) updates.targetProfession = String(body.targetProfession).trim();
+      if (body.availableHours !== undefined) updates.availableHours = String(body.availableHours).trim();
+
+      if (body.pricePerHour !== undefined) {
+        const n = Number(body.pricePerHour);
+        if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid price per hour" });
+        updates.pricePerHour = n;
+      }
+      if (body.pricePerDay !== undefined) {
+        const n = Number(body.pricePerDay);
+        if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid price per day" });
+        updates.pricePerDay = n;
+      }
+      if (body.capacity !== undefined) {
+        const n = Number(body.capacity);
+        if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid capacity" });
+        updates.capacity = n;
+      }
+      if (body.amenities !== undefined) {
+        if (!Array.isArray(body.amenities)) return res.status(400).json({ message: "Amenities must be an array" });
+        updates.amenities = body.amenities.map((a: any) => String(a).trim()).filter(Boolean);
+      }
+
+      if (Object.keys(updates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
+
+      if (updates.address && updates.address !== space.address) {
+        const coords = await geocodeAddress(updates.address);
+        if (coords) {
+          updates.latitude = coords.lat;
+          updates.longitude = coords.lng;
+        }
+      }
+
+      const updated = await storage.updateSpace(space.id, updates);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.put("/api/spaces/:id/photos/reorder", isAuthenticated, async (req: any, res) => {
     try {
       const space = await storage.getSpaceById(req.params.id);
