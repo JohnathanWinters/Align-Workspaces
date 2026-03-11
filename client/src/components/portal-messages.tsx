@@ -35,8 +35,9 @@ interface EnrichedBooking extends SpaceBooking {
 }
 
 const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
+  awaiting_payment: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Awaiting Payment" },
   pending: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Pending" },
-  approved: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, label: "Approved" },
+  approved: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, label: "Confirmed" },
   rejected: { color: "bg-red-50 text-red-700 border-red-200", icon: XCircle, label: "Declined" },
   cancelled: { color: "bg-gray-100 text-gray-500 border-gray-200", icon: Ban, label: "Cancelled" },
 };

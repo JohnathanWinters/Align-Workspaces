@@ -1,5 +1,6 @@
 import { getStripeSync, getUncachableStripeClient } from './stripeClient';
 import { storage } from './storage';
+import { sendSpaceBookingNotification } from './gmail';
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -24,7 +25,22 @@ export class WebhookHandlers {
         }
         if (session.metadata?.type === 'space_booking' && session.metadata?.bookingId) {
           const bookingId = session.metadata.bookingId;
+          const booking = await storage.getSpaceBookingById(bookingId);
+
           await storage.updateSpaceBooking(bookingId, { paymentStatus: "paid", status: "approved" });
+
+          const guestName = session.metadata.guestName || booking?.userName || "Guest";
+          const bookingDate = session.metadata.bookingDate || booking?.bookingDate || "";
+          const bookingHours = parseInt(session.metadata.bookingHours) || booking?.bookingHours || 1;
+
+          await storage.createSpaceMessage({
+            spaceBookingId: bookingId,
+            senderId: session.metadata.userId || "system",
+            senderName: guestName,
+            senderRole: "guest",
+            message: `Booked ${session.metadata.spaceName || "this space"} on ${bookingDate} for ${bookingHours} hour${bookingHours > 1 ? "s" : ""}.`,
+          });
+
           await storage.createSpaceMessage({
             spaceBookingId: bookingId,
             senderId: "system",
@@ -33,7 +49,22 @@ export class WebhookHandlers {
             message: "Payment completed — booking confirmed!",
             messageType: "system",
           });
-          console.log(`Space booking ${bookingId} marked as paid and approved`);
+
+          try {
+            await sendSpaceBookingNotification({
+              spaceName: session.metadata.spaceName || "a space",
+              guestName,
+              guestEmail: session.metadata.guestEmail || "",
+              message: `Booking confirmed for ${bookingDate}, ${bookingHours} hour${bookingHours > 1 ? "s" : ""}.`,
+              hostEmail: session.metadata.hostEmail || "ArmandoRamirezRomero89@gmail.com",
+              bookingDate,
+              bookingHours,
+            });
+          } catch (emailErr) {
+            console.error("Failed to send booking notification:", emailErr);
+          }
+
+          console.log(`Space booking ${bookingId} paid & confirmed, host notified`);
         }
       }
     } catch (err) {

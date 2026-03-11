@@ -2530,7 +2530,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Space not found" });
       }
 
-      const { bookingDate, bookingHours, message } = req.body;
+      const { bookingDate, bookingHours } = req.body;
       if (!bookingDate) return res.status(400).json({ message: "Booking date is required" });
       const hours = parseInt(bookingHours) || 1;
 
@@ -2545,13 +2545,14 @@ export async function registerRoutes(
         }
       }
 
+      const guestName = user.claims?.first_name || "Guest";
+
       const booking = await storage.createSpaceBooking({
         spaceId: space.id,
         userId: user.claims.sub,
-        userName: user.claims?.first_name || "Guest",
+        userName: guestName,
         userEmail: user.claims?.email || null,
-        status: "pending",
-        message: message || null,
+        status: "awaiting_payment",
         bookingDate,
         bookingHours: hours,
         paymentAmount: fees.totalCharge,
@@ -2559,15 +2560,6 @@ export async function registerRoutes(
         hostFeeAmount: fees.hostFee,
         hostEarnings: fees.hostEarnings,
         paymentStatus: "pending",
-      });
-
-      const guestName = user.claims?.first_name || "Guest";
-      await storage.createSpaceMessage({
-        spaceBookingId: booking.id,
-        senderId: user.claims.sub,
-        senderName: guestName,
-        senderRole: "guest",
-        message: message || `Hi, I'd like to book ${space.name} on ${bookingDate} for ${hours} hour${hours > 1 ? "s" : ""}.`,
       });
 
       const stripe = await getUncachableStripeClient();
@@ -2590,13 +2582,19 @@ export async function registerRoutes(
         ],
         mode: "payment",
         success_url: `${baseUrl}/portal?space_payment=success`,
-        cancel_url: `${baseUrl}/portal?space_payment=cancelled`,
+        cancel_url: `${baseUrl}/spaces/browse?space_payment=cancelled`,
         customer_email: user.claims?.email || booking.userEmail,
         metadata: {
           type: "space_booking",
           bookingId: booking.id,
           spaceId: space.id,
           userId: user.claims.sub,
+          guestName,
+          guestEmail: user.claims?.email || "",
+          spaceName: space.name,
+          hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
+          bookingDate,
+          bookingHours: String(hours),
         },
       };
 
@@ -2611,20 +2609,6 @@ export async function registerRoutes(
 
       const session = await stripe.checkout.sessions.create(sessionConfig);
       await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id });
-
-      try {
-        await sendSpaceBookingNotification({
-          spaceName: space.name,
-          guestName,
-          guestEmail: user.claims?.email || "",
-          message: message || "",
-          hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
-          bookingDate,
-          bookingHours: hours,
-        });
-      } catch (emailErr) {
-        console.error("Failed to send booking notification:", emailErr);
-      }
 
       res.json({ booking, checkoutUrl: session.url });
     } catch (err: any) {
@@ -2643,6 +2627,7 @@ export async function registerRoutes(
       for (const space of userSpaces) {
         const bookings = await storage.getSpaceBookingsBySpace(space.id);
         for (const b of bookings) {
+          if (b.status === "awaiting_payment") continue;
           hostBookings.push({ ...b, spaceName: space.name });
         }
       }

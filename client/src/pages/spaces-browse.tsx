@@ -347,7 +347,6 @@ function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; space
 function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
-  const [bookingMessage, setBookingMessage] = useState("");
   const [bookingDate, setBookingDate] = useState("");
   const [bookingHours, setBookingHours] = useState(1);
   const [showCarousel, setShowCarousel] = useState(false);
@@ -379,7 +378,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const bookMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/spaces/${space.id}/book`, {
-        message: bookingMessage,
         bookingDate,
         bookingHours,
       });
@@ -392,7 +390,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
         toast({ title: "Booking created", description: "Check your portal for updates." });
         setShowBooking(false);
         setShowAuthPrompt(false);
-        setBookingMessage("");
       }
     },
     onError: (err: any) => {
@@ -891,15 +888,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                         </select>
                       </div>
                     </div>
-
-                    <Textarea
-                      value={bookingMessage}
-                      onChange={(e) => setBookingMessage(e.target.value)}
-                      placeholder={`Hi, I'd like to book ${space.name}. Let me know if this time works!`}
-                      rows={2}
-                      className="text-sm bg-white"
-                      data-testid={`input-booking-message-${space.id}`}
-                    />
 
                     <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-1.5">
                       <div className="flex justify-between text-xs text-foreground/60">
