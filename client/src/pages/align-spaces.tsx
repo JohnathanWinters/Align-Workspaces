@@ -137,7 +137,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="text-white/90 text-base sm:text-lg max-w-md mx-auto leading-relaxed mt-6 sm:mt-8 font-normal text-center"
           >
-            Book professional workspaces across Miami — therapy offices, studios, meeting rooms, and more. Designed for independent professionals and growing practices.
+            Book professional workspaces across Miami, therapy offices, studios, meeting rooms, and more. Designed for independent professionals and growing practices.
           </motion.p>
 
           <motion.div
