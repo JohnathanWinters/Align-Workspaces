@@ -1,5 +1,4 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
 import type { ConfiguratorState } from "@/lib/configurator-data";
 import {
   generateBrandDescription,
@@ -68,23 +67,6 @@ export function ConceptSummary({ state }: ConceptSummaryProps) {
               Pricing reflects potential venue rental expenses.
             </p>
 
-            <div className="mt-5 pt-4 border-t border-border" data-testid="what-you-get">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
-                What You Get
-              </p>
-              <ul className="space-y-2">
-                {[
-                  "All selected, fully edited images",
-                  "Professionally color graded and retouched",
-                  "Secure digital delivery",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-card-foreground">
-                    <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
