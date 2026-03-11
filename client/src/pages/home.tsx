@@ -697,6 +697,35 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           emotionalImpact={state.emotionalImpact}
                         />
                         <ConceptSummary state={state} />
+
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.2 }}
+                          className="rounded-xl border border-[hsl(var(--border))] bg-white/80 backdrop-blur-sm p-5"
+                          data-testid="what-you-get"
+                        >
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4 text-center font-medium">What You Get</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {[
+                              { label: "1-Hour Session", detail: "A focused, one-hour portrait session tailored to your brand and vision." },
+                              { label: "15+ Edited Photos", detail: "At least 15 professionally retouched images, delivered in high resolution within 7–10 business days." },
+                              { label: "2 Yearly Edit Tokens", detail: "Two complimentary retouching sessions per year to refresh or refine your images as your brand evolves." },
+                              { label: "Personal Mood Board", detail: "A curated mood board built from your configurator choices to guide your session's look and feel." },
+                              { label: "Wardrobe Guidance", detail: "Personalized outfit recommendations based on your environment, presence, and desired impact." },
+                              { label: "Online Gallery", detail: "A private, shareable online gallery where you can view, download, and share your final images." },
+                            ].map((item) => (
+                              <div key={item.label} className="group/tip relative text-center p-3 rounded-lg bg-[hsl(var(--muted))]/50 hover:bg-[#c4956a]/10 transition-colors cursor-default" data-testid={`perk-${item.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                                <p className="text-sm font-medium text-foreground">{item.label}</p>
+                                <div className="invisible group-hover/tip:visible opacity-0 group-hover/tip:opacity-100 transition-all duration-200 absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-3 bg-foreground text-background text-xs leading-relaxed rounded-lg shadow-xl z-[9999] pointer-events-none">
+                                  {item.detail}
+                                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-foreground" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+
                         <StepContent
                           title="Bring it to Life"
                           subtitle="Transform your vision into a lasting first impression."
