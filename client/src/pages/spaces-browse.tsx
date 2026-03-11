@@ -1237,8 +1237,8 @@ export default function SpacesBrowsePage() {
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">{mobileView === "map" ? "List" : "Back"}</span>
           </button>
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
               data-testid="button-toggle-map"
@@ -1250,8 +1250,7 @@ export default function SpacesBrowsePage() {
                 <><List className="w-3.5 h-3.5" /> List ({filtered.length})</>
               )}
             </button>
-          </div>
-          <div className="relative">
+            <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               data-testid="button-browse-menu"
@@ -1284,6 +1283,7 @@ export default function SpacesBrowsePage() {
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
           </div>
         </div>
       </nav>
