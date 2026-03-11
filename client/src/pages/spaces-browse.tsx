@@ -134,6 +134,16 @@ function createPriceIcon(price: number, _type: string, isActive: boolean) {
   });
 }
 
+function MapResizeHandler({ visible }: { visible: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    if (visible) {
+      setTimeout(() => map.invalidateSize(), 100);
+    }
+  }, [visible, map]);
+  return null;
+}
+
 function MapBoundsUpdater({ spaces }: { spaces: Space[] }) {
   const map = useMap();
   const boundsKey = useMemo(() => {
@@ -161,7 +171,7 @@ function MapBoundsUpdater({ spaces }: { spaces: Space[] }) {
   return null;
 }
 
-function SpacesMap({ spaces, hoveredId, onMarkerClick }: { spaces: Space[]; hoveredId: string | null; onMarkerClick: (id: string) => void }) {
+function SpacesMap({ spaces, hoveredId, onMarkerClick, visible = true }: { spaces: Space[]; hoveredId: string | null; onMarkerClick: (id: string) => void; visible?: boolean }) {
   const mappable = useMemo(() => spaces.filter(s => {
     if (!s.latitude || !s.longitude) return false;
     const lat = parseFloat(s.latitude);
@@ -192,6 +202,7 @@ function SpacesMap({ spaces, hoveredId, onMarkerClick }: { spaces: Space[]; hove
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
+      <MapResizeHandler visible={visible} />
       <MapBoundsUpdater spaces={mappable} />
       {mappable.map(space => (
         <Marker
@@ -1546,6 +1557,7 @@ export default function SpacesBrowsePage() {
                 spaces={filtered}
                 hoveredId={hoveredCardId}
                 onMarkerClick={handleMarkerClick}
+                visible={mobileView === "map"}
               />
             )}
           </div>
