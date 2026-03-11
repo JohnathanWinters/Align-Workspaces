@@ -22,6 +22,19 @@ export class WebhookHandlers {
           await storage.addPurchasedTokens(session.metadata.userId, quantity);
           console.log(`Credited ${quantity} edit tokens to user ${session.metadata.userId}`);
         }
+        if (session.metadata?.type === 'space_booking' && session.metadata?.bookingId) {
+          const bookingId = session.metadata.bookingId;
+          await storage.updateSpaceBooking(bookingId, { paymentStatus: "paid" });
+          await storage.createSpaceMessage({
+            spaceBookingId: bookingId,
+            senderId: "system",
+            senderName: "System",
+            senderRole: "guest",
+            message: "Payment completed successfully.",
+            messageType: "system",
+          });
+          console.log(`Space booking ${bookingId} marked as paid`);
+        }
       }
     } catch (err) {
       console.log("Custom webhook processing skipped (signature verification or non-token event):", (err as Error).message);

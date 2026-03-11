@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
+import PortalMessagesSection, { useUnreadCount } from "@/components/portal-messages";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { playNotificationSound } from "@/lib/notification-sound";
@@ -1662,7 +1663,8 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
-  const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "spaces">("shoots");
+  const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "messages" | "spaces">("shoots");
+  const unreadCount = useUnreadCount();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
@@ -1826,6 +1828,29 @@ function PortalContent() {
               )}
             </button>
             <button
+              onClick={() => setActiveTab("messages")}
+              data-testid="tab-messages"
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === "messages"
+                  ? "text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              Messages
+              {unreadCount > 0 && (
+                <span className="bg-gray-900 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-medium" data-testid="tab-messages-unread">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+              {activeTab === "messages" && (
+                <motion.div
+                  layoutId="portal-tab-indicator"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                />
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab("spaces")}
               data-testid="tab-my-spaces"
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
@@ -1845,7 +1870,9 @@ function PortalContent() {
             </button>
           </div>
 
-          {activeTab === "spaces" ? (
+          {activeTab === "messages" ? (
+            <PortalMessagesSection userId={user?.id || ""} />
+          ) : activeTab === "spaces" ? (
             <PortalSpacesSection userId={user?.id || ""} />
           ) : activeTab === "edits" ? (
             <EditTokenSection />

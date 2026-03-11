@@ -11,14 +11,9 @@ import {
   Building2,
   Plus,
   MapPin,
-  Clock,
   DollarSign,
   Users,
-  Send,
   Loader2,
-  ChevronDown,
-  ChevronUp,
-  MessageCircle,
   X,
   Camera,
   ImagePlus,
@@ -29,137 +24,13 @@ import {
   Save,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Space, SpaceBooking, SpaceMessage } from "@shared/schema";
+import type { Space } from "@shared/schema";
 
 const SPACE_TYPES = [
   { value: "office", label: "Office" },
   { value: "gym", label: "Training Studio" },
   { value: "meeting", label: "Meeting Room" },
 ];
-
-function SpaceChat({ bookingId, currentUserId }: { bookingId: string; currentUserId: string }) {
-  const [msg, setMsg] = useState("");
-
-  const { data: messages = [], isLoading } = useQuery<SpaceMessage[]>({
-    queryKey: ["/api/space-bookings", bookingId, "messages"],
-    queryFn: async () => {
-      const res = await fetch(`/api/space-bookings/${bookingId}/messages`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch messages");
-      return res.json();
-    },
-    refetchInterval: 10000,
-  });
-
-  const sendMutation = useMutation({
-    mutationFn: async (message: string) => {
-      await apiRequest("POST", `/api/space-bookings/${bookingId}/messages`, { message });
-    },
-    onSuccess: () => {
-      setMsg("");
-      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", bookingId, "messages"] });
-    },
-  });
-
-  return (
-    <div className="mt-3 border-t border-gray-100 pt-3">
-      <div className="max-h-60 overflow-y-auto space-y-2 mb-3">
-        {isLoading ? (
-          <div className="flex justify-center py-4">
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-          </div>
-        ) : messages.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-2">No messages yet</p>
-        ) : (
-          messages.map((m) => (
-            <div
-              key={m.id}
-              className={`flex ${m.senderId === currentUserId ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                  m.senderId === currentUserId
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                <p className="text-[10px] opacity-60 mb-0.5">{m.senderName}</p>
-                <p>{m.message}</p>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-      <div className="flex gap-2">
-        <Input
-          value={msg}
-          onChange={(e) => setMsg(e.target.value)}
-          placeholder="Type a message..."
-          className="text-sm"
-          data-testid={`input-chat-${bookingId}`}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && msg.trim()) {
-              sendMutation.mutate(msg.trim());
-            }
-          }}
-        />
-        <Button
-          size="sm"
-          disabled={!msg.trim() || sendMutation.isPending}
-          onClick={() => sendMutation.mutate(msg.trim())}
-          data-testid={`button-send-chat-${bookingId}`}
-          className="bg-gray-900 text-white hover:bg-black"
-        >
-          <Send className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function BookingCard({ booking, currentUserId, spaceName, role }: {
-  booking: SpaceBooking;
-  currentUserId: string;
-  spaceName?: string;
-  role: "host" | "guest";
-}) {
-  const [showChat, setShowChat] = useState(false);
-
-  const statusColors: Record<string, string> = {
-    pending: "bg-amber-50 text-amber-700",
-    approved: "bg-emerald-50 text-emerald-700",
-    rejected: "bg-red-50 text-red-700",
-    cancelled: "bg-gray-100 text-gray-500",
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white" data-testid={`booking-card-${booking.id}`}>
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          {spaceName && <p className="text-sm font-medium text-gray-900">{spaceName}</p>}
-          <p className="text-xs text-gray-500">
-            {role === "host" ? `From: ${booking.userName}` : "Your request"}
-          </p>
-        </div>
-        <Badge className={statusColors[booking.status || "pending"]}>
-          {booking.status || "pending"}
-        </Badge>
-      </div>
-      {booking.message && (
-        <p className="text-sm text-gray-600 mb-2">{booking.message}</p>
-      )}
-      <button
-        onClick={() => setShowChat(!showChat)}
-        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors"
-        data-testid={`button-toggle-chat-${booking.id}`}
-      >
-        <MessageCircle className="w-3.5 h-3.5" />
-        {showChat ? "Hide Chat" : "Open Chat"}
-        {showChat ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-      </button>
-      {showChat && <SpaceChat bookingId={booking.id} currentUserId={currentUserId} />}
-    </div>
-  );
-}
 
 function SpacePhotoManager({ space }: { space: Space }) {
   const { toast } = useToast();
@@ -675,18 +546,6 @@ export default function PortalSpacesSection({ userId }: { userId: string }) {
     },
   });
 
-  const { data: bookingsData } = useQuery<{ guestBookings: SpaceBooking[]; hostBookings: (SpaceBooking & { spaceName?: string })[] }>({
-    queryKey: ["/api/space-bookings"],
-    queryFn: async () => {
-      const res = await fetch("/api/space-bookings", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-  });
-
-  const guestBookings = bookingsData?.guestBookings || [];
-  const hostBookings = bookingsData?.hostBookings || [];
-
   const statusColors: Record<string, string> = {
     pending: "bg-amber-50 text-amber-700",
     approved: "bg-emerald-50 text-emerald-700",
@@ -742,39 +601,6 @@ export default function PortalSpacesSection({ userId }: { userId: string }) {
           {mySpaces.map((space) => (
             <SpaceCard key={space.id} space={space} statusColors={statusColors} />
           ))}
-        </div>
-      )}
-
-      {hostBookings.length > 0 && (
-        <div>
-          <h2 className="font-serif text-xl text-gray-900 mb-4">Booking Requests for My Spaces</h2>
-          <div className="space-y-3">
-            {hostBookings.map((b) => (
-              <BookingCard
-                key={b.id}
-                booking={b}
-                currentUserId={userId}
-                spaceName={b.spaceName}
-                role="host"
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {guestBookings.length > 0 && (
-        <div>
-          <h2 className="font-serif text-xl text-gray-900 mb-4">My Booking Requests</h2>
-          <div className="space-y-3">
-            {guestBookings.map((b) => (
-              <BookingCard
-                key={b.id}
-                booking={b}
-                currentUserId={userId}
-                role="guest"
-              />
-            ))}
-          </div>
         </div>
       )}
     </div>

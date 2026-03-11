@@ -91,8 +91,11 @@ export interface IStorage {
   getSpaceBookingsBySpace(spaceId: string): Promise<SpaceBooking[]>;
   getSpaceBookingById(id: string): Promise<SpaceBooking | undefined>;
   updateSpaceBookingStatus(id: string, status: string): Promise<SpaceBooking>;
+  updateSpaceBooking(id: string, data: Partial<SpaceBooking>): Promise<SpaceBooking>;
+  markBookingRead(bookingId: string, role: "guest" | "host"): Promise<void>;
   getSpaceMessages(spaceBookingId: string): Promise<SpaceMessage[]>;
   createSpaceMessage(msg: InsertSpaceMessage): Promise<SpaceMessage>;
+  getLatestSpaceMessage(bookingId: string): Promise<SpaceMessage | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -695,6 +698,25 @@ export class DatabaseStorage implements IStorage {
 
   async createSpaceMessage(msg: InsertSpaceMessage): Promise<SpaceMessage> {
     const [result] = await db.insert(spaceMessages).values(msg).returning();
+    return result;
+  }
+
+  async updateSpaceBooking(id: string, data: Partial<SpaceBooking>): Promise<SpaceBooking> {
+    const [result] = await db.update(spaceBookings).set(data).where(eq(spaceBookings.id, id)).returning();
+    return result;
+  }
+
+  async markBookingRead(bookingId: string, role: "guest" | "host"): Promise<void> {
+    const now = new Date();
+    if (role === "guest") {
+      await db.update(spaceBookings).set({ lastReadGuest: now }).where(eq(spaceBookings.id, bookingId));
+    } else {
+      await db.update(spaceBookings).set({ lastReadHost: now }).where(eq(spaceBookings.id, bookingId));
+    }
+  }
+
+  async getLatestSpaceMessage(bookingId: string): Promise<SpaceMessage | undefined> {
+    const [result] = await db.select().from(spaceMessages).where(eq(spaceMessages.spaceBookingId, bookingId)).orderBy(desc(spaceMessages.createdAt)).limit(1);
     return result;
   }
 }

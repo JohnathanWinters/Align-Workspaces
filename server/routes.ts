@@ -2473,7 +2473,29 @@ export async function registerRoutes(
         }
       }
 
-      res.json({ guestBookings, hostBookings });
+      const enrichBooking = async (b: any, role: "guest" | "host") => {
+        const latest = await storage.getLatestSpaceMessage(b.id);
+        const space = await storage.getSpaceById(b.spaceId);
+        const lastRead = role === "guest" ? b.lastReadGuest : b.lastReadHost;
+        const msgs = await storage.getSpaceMessages(b.id);
+        const unreadCount = lastRead
+          ? msgs.filter((m: any) => m.createdAt > lastRead && m.senderId !== userId).length
+          : msgs.filter((m: any) => m.senderId !== userId).length;
+        return {
+          ...b,
+          spaceName: space?.name || b.spaceName || "Unknown Space",
+          spaceType: space?.type,
+          otherPartyName: role === "guest" ? (space?.hostName || "Host") : (b.userName || "Guest"),
+          latestMessage: latest ? { message: latest.message, createdAt: latest.createdAt, senderRole: latest.senderRole, messageType: latest.messageType } : null,
+          unreadCount,
+          role,
+        };
+      };
+
+      const enrichedGuest = await Promise.all(guestBookings.map((b) => enrichBooking(b, "guest")));
+      const enrichedHost = await Promise.all(hostBookings.map((b) => enrichBooking(b, "host")));
+
+      res.json({ guestBookings: enrichedGuest, hostBookings: enrichedHost });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -2517,15 +2539,154 @@ export async function registerRoutes(
         senderRole = "host";
       }
 
+      const messageText = String(req.body.message || "").trim();
+      if (!messageText) return res.status(400).json({ message: "Message cannot be empty" });
+
       const msg = await storage.createSpaceMessage({
         spaceBookingId: req.params.id,
         senderId: userId,
         senderName: req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest"),
         senderRole,
-        message: req.body.message,
+        message: messageText,
       });
 
       res.json(msg);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/space-bookings/:id/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      const { status } = req.body;
+      const space = await storage.getSpaceById(booking.spaceId);
+
+      if (status === "approved" || status === "rejected") {
+        if (!space || space.userId !== userId) return res.status(403).json({ message: "Only the host can approve or reject" });
+      } else if (status === "cancelled") {
+        if (booking.userId !== userId && (!space || space.userId !== userId)) {
+          return res.status(403).json({ message: "Not authorized" });
+        }
+      } else {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const updated = await storage.updateSpaceBookingStatus(booking.id, status);
+
+      const statusLabels: Record<string, string> = { approved: "approved", rejected: "declined", cancelled: "cancelled" };
+      const actorName = req.user.claims?.first_name || (space?.userId === userId ? "Host" : "Guest");
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: "system",
+        senderName: "System",
+        senderRole: space?.userId === userId ? "host" : "guest",
+        message: `${actorName} ${statusLabels[status]} this booking request.`,
+        messageType: "system",
+      });
+
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/request-payment", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      if (!space || space.userId !== userId) return res.status(403).json({ message: "Only the host can request payment" });
+
+      const { amount, description } = req.body;
+      const cents = Math.round(Number(amount) * 100);
+      if (!cents || cents < 100) return res.status(400).json({ message: "Amount must be at least $1.00" });
+
+      await storage.updateSpaceBooking(booking.id, { paymentAmount: cents, paymentStatus: "requested" });
+
+      const hostName = req.user.claims?.first_name || space.hostName || "Host";
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: userId,
+        senderName: hostName,
+        senderRole: "host",
+        message: JSON.stringify({ amount: cents, description: description || `Payment for ${space.name}` }),
+        messageType: "payment_request",
+      });
+
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/checkout", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      if (booking.userId !== userId) return res.status(403).json({ message: "Only the guest can pay" });
+      if (!booking.paymentAmount) return res.status(400).json({ message: "No payment requested" });
+      if (booking.paymentStatus === "paid") return res.status(400).json({ message: "Already paid" });
+
+      const space = await storage.getSpaceById(booking.spaceId);
+      const stripe = await getUncachableStripeClient();
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: space?.name || "Space Booking",
+                description: `Booking payment for ${space?.name || "space"}`,
+              },
+              unit_amount: booking.paymentAmount,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: `${baseUrl}/portal?space_payment=success`,
+        cancel_url: `${baseUrl}/portal?space_payment=cancelled`,
+        customer_email: booking.userEmail || req.user.claims.email,
+        metadata: {
+          type: "space_booking",
+          bookingId: booking.id,
+          spaceId: booking.spaceId,
+          userId,
+        },
+      });
+
+      await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id, paymentStatus: "pending" });
+      res.json({ url: session.url });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Failed to create checkout" });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      if (booking.userId === userId) {
+        await storage.markBookingRead(booking.id, "guest");
+      } else {
+        const space = await storage.getSpaceById(booking.spaceId);
+        if (!space || space.userId !== userId) return res.status(403).json({ message: "Not authorized" });
+        await storage.markBookingRead(booking.id, "host");
+      }
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
