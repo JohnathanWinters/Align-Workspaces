@@ -1771,7 +1771,7 @@ function PortalContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mb-6 flex items-end justify-between flex-wrap gap-4">
+          <div className="mb-6 flex flex-col items-center text-center sm:items-start sm:text-left sm:flex-row sm:justify-between gap-4">
             <div>
               <h1 className="font-serif text-3xl text-gray-900 mb-1" data-testid="text-welcome">
                 Welcome{user?.firstName ? `, ${user.firstName}` : ""}
@@ -1790,7 +1790,7 @@ function PortalContent() {
             </Link>
           </div>
 
-          <div className="flex gap-1 mb-8 border-b border-gray-200" data-testid="portal-tabs">
+          <div className="flex gap-1 mb-8 border-b border-gray-200 justify-center" data-testid="portal-tabs">
             <button
               onClick={() => setActiveTab("shoots")}
               data-testid="tab-my-shoots"
@@ -1801,7 +1801,7 @@ function PortalContent() {
               }`}
             >
               <Camera className="w-4 h-4" />
-              My Shoots
+              Shoots
               {activeTab === "shoots" && (
                 <motion.div
                   layoutId="portal-tab-indicator"
@@ -1819,7 +1819,7 @@ function PortalContent() {
               }`}
             >
               <ImagePlus className="w-4 h-4" />
-              My Edits
+              Edits
               {activeTab === "edits" && (
                 <motion.div
                   layoutId="portal-tab-indicator"
@@ -1909,7 +1909,7 @@ function PortalContent() {
               </Card>
             </motion.div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-md sm:max-w-none mx-auto sm:mx-0">
               <AnimatePresence>
                 {shoots.map((shoot, index) => (
                   <motion.div
