@@ -2076,8 +2076,60 @@ export async function registerRoutes(
 
   app.patch("/api/admin/spaces/:id", isAdmin, async (req, res) => {
     try {
-      const space = await storage.updateSpace(req.params.id, req.body);
+      const updates = { ...req.body };
+      if (updates.address && !updates.latitude && !updates.longitude) {
+        const coords = await geocodeAddress(updates.address);
+        if (coords) {
+          updates.latitude = coords.lat;
+          updates.longitude = coords.lng;
+        }
+      }
+      const space = await storage.updateSpace(req.params.id, updates);
       res.json(space);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/spaces/:id/geocode", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+      if (!space.address) return res.status(400).json({ message: "Space has no address" });
+
+      const coords = await geocodeAddress(space.address);
+      if (!coords) return res.status(404).json({ message: "Could not geocode this address. Try a more specific address." });
+
+      const updated = await storage.updateSpace(space.id, { latitude: coords.lat, longitude: coords.lng });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/spaces/geocode-all", isAdmin, async (_req, res) => {
+    try {
+      const allSpaces = await storage.getAllSpaces();
+      const results: { id: string; name: string; success: boolean }[] = [];
+      for (const space of allSpaces) {
+        if (space.latitude && space.longitude) {
+          results.push({ id: space.id, name: space.name, success: true });
+          continue;
+        }
+        if (!space.address) {
+          results.push({ id: space.id, name: space.name, success: false });
+          continue;
+        }
+        const coords = await geocodeAddress(space.address);
+        if (coords) {
+          await storage.updateSpace(space.id, { latitude: coords.lat, longitude: coords.lng });
+          results.push({ id: space.id, name: space.name, success: true });
+        } else {
+          results.push({ id: space.id, name: space.name, success: false });
+        }
+        await new Promise(resolve => setTimeout(resolve, 1100));
+      }
+      res.json({ results });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

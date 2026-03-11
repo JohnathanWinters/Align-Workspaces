@@ -1988,6 +1988,51 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     }
   };
 
+  const handleGeocodeSpace = async (id: string, name: string) => {
+    try {
+      const res = await fetch(`/api/admin/spaces/${id}/geocode`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: "Geocoded", description: `${name}: ${data.latitude}, ${data.longitude}` });
+        loadSpaces();
+      } else {
+        const err = await res.json();
+        toast({ title: "Geocode failed", description: err.message, variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleGeocodeAll = async () => {
+    const noCoords = spaces.filter((s: any) => !s.latitude || !s.longitude);
+    if (noCoords.length === 0) {
+      toast({ title: "All spaces already have coordinates" });
+      return;
+    }
+    if (!confirm(`Geocode ${noCoords.length} spaces without coordinates?`)) return;
+    try {
+      const res = await fetch("/api/admin/spaces/geocode-all", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const succeeded = data.results.filter((r: any) => r.success).length;
+        toast({ title: `Geocoded ${succeeded} of ${data.results.length} spaces` });
+        loadSpaces();
+      } else {
+        const err = await res.json();
+        toast({ title: "Geocode all failed", description: err.message || "Unknown error", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   const startEdit = (space: any) => {
     setEditingId(space.id);
     setEditForm({
@@ -2072,6 +2117,11 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
             <ChevronLeft className="w-5 h-5" />
           </button>
           <h1 className="font-serif text-lg text-gray-900 flex-1">Manage Spaces</h1>
+          {spaces.some((s: any) => !s.latitude || !s.longitude) && (
+            <Button size="sm" variant="outline" onClick={handleGeocodeAll} className="border-blue-200 text-blue-600 hover:bg-blue-50 text-xs" data-testid="button-geocode-all">
+              <MapPin className="w-3 h-3 mr-1" /> Geocode All ({spaces.filter((s: any) => !s.latitude || !s.longitude).length})
+            </Button>
+          )}
           {spaces.some(s => s.isSample === 1) && (
             <Button size="sm" variant="outline" onClick={handlePurgeSamples} className="border-red-200 text-red-600 hover:bg-red-50 text-xs" data-testid="button-purge-samples">
               <Trash2 className="w-3 h-3 mr-1" /> Purge Samples ({spaces.filter(s => s.isSample === 1).length})
@@ -2217,6 +2267,11 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           <p className="text-xs text-gray-400 mt-1">
                             Type: {space.type} | ${space.pricePerHour}/hr | Host: {space.hostName || "N/A"}
                             {space.isSample ? " | Sample" : ""}
+                            {space.latitude && space.longitude ? (
+                              <span className="text-emerald-500 ml-1">| Mapped</span>
+                            ) : (
+                              <span className="text-amber-500 ml-1">| No coordinates</span>
+                            )}
                           </p>
                           {space.ownerInfo ? (
                             <div className="flex items-center gap-1.5 mt-1.5">
@@ -2266,6 +2321,12 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           <Button size="sm" variant="outline" onClick={() => handleAction(space.id, "reject")} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-reject-space-${space.id}`}>
                             <XCircle className="w-4 h-4 mr-1" />
                             Reject
+                          </Button>
+                        )}
+                        {(!space.latitude || !space.longitude) && (
+                          <Button size="sm" variant="outline" onClick={() => handleGeocodeSpace(space.id, space.name)} className="border-blue-200 text-blue-600 hover:bg-blue-50" data-testid={`button-geocode-space-${space.id}`}>
+                            <MapPin className="w-3.5 h-3.5 mr-1" />
+                            Geocode
                           </Button>
                         )}
                         <Button size="sm" variant="outline" onClick={() => handleDeleteSpace(space.id, space.name)} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-delete-space-${space.id}`}>
