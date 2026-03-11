@@ -61,7 +61,7 @@ export default function AlignSpacesPage() {
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: "url(/images/spaces-hero.png)",
-          backgroundPosition: "center center",
+          backgroundPosition: "center 40%",
           filter: "brightness(0.7) contrast(1.05)",
           y,
           scale,
