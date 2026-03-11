@@ -2052,6 +2052,92 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/spaces/:id/photos", isAdmin, upload.array("photos", 10), async (req: any, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) return res.status(400).json({ message: "No files uploaded" });
+
+      const newUrls: string[] = [];
+      for (const f of files) {
+        const objectKey = `uploads/space-${randomUUID()}.webp`;
+        const privateDir = objectStorageService.getPrivateObjectDir();
+        const fullPath = `${privateDir}/${objectKey}`;
+        const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
+        const bucketName = parts[0];
+        const objectName = parts.slice(1).join("/");
+        const bucket = objectStorageClient.bucket(bucketName);
+        const file = bucket.file(objectName);
+        const rawBuffer = fs.readFileSync(f.path);
+        const processedBuffer = await sharp(rawBuffer)
+          .rotate()
+          .resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 85, effort: 4 })
+          .toBuffer();
+        await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
+        fs.unlinkSync(f.path);
+        newUrls.push(`/objects/${objectKey}`);
+      }
+
+      const existingUrls = space.imageUrls || [];
+      const updated = await storage.updateSpace(space.id, { imageUrls: [...existingUrls, ...newUrls] });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/spaces/:id/photos", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const { imageUrl } = req.body;
+      if (!imageUrl) return res.status(400).json({ message: "imageUrl required" });
+
+      const existingUrls = space.imageUrls || [];
+      const updated = await storage.updateSpace(space.id, { imageUrls: existingUrls.filter((u: string) => u !== imageUrl) });
+
+      try {
+        const objectKey = imageUrl.replace("/objects/", "");
+        const privateDir = objectStorageService.getPrivateObjectDir();
+        const fullPath = `${privateDir}/${objectKey}`;
+        const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
+        await objectStorageClient.bucket(parts[0]).file(parts.slice(1).join("/")).delete();
+      } catch {}
+
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/spaces/:id/transfer", isAdmin, async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const { newUserId } = req.body;
+      if (!newUserId) return res.status(400).json({ message: "newUserId required" });
+
+      let newOwnerInfo = null;
+      try {
+        const { authStorage } = await import("./replit_integrations/auth");
+        const user = await authStorage.getUser(newUserId);
+        if (user) {
+          newOwnerInfo = { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName };
+        }
+      } catch {}
+
+      const updated = await storage.updateSpace(space.id, { userId: newUserId });
+      res.json({ ...updated, ownerInfo: newOwnerInfo });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/admin/spaces/pending", isAdmin, async (_req, res) => {
     try {
       const pending = await storage.getPendingSpaces();

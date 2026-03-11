@@ -1666,6 +1666,172 @@ const FEATURED_CATEGORIES = [
   "Artists", "Barbers", "Designers", "Entrepreneurs",
 ];
 
+function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: string; onUpdate: () => void }) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const images = space.imageUrls || [];
+
+  const handleUpload = async (files: FileList) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach((f) => formData.append("photos", f));
+      const res = await fetch(`/api/admin/spaces/${space.id}/photos`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error((await res.json()).message || "Upload failed");
+      toast({ title: "Photos uploaded" });
+      onUpdate();
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    }
+    setUploading(false);
+  };
+
+  const handleDelete = async (imageUrl: string) => {
+    try {
+      const res = await fetch(`/api/admin/spaces/${space.id}/photos`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      toast({ title: "Photo removed" });
+      onUpdate();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100" data-testid={`admin-space-photos-${space.id}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
+          <Camera className="w-3 h-3" /> Photos ({images.length})
+        </span>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="text-xs text-[#c4956a] hover:text-[#b3845c] font-medium flex items-center gap-1 disabled:opacity-50"
+          data-testid={`admin-add-photos-${space.id}`}
+        >
+          {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImagePlus className="w-3 h-3" />}
+          {uploading ? "Uploading..." : "Add Photos"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => e.target.files && e.target.files.length > 0 && handleUpload(e.target.files)}
+        />
+      </div>
+      {images.length > 0 ? (
+        <div className="grid grid-cols-4 gap-2">
+          {images.map((url: string, i: number) => (
+            <div key={url} className="relative group rounded-lg overflow-hidden aspect-[4/3] bg-gray-100" data-testid={`admin-space-photo-${space.id}-${i}`}>
+              <img src={url} alt="" className="w-full h-full object-cover" />
+              <button
+                onClick={() => handleDelete(url)}
+                className="absolute top-1 right-1 w-6 h-6 bg-black/60 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                data-testid={`admin-delete-photo-${space.id}-${i}`}
+              >
+                <Trash2 className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-1.5 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a] transition-colors"
+          data-testid={`admin-upload-first-photo-${space.id}`}
+        >
+          <ImagePlus className="w-5 h-5" />
+          <span className="text-xs">Add photos</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AdminTransferOwnership({ space, token, onUpdate }: { space: any; token: string; onUpdate: () => void }) {
+  const { toast } = useToast();
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [newUserId, setNewUserId] = useState("");
+  const [transferring, setTransferring] = useState(false);
+
+  const handleTransfer = async () => {
+    if (!newUserId.trim()) return;
+    setTransferring(true);
+    try {
+      const res = await fetch(`/api/admin/spaces/${space.id}/transfer`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ newUserId: newUserId.trim() }),
+      });
+      if (!res.ok) throw new Error((await res.json()).message || "Transfer failed");
+      toast({ title: "Ownership transferred" });
+      setShowTransfer(false);
+      setNewUserId("");
+      onUpdate();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setTransferring(false);
+  };
+
+  return (
+    <div className="mt-3" data-testid={`admin-transfer-${space.id}`}>
+      {!showTransfer ? (
+        <button
+          onClick={() => setShowTransfer(true)}
+          className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
+          data-testid={`button-show-transfer-${space.id}`}
+        >
+          <Move className="w-3 h-3" /> Transfer Ownership
+        </button>
+      ) : (
+        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+          <p className="text-xs font-medium text-gray-600">Transfer to User ID:</p>
+          <div className="flex gap-2">
+            <input
+              value={newUserId}
+              onChange={(e) => setNewUserId(e.target.value)}
+              placeholder="Enter user ID"
+              className="flex-1 px-3 py-1.5 border border-gray-200 rounded-md text-sm bg-white focus:outline-none focus:border-gray-400"
+              data-testid={`input-transfer-userid-${space.id}`}
+            />
+            <Button
+              size="sm"
+              onClick={handleTransfer}
+              disabled={!newUserId.trim() || transferring}
+              className="bg-gray-900 text-white hover:bg-gray-800 text-xs"
+              data-testid={`button-confirm-transfer-${space.id}`}
+            >
+              {transferring ? <Loader2 className="w-3 h-3 animate-spin" /> : "Transfer"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setShowTransfer(false); setNewUserId(""); }} className="text-xs" data-testid={`button-cancel-transfer-${space.id}`}>
+              Cancel
+            </Button>
+          </div>
+          {space.ownerInfo && (
+            <p className="text-[10px] text-gray-400">
+              Current: {space.ownerInfo.firstName} {space.ownerInfo.lastName} ({space.ownerInfo.email}) — ID: {space.userId}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [spaces, setSpaces] = useState<any[]>([]);
@@ -1985,6 +2151,8 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           </Button>
                         )}
                       </div>
+                      <AdminSpacePhotos space={space} token={token} onUpdate={loadSpaces} />
+                      <AdminTransferOwnership space={space} token={token} onUpdate={loadSpaces} />
                     </>
                   )}
                 </CardContent>
