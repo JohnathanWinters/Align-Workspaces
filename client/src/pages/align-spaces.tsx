@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { User, Menu, X, Camera, Star } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
+import { SiteFooter } from "@/components/site-footer";
 
 export default function AlignSpacesPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -165,6 +166,8 @@ export default function AlignSpacesPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      <SiteFooter variant="dark" />
     </section>
   );
 }

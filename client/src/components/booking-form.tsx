@@ -132,6 +132,24 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
         className="space-y-4"
       >
         <Card
+          className="p-5 cursor-pointer hover-elevate transition-all border-[#c4956a] ring-1 ring-[#c4956a]/30 bg-[#c4956a]/5 dark:bg-[#c4956a]/10"
+          onClick={() => setMode("lock-date")}
+          data-testid="option-lock-date"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-md bg-[#c4956a]/15 flex items-center justify-center shrink-0">
+              <CalendarDays className="w-5 h-5 text-[#c4956a]" />
+            </div>
+            <div>
+              <h3 className="font-medium text-base mb-1">Secure Your Session</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Choose your date and reserve your aligned portrait experience.
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card
           className="p-5 cursor-pointer hover-elevate transition-all"
           onClick={() => setMode("collaborate")}
           data-testid="option-collaborate"
@@ -144,24 +162,6 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
               <h3 className="font-medium text-base mb-1">Collaborate on Your Vision</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Create your account to save your concept and refine it together.
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          className="p-5 cursor-pointer hover-elevate transition-all"
-          onClick={() => setMode("lock-date")}
-          data-testid="option-lock-date"
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-md bg-foreground/5 flex items-center justify-center shrink-0">
-              <CalendarDays className="w-5 h-5 text-foreground" />
-            </div>
-            <div>
-              <h3 className="font-medium text-base mb-1">Secure Your Session</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Choose your date and reserve your aligned portrait experience.
               </p>
             </div>
           </div>

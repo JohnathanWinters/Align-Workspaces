@@ -17,7 +17,8 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Framework & UI**: React with TypeScript, Vite, Wouter for routing, and shadcn/ui (New York style) built on Radix UI with Tailwind CSS for styling.
 - **State & Forms**: Local React state for the configurator, TanStack React Query for server data, React Hook Form with Zod for form validation.
 - **Visuals**: Framer Motion for animations, warm neutral color palette, and Google Fonts (Plus Jakarta Sans, Playfair Display).
-- **Key Features**: A 6-step configurator with dynamic image previews (`ImageGallery`), a live `ConceptSummary`, and a `BookingForm` that handles both collaboration requests and secure session bookings with Stripe integration.
+- **Key Features**: A 6-step configurator with dynamic image previews (`ImageGallery`), a live `ConceptSummary`, labeled step indicator (`StepIndicator` with step names), clickable selection summary chips for quick step navigation, staggered reveal animations, and a `BookingForm` that handles both collaboration requests and secure session bookings with Stripe integration.
+- **Site Footer**: Shared `SiteFooter` component (`client/src/components/site-footer.tsx`) with `variant` prop ("dark"/"light"), used on hero pages. Includes nav links, contact info, and copyright.
 
 ### Backend
 - **Framework & API**: Express 5 on Node.js with TypeScript, providing a RESTful JSON API.

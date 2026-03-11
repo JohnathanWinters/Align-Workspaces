@@ -416,7 +416,7 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-400">
-            {request.annualTokensUsed} annual + {request.purchasedTokensUsed} purchased tokens
+            {request.annualTokensUsed} included + {request.purchasedTokensUsed} purchased sessions
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -707,7 +707,7 @@ function EditTokenSection() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("token_purchase") === "success") {
-      toast({ title: "Purchase Successful", description: "Your edit tokens have been added to your account." });
+      toast({ title: "Purchase Successful", description: "Your retouching sessions have been added to your account." });
       const url = new URL(window.location.href);
       url.searchParams.delete("token_purchase");
       window.history.replaceState({}, "", url.toString());
@@ -844,7 +844,7 @@ function EditTokenSection() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Coins className="w-5 h-5 text-amber-500" />
-              <CardTitle className="text-base font-semibold">Edit Tokens</CardTitle>
+              <CardTitle className="text-base font-semibold">Professional Retouching</CardTitle>
             </div>
             <Button
               variant="outline"
@@ -853,7 +853,7 @@ function EditTokenSection() {
               data-testid="button-buy-tokens"
             >
               <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-              Buy More Tokens
+              Get More Sessions
             </Button>
           </div>
         </CardHeader>
@@ -865,20 +865,20 @@ function EditTokenSection() {
           ) : tokenBalance ? (
             <div className="flex flex-wrap gap-6 text-sm">
               <div data-testid="text-annual-tokens">
-                <span className="text-gray-500">Annual Tokens Remaining:</span>{" "}
+                <span className="text-gray-500">Included retouching sessions:</span>{" "}
                 <span className="font-semibold text-gray-900">{tokenBalance.annualTokens}</span>
               </div>
               <div data-testid="text-purchased-tokens">
-                <span className="text-gray-500">Purchased Tokens Remaining:</span>{" "}
+                <span className="text-gray-500">Additional sessions purchased:</span>{" "}
                 <span className="font-semibold text-gray-900">{tokenBalance.purchasedTokens}</span>
               </div>
               <div data-testid="text-reset-date">
-                <span className="text-gray-500">Next Annual Reset Date:</span>{" "}
+                <span className="text-gray-500">Sessions reset on:</span>{" "}
                 <span className="font-semibold text-gray-900">{formatDate(tokenBalance.annualTokenResetDate)}</span>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">Unable to load token balance.</p>
+            <p className="text-sm text-gray-500">Unable to load session balance.</p>
           )}
         </CardContent>
       </Card>
@@ -979,16 +979,16 @@ function EditTokenSection() {
             {selectedFiles.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
                 <p className="font-medium text-gray-900" data-testid="text-token-cost">
-                  This will use {tokenCost} edit token(s)
+                  This will use {tokenCost} retouching session(s)
                 </p>
                 {hasEnoughTokens ? (
                   <p className="text-gray-500" data-testid="text-token-breakdown">
-                    {annualUsed} from annual tokens, {purchasedUsed} from purchased tokens
+                    {annualUsed} from included sessions, {purchasedUsed} from purchased sessions
                   </p>
                 ) : (
                   <div className="flex items-start gap-2 text-amber-600" data-testid="text-insufficient-tokens">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <p>You do not have enough Edit Tokens. Please purchase additional tokens to continue.</p>
+                    <p>You don't have enough retouching sessions. Please purchase additional sessions to continue.</p>
                   </div>
                 )}
               </div>
@@ -1035,10 +1035,10 @@ function EditTokenSection() {
         </motion.div>
       )}
 
-      {!requestsLoading && editRequests.length > 0 && (
+      {!requestsLoading && editRequests.length > 0 ? (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2" data-testid="text-past-requests-heading">
-            <Pencil className="w-4 h-4 text-gray-500" />
+            <ImagePlus className="w-4 h-4 text-gray-500" />
             Your Edit Requests
           </h3>
           {editRequests.map((req) => (
@@ -1050,6 +1050,26 @@ function EditTokenSection() {
             />
           ))}
         </div>
+      ) : !requestsLoading && editRequests.length === 0 && (
+        <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="card-edits-empty-state">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <ImagePlus className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="font-serif text-lg text-gray-900 mb-1.5">No retouching requests yet</h3>
+            <p className="text-gray-500 text-sm max-w-sm mb-5">
+              Submit your first photos for professional retouching — we'll handle the rest so your images look their absolute best.
+            </p>
+            <Button
+              onClick={() => setShowSubmitDialog(true)}
+              data-testid="button-submit-photos-empty"
+              className="bg-[#1a1a1a] text-white"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Submit Photos for Retouching
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
@@ -1060,9 +1080,9 @@ function EditTokenSection() {
               <div className="space-y-2">
                 <p>
                   You are about to submit {fileCount} photo(s) for editing. This will use{" "}
-                  <span className="font-semibold">{tokenCost} edit token(s)</span>:
+                  <span className="font-semibold">{tokenCost} retouching session(s)</span>:
                   <br />
-                  {annualUsed} from annual tokens and {purchasedUsed} from purchased tokens.
+                  {annualUsed} from included sessions and {purchasedUsed} from purchased sessions.
                 </p>
                 {editInstructions.trim() && (
                   <div className="bg-gray-50 rounded-md p-3 mt-2">
@@ -1096,8 +1116,8 @@ function EditTokenSection() {
       <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
         <DialogContent data-testid="dialog-buy-tokens">
           <DialogHeader>
-            <DialogTitle>Buy More Edit Tokens</DialogTitle>
-            <DialogDescription>Each token covers one photo edit. Here's what's included:</DialogDescription>
+            <DialogTitle>Get More Retouching Sessions</DialogTitle>
+            <DialogDescription>Each session covers one photo edit. Here's what's included:</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="bg-gray-50 rounded-lg p-3 space-y-2">
@@ -1153,7 +1173,7 @@ function EditTokenSection() {
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-sm">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-gray-500">Price per token</span>
+                <span className="text-gray-500">Price per session</span>
                 <span className="text-gray-900" data-testid="text-price-per-token">${tokenConfig?.pricePerToken ?? 5}</span>
               </div>
               <div className="flex items-center justify-between flex-wrap gap-2 mt-1 pt-1 border-t border-gray-200">
@@ -1802,9 +1822,9 @@ function PortalContent() {
                   <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                     <Camera className="w-7 h-7 text-gray-400" />
                   </div>
-                  <h3 className="font-serif text-xl text-gray-900 mb-2">No photoshoots yet</h3>
+                  <h3 className="font-serif text-xl text-gray-900 mb-2">Your story starts here</h3>
                   <p className="text-gray-500 text-sm max-w-sm mb-6">
-                    Your photoshoot sessions will appear here once they've been set up. Design your shoot to get started!
+                    Once your first session is booked, it'll appear right here. Let's design something you'll be proud to share.
                   </p>
                   <Link href="/buildmyphoto">
                     <Button

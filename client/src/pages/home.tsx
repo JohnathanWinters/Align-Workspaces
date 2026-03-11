@@ -418,6 +418,31 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
             <StepIndicator currentStep={currentStep} totalSteps={6} onStepClick={(step) => setCurrentStep(step)} />
           </div>
 
+          {currentStep > 1 && (
+            <div className="max-w-6xl mx-auto px-4 mt-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {[
+                  { step: 1, key: "environment", label: getDisplayLabel("environment", state) },
+                  { step: 2, key: "brandMessage", label: getDisplayLabel("brandMessage", state) },
+                  { step: 3, key: "emotionalImpact", label: getDisplayLabel("emotionalImpact", state) },
+                  { step: 5, key: "shootIntent", label: getDisplayLabel("shootIntent", state) },
+                ].filter(s => s.step < currentStep && s.label).map(s => (
+                  <button
+                    key={s.step}
+                    onClick={() => setCurrentStep(s.step)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-foreground/5 hover:bg-foreground/10 text-xs text-foreground/70 hover:text-foreground transition-colors cursor-pointer"
+                    data-testid={`chip-step-${s.step}`}
+                  >
+                    <span className="text-[#c4956a] font-medium">
+                      {s.step === 1 ? "Location" : s.step === 2 ? "Presence" : s.step === 3 ? "Impact" : "Placement"}:
+                    </span>
+                    <span>{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
               <div className={"lg:col-span-12 max-w-3xl mx-auto"}>
@@ -566,6 +591,9 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
                             Pricing varies based on venue rental costs and selected marketing usage rights.
                           </p>
+                          <p className="text-xs text-[#c4956a] mt-3 font-medium">
+                            A 50% deposit secures your date — remainder due at the shoot.
+                          </p>
                         </motion.div>
                       </StepContent>
                     )}
@@ -573,7 +601,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                     {currentStep === 4 && (
                       <StepContent
                         title="Our Work"
-                        subtitle="Shaped by your choices."
+                        subtitle="Here's what we've curated based on your vision."
                         centerTitle
                       >
                         <PortfolioGallery
@@ -839,16 +867,16 @@ function OtherInput({
       <Input
         value={value}
         onChange={(e) => {
-          if (e.target.value.length <= 30) {
+          if (e.target.value.length <= 50) {
             onChange(e.target.value);
           }
         }}
         placeholder={placeholder}
-        maxLength={30}
+        maxLength={50}
         data-testid={testId}
         autoFocus
       />
-      <p className="text-xs text-muted-foreground mt-1.5 text-right">{value.length}/30</p>
+      <p className="text-xs text-muted-foreground mt-1.5 text-right">{value.length}/50</p>
     </motion.div>
   );
 }

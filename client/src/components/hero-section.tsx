@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { User, Menu, X, Building2, Camera, Star } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
+import { SiteFooter } from "./site-footer";
 
 interface HeroSectionProps {
   onStart: () => void;
@@ -172,6 +173,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           </motion.div>
         </motion.div>
       </div>
+
+      <SiteFooter variant="dark" />
     </section>
   );
 }
