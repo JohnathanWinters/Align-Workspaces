@@ -130,7 +130,16 @@ function ConversationList({
                     {c.latestMessage ? formatTime(c.latestMessage.createdAt) : ""}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 truncate mt-0.5">{c.spaceName}</p>
+                <p className="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1.5">
+                    <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0 rounded-full border ${
+                      c.role === "host"
+                        ? "bg-violet-50 text-violet-600 border-violet-200"
+                        : "bg-sky-50 text-sky-600 border-sky-200"
+                    }`}>
+                      {c.role === "host" ? "Hosting" : "Renting"}
+                    </span>
+                    <span className="truncate">{c.spaceName}</span>
+                  </p>
                 <div className="flex items-center justify-between mt-1">
                   <p className={`text-xs truncate max-w-[70%] ${c.unreadCount > 0 ? "text-gray-800 font-medium" : "text-gray-400"}`}>
                     {getMessagePreview(c.latestMessage)}
