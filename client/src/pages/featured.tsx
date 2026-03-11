@@ -99,14 +99,11 @@ function FeaturedNav() {
             </button>
             {menuOpen && (
               <div className="absolute right-0 top-full mt-2 bg-background border border-border rounded-lg shadow-lg py-2 min-w-[180px] z-50">
-                <Link href="/featured">
-                  <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors font-medium" data-testid="link-featured-nav">Featured</button>
+                <Link href="/buildmyphoto">
+                  <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portraits-nav">Align Portraits</button>
                 </Link>
-                <Link href="/portfolio">
-                  <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portfolio-nav">Our Work</button>
-                </Link>
-                <Link href="/about">
-                  <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-about-nav">Our Vision</button>
+                <Link href="/spaces/browse">
+                  <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-spaces-nav">Align Spaces</button>
                 </Link>
                 <Link href="/portal">
                   <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted transition-colors" data-testid="link-portal-nav">Client Portal</button>
