@@ -1197,12 +1197,6 @@ export default function SpacesBrowsePage() {
                       Align Portraits
                     </button>
                   </Link>
-                  <Link href="/spaces/browse">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-browse">
-                      <Building2 className="w-4 h-4" />
-                      Align Spaces
-                    </button>
-                  </Link>
                   <Link href="/portal">
                     <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
                       <User className="w-4 h-4" />

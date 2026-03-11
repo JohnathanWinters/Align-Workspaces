@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Camera } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Camera, X, Menu, MapPin, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
@@ -15,22 +15,67 @@ const photographers = [
 ];
 
 export default function PhotographersPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     document.title = "About Armando Ramirez | Miami Portrait Photographer | Align";
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <Link href="/portraits">
-              <p className="font-serif text-base sm:text-lg font-semibold tracking-tight cursor-pointer" data-testid="link-home-from-photographers">Align Portrait Designer</p>
-            </Link>
-            <Button variant="ghost" data-testid="button-back-home-photographers" onClick={() => window.history.back()}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
+        <div className="px-4 sm:px-6 py-3">
+          <div className="flex items-center justify-between">
+            <button onClick={() => window.history.back()} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="button-back-home-photographers">
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Our Vision</span>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                data-testid="button-photographers-menu"
+                className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+              >
+                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-50"
+                  >
+                    <Link href="/buildmyphoto">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-photographers">
+                        <Camera className="w-4 h-4" />
+                        Align Portraits
+                      </button>
+                    </Link>
+                    <Link href="/spaces/browse">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-photographers">
+                        <MapPin className="w-4 h-4" />
+                        Align Spaces
+                      </button>
+                    </Link>
+                    <Link href="/featured">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-photographers">
+                        <Star className="w-4 h-4" />
+                        Featured Pros
+                      </button>
+                    </Link>
+                    <Link href="/portal">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-photographers">
+                        <Users className="w-4 h-4" />
+                        Client Portal
+                      </button>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>

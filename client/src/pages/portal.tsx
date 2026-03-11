@@ -45,6 +45,8 @@ import {
   Bell,
   BellRing,
   Building2,
+  Menu,
+  Star,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
@@ -1661,6 +1663,7 @@ function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
   const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "spaces">("shoots");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
     queryKey: ["/api/shoots"],
@@ -1682,40 +1685,80 @@ function PortalContent() {
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <HelpButton />
-      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.history.back()}
-              data-testid="button-back-home"
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-            <div className="h-4 w-px bg-gray-200" />
-            <p className="font-serif text-lg text-gray-900" data-testid="text-portal-title">Client Portal</p>
-          </div>
+      <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-10">
+        <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
+          <button
+            onClick={() => window.history.back()}
+            data-testid="button-back-home"
+            className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
           <div className="flex items-center gap-3">
-            <Avatar className="w-8 h-8" data-testid="img-user-avatar">
+            <Avatar className="w-7 h-7" data-testid="img-user-avatar">
               {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} alt={user?.firstName || "User"} />}
               <AvatarFallback className="bg-gray-100 text-gray-500">
-                <User className="w-4 h-4" />
+                <User className="w-3.5 h-3.5" />
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-gray-600 hidden sm:block" data-testid="text-user-name">
-              {user?.firstName || user?.email || "Client"}
-            </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => logout()}
               disabled={isLoggingOut}
               data-testid="button-logout"
-              className="text-gray-500 hover:text-gray-900"
+              className="text-foreground/50 hover:text-foreground p-1"
             >
               <LogOut className="w-4 h-4" />
             </Button>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                data-testid="button-portal-menu"
+                className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+              >
+                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-50"
+                  >
+                    <Link href="/buildmyphoto">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-portal">
+                        <Camera className="w-4 h-4" />
+                        Align Portraits
+                      </button>
+                    </Link>
+                    <Link href="/spaces/browse">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-portal">
+                        <MapPin className="w-4 h-4" />
+                        Align Spaces
+                      </button>
+                    </Link>
+                    <Link href="/featured">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-portal">
+                        <Star className="w-4 h-4" />
+                        Featured Pros
+                      </button>
+                    </Link>
+                    <Link href="/portfolio">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-portal">
+                        <Camera className="w-4 h-4" />
+                        Our Work
+                      </button>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
