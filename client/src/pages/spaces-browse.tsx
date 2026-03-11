@@ -1559,7 +1559,7 @@ export default function SpacesBrowsePage() {
         </div>
       </div>
 
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
         <button
           onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
           data-testid="button-toggle-map"
