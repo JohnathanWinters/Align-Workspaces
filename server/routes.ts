@@ -20,6 +20,25 @@ import { authStorage } from "./replit_integrations/auth";
 
 const objectStorageService = new ObjectStorageService();
 
+async function geocodeAddress(address: string): Promise<{ lat: string; lng: string } | null> {
+  try {
+    const encoded = encodeURIComponent(address);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "AlignSpaces/1.0 (alignphotodesign.com)" },
+    });
+    if (!res.ok) return null;
+    const results = await res.json() as Array<{ lat: string; lon: string }>;
+    if (results.length > 0) {
+      return { lat: results[0].lat, lng: results[0].lon };
+    }
+    return null;
+  } catch (err) {
+    console.error("Geocoding failed:", err);
+    return null;
+  }
+}
+
 const uploadDir = path.join(process.cwd(), "uploads");
 const tmpUploadDir = path.join(process.cwd(), "tmp_uploads");
 if (!fs.existsSync(tmpUploadDir)) fs.mkdirSync(tmpUploadDir, { recursive: true });
@@ -1906,6 +1925,16 @@ export async function registerRoutes(
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
+      let latitude: string | null = null;
+      let longitude: string | null = null;
+      if (address) {
+        const coords = await geocodeAddress(address);
+        if (coords) {
+          latitude = coords.lat;
+          longitude = coords.lng;
+        }
+      }
+
       const space = await storage.createSpace({
         name,
         slug,
@@ -1914,6 +1943,8 @@ export async function registerRoutes(
         shortDescription: shortDescription || null,
         address,
         neighborhood: neighborhood || null,
+        latitude,
+        longitude,
         pricePerHour: parseInt(pricePerHour),
         pricePerDay: pricePerDay ? parseInt(pricePerDay) : null,
         capacity: capacity ? parseInt(capacity) : null,
