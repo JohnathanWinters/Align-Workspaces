@@ -135,7 +135,7 @@ export default function AlignSpacesPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-white/50 text-sm sm:text-base max-w-sm mx-auto leading-relaxed mt-6 sm:mt-8 font-light text-center"
+            className="text-white/90 text-base sm:text-lg max-w-md mx-auto leading-relaxed mt-6 sm:mt-8 font-normal text-center"
           >
             Find and rent professional workspaces in Miami — therapy offices, training studios, meeting rooms, and more. Built for small business professionals.
           </motion.p>
@@ -157,7 +157,7 @@ export default function AlignSpacesPage() {
             <Link href="/featured">
               <button
                 data-testid="button-featured-spaces"
-                className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white/60 hover:text-white transition-colors duration-300"
+                className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white px-6 py-2.5 rounded-full border border-white/40 hover:border-white/80 hover:bg-white/10 transition-all duration-300"
               >
                 Meet Our Featured Professionals
               </button>

@@ -20,7 +20,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
   ];
 
   return (
-    <footer className={`relative z-10 w-full px-6 py-8 sm:py-10`} data-testid="site-footer">
+    <footer className={`relative z-10 w-full px-6 py-8 sm:py-10 pb-16 sm:pb-10`} data-testid="site-footer">
       <div className={`max-w-4xl mx-auto border-t ${dividerColor} pt-8`}>
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
           {navLinks.map((link) => (
