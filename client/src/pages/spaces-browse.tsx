@@ -791,39 +791,55 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                 </button>
 
                 {showAuthPrompt && !isAuthenticated && (
-                  <div className="bg-gradient-to-br from-stone-50 to-amber-50/30 rounded-lg p-5 mt-2 space-y-4 border border-stone-200/60" data-testid={`auth-prompt-${space.id}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#c4956a]/10 flex items-center justify-center">
-                          <User className="w-4 h-4 text-[#c4956a]" />
+                  <AnimatePresence>
+                    <div className="fixed inset-0 z-[2000] flex items-center justify-center px-6" onClick={handleDismissAuth}>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/50"
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        transition={{ duration: 0.2 }}
+                        className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-5"
+                        onClick={e => e.stopPropagation()}
+                        data-testid={`auth-prompt-${space.id}`}
+                      >
+                        <button onClick={handleDismissAuth} className="absolute top-4 right-4 text-foreground/40 hover:text-foreground/60">
+                          <X className="w-5 h-5" />
+                        </button>
+                        <div className="text-center">
+                          <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                            <User className="w-7 h-7 text-[#c4956a]" />
+                          </div>
+                          <h3 className="font-serif text-lg font-semibold mb-2">Register to Schedule</h3>
+                          <p className="text-sm text-foreground/50 max-w-xs mx-auto">
+                            Create a free account to send booking requests, chat with hosts, and manage your reservations.
+                          </p>
                         </div>
-                        <p className="text-sm font-semibold text-foreground">Register to Schedule</p>
-                      </div>
-                      <button onClick={handleDismissAuth} className="text-foreground/40 hover:text-foreground/60">
-                        <X className="w-4 h-4" />
-                      </button>
+                        <Button
+                          onClick={handleRegisterClick}
+                          disabled={authPending}
+                          className="w-full bg-[#c4956a] text-white hover:bg-[#b3845d] py-3"
+                          data-testid={`button-register-${space.id}`}
+                        >
+                          {authPending ? (
+                            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Waiting for sign in...</>
+                          ) : (
+                            <><User className="w-4 h-4 mr-2" /> Create Account / Sign In</>
+                          )}
+                        </Button>
+                        {authPending && (
+                          <p className="text-[10px] text-foreground/40 text-center">
+                            Complete sign in in the popup window. This page will update automatically.
+                          </p>
+                        )}
+                      </motion.div>
                     </div>
-                    <p className="text-sm text-foreground/60 leading-relaxed">
-                      Create a free account to send booking requests, chat with hosts, and manage your reservations.
-                    </p>
-                    <Button
-                      onClick={handleRegisterClick}
-                      disabled={authPending}
-                      className="w-full bg-[#c4956a] text-white hover:bg-[#b3845d]"
-                      data-testid={`button-register-${space.id}`}
-                    >
-                      {authPending ? (
-                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Waiting for sign in...</>
-                      ) : (
-                        <><User className="w-4 h-4 mr-2" /> Create Account / Sign In</>
-                      )}
-                    </Button>
-                    {authPending && (
-                      <p className="text-[10px] text-foreground/40 text-center">
-                        Complete sign in in the popup window. This page will update automatically.
-                      </p>
-                    )}
-                  </div>
+                  </AnimatePresence>
                 )}
                 {showBooking && !(showAuthPrompt && !isAuthenticated) && (
                   <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3">
