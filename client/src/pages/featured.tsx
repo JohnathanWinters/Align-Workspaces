@@ -184,9 +184,9 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
         <div className="hidden sm:block relative z-10 w-full h-full">
           <div className="absolute bottom-0 left-0 right-0 max-w-6xl mx-auto px-6 pb-16 md:pb-20">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
             >
               <p className="text-sm uppercase tracking-[0.2em] text-white/50 mb-3 flex items-center gap-2" data-testid="text-potw-heading">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -212,9 +212,9 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
       <div className="sm:hidden px-5 pt-6 pb-8">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
         >
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] mb-3 flex items-center gap-1.5 font-semibold">
             <Star className="w-3 h-3 fill-[#c4956a] text-[#c4956a]" />
@@ -240,26 +240,31 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
 function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: number }) {
   const [, setLocation] = useLocation();
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const cappedDelay = Math.min(index * 0.06, 0.3);
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.08 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: cappedDelay }}
       className="group cursor-pointer transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
       onClick={() => setLocation(`/featured/${pro.slug}`)}
       data-testid={`card-featured-${pro.slug}`}
     >
       <div className="aspect-[3/4] relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300">
+        {!imgLoaded && pro.portraitImageUrl && (
+          <div className="absolute inset-0 bg-stone-100 animate-pulse" />
+        )}
         <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
           {pro.portraitImageUrl ? (
             <img
               src={pro.portraitImageUrl}
               alt={`${pro.name} - ${pro.profession}`}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              loading="lazy"
+              className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              loading={index < 3 ? "eager" : "lazy"}
               decoding="async"
+              onLoad={() => setImgLoaded(true)}
               style={getCropStyle(pro.portraitCropPosition)}
             />
           ) : (
@@ -696,9 +701,9 @@ function FeaturedListingPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <section className={`${weeklyPro && !activeCategory ? "pt-16 sm:pt-20" : "pt-16 sm:pt-24"} pb-8 sm:pb-12`}>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.35 }}
             className={weeklyPro && !activeCategory ? "" : "text-center mb-4"}
           >
             {(!weeklyPro || activeCategory) && (
