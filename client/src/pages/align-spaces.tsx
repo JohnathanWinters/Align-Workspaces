@@ -62,12 +62,12 @@ export default function AlignSpacesPage() {
         style={{
           backgroundImage: "url(/images/spaces-hero.png)",
           backgroundPosition: "center 40%",
-          filter: "brightness(0.7) contrast(1.05)",
+          filter: "brightness(0.85) contrast(1.05)",
           y,
           scale,
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/75" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 via-40% to-black/80" />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-center">
