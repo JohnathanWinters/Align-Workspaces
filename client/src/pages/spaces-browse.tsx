@@ -1237,7 +1237,20 @@ export default function SpacesBrowsePage() {
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
           </button>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+            <button
+              onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
+              data-testid="button-toggle-map"
+              className="lg:hidden flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold px-3 py-1.5 rounded-full border border-stone-200 text-foreground/60 hover:text-foreground hover:border-stone-300 transition-colors bg-white"
+            >
+              {mobileView === "list" ? (
+                <><MapIcon className="w-3.5 h-3.5" /> Map</>
+              ) : (
+                <><List className="w-3.5 h-3.5" /> List ({filtered.length})</>
+              )}
+            </button>
+          </div>
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -1575,19 +1588,6 @@ export default function SpacesBrowsePage() {
         </div>
       </div>
 
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000]">
-        <button
-          onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
-          data-testid="button-toggle-map"
-          className="flex items-center gap-2 bg-foreground text-background px-5 py-3 rounded-full shadow-lg text-sm font-medium hover:opacity-90 transition-opacity"
-        >
-          {mobileView === "list" ? (
-            <><MapIcon className="w-4 h-4" /> Map</>
-          ) : (
-            <><List className="w-4 h-4" /> List ({filtered.length})</>
-          )}
-        </button>
-      </div>
 
       <AnimatePresence>
         {showListModal && (
