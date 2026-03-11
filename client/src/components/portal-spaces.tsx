@@ -22,6 +22,10 @@ import {
   GripVertical,
   Pencil,
   Save,
+  CheckCircle2,
+  ExternalLink,
+  CreditCard,
+  ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -534,6 +538,121 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
   );
 }
 
+function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
+  const { toast } = useToast();
+
+  const { data: connectStatus, isLoading } = useQuery<{
+    connected: boolean;
+    onboardingComplete: boolean;
+    chargesEnabled?: boolean;
+    payoutsEnabled?: boolean;
+  }>({
+    queryKey: ["/api/stripe/connect/status"],
+    queryFn: async () => {
+      const res = await fetch("/api/stripe/connect/status", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const onboardMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/stripe/connect/onboard");
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      if (data.url) window.location.href = data.url;
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const dashboardMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/stripe/connect/dashboard", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      if (data.url) window.open(data.url, "_blank");
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  if (isLoading) return null;
+  if (!hasSpaces && !connectStatus?.connected) return null;
+
+  if (connectStatus?.onboardingComplete) {
+    return (
+      <Card className="border-emerald-200 bg-emerald-50/30" data-testid="stripe-connect-complete">
+        <CardContent className="flex items-center justify-between py-4 px-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-emerald-800">Payouts active</p>
+              <p className="text-xs text-emerald-600">Earnings are deposited to your bank account automatically.</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => dashboardMutation.mutate()}
+            disabled={dashboardMutation.isPending}
+            className="text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            data-testid="button-stripe-dashboard"
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Stripe Dashboard
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-stone-200 bg-gradient-to-br from-white to-stone-50" data-testid="stripe-connect-setup">
+      <CardContent className="py-6 px-5">
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+            <CreditCard className="w-5 h-5 text-stone-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Set up payouts to receive earnings</h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-3">
+              Connect your bank account to receive payments when guests book your space. Align charges a 7% host fee on each booking.
+            </p>
+            <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
+              <ShieldCheck className="w-4 h-4 text-stone-500 flex-shrink-0" />
+              <p className="text-[11px] text-stone-500">
+                Payments are securely processed by Stripe. Your earnings are automatically deposited to your bank account.
+              </p>
+            </div>
+            <Button
+              onClick={() => onboardMutation.mutate()}
+              disabled={onboardMutation.isPending}
+              size="sm"
+              className="bg-gray-900 text-white hover:bg-black text-xs"
+              data-testid="button-connect-stripe"
+            >
+              {onboardMutation.isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              ) : (
+                <CreditCard className="w-3 h-3 mr-1" />
+              )}
+              {connectStatus?.connected ? "Continue Setup" : "Connect with Stripe"}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function PortalSpacesSection({ userId }: { userId: string }) {
   const [showForm, setShowForm] = useState(false);
 
@@ -554,6 +673,8 @@ export default function PortalSpacesSection({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-8">
+      <StripeConnectSection hasSpaces={mySpaces.length > 0} />
+
       <div className="flex items-center justify-between">
         <h2 className="font-serif text-xl text-gray-900">My Spaces</h2>
         {!showForm && (

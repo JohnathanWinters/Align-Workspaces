@@ -24,16 +24,16 @@ export class WebhookHandlers {
         }
         if (session.metadata?.type === 'space_booking' && session.metadata?.bookingId) {
           const bookingId = session.metadata.bookingId;
-          await storage.updateSpaceBooking(bookingId, { paymentStatus: "paid" });
+          await storage.updateSpaceBooking(bookingId, { paymentStatus: "paid", status: "approved" });
           await storage.createSpaceMessage({
             spaceBookingId: bookingId,
             senderId: "system",
             senderName: "System",
-            senderRole: "guest",
-            message: "Payment completed successfully.",
+            senderRole: "system",
+            message: "Payment completed — booking confirmed!",
             messageType: "system",
           });
-          console.log(`Space booking ${bookingId} marked as paid`);
+          console.log(`Space booking ${bookingId} marked as paid and approved`);
         }
       }
     } catch (err) {

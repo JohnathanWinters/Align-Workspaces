@@ -27,7 +27,9 @@ export interface IStorage {
   updateFolder(id: string, data: Partial<InsertGalleryFolder>): Promise<GalleryFolder>;
   deleteFolder(id: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
+  getUserById(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  updateUserStripeAccount(id: string, stripeAccountId: string, onboardingComplete: string): Promise<User>;
   getFavorites(userId: string, shootId: string): Promise<string[]>;
   toggleFavorite(userId: string, imageId: string): Promise<boolean>;
   updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string }): Promise<User>;
@@ -222,9 +224,23 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(users).orderBy(desc(users.createdAt));
   }
 
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async updateUserStripeAccount(id: string, stripeAccountId: string, onboardingComplete: string): Promise<User> {
+    const [result] = await db.update(users).set({
+      stripeAccountId,
+      stripeOnboardingComplete: onboardingComplete,
+      updatedAt: new Date(),
+    }).where(eq(users.id, id)).returning();
+    return result;
   }
 
   async getFavorites(userId: string, shootId: string): Promise<string[]> {

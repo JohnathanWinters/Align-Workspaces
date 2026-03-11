@@ -335,7 +335,11 @@ function ConversationView({
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-gray-500 truncate">{booking.spaceName} · {isHost ? "You're the host" : "You're the guest"}</p>
+            <p className="text-xs text-gray-500 truncate">
+              {booking.spaceName} · {isHost ? "You're the host" : "You're the guest"}
+              {booking.bookingDate && ` · ${booking.bookingDate}`}
+              {booking.bookingHours && ` · ${booking.bookingHours}hr${booking.bookingHours > 1 ? "s" : ""}`}
+            </p>
           </div>
         </div>
 

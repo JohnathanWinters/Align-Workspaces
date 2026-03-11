@@ -394,17 +394,24 @@ export async function sendSpaceBookingNotification(data: {
   guestEmail: string;
   message: string;
   hostEmail: string;
+  bookingDate?: string;
+  bookingHours?: number;
 }) {
   const gmail = await getUncachableGmailClient();
 
   const subject = `New Booking Request: ${data.spaceName} — from ${data.guestName}`;
 
+  const dateInfo = data.bookingDate
+    ? [`--- Booking Details ---`, `Date: ${data.bookingDate}`, `Duration: ${data.bookingHours || 1} hour${(data.bookingHours || 1) > 1 ? 's' : ''}`, ``]
+    : [];
+
   const body = [
-    `Someone is interested in booking your space on Align Spaces!`,
+    `Someone has booked your space on Align Spaces!`,
     ``,
     `--- Space ---`,
     `${data.spaceName}`,
     ``,
+    ...dateInfo,
     `--- Guest ---`,
     `Name: ${data.guestName}`,
     `Email: ${data.guestEmail}`,
@@ -412,7 +419,7 @@ export async function sendSpaceBookingNotification(data: {
     `--- Message ---`,
     data.message || '(No message provided)',
     ``,
-    `Log in to your Align client portal to view the request and start a conversation.`,
+    `Log in to your Align client portal to view the booking and start a conversation.`,
   ].join('\n');
 
   const to = data.hostEmail || 'ArmandoRamirezRomero89@gmail.com';

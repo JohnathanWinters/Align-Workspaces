@@ -348,6 +348,8 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingHours, setBookingHours] = useState(1);
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
@@ -370,15 +372,28 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
     return () => clearPolling();
   }, [clearPolling]);
 
+  const basePriceCents = space.pricePerHour * 100 * bookingHours;
+  const renterFee = Math.round(basePriceCents * 0.07);
+  const totalCharge = basePriceCents + renterFee;
+
   const bookMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", `/api/spaces/${space.id}/book`, { message: bookingMessage });
+      const res = await apiRequest("POST", `/api/spaces/${space.id}/book`, {
+        message: bookingMessage,
+        bookingDate,
+        bookingHours,
+      });
+      return res.json();
     },
-    onSuccess: () => {
-      toast({ title: "Request sent!", description: "The host will be notified. Check your portal for updates." });
-      setShowBooking(false);
-      setShowAuthPrompt(false);
-      setBookingMessage("");
+    onSuccess: (data: any) => {
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast({ title: "Booking created", description: "Check your portal for updates." });
+        setShowBooking(false);
+        setShowAuthPrompt(false);
+        setBookingMessage("");
+      }
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -844,32 +859,76 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                 {showBooking && !(showAuthPrompt && !isAuthenticated) && (
                   <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-foreground">Send a message to the host</p>
+                      <p className="text-sm font-medium text-foreground">Book this space</p>
                       <button onClick={() => setShowBooking(false)} className="text-foreground/40 hover:text-foreground/60">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] text-foreground/50 mb-1 block">Date</label>
+                        <Input
+                          type="date"
+                          value={bookingDate}
+                          onChange={(e) => setBookingDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="text-sm bg-white h-9"
+                          data-testid={`input-booking-date-${space.id}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-foreground/50 mb-1 block">Hours</label>
+                        <select
+                          value={bookingHours}
+                          onChange={(e) => setBookingHours(parseInt(e.target.value))}
+                          className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm"
+                          data-testid={`select-booking-hours-${space.id}`}
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                            <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
                     <Textarea
                       value={bookingMessage}
                       onChange={(e) => setBookingMessage(e.target.value)}
-                      placeholder={`Hi, I'm interested in booking ${space.name}. I'd like to discuss available dates and times.`}
-                      rows={3}
+                      placeholder={`Hi, I'd like to book ${space.name}. Let me know if this time works!`}
+                      rows={2}
                       className="text-sm bg-white"
                       data-testid={`input-booking-message-${space.id}`}
                     />
+
+                    <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-1.5">
+                      <div className="flex justify-between text-xs text-foreground/60">
+                        <span>${space.pricePerHour}/hr x {bookingHours} hour{bookingHours > 1 ? "s" : ""}</span>
+                        <span>${(basePriceCents / 100).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-foreground/60">
+                        <span>Service fee (7%)</span>
+                        <span>${(renterFee / 100).toFixed(2)}</span>
+                      </div>
+                      <div className="border-t border-stone-200 pt-1.5 flex justify-between text-sm font-medium text-foreground">
+                        <span>Total</span>
+                        <span>${(totalCharge / 100).toFixed(2)}</span>
+                      </div>
+                    </div>
+
                     <Button
                       onClick={() => bookMutation.mutate()}
-                      disabled={bookMutation.isPending}
+                      disabled={bookMutation.isPending || !bookingDate}
                       className="w-full bg-foreground text-background hover:opacity-90"
                       data-testid={`button-submit-booking-${space.id}`}
                     >
                       {bookMutation.isPending ? (
-                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</>
+                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
                       ) : (
-                        <><Send className="w-4 h-4 mr-2" /> Send Request</>
+                        <>Book &amp; Pay ${(totalCharge / 100).toFixed(2)}</>
                       )}
                     </Button>
-                    <p className="text-[10px] text-foreground/40 text-center">You'll be able to chat with the host in your client portal.</p>
+                    <p className="text-[10px] text-foreground/40 text-center">Secure payment via Stripe. You can message the host in your portal.</p>
                   </div>
                 )}
               </div>

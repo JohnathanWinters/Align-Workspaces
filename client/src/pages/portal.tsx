@@ -716,6 +716,20 @@ function EditTokenSection() {
       window.history.replaceState({}, "", url.toString());
       queryClient.invalidateQueries({ queryKey: ["/api/edit-tokens"] });
     }
+    if (params.get("space_payment") === "success") {
+      toast({ title: "Booking confirmed!", description: "Your space has been booked. Check your messages for details." });
+      const url = new URL(window.location.href);
+      url.searchParams.delete("space_payment");
+      window.history.replaceState({}, "", url.toString());
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+    }
+    if (params.get("stripe_connect") === "return") {
+      toast({ title: "Stripe setup updated", description: "Your payout account has been configured." });
+      const url = new URL(window.location.href);
+      url.searchParams.delete("stripe_connect");
+      window.history.replaceState({}, "", url.toString());
+      queryClient.invalidateQueries({ queryKey: ["/api/stripe/connect/status"] });
+    }
   }, [toast]);
 
   const { data: tokenBalance, isLoading: tokensLoading } = useQuery<EditToken>({

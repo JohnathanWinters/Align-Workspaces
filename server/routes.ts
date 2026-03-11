@@ -7,7 +7,7 @@ import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification } from "./gmail";
 import { sendPushToUser, sendPushToRole } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
-import { calculatePricing } from "@shared/pricing";
+import { calculatePricing, calculateSpaceBookingFees } from "@shared/pricing";
 import { isAuthenticated } from "./replit_integrations/auth";
 import multer from "multer";
 import path from "path";
@@ -396,6 +396,90 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Failed to get Stripe publishable key:", error);
       res.status(500).json({ message: "Failed to get payment configuration" });
+    }
+  });
+
+  app.post("/api/stripe/connect/onboard", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const stripe = await getUncachableStripeClient();
+      let accountId = user.stripeAccountId;
+
+      if (!accountId) {
+        const account = await stripe.accounts.create({
+          type: "express",
+          email: user.email || req.user.claims.email,
+          metadata: { alignUserId: userId },
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+        });
+        accountId = account.id;
+        await storage.updateUserStripeAccount(userId, accountId, "false");
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: `${baseUrl}/portal?stripe_connect=refresh`,
+        return_url: `${baseUrl}/portal?stripe_connect=return`,
+        type: "account_onboarding",
+      });
+
+      res.json({ url: accountLink.url });
+    } catch (err: any) {
+      console.error("Stripe Connect onboard error:", err);
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/stripe/connect/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      if (!user.stripeAccountId) {
+        return res.json({ connected: false, onboardingComplete: false });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      const account = await stripe.accounts.retrieve(user.stripeAccountId);
+      const onboardingComplete = account.charges_enabled && account.payouts_enabled;
+
+      if (onboardingComplete && user.stripeOnboardingComplete !== "true") {
+        await storage.updateUserStripeAccount(userId, user.stripeAccountId, "true");
+      }
+
+      res.json({
+        connected: true,
+        onboardingComplete,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+        accountId: user.stripeAccountId,
+      });
+    } catch (err: any) {
+      console.error("Stripe Connect status error:", err);
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/stripe/connect/dashboard", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUserById(userId);
+      if (!user?.stripeAccountId) return res.status(400).json({ message: "No Stripe account connected" });
+
+      const stripe = await getUncachableStripeClient();
+      const loginLink = await stripe.accounts.createLoginLink(user.stripeAccountId);
+      res.json({ url: loginLink.url });
+    } catch (err: any) {
+      console.error("Stripe Connect dashboard error:", err);
+      res.status(500).json({ message: err.message });
     }
   });
 
@@ -2416,6 +2500,28 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/spaces/:id/booking-fees", async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) {
+        return res.status(404).json({ message: "Space not found" });
+      }
+
+      const hours = parseInt(req.query.hours as string) || 1;
+      const basePriceCents = space.pricePerHour * 100 * hours;
+      const fees = calculateSpaceBookingFees(basePriceCents);
+
+      res.json({
+        ...fees,
+        pricePerHour: space.pricePerHour,
+        hours,
+        spaceName: space.name,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/spaces/:id/book", isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user;
@@ -2424,37 +2530,105 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Space not found" });
       }
 
+      const { bookingDate, bookingHours, message } = req.body;
+      if (!bookingDate) return res.status(400).json({ message: "Booking date is required" });
+      const hours = parseInt(bookingHours) || 1;
+
+      const basePriceCents = space.pricePerHour * 100 * hours;
+      const fees = calculateSpaceBookingFees(basePriceCents);
+
+      let hostStripeAccountId: string | null = null;
+      if (space.userId) {
+        const hostUser = await storage.getUserById(space.userId);
+        if (hostUser?.stripeAccountId && hostUser.stripeOnboardingComplete === "true") {
+          hostStripeAccountId = hostUser.stripeAccountId;
+        }
+      }
+
       const booking = await storage.createSpaceBooking({
         spaceId: space.id,
         userId: user.claims.sub,
         userName: user.claims?.first_name || "Guest",
         userEmail: user.claims?.email || null,
         status: "pending",
-        message: req.body.message || null,
+        message: message || null,
+        bookingDate,
+        bookingHours: hours,
+        paymentAmount: fees.totalCharge,
+        renterFeeAmount: fees.renterFee,
+        hostFeeAmount: fees.hostFee,
+        hostEarnings: fees.hostEarnings,
+        paymentStatus: "pending",
       });
 
+      const guestName = user.claims?.first_name || "Guest";
       await storage.createSpaceMessage({
         spaceBookingId: booking.id,
         senderId: user.claims.sub,
-        senderName: user.claims?.first_name || "Guest",
+        senderName: guestName,
         senderRole: "guest",
-        message: req.body.message || `Hi, I'm interested in booking ${space.name}.`,
+        message: message || `Hi, I'd like to book ${space.name} on ${bookingDate} for ${hours} hour${hours > 1 ? "s" : ""}.`,
       });
+
+      const stripe = await getUncachableStripeClient();
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+      const sessionConfig: any = {
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: `${space.name} — ${bookingDate}`,
+                description: `${hours} hour${hours > 1 ? "s" : ""} at $${space.pricePerHour}/hr`,
+              },
+              unit_amount: fees.totalCharge,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: `${baseUrl}/portal?space_payment=success`,
+        cancel_url: `${baseUrl}/portal?space_payment=cancelled`,
+        customer_email: user.claims?.email || booking.userEmail,
+        metadata: {
+          type: "space_booking",
+          bookingId: booking.id,
+          spaceId: space.id,
+          userId: user.claims.sub,
+        },
+      };
+
+      if (hostStripeAccountId) {
+        sessionConfig.payment_intent_data = {
+          application_fee_amount: fees.renterFee + fees.hostFee,
+          transfer_data: {
+            destination: hostStripeAccountId,
+          },
+        };
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionConfig);
+      await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id });
 
       try {
         await sendSpaceBookingNotification({
           spaceName: space.name,
-          guestName: user.claims?.first_name || "Guest",
+          guestName,
           guestEmail: user.claims?.email || "",
-          message: req.body.message || "",
+          message: message || "",
           hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
+          bookingDate,
+          bookingHours: hours,
         });
       } catch (emailErr) {
         console.error("Failed to send booking notification:", emailErr);
       }
 
-      res.json(booking);
+      res.json({ booking, checkoutUrl: session.url });
     } catch (err: any) {
+      console.error("Booking error:", err);
       res.status(500).json({ message: err.message });
     }
   });
