@@ -30,6 +30,8 @@ import {
   SlidersHorizontal,
   Navigation,
   ArrowUpDown,
+  BadgeCheck,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -331,7 +333,7 @@ function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; space
   );
 }
 
-function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null }) {
+function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingMessage, setBookingMessage] = useState("");
@@ -375,7 +377,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
   const handleViewPhotos = async () => {
     if (spacePhotos.length > 0) {
       setShowSpacePhotos(true);
-      setSpacePhotoIndex(0);
       return;
     }
     setLoadingPhotos(true);
@@ -386,7 +387,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
         setSpacePhotos(photos);
         if (photos.length > 0) {
           setShowSpacePhotos(true);
-          setSpacePhotoIndex(0);
         } else {
           toast({ title: "No photos yet", description: "No portfolio photos have been linked to this space yet." });
         }
@@ -402,6 +402,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
       return;
     }
     setShowBooking(true);
+    setExpanded(true);
   };
 
   const handleRegisterClick = () => {
@@ -524,7 +525,22 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
           <div className="absolute top-3 right-3 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
             Sample
           </div>
-        ) : null}
+        ) : (
+          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm text-[10px] font-semibold text-emerald-700 px-2 py-1 rounded-full shadow-sm" data-testid={`badge-verified-${space.id}`}>
+            <BadgeCheck className="w-3 h-3" />
+            Verified
+          </div>
+        )}
+        {(portfolioPhotoCount ?? 0) > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleViewPhotos(); }}
+            className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full hover:bg-black/75 transition-colors z-10"
+            data-testid={`badge-photos-${space.id}`}
+          >
+            <Camera className="w-3 h-3" />
+            {portfolioPhotoCount} photo{portfolioPhotoCount !== 1 ? "s" : ""}
+          </button>
+        )}
       </div>
 
       <AnimatePresence>
@@ -615,15 +631,39 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
           </p>
         )}
 
-        <div className="mt-auto">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-2 w-full py-2.5 rounded-lg border border-stone-300 bg-white text-sm font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-400 active:bg-stone-100 transition-all flex items-center justify-center gap-1.5 shadow-sm"
-          data-testid={`button-expand-space-${space.id}`}
-        >
-          {expanded ? "Show less" : "View details"}
-          <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} />
-        </button>
+        {space.amenities && space.amenities.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {space.amenities.slice(0, 3).map((amenity, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 text-foreground/55 px-2 py-0.5 rounded-full">
+                <Check className="w-2.5 h-2.5 text-[#c4956a]" />
+                {amenity}
+              </span>
+            ))}
+            {space.amenities.length > 3 && (
+              <span className="text-[11px] text-foreground/35 px-1 py-0.5">+{space.amenities.length - 3} more</span>
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto space-y-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex-1 py-2.5 rounded-lg border border-stone-300 bg-white text-sm font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-400 active:bg-stone-100 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+            data-testid={`button-expand-space-${space.id}`}
+          >
+            {expanded ? "Show less" : "Details"}
+            <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} />
+          </button>
+          <button
+            onClick={handleBookClick}
+            className="flex-1 py-2.5 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 active:opacity-80 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+            data-testid={`button-book-card-${space.id}`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            Book
+          </button>
+        </div>
 
         <AnimatePresence>
           {expanded && (
@@ -635,7 +675,11 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
               className="overflow-hidden"
             >
               <div className="pt-4 border-t border-stone-100 mt-4 space-y-3">
-                <p className="text-sm text-foreground/60 leading-relaxed whitespace-pre-line">{space.description}</p>
+                <div className="text-sm text-foreground/60 leading-relaxed">
+                  {space.description.split(/\n\n+/).map((paragraph, i) => (
+                    <p key={i} className={i > 0 ? "mt-3" : ""}>{paragraph}</p>
+                  ))}
+                </div>
 
                 {(() => {
                   let paletteData: { colors: { hex: string; name: string }[]; feel: string } | null = null;
@@ -725,14 +769,17 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
                 <button
                   onClick={handleViewPhotos}
                   disabled={loadingPhotos}
-                  className="inline-flex items-center gap-2 text-sm bg-stone-100 text-stone-700 px-4 py-2 rounded-full hover:bg-stone-200 transition-colors font-medium"
+                  className="w-full flex items-center justify-center gap-2 text-sm bg-gradient-to-r from-stone-100 to-stone-50 text-stone-700 px-4 py-3 rounded-lg hover:from-stone-200 hover:to-stone-100 transition-all font-medium border border-stone-200/60"
                   data-testid={`button-view-photos-${space.id}`}
                 >
-                  {loadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                  {loadingPhotos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5 text-[#c4956a]" />}
                   View Photos Taken Here
+                  {(portfolioPhotoCount ?? 0) > 0 && (
+                    <span className="text-[10px] bg-[#c4956a]/10 text-[#c4956a] px-1.5 py-0.5 rounded-full font-bold">{portfolioPhotoCount}</span>
+                  )}
                 </button>
 
-                {showAuthPrompt && !isAuthenticated ? (
+                {showAuthPrompt && !isAuthenticated && (
                   <div className="bg-gradient-to-br from-stone-50 to-amber-50/30 rounded-lg p-5 mt-2 space-y-4 border border-stone-200/60" data-testid={`auth-prompt-${space.id}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -766,16 +813,8 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance }: { space
                       </p>
                     )}
                   </div>
-                ) : !showBooking ? (
-                  <button
-                    onClick={handleBookClick}
-                    className="inline-flex items-center gap-2 text-sm bg-foreground text-background px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity font-medium mt-2"
-                    data-testid={`button-book-space-${space.id}`}
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    Request to Book
-                  </button>
-                ) : (
+                )}
+                {showBooking && !(showAuthPrompt && !isAuthenticated) && (
                   <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-foreground">Send a message to the host</p>
@@ -1055,6 +1094,28 @@ export default function SpacesBrowsePage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: photoCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ["/api/spaces/photo-counts"],
+    queryFn: async () => {
+      if (allSpaces.length === 0) return {};
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        allSpaces.map(async (space) => {
+          try {
+            const res = await fetch(`/api/portfolio-photos/by-space/${space.id}`);
+            if (res.ok) {
+              const photos = await res.json();
+              if (photos.length > 0) counts[space.id] = photos.length;
+            }
+          } catch {}
+        })
+      );
+      return counts;
+    },
+    enabled: allSpaces.length > 0,
+    staleTime: 10 * 60 * 1000,
+  });
+
   const priceRange = useMemo(() => {
     if (allSpaces.length === 0) return { min: 0, max: 100 };
     const prices = allSpaces.map(s => s.pricePerHour);
@@ -1193,6 +1254,9 @@ export default function SpacesBrowsePage() {
       </nav>
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 bg-background">
+        <p className="text-xs text-foreground/40 mb-2" data-testid="text-spaces-intro">
+          Discover and book workspaces across Miami — offices, studios, and meeting rooms for professionals.
+        </p>
         <div className="flex items-center gap-2">
           <div ref={typeDropdownRef} className="relative flex-shrink-0" data-testid="dropdown-space-type">
             <button
@@ -1245,23 +1309,25 @@ export default function SpacesBrowsePage() {
               )}
             </AnimatePresence>
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            data-testid="button-toggle-filters"
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
-              showFilters || activeFilterCount > 0
-                ? "bg-foreground text-background border-foreground"
-                : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-[#c4956a] text-white text-[10px] font-bold flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+          {allSpaces.length >= 3 && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              data-testid="button-toggle-filters"
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
+                showFilters || activeFilterCount > 0
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-[#c4956a] text-white text-[10px] font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         <AnimatePresence>
@@ -1420,28 +1486,40 @@ export default function SpacesBrowsePage() {
               <div className="text-center py-20">
                 <Building2 className="w-12 h-12 text-stone-300 mx-auto mb-4" />
                 <p className="text-foreground/50 text-sm">No spaces found for this category yet.</p>
+                <p className="text-foreground/30 text-xs mt-2">Try a different category or check back soon.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filtered.map((space, i) => (
-                  <div
-                    key={space.id}
-                    ref={el => { cardRefs.current[space.id] = el; }}
-                    className="h-full"
-                  >
-                    <SpaceCard
-                      space={space}
-                      onHover={setHoveredCardId}
-                      onLeave={() => setHoveredCardId(null)}
-                      isHighlighted={hoveredCardId === space.id}
-                      distance={getDistanceForSpace(space)}
-                    />
+              <>
+                {filtered.length <= 2 && (
+                  <div className="flex items-center gap-2 bg-amber-50/60 border border-amber-100 rounded-lg px-4 py-3 mb-2" data-testid="text-early-access">
+                    <Sparkles className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+                    <p className="text-xs text-foreground/50">
+                      We're just getting started. New spaces are added weekly across Miami neighborhoods.
+                    </p>
                   </div>
-                ))}
-              </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filtered.map((space) => (
+                    <div
+                      key={space.id}
+                      ref={el => { cardRefs.current[space.id] = el; }}
+                      className="h-full"
+                    >
+                      <SpaceCard
+                        space={space}
+                        onHover={setHoveredCardId}
+                        onLeave={() => setHoveredCardId(null)}
+                        isHighlighted={hoveredCardId === space.id}
+                        distance={getDistanceForSpace(space)}
+                        portfolioPhotoCount={photoCounts[space.id]}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
-            <div className="pb-8 pt-4">
+            <div className="pb-24 lg:pb-8 pt-4">
               <div className="bg-stone-50 rounded-2xl p-6 sm:p-8 text-center">
                 <h2 className="font-serif text-lg sm:text-xl font-semibold mb-2" data-testid="text-list-space-heading">
                   Have a space to share?
@@ -1483,7 +1561,7 @@ export default function SpacesBrowsePage() {
           {mobileView === "list" ? (
             <><MapIcon className="w-4 h-4" /> Map</>
           ) : (
-            <><List className="w-4 h-4" /> List</>
+            <><List className="w-4 h-4" /> List ({filtered.length})</>
           )}
         </button>
       </div>

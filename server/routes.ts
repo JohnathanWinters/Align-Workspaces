@@ -1753,7 +1753,7 @@ export async function registerRoutes(
   app.get("/api/spaces", async (req, res) => {
     try {
       const type = req.query.type as string | undefined;
-      const spacesList = await storage.getSpaces({ type, includeSamples: true });
+      const spacesList = await storage.getSpaces({ type, includeSamples: false });
       res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
       res.json(spacesList);
     } catch (err: any) {
