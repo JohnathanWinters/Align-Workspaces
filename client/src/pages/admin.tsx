@@ -3956,6 +3956,7 @@ const PIPELINE_STAGES = [
 
 const ACTIVITY_TYPES = [
   { key: "call", label: "Phone Call", icon: Phone },
+  { key: "text", label: "Text", icon: MessageCircle },
   { key: "email", label: "Email", icon: Send },
   { key: "note", label: "Note", icon: Edit },
   { key: "meeting", label: "Meeting", icon: Users },
@@ -4172,9 +4173,10 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   ];
 
   const callCount = activities.filter(a => a.type === "call").length;
+  const textCount = activities.filter(a => a.type === "text").length;
   const emailCount = activities.filter(a => a.type === "email").length;
   const meetingCount = activities.filter(a => a.type === "meeting").length;
-  const totalAttempts = callCount + emailCount;
+  const totalAttempts = callCount + textCount + emailCount;
 
   if (selectedContact) {
     return (
@@ -4192,12 +4194,21 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
 
         {totalAttempts > 0 && (
           <div className="flex gap-3 mb-4" data-testid="contact-attempt-stats">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-              <Phone className="w-3 h-3" /> {callCount} {callCount === 1 ? "call" : "calls"}
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-medium">
-              <Send className="w-3 h-3" /> {emailCount} {emailCount === 1 ? "email" : "emails"}
-            </div>
+            {callCount > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                <Phone className="w-3 h-3" /> {callCount} {callCount === 1 ? "call" : "calls"}
+              </div>
+            )}
+            {textCount > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
+                <MessageCircle className="w-3 h-3" /> {textCount} {textCount === 1 ? "text" : "texts"}
+              </div>
+            )}
+            {emailCount > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-medium">
+                <Send className="w-3 h-3" /> {emailCount} {emailCount === 1 ? "email" : "emails"}
+              </div>
+            )}
             {meetingCount > 0 && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                 <Users className="w-3 h-3" /> {meetingCount} {meetingCount === 1 ? "meeting" : "meetings"}
