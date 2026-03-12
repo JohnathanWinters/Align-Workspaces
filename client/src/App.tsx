@@ -33,6 +33,10 @@ function Router() {
       <Route path="/featured" component={FeaturedPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/team" component={EmployeePage} />
+      <Route path="/auth-success">{() => {
+        if (window.opener) { window.close(); }
+        return <div className="flex items-center justify-center min-h-screen text-gray-500">Authentication successful. You can close this window.</div>;
+      }}</Route>
       <Route component={NotFound} />
     </Switch>
   );

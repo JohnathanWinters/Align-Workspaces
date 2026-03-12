@@ -355,23 +355,23 @@ function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; space
   );
 }
 
-function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
-  const [expanded, setExpanded] = useState(false);
-  const [showBooking, setShowBooking] = useState(false);
+function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount, autoBook }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number; autoBook?: boolean }) {
+  const { user, isAuthenticated } = useAuth();
+  const [expanded, setExpanded] = useState(!!autoBook);
+  const [showBooking, setShowBooking] = useState(!!(autoBook && isAuthenticated));
   const [bookingDate, setBookingDate] = useState("");
   const [bookingStartTime, setBookingStartTime] = useState("");
   const [bookingHours, setBookingHours] = useState(1);
   const [bookingStep, setBookingStep] = useState<"date" | "time" | "confirm">("date");
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(!!(autoBook && !isAuthenticated));
   const [authPending, setAuthPending] = useState(false);
   const [activeColor, setActiveColor] = useState<number | null>(null);
   const [spacePhotos, setSpacePhotos] = useState<Array<{ id: string; imageUrl: string }>>([]);
   const [showSpacePhotos, setShowSpacePhotos] = useState(false);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
-  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   const clearPolling = useCallback(() => {
@@ -461,11 +461,20 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   };
 
   const handleRegisterClick = () => {
+    const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      const returnPath = `/browse?book=${encodeURIComponent(space.id)}`;
+      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
+      return;
+    }
+
     setAuthPending(true);
-    const popup = window.open("/api/login", "alignAuth", "width=500,height=700,left=200,top=100");
+    const popup = window.open("/api/login?returnTo=/auth-success", "alignAuth", "width=500,height=700,left=200,top=100");
 
     if (!popup || popup.closed) {
-      window.location.href = "/api/login";
+      const returnPath = window.location.pathname + window.location.search;
+      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
       return;
     }
 
@@ -473,6 +482,17 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
       if (popup.closed) {
         clearPolling();
         setAuthPending(false);
+        try {
+          const res = await fetch("/api/auth/user", { credentials: "include" });
+          if (res.ok) {
+            const userData = await res.json();
+            if (userData?.id) {
+              setShowAuthPrompt(false);
+              setShowBooking(true);
+              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+            }
+          }
+        } catch {}
         return;
       }
       try {
@@ -1121,14 +1141,35 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
   useEffect(() => () => clearPolling(), [clearPolling]);
 
   const handleAuthClick = () => {
+    const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      const returnPath = window.location.pathname + window.location.search;
+      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
+      return;
+    }
+
     setAuthPending(true);
-    const popup = window.open("/api/login", "alignAuth", "width=500,height=700,left=200,top=100");
+    const popup = window.open("/api/login?returnTo=/auth-success", "alignAuth", "width=500,height=700,left=200,top=100");
     if (!popup || popup.closed) {
-      window.location.href = "/api/login";
+      const returnPath = window.location.pathname + window.location.search;
+      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
       return;
     }
     pollRef.current.interval = setInterval(async () => {
-      if (popup.closed) { clearPolling(); setAuthPending(false); return; }
+      if (popup.closed) {
+        clearPolling(); setAuthPending(false);
+        try {
+          const res = await fetch("/api/auth/user", { credentials: "include" });
+          if (res.ok) {
+            const userData = await res.json();
+            if (userData?.id) {
+              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+            }
+          }
+        } catch {}
+        return;
+      }
       try {
         const res = await fetch("/api/auth/user", { credentials: "include" });
         if (res.ok) {
@@ -1303,6 +1344,18 @@ export default function SpacesBrowsePage() {
   const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [autoBookSpaceId, setAutoBookSpaceId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("book");
+  });
+
+  useEffect(() => {
+    if (autoBookSpaceId) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("book");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+  }, [autoBookSpaceId]);
 
   useEffect(() => {
     if (!showTypeDropdown) return;
@@ -1766,6 +1819,7 @@ export default function SpacesBrowsePage() {
                         isHighlighted={hoveredCardId === space.id}
                         distance={getDistanceForSpace(space)}
                         portfolioPhotoCount={photoCounts[space.id]}
+                        autoBook={autoBookSpaceId === space.id}
                       />
                     </div>
                   ))}
