@@ -2647,6 +2647,7 @@ export async function registerRoutes(
           spaceName: space?.name || b.spaceName || "Unknown Space",
           spaceType: space?.type,
           spaceSchedule: space?.availabilitySchedule || null,
+          spaceBufferMinutes: space?.bufferMinutes ?? 15,
           otherPartyName: role === "guest" ? (space?.hostName || "Host") : (b.userName || "Guest"),
           latestMessage: latest ? { message: latest.message, createdAt: latest.createdAt, senderRole: latest.senderRole, messageType: latest.messageType } : null,
           unreadCount,

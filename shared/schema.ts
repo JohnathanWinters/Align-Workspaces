@@ -342,6 +342,7 @@ export const spaces = pgTable("spaces", {
   targetProfession: text("target_profession"),
   availableHours: text("available_hours"),
   availabilitySchedule: text("availability_schedule"),
+  bufferMinutes: integer("buffer_minutes").default(15),
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
   hostName: text("host_name"),

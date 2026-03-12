@@ -389,8 +389,9 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
     try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
   })();
 
-  const availableSlots = bookingDate && schedule ? getAvailableTimeSlots(schedule, bookingDate) : [];
-  const maxHours = bookingDate && bookingStartTime && schedule ? getMaxHoursFromSlot(schedule, bookingDate, bookingStartTime) : 8;
+  const bufferMinutes = space.bufferMinutes ?? 15;
+  const availableSlots = bookingDate && schedule ? getAvailableTimeSlots(schedule, bookingDate, bufferMinutes) : [];
+  const maxHours = bookingDate && bookingStartTime && schedule ? getMaxHoursFromSlot(schedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
 
   const isDateAvailable = (date: Date): boolean => {
     if (!schedule) return true;

@@ -65,7 +65,7 @@ export function getDayOfWeek(dateStr: string): keyof WeekSchedule | null {
   return map[dayIndex] || null;
 }
 
-export function getAvailableTimeSlots(schedule: WeekSchedule, dateStr: string): string[] {
+export function getAvailableTimeSlots(schedule: WeekSchedule, dateStr: string, bufferMinutes: number = 15): string[] {
   const dayKey = getDayOfWeek(dateStr);
   if (!dayKey) return [];
   const daySchedule = schedule[dayKey];
@@ -75,7 +75,10 @@ export function getAvailableTimeSlots(schedule: WeekSchedule, dateStr: string): 
   const [closeH, closeM] = daySchedule.close.split(":").map(Number);
   const openMinutes = openH * 60 + openM;
   const closeMinutes = closeH * 60 + closeM;
-  for (let m = openMinutes; m < closeMinutes; m += 60) {
+  const step = 60 + bufferMinutes;
+  for (let i = 0; ; i++) {
+    const m = openMinutes + i * step;
+    if (m + 60 > closeMinutes) break;
     const h = Math.floor(m / 60);
     const min = m % 60;
     slots.push(`${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`);
@@ -83,7 +86,7 @@ export function getAvailableTimeSlots(schedule: WeekSchedule, dateStr: string): 
   return slots;
 }
 
-export function getMaxHoursFromSlot(schedule: WeekSchedule, dateStr: string, startTime: string): number {
+export function getMaxHoursFromSlot(schedule: WeekSchedule, dateStr: string, startTime: string, bufferMinutes: number = 15): number {
   const dayKey = getDayOfWeek(dateStr);
   if (!dayKey) return 1;
   const daySchedule = schedule[dayKey];
@@ -92,7 +95,8 @@ export function getMaxHoursFromSlot(schedule: WeekSchedule, dateStr: string, sta
   const [closeH, closeM] = daySchedule.close.split(":").map(Number);
   const startMinutes = startH * 60 + startM;
   const closeMinutes = closeH * 60 + closeM;
-  return Math.max(1, Math.floor((closeMinutes - startMinutes) / 60));
+  const available = closeMinutes - startMinutes - bufferMinutes;
+  return Math.max(1, Math.floor(available / 60));
 }
 
 const DEFAULT_SCHEDULE: WeekSchedule = {

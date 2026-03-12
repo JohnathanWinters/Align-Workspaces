@@ -295,6 +295,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     amenities: (space.amenities || []).join(", "),
     targetProfession: space.targetProfession || "",
     hostName: space.hostName || "",
+    bufferMinutes: String(space.bufferMinutes ?? 15),
   });
 
   const updateMutation = useMutation({
@@ -304,6 +305,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
         pricePerHour: formData.pricePerHour ? Number(formData.pricePerHour) : undefined,
         pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
         capacity: formData.capacity ? Number(formData.capacity) : undefined,
+        bufferMinutes: Number(formData.bufferMinutes),
         amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
@@ -381,6 +383,27 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
       </div>
       <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
       <div>
+        <label className="text-xs text-gray-500 mb-1 block">Buffer Time Between Bookings</label>
+        <div className="flex items-center gap-2">
+          <select
+            value={formData.bufferMinutes}
+            onChange={(e) => update("bufferMinutes", e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
+            data-testid={`edit-select-buffer-${space.id}`}
+          >
+            <option value="0">No buffer</option>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="20">20 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
+      </div>
+      <div>
         <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
         <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} data-testid={`edit-input-short-desc-${space.id}`} />
       </div>
@@ -431,12 +454,14 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     amenities: "",
     targetProfession: "",
     hostName: "",
+    bufferMinutes: "15",
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
       const payload = {
         ...formData,
+        bufferMinutes: Number(formData.bufferMinutes),
         amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
@@ -516,6 +541,26 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
         </div>
 
         <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
+
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Buffer Time Between Bookings</label>
+          <select
+            value={formData.bufferMinutes}
+            onChange={(e) => update("bufferMinutes", e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
+            data-testid="select-space-buffer"
+          >
+            <option value="0">No buffer</option>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes (default)</option>
+            <option value="20">20 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
+          <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
+        </div>
 
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Short Description</label>

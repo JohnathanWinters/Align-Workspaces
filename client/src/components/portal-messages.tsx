@@ -43,6 +43,7 @@ interface EnrichedBooking extends SpaceBooking {
   unreadCount: number;
   role: "guest" | "host";
   spaceSchedule?: string;
+  spaceBufferMinutes?: number;
 }
 
 const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
@@ -272,6 +273,7 @@ function ConversationView({
   const spaceSchedule: import("./availability-schedule-editor").WeekSchedule | null = (() => {
     try { return booking.spaceSchedule ? JSON.parse(booking.spaceSchedule) : null; } catch { return null; }
   })();
+  const bufferMins = booking.spaceBufferMinutes ?? 15;
 
   const sendMutation = useMutation({
     mutationFn: async (text: string) => {
@@ -490,7 +492,7 @@ function ConversationView({
                   </p>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {(spaceSchedule ? getAvailableTimeSlots(spaceSchedule, rescheduleDate) : []).map((slot) => (
+                  {(spaceSchedule ? getAvailableTimeSlots(spaceSchedule, rescheduleDate, bufferMins) : []).map((slot) => (
                     <button
                       key={slot}
                       onClick={() => setRescheduleTime(slot)}
@@ -521,7 +523,7 @@ function ConversationView({
                       className="h-7 rounded-md border border-input bg-white px-2 text-xs"
                       data-testid="reschedule-hours"
                     >
-                      {Array.from({ length: spaceSchedule ? getMaxHoursFromSlot(spaceSchedule, rescheduleDate, rescheduleTime) : 8 }, (_, i) => i + 1).map((h) => (
+                      {Array.from({ length: spaceSchedule ? getMaxHoursFromSlot(spaceSchedule, rescheduleDate, rescheduleTime, bufferMins) : 8 }, (_, i) => i + 1).map((h) => (
                         <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
                       ))}
                     </select>
