@@ -201,10 +201,10 @@ const defaultShootForm: ShootFormData = {
   notes: "",
 };
 
-const environments = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym"];
+const environments = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym", "kitchen"];
 const brandMessages = ["assured", "empathy", "confidence", "motivation"];
-const emotionalImpacts = ["cozy", "bright", "powerful", "cinematic"];
-const shootIntents = ["website", "social-media", "marketing", "personal-brand", "team"];
+const emotionalImpacts = ["cozy", "bright", "powerful"];
+const shootIntents = ["social-media", "commercial", "team"];
 const statuses = ["draft", "pending-review", "scheduled", "in-progress", "completed"];
 
 function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: string; shootTitle: string; token: string; onBack: () => void }) {
@@ -2709,10 +2709,10 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
 
   const envOptions = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym", "kitchen"];
   const brandOptions = ["assured", "empathy", "confidence", "motivation"];
-  const moodOptions = ["cozy", "bright", "powerful", "cinematic"];
+  const moodOptions = ["cozy", "bright", "powerful"];
   const envLabels: Record<string, string> = { restaurant: "Restaurant", office: "Office", nature: "Nature", workvan: "Work Van", urban: "Urban", suburban: "Suburban", gym: "Gym", kitchen: "Kitchen" };
   const brandLabels: Record<string, string> = { assured: "Welcoming", empathy: "Warm", confidence: "Confident", motivation: "Motivated" };
-  const moodLabels: Record<string, string> = { cozy: "Comfortable", bright: "Inspired", powerful: "Reassured", cinematic: "Cinematic" };
+  const moodLabels: Record<string, string> = { cozy: "Comfortable", bright: "Inspired", powerful: "Reassured" };
 
   const filteredAdminPhotos = photos.filter(p => (p.category || "people") === adminCategory);
 
