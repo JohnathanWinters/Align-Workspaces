@@ -8,6 +8,7 @@ import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendE
 import { sendPushToUser, sendPushToRole } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees } from "@shared/pricing";
+import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
 import { isAuthenticated } from "./replit_integrations/auth";
 import multer from "multer";
 import path from "path";
@@ -2769,6 +2770,15 @@ export async function registerRoutes(
         }
       }
 
+      if (status === "cancelled" && booking.googleCalendarEventId) {
+        try {
+          await deleteBookingCalendarEvent(booking.googleCalendarEventId);
+          await storage.updateSpaceBooking(booking.id, { googleCalendarEventId: null });
+        } catch (calErr) {
+          console.error("Failed to delete calendar event:", calErr);
+        }
+      }
+
       const updated = await storage.updateSpaceBookingStatus(booking.id, status);
 
       const statusLabels: Record<string, string> = { approved: "approved", rejected: "declined", cancelled: "cancelled" };
@@ -3015,6 +3025,38 @@ export async function registerRoutes(
         await storage.markBookingRead(booking.id, "host");
       }
       res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/space-bookings/:id/calendar-url", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      if (booking.userId !== userId && (!space || space.userId !== userId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      if (!booking.bookingDate || !booking.bookingStartTime || !booking.bookingHours) {
+        return res.status(400).json({ message: "Booking details incomplete" });
+      }
+
+      const url = generateAddToCalendarUrl({
+        spaceName: space?.name || "Space",
+        guestName: booking.userName || "Guest",
+        guestEmail: booking.userEmail || "",
+        bookingDate: booking.bookingDate,
+        bookingStartTime: booking.bookingStartTime,
+        bookingHours: booking.bookingHours,
+        spaceAddress: space?.address || "",
+        bookingId: booking.id,
+      });
+
+      res.json({ url });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

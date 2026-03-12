@@ -24,6 +24,7 @@ import {
   Info,
   CalendarDays,
   RefreshCw,
+  CalendarPlus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -447,6 +448,25 @@ function ConversationView({
                 )}
               </div>
             </div>
+
+            {booking.status === "approved" && (
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await apiRequest("GET", `/api/space-bookings/${booking.id}/calendar-url`);
+                    const data = await res.json();
+                    if (data.url) window.open(data.url, "_blank");
+                  } catch {
+                    toast({ title: "Could not generate calendar link", variant: "destructive" });
+                  }
+                }}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                data-testid="button-add-to-calendar"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+                Add to Google Calendar
+              </button>
+            )}
 
             {showCancelConfirm && booking.status === "approved" && (
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-2" data-testid="cancel-confirm-panel">

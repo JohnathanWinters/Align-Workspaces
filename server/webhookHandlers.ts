@@ -1,6 +1,7 @@
 import { getStripeSync, getUncachableStripeClient } from './stripeClient';
 import { storage } from './storage';
 import { sendSpaceBookingNotification } from './gmail';
+import { createBookingCalendarEvent } from './googleCalendar';
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -83,6 +84,26 @@ export class WebhookHandlers {
             });
           } catch (emailErr) {
             console.error("Failed to send booking notification:", emailErr);
+          }
+
+          try {
+            const space = await storage.getSpaceById(booking?.spaceId || session.metadata.spaceId);
+            const calendarEventId = await createBookingCalendarEvent({
+              spaceName: session.metadata.spaceName || space?.name || "Space",
+              guestName,
+              guestEmail: session.metadata.guestEmail || booking?.userEmail || "",
+              hostEmail: session.metadata.hostEmail || "ArmandoRamirezRomero89@gmail.com",
+              bookingDate,
+              bookingStartTime,
+              bookingHours,
+              spaceAddress: space?.address || "",
+              bookingId,
+            });
+            if (calendarEventId) {
+              await storage.updateSpaceBooking(bookingId, { googleCalendarEventId: calendarEventId });
+            }
+          } catch (calErr) {
+            console.error("Failed to create calendar event:", calErr);
           }
 
           console.log(`Space booking ${bookingId} paid & confirmed, host notified`);

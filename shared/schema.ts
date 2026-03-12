@@ -382,6 +382,7 @@ export const spaceBookings = pgTable("space_bookings", {
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   refundStatus: text("refund_status"),
   refundAmount: integer("refund_amount"),
+  googleCalendarEventId: text("google_calendar_event_id"),
   lastReadGuest: timestamp("last_read_guest"),
   lastReadHost: timestamp("last_read_host"),
   createdAt: timestamp("created_at").defaultNow(),
