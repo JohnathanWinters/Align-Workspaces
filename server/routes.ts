@@ -2602,7 +2602,7 @@ export async function registerRoutes(
           guestName,
           guestEmail: user.claims?.email || "",
           spaceName: space.name,
-          hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
+          hostEmail: space.contactEmail || "armando@alignworkspaces.com",
           bookingDate,
           bookingStartTime: bookingStartTime || "",
           bookingHours: String(hours),
@@ -3235,7 +3235,7 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
 
 ## Contact
 - Website: ${SITE_URL}
-- Email: ArmandoRamirezRomero89@gmail.com
+- Email: hello@alignworkspaces.com
 
 ## Key Pages
 - Home / Align Spaces: ${SITE_URL}/
@@ -3331,7 +3331,7 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
 ${featuredSection}
 ## Contact Information
 - Website: ${SITE_URL}
-- Email: ArmandoRamirezRomero89@gmail.com
+- Email: hello@alignworkspaces.com
 - Hours: Monday–Sunday 8:00 AM – 8:00 PM
 
 ## Key Pages

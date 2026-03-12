@@ -78,7 +78,7 @@ export class WebhookHandlers {
               guestName,
               guestEmail: session.metadata.guestEmail || "",
               message: `Booking confirmed for ${bookingDate}, ${bookingHours} hour${bookingHours > 1 ? "s" : ""}.`,
-              hostEmail: session.metadata.hostEmail || "ArmandoRamirezRomero89@gmail.com",
+              hostEmail: session.metadata.hostEmail || "armando@alignworkspaces.com",
               bookingDate,
               bookingHours,
             });
@@ -92,7 +92,7 @@ export class WebhookHandlers {
               spaceName: session.metadata.spaceName || space?.name || "Space",
               guestName,
               guestEmail: session.metadata.guestEmail || booking?.userEmail || "",
-              hostEmail: session.metadata.hostEmail || "ArmandoRamirezRomero89@gmail.com",
+              hostEmail: session.metadata.hostEmail || "armando@alignworkspaces.com",
               bookingDate,
               bookingStartTime,
               bookingHours,

@@ -88,7 +88,7 @@ export async function sendBookingNotification(data: BookingEmailData) {
     data.notes ? `--- Notes ---\n${data.notes}` : '',
   ].join('\n');
 
-  const to = 'ArmandoRamirezRomero89@gmail.com';
+  const to = 'armando@alignworkspaces.com';
 
   const rawMessage = [
     `To: ${to}`,
@@ -134,7 +134,7 @@ export async function sendHelpRequest(data: HelpRequestData) {
     data.message,
   ].join('\n');
 
-  const to = 'ArmandoRamirezRomero89@gmail.com';
+  const to = 'armando@alignworkspaces.com';
 
   const rawMessage = [
     `To: ${to}`,
@@ -192,7 +192,7 @@ export async function sendCollaborateMessage(data: CollaborateMessageData) {
     data.message,
   ].join('\n');
 
-  const to = 'ArmandoRamirezRomero89@gmail.com';
+  const to = 'armando@alignworkspaces.com';
 
   const rawMessage = [
     `To: ${to}`,
@@ -312,7 +312,7 @@ export async function sendEditRequestNotification(data: EditRequestNotificationD
   bodyLines.push(``, `Log in to the admin panel to view the photos and start a conversation.`);
   const body = bodyLines.join('\n');
 
-  const to = 'ArmandoRamirezRomero89@gmail.com';
+  const to = 'armando@alignworkspaces.com';
 
   const rawMessage = [
     `To: ${to}`,
@@ -364,7 +364,7 @@ export async function sendNewSpaceSubmissionNotification(data: {
     `Log in to the admin panel to review and approve this listing.`,
   ].join('\n');
 
-  const to = 'ArmandoRamirezRomero89@gmail.com';
+  const to = 'armando@alignworkspaces.com';
 
   const rawMessage = [
     `To: ${to}`,
@@ -422,7 +422,7 @@ export async function sendSpaceBookingNotification(data: {
     `Log in to your Align client portal to view the booking and start a conversation.`,
   ].join('\n');
 
-  const to = data.hostEmail || 'ArmandoRamirezRomero89@gmail.com';
+  const to = data.hostEmail || 'armando@alignworkspaces.com';
 
   const rawMessage = [
     `To: ${to}`,

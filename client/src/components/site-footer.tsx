@@ -42,12 +42,12 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
             Miami, FL
           </span>
           <a
-            href="mailto:hello@alignvisuals.com"
+            href="mailto:hello@alignworkspaces.com"
             className={`flex items-center gap-1.5 text-xs ${textColor} ${hoverColor} transition-colors duration-300`}
             data-testid="link-footer-email"
           >
             <Mail className="w-3 h-3" />
-            hello@alignvisuals.com
+            hello@alignworkspaces.com
           </a>
         </div>
 
