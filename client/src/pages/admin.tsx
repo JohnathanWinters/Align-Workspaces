@@ -44,6 +44,7 @@ import {
   CheckCircle,
   XCircle,
   BarChart3,
+  Pipette,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -2595,6 +2596,9 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, category: "people" });
   const [newColorHex, setNewColorHex] = useState("#8B7355");
   const [newColorKeyword, setNewColorKeyword] = useState("");
+  const [eyedropperOpen, setEyedropperOpen] = useState(false);
+  const [eyedropperHover, setEyedropperHover] = useState<string | null>(null);
+  const eyedropperCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [availableSpaces, setAvailableSpaces] = useState<Array<{ id: string; name: string; neighborhood: string | null }>>([]);
 
@@ -2705,6 +2709,50 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       ...prev,
       colorPalette: prev.colorPalette.filter((_, i) => i !== index),
     }));
+  };
+
+  const openEyedropper = () => {
+    setEyedropperHover(null);
+    setEyedropperOpen(true);
+  };
+
+  const handleEyedropperLoad = (img: HTMLImageElement) => {
+    const canvas = eyedropperCanvasRef.current;
+    if (!canvas) return;
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(img, 0, 0);
+  };
+
+  const sampleColorAt = (e: React.MouseEvent<HTMLDivElement>) => {
+    const canvas = eyedropperCanvasRef.current;
+    if (!canvas) return null;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const rect = e.currentTarget.querySelector("img")?.getBoundingClientRect();
+    if (!rect) return null;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const px = Math.round((e.clientX - rect.left) * scaleX);
+    const py = Math.round((e.clientY - rect.top) * scaleY);
+    const pixel = ctx.getImageData(px, py, 1, 1).data;
+    return "#" + [pixel[0], pixel[1], pixel[2]].map(v => v.toString(16).padStart(2, "0").toUpperCase()).join("");
+  };
+
+  const handleEyedropperMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const hex = sampleColorAt(e);
+    if (hex) setEyedropperHover(hex);
+  };
+
+  const handleEyedropperClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const hex = sampleColorAt(e);
+    if (hex) {
+      setNewColorHex(hex);
+      setEyedropperOpen(false);
+      setEyedropperHover(null);
+    }
   };
 
   const envOptions = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym", "kitchen"];
@@ -2989,6 +3037,55 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                       <Plus className="w-3 h-3 mr-1" /> Add
                     </Button>
                   </div>
+                  <Button size="sm" variant="outline" className="mt-2 w-full h-8 text-xs" onClick={openEyedropper} data-testid="button-eyedropper">
+                    <Pipette className="w-3 h-3 mr-1.5" /> Pick Color from Photo
+                  </Button>
+                  <canvas ref={eyedropperCanvasRef} className="hidden" />
+                  <AnimatePresence>
+                    {eyedropperOpen && editingPhoto && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="fixed inset-0 z-[9999] bg-black/80 flex flex-col items-center justify-center p-4"
+                        data-testid="modal-eyedropper"
+                      >
+                        <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                          <div className="flex items-center justify-between px-4 py-3 border-b">
+                            <div className="flex items-center gap-3">
+                              <Pipette className="w-4 h-4 text-stone-500" />
+                              <span className="text-sm font-medium">Click anywhere on the photo to pick a color</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {eyedropperHover && (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full border-2 border-stone-300 shadow-sm" style={{ backgroundColor: eyedropperHover }} />
+                                  <span className="text-xs font-mono text-stone-500">{eyedropperHover}</span>
+                                </div>
+                              )}
+                              <Button size="sm" variant="ghost" onClick={() => { setEyedropperOpen(false); setEyedropperHover(null); }} data-testid="button-close-eyedropper">
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div
+                            className="flex-1 overflow-auto p-4 flex items-center justify-center bg-stone-100 cursor-crosshair"
+                            onMouseMove={handleEyedropperMove}
+                            onClick={handleEyedropperClick}
+                          >
+                            <img
+                              src={editingPhoto.imageUrl}
+                              alt="Pick a color"
+                              className="max-w-full max-h-[70vh] object-contain rounded select-none"
+                              onLoad={e => handleEyedropperLoad(e.currentTarget)}
+                              draggable={false}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t">
