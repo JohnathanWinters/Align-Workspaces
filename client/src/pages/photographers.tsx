@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, X, Menu, MapPin, Star, Users } from "lucide-react";
+import { ArrowLeft, Camera, X, Menu, MapPin, Star, Users, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";

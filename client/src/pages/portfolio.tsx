@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2 } from "lucide-react";
+import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";

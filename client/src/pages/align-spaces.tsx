@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { User, Menu, X, Camera, Star } from "lucide-react";
+import { User, Menu, X, Camera, Star, Info } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
