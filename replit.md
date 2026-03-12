@@ -35,6 +35,11 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Schema**: `shared/schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, push subscriptions, nominations, spaces, and space bookings.
 - **Pricing**: `shared/pricing.ts` contains server-authoritative pricing logic.
 
+### Domain Redirects
+- **Primary domain**: `alignworkspaces.com`
+- **Contact email**: `hello@alignworkspaces.com` (display), `armando@alignworkspaces.com` (notifications)
+- Server-side 301 redirects in `server/index.ts`: `alignportraits.com`, `buildmyphoto.com`, `alignvisuals.com` (+ www variants) all redirect to `https://alignworkspaces.com/portraits`.
+
 ### Build System
 - **Development**: `tsx server/index.ts` with Vite middleware for HMR.
 - **Production**: A custom build script uses Vite for the client and esbuild for the server, outputting to `dist/`.

@@ -104,6 +104,24 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+const DOMAIN_REDIRECTS: Record<string, string> = {
+  "alignportraits.com": "https://alignworkspaces.com/portraits",
+  "www.alignportraits.com": "https://alignworkspaces.com/portraits",
+  "buildmyphoto.com": "https://alignworkspaces.com/portraits",
+  "www.buildmyphoto.com": "https://alignworkspaces.com/portraits",
+  "alignvisuals.com": "https://alignworkspaces.com/portraits",
+  "www.alignvisuals.com": "https://alignworkspaces.com/portraits",
+};
+
+app.use((req, res, next) => {
+  const host = (req.hostname || req.headers.host || "").split(":")[0].toLowerCase();
+  const target = DOMAIN_REDIRECTS[host];
+  if (target) {
+    return res.redirect(301, target);
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
