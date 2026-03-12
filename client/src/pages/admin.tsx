@@ -2593,7 +2593,8 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     colorPalette: Array<{ hex: string; keyword: string }>;
     locationSpaceId: string | null;
     category: string;
-  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, category: "people" });
+    cropPosition: { x: number; y: number; zoom: number };
+  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, category: "people", cropPosition: { x: 50, y: 50, zoom: 1 } });
   const [newColorHex, setNewColorHex] = useState("#8B7355");
   const [newColorKeyword, setNewColorKeyword] = useState("");
   const [eyedropperOpen, setEyedropperOpen] = useState(false);
@@ -2658,6 +2659,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
 
   const startEdit = (photo: PortfolioPhoto) => {
     setEditingPhoto(photo);
+    const crop = (photo.cropPosition as any) || { x: 50, y: 50, zoom: 1 };
     setTagForm({
       environments: photo.environments || [],
       brandMessages: photo.brandMessages || [],
@@ -2665,6 +2667,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       colorPalette: photo.colorPalette || [],
       locationSpaceId: photo.locationSpaceId || null,
       category: photo.category || "people",
+      cropPosition: { x: crop.x, y: crop.y, zoom: crop.zoom ?? 1 },
     });
   };
 
@@ -2868,7 +2871,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                 onDragLeave={() => setPortfolioDragOverIdx(null)}
                 onDrop={e => { e.preventDefault(); if (portfolioDragIdx !== null) handlePortfolioDrop(portfolioDragIdx, idx); setPortfolioDragIdx(null); setPortfolioDragOverIdx(null); }}
                 onDragEnd={() => { setPortfolioDragIdx(null); setPortfolioDragOverIdx(null); }}
-                className={`group relative rounded-lg overflow-hidden bg-stone-100 aspect-[3/4] cursor-grab active:cursor-grabbing transition-all ${
+                className={`group relative rounded-lg overflow-hidden bg-stone-100 ${adminCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} cursor-grab active:cursor-grabbing transition-all ${
                   portfolioDragIdx === idx ? "opacity-40 scale-95" : ""
                 } ${portfolioDragOverIdx === idx && portfolioDragIdx !== null && portfolioDragIdx !== idx ? "ring-2 ring-[#c4956a] scale-105" : ""}`}
                 data-testid={`card-portfolio-${photo.id}`}
@@ -2877,6 +2880,10 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                   src={photo.imageUrl}
                   alt="Portfolio"
                   className="w-full h-full object-cover pointer-events-none"
+                  style={(() => {
+                    const c = (photo as any).cropPosition || { x: 50, y: 50, zoom: 1 };
+                    return { objectPosition: `${c.x}% ${c.y}%`, ...(c.zoom && c.zoom !== 1 ? { transform: `scale(${c.zoom})`, transformOrigin: `${c.x}% ${c.y}%` } : {}) };
+                  })()}
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end opacity-0 group-hover:opacity-100">
@@ -3121,6 +3128,61 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                       </motion.div>
                     )}
                   </AnimatePresence>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Crop & Position</Label>
+                  <p className="text-xs text-gray-400 mb-3">Adjust how the photo is framed in its card. Drag or use sliders.</p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div
+                      className={`relative overflow-hidden rounded-lg bg-stone-200 flex-shrink-0 cursor-move ${tagForm.category === "spaces" ? "w-64 aspect-[4/3]" : "w-40 aspect-[3/4]"}`}
+                      onMouseDown={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const startPos = { ...tagForm.cropPosition };
+                        const handleMove = (ev: MouseEvent) => {
+                          const dx = ((ev.clientX - startX) / rect.width) * 100;
+                          const dy = ((ev.clientY - startY) / rect.height) * 100;
+                          setTagForm(prev => ({ ...prev, cropPosition: { ...prev.cropPosition, x: Math.max(0, Math.min(100, startPos.x - dx)), y: Math.max(0, Math.min(100, startPos.y - dy)) } }));
+                        };
+                        const handleUp = () => { window.removeEventListener("mousemove", handleMove); window.removeEventListener("mouseup", handleUp); };
+                        window.addEventListener("mousemove", handleMove);
+                        window.addEventListener("mouseup", handleUp);
+                      }}
+                      data-testid="crop-preview"
+                    >
+                      <img
+                        src={editingPhoto.imageUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        style={{
+                          objectPosition: `${tagForm.cropPosition.x}% ${tagForm.cropPosition.y}%`,
+                          transform: `scale(${tagForm.cropPosition.zoom})`,
+                          transformOrigin: `${tagForm.cropPosition.x}% ${tagForm.cropPosition.y}%`,
+                        }}
+                        draggable={false}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 w-12">Zoom</span>
+                        <input type="range" min={1} max={2} step={0.05} value={tagForm.cropPosition.zoom} onChange={e => setTagForm(prev => ({ ...prev, cropPosition: { ...prev.cropPosition, zoom: parseFloat(e.target.value) } }))} className="flex-1 accent-stone-700" data-testid="slider-crop-zoom" />
+                        <span className="text-xs text-gray-400 tabular-nums w-10 text-right">{Math.round(tagForm.cropPosition.zoom * 100)}%</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 w-12">Vertical</span>
+                        <input type="range" min={0} max={100} step={1} value={tagForm.cropPosition.y} onChange={e => setTagForm(prev => ({ ...prev, cropPosition: { ...prev.cropPosition, y: parseFloat(e.target.value) } }))} className="flex-1 accent-stone-700" data-testid="slider-crop-y" />
+                        <span className="text-xs text-gray-400 tabular-nums w-10 text-right">{Math.round(tagForm.cropPosition.y)}%</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 w-12">Horizontal</span>
+                        <input type="range" min={0} max={100} step={1} value={tagForm.cropPosition.x} onChange={e => setTagForm(prev => ({ ...prev, cropPosition: { ...prev.cropPosition, x: parseFloat(e.target.value) } }))} className="flex-1 accent-stone-700" data-testid="slider-crop-x" />
+                        <span className="text-xs text-gray-400 tabular-nums w-10 text-right">{Math.round(tagForm.cropPosition.x)}%</span>
+                      </div>
+                      <button onClick={() => setTagForm(prev => ({ ...prev, cropPosition: { x: 50, y: 50, zoom: 1 } }))} className="text-xs text-stone-500 hover:text-stone-700 underline" data-testid="button-reset-crop">Reset to center</button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t">

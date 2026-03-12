@@ -39,20 +39,26 @@ function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
 
 function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void }) {
   const palette = (photo.colorPalette as ColorSwatch[] | null) || [];
+  const crop = (photo.cropPosition as { x: number; y: number; zoom: number } | null) || { x: 50, y: 50, zoom: 1 };
+  const isSpaces = photo.category === "spaces";
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
-      className="aspect-[3/4] rounded-md overflow-hidden relative cursor-pointer group"
+      className={`${isSpaces ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-md overflow-hidden relative cursor-pointer group`}
       onClick={() => onPhotoClick(photo)}
       data-testid={`portfolio-full-card-${index}`}
     >
       <img
         src={photo.imageUrl}
-        alt="Personal branding portrait by Align Miami"
+        alt={isSpaces ? "Creative workspace by Align Miami" : "Personal branding portrait by Align Miami"}
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        style={{
+          objectPosition: `${crop.x}% ${crop.y}%`,
+          ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}),
+        }}
         loading="lazy"
         decoding="async"
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -309,9 +315,9 @@ export default function PortfolioPage() {
         </div>
 
         {isLoading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className={`grid gap-4 ${activeCategory === "spaces" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="aspect-[3/4] rounded-md bg-foreground/5 animate-pulse" />
+              <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-md bg-foreground/5 animate-pulse`} />
             ))}
           </div>
         )}
@@ -324,7 +330,7 @@ export default function PortfolioPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+              className={`grid gap-4 ${activeCategory === "spaces" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}
               data-testid="portfolio-full-grid"
             >
               {filteredPhotos.map((photo, index) => (

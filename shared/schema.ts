@@ -45,6 +45,7 @@ export const portfolioPhotos = pgTable("portfolio_photos", {
   brandMessages: text("brand_messages").array().notNull(),
   emotionalImpacts: text("emotional_impacts").array().notNull(),
   colorPalette: jsonb("color_palette").$type<ColorSwatch[]>().default([]),
+  cropPosition: jsonb("crop_position").$type<{ x: number; y: number; zoom: number }>().default({ x: 50, y: 50, zoom: 1 }),
   locationSpaceId: varchar("location_space_id"),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),

@@ -386,7 +386,7 @@ export async function registerRoutes(
 
   app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
     try {
-      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category } = req.body;
+      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category, cropPosition } = req.body;
       const updates: any = {
         environments,
         brandMessages,
@@ -395,6 +395,13 @@ export async function registerRoutes(
         locationSpaceId: locationSpaceId || null,
       };
       if (category) updates.category = category;
+      if (cropPosition && typeof cropPosition === "object" && typeof cropPosition.x === "number" && typeof cropPosition.y === "number") {
+        updates.cropPosition = {
+          x: Math.max(0, Math.min(100, cropPosition.x)),
+          y: Math.max(0, Math.min(100, cropPosition.y)),
+          zoom: Math.max(1, Math.min(2, cropPosition.zoom ?? 1)),
+        };
+      }
       const photo = await storage.updatePortfolioPhoto(req.params.id, updates);
       res.json(photo);
     } catch (err: any) {
