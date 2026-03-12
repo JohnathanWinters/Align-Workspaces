@@ -4646,13 +4646,6 @@ function AdminDashboard({ token }: { token: string }) {
             <p className="font-serif text-lg text-gray-900" data-testid="text-admin-title">Admin Panel</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Users className="w-4 h-4" />
-              <span data-testid="text-user-count">{users.length} clients</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <Camera className="w-4 h-4" />
-              <span data-testid="text-shoot-count">{shoots.length} shoots</span>
-            </div>
             <Button
               variant="outline"
               size="sm"
