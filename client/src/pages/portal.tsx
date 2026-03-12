@@ -1679,6 +1679,7 @@ function PortalContent() {
   const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "messages" | "spaces">("shoots");
   const unreadCount = useUnreadCount();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
     queryKey: ["/api/shoots"],
@@ -1712,37 +1713,56 @@ function PortalContent() {
           </button>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 mr-1">
-              <Avatar className="w-7 h-7" data-testid="img-user-avatar">
-                {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} alt={user?.firstName || "User"} />}
-                <AvatarFallback className="bg-gray-100 text-gray-500">
-                  <User className="w-3.5 h-3.5" />
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden sm:block text-xs text-foreground/50 max-w-[120px] truncate" data-testid="text-user-email">
-                {user?.firstName || user?.email || ""}
-              </span>
-            </div>
-            <div className="flex items-center border-l border-stone-200 pl-2 gap-1">
+            <div className="relative">
               <button
-                onClick={() => { window.location.href = "/api/login?switch=1&returnTo=/portal"; }}
-                data-testid="button-switch-account"
-                className="text-[10px] text-foreground/40 hover:text-foreground transition-colors px-1.5 py-1"
-                title="Switch account"
+                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                data-testid="button-account-menu"
               >
-                Switch
+                <Avatar className="w-7 h-7" data-testid="img-user-avatar">
+                  {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} alt={user?.firstName || "User"} />}
+                  <AvatarFallback className="bg-gray-100 text-gray-500">
+                    <User className="w-3.5 h-3.5" />
+                  </AvatarFallback>
+                </Avatar>
+                <ChevronDown className={`w-3 h-3 text-foreground/40 transition-transform ${accountMenuOpen ? "rotate-180" : ""}`} />
               </button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => logout()}
-                disabled={isLoggingOut}
-                data-testid="button-logout"
-                className="text-foreground/40 hover:text-foreground p-1 h-7"
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
+              <AnimatePresence>
+                {accountMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setAccountMenuOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-lg py-1 min-w-[180px] z-[9999]"
+                    >
+                      <div className="px-3 py-2 border-b border-stone-100">
+                        <p className="text-xs font-medium text-foreground/80 truncate">{user?.firstName} {user?.lastName || ""}</p>
+                        <p className="text-[10px] text-foreground/40 truncate">{user?.email || ""}</p>
+                      </div>
+                      <button
+                        onClick={() => { setAccountMenuOpen(false); window.location.href = "/api/login?switch=1&returnTo=/portal"; }}
+                        data-testid="button-switch-account"
+                        className="w-full text-left px-3 py-2 text-xs text-foreground/60 hover:bg-stone-50 hover:text-foreground transition-colors flex items-center gap-2"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        Switch Account
+                      </button>
+                      <button
+                        onClick={() => { setAccountMenuOpen(false); logout(); }}
+                        disabled={isLoggingOut}
+                        data-testid="button-logout"
+                        className="w-full text-left px-3 py-2 text-xs text-red-500/70 hover:bg-red-50 hover:text-red-600 transition-colors flex items-center gap-2"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Sign Out
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
             <div className="relative">
               <button
