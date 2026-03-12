@@ -34,6 +34,7 @@ import {
   Sparkles,
   ChevronDown,
   Shield,
+  Info,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -1493,6 +1494,10 @@ export default function SpacesBrowsePage() {
                   <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-browse">
                     <Star className="w-4 h-4" />
                     Featured Pros
+                  </button>
+                  <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-browse">
+                    <Info className="w-4 h-4" />
+                    About Us
                   </button>
                 </motion.div>
               )}

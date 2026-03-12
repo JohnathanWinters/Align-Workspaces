@@ -15,6 +15,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
     { label: "Portraits", href: "/portraits" },
     { label: "Spaces", href: "/browse" },
     { label: "Featured Pros", href: "/featured" },
+    { label: "About Us", href: "/about" },
     { label: "Portfolio", href: "/portfolio" },
     { label: "Client Portal", href: "/portal" },
   ];

@@ -47,6 +47,7 @@ import {
   Building2,
   Menu,
   Star,
+  Info,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
@@ -1798,6 +1799,12 @@ function PortalContent() {
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-portal">
                         <Star className="w-4 h-4" />
                         Featured Pros
+                      </button>
+                    </Link>
+                    <Link href="/about">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-portal">
+                        <Info className="w-4 h-4" />
+                        About Us
                       </button>
                     </Link>
                     <Link href="/portfolio">

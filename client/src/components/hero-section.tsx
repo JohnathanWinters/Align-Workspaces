@@ -111,6 +111,10 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
+                  <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
+                    <Info className="w-4 h-4" />
+                    About Us
+                  </button>
                   <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
                     <Camera className="w-4 h-4" />
                     Our Work
