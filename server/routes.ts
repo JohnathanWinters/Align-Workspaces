@@ -268,6 +268,18 @@ export async function registerRoutes(
         estimatedMax: data.estimatedMax,
       }).catch((err) => console.error("Failed to send booking email:", err));
 
+      storage.createPipelineContact({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        source: "website",
+        category: "portraits",
+        stage: "new",
+        notes: data.notes || undefined,
+        leadId: lead.id,
+        estimatedValue: data.estimatedMin,
+      }).catch((err) => console.error("Failed to create pipeline contact:", err));
+
       res.status(201).json(lead);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -3495,6 +3507,157 @@ ${featuredSection}
     } catch (err) {
       console.error("Analytics error:", err);
       res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  app.get("/api/admin/pipeline", isAdmin, async (_req, res) => {
+    try {
+      const contacts = await storage.getPipelineContacts();
+      res.json(contacts);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/pipeline", isAdmin, async (req, res) => {
+    try {
+      const body = { ...req.body };
+      if (body.nextFollowUp && typeof body.nextFollowUp === "string") body.nextFollowUp = new Date(body.nextFollowUp);
+      if (body.lastContactDate && typeof body.lastContactDate === "string") body.lastContactDate = new Date(body.lastContactDate);
+      const contact = await storage.createPipelineContact(body);
+      if (req.body.notes) {
+        await storage.createPipelineActivity({ contactId: contact.id, type: "note", note: req.body.notes });
+      }
+      res.json(contact);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/pipeline/:id", isAdmin, async (req, res) => {
+    try {
+      const body = { ...req.body };
+      if (body.nextFollowUp && typeof body.nextFollowUp === "string") body.nextFollowUp = new Date(body.nextFollowUp);
+      if (body.nextFollowUp === null) body.nextFollowUp = null;
+      if (body.lastContactDate && typeof body.lastContactDate === "string") body.lastContactDate = new Date(body.lastContactDate);
+      const contact = await storage.updatePipelineContact(req.params.id, body);
+      res.json(contact);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/pipeline/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deletePipelineContact(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/pipeline/:id/activities", isAdmin, async (req, res) => {
+    try {
+      const activities = await storage.getPipelineActivities(req.params.id);
+      res.json(activities);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/pipeline/:id/activities", isAdmin, async (req, res) => {
+    try {
+      const activity = await storage.createPipelineActivity({
+        contactId: req.params.id,
+        type: req.body.type || "note",
+        note: req.body.note,
+      });
+      await storage.updatePipelineContact(req.params.id, { lastContactDate: new Date() });
+      res.json(activity);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/pipeline/import-leads", isAdmin, async (_req, res) => {
+    try {
+      const existingLeads = await storage.getLeads();
+      const existingContacts = await storage.getPipelineContacts();
+      const existingLeadIds = new Set(existingContacts.filter(c => c.leadId).map(c => c.leadId));
+      let imported = 0;
+      for (const lead of existingLeads) {
+        if (existingLeadIds.has(lead.id)) continue;
+        await storage.createPipelineContact({
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          source: "website",
+          category: "portraits",
+          stage: lead.paymentStatus === "paid" ? "booked" : "new",
+          notes: lead.notes || undefined,
+          leadId: lead.id,
+          estimatedValue: lead.estimatedMin,
+        });
+        imported++;
+      }
+      res.json({ imported, total: existingLeads.length });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/pipeline/export", isAdmin, async (_req, res) => {
+    try {
+      const contacts = await storage.getPipelineContacts();
+      const header = "Name,Email,Phone,Instagram,Source,Category,Stage,Notes,Next Follow-Up,Last Contact,Estimated Value,Created";
+      const rows = contacts.map(c => {
+        const esc = (v: string | null | undefined) => {
+          if (!v) return "";
+          const s = String(v).replace(/"/g, '""');
+          return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s}"` : s;
+        };
+        return [
+          esc(c.name), esc(c.email), esc(c.phone), esc(c.instagram),
+          esc(c.source), esc(c.category), esc(c.stage), esc(c.notes),
+          c.nextFollowUp ? new Date(c.nextFollowUp).toISOString().split("T")[0] : "",
+          c.lastContactDate ? new Date(c.lastContactDate).toISOString().split("T")[0] : "",
+          c.estimatedValue ?? "",
+          c.createdAt ? new Date(c.createdAt).toISOString().split("T")[0] : "",
+        ].join(",");
+      });
+      const csv = [header, ...rows].join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", "attachment; filename=pipeline-contacts.csv");
+      res.send(csv);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/pipeline/import-csv", isAdmin, async (req, res) => {
+    try {
+      const { rows } = req.body;
+      if (!Array.isArray(rows)) return res.status(400).json({ message: "rows array required" });
+      let imported = 0;
+      for (const row of rows) {
+        if (!row.name) continue;
+        await storage.createPipelineContact({
+          name: row.name,
+          email: row.email || undefined,
+          phone: row.phone || undefined,
+          instagram: row.instagram || undefined,
+          source: row.source || "import",
+          category: row.category || "portraits",
+          stage: row.stage || "new",
+          notes: row.notes || undefined,
+          estimatedValue: row.estimatedValue ? parseInt(row.estimatedValue) : undefined,
+          nextFollowUp: row.nextFollowUp ? new Date(row.nextFollowUp) : undefined,
+        });
+        imported++;
+      }
+      res.json({ imported });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   });
 

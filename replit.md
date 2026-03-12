@@ -59,6 +59,7 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Portfolio Categories**: `portfolio_photos.category` field (`people` or `spaces`) enables a People/Spaces toggle on the `/portfolio` page. Admin panel includes category filtering, category-aware uploads, and category editing per photo.
 - **Portfolio-Space Link**: `portfolio_photos.location_space_id` links photos to spaces, allowing users to view photos taken at a specific space.
 - **Photo Management**: Supports batched multi-file uploads, drag-and-drop, drag-to-reorder (`displayOrder` column), crop/position adjustment (`cropPosition` JSON: x, y, zoom), and individual photo deletion. Spaces photos use landscape (4:3) framing; people photos use portrait (3:4).
+- **Book of Business (Pipeline CRM)**: `pipeline_contacts` and `pipeline_activities` tables. Kanban board and list views with stages: New Lead → Contacted → Follow-up → Proposal Sent → Booked → Completed → Lost. Drag between columns to move stages. Activity logging (calls, emails, notes, meetings). Auto-imports website leads. CSV import/export for Excel compatibility. Filter by Portraits/Spaces.
 
 ## External Dependencies
 

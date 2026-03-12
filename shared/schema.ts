@@ -431,3 +431,47 @@ export const pageViews = pgTable("page_views", {
 });
 
 export type PageView = typeof pageViews.$inferSelect;
+
+export const pipelineContacts = pgTable("pipeline_contacts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  instagram: text("instagram"),
+  source: text("source").default("website"),
+  category: text("category").default("portraits"),
+  stage: text("stage").notNull().default("new"),
+  notes: text("notes"),
+  nextFollowUp: timestamp("next_follow_up"),
+  lastContactDate: timestamp("last_contact_date"),
+  leadId: varchar("lead_id"),
+  bookingId: varchar("booking_id"),
+  estimatedValue: integer("estimated_value"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPipelineContactSchema = createInsertSchema(pipelineContacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPipelineContact = z.infer<typeof insertPipelineContactSchema>;
+export type PipelineContact = typeof pipelineContacts.$inferSelect;
+
+export const pipelineActivities = pgTable("pipeline_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: varchar("contact_id").notNull(),
+  type: text("type").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPipelineActivitySchema = createInsertSchema(pipelineActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPipelineActivity = z.infer<typeof insertPipelineActivitySchema>;
+export type PipelineActivity = typeof pipelineActivities.$inferSelect;

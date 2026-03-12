@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, isNull, ne, ilike } from "drizzle-orm";
 
@@ -99,6 +99,12 @@ export interface IStorage {
   createSpaceMessage(msg: InsertSpaceMessage): Promise<SpaceMessage>;
   getLatestSpaceMessage(bookingId: string): Promise<SpaceMessage | undefined>;
   updateSpaceMessage(id: string, data: Partial<SpaceMessage>): Promise<void>;
+  getPipelineContacts(): Promise<PipelineContact[]>;
+  createPipelineContact(data: InsertPipelineContact): Promise<PipelineContact>;
+  updatePipelineContact(id: string, data: Partial<InsertPipelineContact>): Promise<PipelineContact>;
+  deletePipelineContact(id: string): Promise<void>;
+  getPipelineActivities(contactId: string): Promise<PipelineActivity[]>;
+  createPipelineActivity(data: InsertPipelineActivity): Promise<PipelineActivity>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -739,6 +745,34 @@ export class DatabaseStorage implements IStorage {
 
   async updateSpaceMessage(id: string, data: Partial<SpaceMessage>): Promise<void> {
     await db.update(spaceMessages).set(data).where(eq(spaceMessages.id, id));
+  }
+
+  async getPipelineContacts(): Promise<PipelineContact[]> {
+    return db.select().from(pipelineContacts).orderBy(desc(pipelineContacts.updatedAt));
+  }
+
+  async createPipelineContact(data: InsertPipelineContact): Promise<PipelineContact> {
+    const [result] = await db.insert(pipelineContacts).values(data).returning();
+    return result;
+  }
+
+  async updatePipelineContact(id: string, data: Partial<InsertPipelineContact>): Promise<PipelineContact> {
+    const [result] = await db.update(pipelineContacts).set({ ...data, updatedAt: new Date() }).where(eq(pipelineContacts.id, id)).returning();
+    return result;
+  }
+
+  async deletePipelineContact(id: string): Promise<void> {
+    await db.delete(pipelineActivities).where(eq(pipelineActivities.contactId, id));
+    await db.delete(pipelineContacts).where(eq(pipelineContacts.id, id));
+  }
+
+  async getPipelineActivities(contactId: string): Promise<PipelineActivity[]> {
+    return db.select().from(pipelineActivities).where(eq(pipelineActivities.contactId, contactId)).orderBy(desc(pipelineActivities.createdAt));
+  }
+
+  async createPipelineActivity(data: InsertPipelineActivity): Promise<PipelineActivity> {
+    const [result] = await db.insert(pipelineActivities).values(data).returning();
+    return result;
   }
 }
 

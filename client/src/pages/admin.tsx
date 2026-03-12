@@ -45,12 +45,19 @@ import {
   XCircle,
   BarChart3,
   Pipette,
+  Phone,
+  FileSpreadsheet,
+  ArrowRight,
+  Clock,
+  CalendarDays,
+  Instagram,
+  Globe,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
-import type { Shoot, User as UserType, GalleryImage, GalleryFolder } from "@shared/schema";
+import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
 
 interface EditToken {
   id: string;
@@ -3937,6 +3944,570 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   );
 }
 
+const PIPELINE_STAGES = [
+  { key: "new", label: "New Lead", color: "bg-blue-100 text-blue-700" },
+  { key: "contacted", label: "Contacted", color: "bg-purple-100 text-purple-700" },
+  { key: "follow-up", label: "Follow-up", color: "bg-yellow-100 text-yellow-800" },
+  { key: "proposal", label: "Proposal Sent", color: "bg-orange-100 text-orange-700" },
+  { key: "booked", label: "Booked", color: "bg-green-100 text-green-700" },
+  { key: "completed", label: "Completed", color: "bg-stone-200 text-stone-700" },
+  { key: "lost", label: "Lost", color: "bg-red-100 text-red-600" },
+];
+
+const ACTIVITY_TYPES = [
+  { key: "call", label: "Phone Call", icon: Phone },
+  { key: "email", label: "Email", icon: Send },
+  { key: "note", label: "Note", icon: Edit },
+  { key: "meeting", label: "Meeting", icon: Users },
+  { key: "follow-up", label: "Follow-up", icon: Clock },
+];
+
+function PipelineManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [contacts, setContacts] = useState<PipelineContact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [showForm, setShowForm] = useState(false);
+  const [editingContact, setEditingContact] = useState<PipelineContact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<PipelineContact | null>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [newActivity, setNewActivity] = useState({ type: "call", note: "" });
+  const [filter, setFilter] = useState<"all" | "portraits" | "spaces">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showImportCsv, setShowImportCsv] = useState(false);
+  const [csvText, setCsvText] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState({
+    name: "", email: "", phone: "", instagram: "", source: "website",
+    category: "portraits", stage: "new", notes: "", estimatedValue: "",
+    nextFollowUp: "",
+  });
+
+  const adminFetch = useCallback(async (url: string, opts: RequestInit = {}) => {
+    return fetch(url, { ...opts, headers: { ...opts.headers as any, Authorization: `Bearer ${token}` } });
+  }, [token]);
+
+  const loadContacts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminFetch("/api/admin/pipeline");
+      if (res.ok) setContacts(await res.json());
+    } catch {} finally { setLoading(false); }
+  }, [adminFetch]);
+
+  useEffect(() => { loadContacts(); }, [loadContacts]);
+
+  const loadActivities = async (contactId: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/pipeline/${contactId}/activities`);
+      if (res.ok) setActivities(await res.json());
+    } catch {}
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return;
+    try {
+      const body: any = { ...form, estimatedValue: form.estimatedValue ? parseInt(form.estimatedValue) : undefined };
+      if (form.nextFollowUp) body.nextFollowUp = new Date(form.nextFollowUp).toISOString();
+      else body.nextFollowUp = null;
+      if (editingContact) {
+        const res = await adminFetch(`/api/admin/pipeline/${editingContact.id}`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        if (res.ok) { toast({ title: "Contact updated" }); }
+      } else {
+        const res = await adminFetch("/api/admin/pipeline", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        if (res.ok) { toast({ title: "Contact added" }); }
+      }
+      setShowForm(false); setEditingContact(null);
+      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", estimatedValue: "", nextFollowUp: "" });
+      await loadContacts();
+    } catch { toast({ title: "Save failed", variant: "destructive" }); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this contact?")) return;
+    try {
+      await adminFetch(`/api/admin/pipeline/${id}`, { method: "DELETE" });
+      if (selectedContact?.id === id) setSelectedContact(null);
+      await loadContacts();
+      toast({ title: "Contact deleted" });
+    } catch { toast({ title: "Delete failed", variant: "destructive" }); }
+  };
+
+  const moveStage = async (contact: PipelineContact, newStage: string) => {
+    try {
+      await adminFetch(`/api/admin/pipeline/${contact.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ stage: newStage }),
+      });
+      await loadContacts();
+    } catch {}
+  };
+
+  const logActivity = async () => {
+    if (!selectedContact || !newActivity.note.trim()) return;
+    try {
+      await adminFetch(`/api/admin/pipeline/${selectedContact.id}/activities`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newActivity),
+      });
+      setNewActivity({ type: "call", note: "" });
+      await loadActivities(selectedContact.id);
+      await loadContacts();
+      toast({ title: "Activity logged" });
+    } catch {}
+  };
+
+  const importLeads = async () => {
+    try {
+      const res = await adminFetch("/api/admin/pipeline/import-leads", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: `Imported ${data.imported} leads` });
+        await loadContacts();
+      }
+    } catch { toast({ title: "Import failed", variant: "destructive" }); }
+  };
+
+  const exportCsv = async () => {
+    try {
+      const res = await adminFetch("/api/admin/pipeline/export");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "pipeline-contacts.csv"; a.click();
+      URL.revokeObjectURL(url);
+    } catch { toast({ title: "Export failed", variant: "destructive" }); }
+  };
+
+  const importCsv = async () => {
+    if (!csvText.trim()) return;
+    try {
+      const lines = csvText.trim().split("\n");
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+      const rows = lines.slice(1).map(line => {
+        const vals = line.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+        const row: any = {};
+        headers.forEach((h, i) => {
+          const key = h === "next follow-up" ? "nextFollowUp" : h === "last contact" ? "lastContactDate" :
+            h === "estimated value" ? "estimatedValue" : h;
+          row[key] = vals[i] || "";
+        });
+        return row;
+      }).filter(r => r.name);
+      const res = await adminFetch("/api/admin/pipeline/import-csv", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rows }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: `Imported ${data.imported} contacts` });
+        setShowImportCsv(false); setCsvText("");
+        await loadContacts();
+      }
+    } catch { toast({ title: "Import failed", variant: "destructive" }); }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { setCsvText(ev.target?.result as string || ""); };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const openEdit = (contact: PipelineContact) => {
+    setEditingContact(contact);
+    setForm({
+      name: contact.name, email: contact.email || "", phone: contact.phone || "",
+      instagram: contact.instagram || "", source: contact.source || "website",
+      category: contact.category || "portraits", stage: contact.stage,
+      notes: contact.notes || "", estimatedValue: contact.estimatedValue?.toString() || "",
+      nextFollowUp: contact.nextFollowUp ? new Date(contact.nextFollowUp).toISOString().split("T")[0] : "",
+    });
+    setShowForm(true);
+  };
+
+  const openDetail = async (contact: PipelineContact) => {
+    setSelectedContact(contact);
+    await loadActivities(contact.id);
+  };
+
+  const filteredContacts = contacts.filter(c => {
+    if (filter !== "all" && c.category !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (c.name || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").includes(q);
+    }
+    return true;
+  });
+
+  const getStageContacts = (stage: string) => filteredContacts.filter(c => c.stage === stage);
+
+  const stageOf = (key: string) => PIPELINE_STAGES.find(s => s.key === key);
+
+  const totalValue = filteredContacts.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+  const followUpsDue = filteredContacts.filter(c => c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()).length;
+
+  if (selectedContact) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedContact(null)} data-testid="button-pipeline-detail-back">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+          </Button>
+          <h1 className="font-serif text-xl font-semibold">{selectedContact.name}</h1>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${stageOf(selectedContact.stage)?.color || "bg-gray-100"}`}>
+            {stageOf(selectedContact.stage)?.label}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <Card className="border-gray-100">
+            <CardContent className="p-4 space-y-2 text-sm">
+              {selectedContact.email && <p className="flex items-center gap-2"><Send className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.email}</p>}
+              {selectedContact.phone && <p className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.phone}</p>}
+              {selectedContact.instagram && <p className="flex items-center gap-2"><Instagram className="w-3.5 h-3.5 text-gray-400" /> @{selectedContact.instagram.replace("@", "")}</p>}
+              <p className="flex items-center gap-2"><Globe className="w-3.5 h-3.5 text-gray-400" /> Source: {selectedContact.source}</p>
+              <p className="flex items-center gap-2"><Camera className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.category === "spaces" ? "Spaces" : "Portraits"}</p>
+              {selectedContact.estimatedValue && <p className="flex items-center gap-2"><Coins className="w-3.5 h-3.5 text-gray-400" /> ${selectedContact.estimatedValue}</p>}
+            </CardContent>
+          </Card>
+          <Card className="border-gray-100">
+            <CardContent className="p-4 space-y-2 text-sm">
+              {selectedContact.nextFollowUp && (
+                <p className={`flex items-center gap-2 ${new Date(selectedContact.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : ""}`}>
+                  <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp).toLocaleDateString()}
+                </p>
+              )}
+              {selectedContact.lastContactDate && (
+                <p className="flex items-center gap-2 text-gray-500"><Clock className="w-3.5 h-3.5" /> Last contact: {new Date(selectedContact.lastContactDate).toLocaleDateString()}</p>
+              )}
+              {selectedContact.notes && <p className="text-gray-600 mt-2">{selectedContact.notes}</p>}
+              <div className="flex gap-2 mt-3">
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(selectedContact)} data-testid="button-edit-contact-detail"><Edit className="w-3 h-3 mr-1" /> Edit</Button>
+                <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleDelete(selectedContact.id)} data-testid="button-delete-contact-detail"><Trash2 className="w-3 h-3 mr-1" /> Delete</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mb-4">
+          <Label className="text-sm font-medium text-gray-700 mb-1 block">Move to Stage</Label>
+          <div className="flex flex-wrap gap-1.5">
+            {PIPELINE_STAGES.map(s => (
+              <button key={s.key} onClick={() => { moveStage(selectedContact, s.key); setSelectedContact({ ...selectedContact, stage: s.key }); }}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${selectedContact.stage === s.key ? s.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
+                data-testid={`button-stage-${s.key}`}>{s.label}</button>
+            ))}
+          </div>
+        </div>
+
+        <Card className="border-gray-100 mb-6">
+          <CardHeader className="pb-3"><CardTitle className="text-sm font-medium">Log Activity</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2">
+              {ACTIVITY_TYPES.map(a => (
+                <button key={a.key} onClick={() => setNewActivity(p => ({ ...p, type: a.key }))}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${newActivity.type === a.key ? "bg-stone-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  data-testid={`button-activity-type-${a.key}`}><a.icon className="w-3 h-3" /> {a.label}</button>
+              ))}
+            </div>
+            <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
+              placeholder="What happened? Quick notes..." className="h-20 text-sm" data-testid="input-activity-note" />
+            <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
+              <Plus className="w-3.5 h-3.5 mr-1" /> Log Activity
+            </Button>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-gray-700">Activity History</h3>
+          {activities.length === 0 && <p className="text-sm text-gray-400">No activities logged yet.</p>}
+          {activities.map((a: any) => {
+            const at = ACTIVITY_TYPES.find(t => t.key === a.type);
+            const Icon = at?.icon || Edit;
+            return (
+              <div key={a.id} className="flex gap-3 items-start p-3 rounded-lg bg-gray-50" data-testid={`activity-${a.id}`}>
+                <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Icon className="w-3.5 h-3.5 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-gray-700">{at?.label || a.type}</span>
+                    <span className="text-[10px] text-gray-400">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                  </div>
+                  {a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-pipeline-back">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+          </Button>
+          <h1 className="font-serif text-xl font-semibold" data-testid="text-pipeline-title">Book of Business</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={importLeads} data-testid="button-import-leads">
+            <ArrowRight className="w-3 h-3 mr-1" /> Import Leads
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowImportCsv(true)} data-testid="button-import-csv">
+            <Upload className="w-3 h-3 mr-1" /> Import CSV
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={exportCsv} data-testid="button-export-csv">
+            <FileSpreadsheet className="w-3 h-3 mr-1" /> Export CSV
+          </Button>
+          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", estimatedValue: "", nextFollowUp: "" }); }} data-testid="button-add-contact">
+            <Plus className="w-3.5 h-3.5 mr-1" /> Add Contact
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
+          {(["all", "portraits", "spaces"] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === f ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              data-testid={`filter-${f}`}>{f === "all" ? "All" : f === "portraits" ? "Portraits" : "Spaces"}</button>
+          ))}
+        </div>
+        <div className="relative flex-1 max-w-xs">
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search contacts..."
+            className="h-8 text-xs pl-8" data-testid="input-pipeline-search" />
+        </div>
+        <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5 ml-auto">
+          <button onClick={() => setViewMode("board")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "board" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-board">Board</button>
+          <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-list">List</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="bg-white rounded-lg border border-gray-100 p-3" data-testid="stat-total-contacts">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Contacts</p>
+          <p className="text-2xl font-semibold text-gray-900">{filteredContacts.length}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-100 p-3" data-testid="stat-pipeline-value">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Pipeline Value</p>
+          <p className="text-2xl font-semibold text-gray-900">${totalValue.toLocaleString()}</p>
+        </div>
+        <div className={`rounded-lg border p-3 ${followUpsDue > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Follow-ups Due</p>
+          <p className={`text-2xl font-semibold ${followUpsDue > 0 ? "text-red-600" : "text-gray-900"}`}>{followUpsDue}</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+      ) : viewMode === "board" ? (
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4">
+          {PIPELINE_STAGES.map(stage => {
+            const stageContacts = getStageContacts(stage.key);
+            return (
+              <div key={stage.key} className="min-w-[240px] max-w-[280px] flex-shrink-0" data-testid={`pipeline-column-${stage.key}`}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => {
+                  const cid = e.dataTransfer.getData("contactId");
+                  if (cid) moveStage(contacts.find(c => c.id === cid)!, stage.key);
+                }}>
+                <div className="flex items-center gap-2 mb-2.5 px-1">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
+                  <span className="text-[10px] text-gray-400">{stageContacts.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {stageContacts.map(c => (
+                    <div key={c.id} draggable onDragStart={e => e.dataTransfer.setData("contactId", c.id)}
+                      className="bg-white rounded-lg border border-gray-100 p-3 cursor-pointer hover:shadow-sm hover:border-gray-200 transition-all group"
+                      onClick={() => openDetail(c)} data-testid={`contact-card-${c.id}`}>
+                      <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
+                      {c.email && <p className="text-[10px] text-gray-400 truncate">{c.email}</p>}
+                      <div className="flex items-center gap-2 mt-2">
+                        {c.category === "spaces" && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">Spaces</span>}
+                        {c.estimatedValue && <span className="text-[10px] text-green-600 font-medium">${c.estimatedValue}</span>}
+                        {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
+                      </div>
+                      <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="text-[10px] text-gray-400 hover:text-gray-700 px-1.5 py-0.5 rounded bg-gray-50" data-testid={`button-edit-card-${c.id}`}>Edit</button>
+                        <button onClick={e => { e.stopPropagation(); handleDelete(c.id); }} className="text-[10px] text-red-400 hover:text-red-600 px-1.5 py-0.5 rounded bg-gray-50" data-testid={`button-delete-card-${c.id}`}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                  {stageContacts.length === 0 && <div className="text-center py-8 text-[10px] text-gray-300 border border-dashed border-gray-200 rounded-lg">No contacts</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
+          <table className="w-full text-sm" data-testid="pipeline-list-table">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Name</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Contact</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Stage</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Category</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Value</th>
+                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Follow-up</th>
+                <th className="text-right px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredContacts.map(c => (
+                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer" onClick={() => openDetail(c)} data-testid={`pipeline-row-${c.id}`}>
+                  <td className="px-3 py-2.5 font-medium text-gray-900">{c.name}</td>
+                  <td className="px-3 py-2.5 text-gray-500">{c.email || c.phone || "—"}</td>
+                  <td className="px-3 py-2.5"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span></td>
+                  <td className="px-3 py-2.5 text-gray-500 capitalize">{c.category}</td>
+                  <td className="px-3 py-2.5 text-gray-700">{c.estimatedValue ? `$${c.estimatedValue}` : "—"}</td>
+                  <td className="px-3 py-2.5">
+                    {c.nextFollowUp ? (
+                      <span className={`text-xs ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                        {new Date(c.nextFollowUp).toLocaleDateString()}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="text-xs text-gray-400 hover:text-gray-700 mr-2" data-testid={`button-list-edit-${c.id}`}>Edit</button>
+                    <button onClick={e => { e.stopPropagation(); handleDelete(c.id); }} className="text-xs text-red-400 hover:text-red-600" data-testid={`button-list-delete-${c.id}`}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+              {filteredContacts.length === 0 && (
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400">No contacts found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {showForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setShowForm(false); setEditingContact(null); }}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} data-testid="form-contact">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-serif text-lg font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h2>
+                <button onClick={() => { setShowForm(false); setEditingContact(null); }} className="p-1 hover:bg-gray-100 rounded"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs text-gray-500">Name *</Label>
+                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-name" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Email</Label>
+                    <Input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-email" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Phone</Label>
+                    <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-phone" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Instagram</Label>
+                    <Input value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" className="h-9 text-sm" data-testid="input-contact-instagram" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Source</Label>
+                    <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-source"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="referral">Referral</SelectItem>
+                        <SelectItem value="social">Social Media</SelectItem>
+                        <SelectItem value="walk-in">Walk-in</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                        <SelectItem value="import">Import</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Category</Label>
+                    <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-category"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="portraits">Portraits</SelectItem>
+                        <SelectItem value="spaces">Spaces</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Stage</Label>
+                    <Select value={form.stage} onValueChange={v => setForm(p => ({ ...p, stage: v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-stage"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PIPELINE_STAGES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Estimated Value ($)</Label>
+                    <Input type="number" value={form.estimatedValue} onChange={e => setForm(p => ({ ...p, estimatedValue: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-value" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
+                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Notes</Label>
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-20 text-sm" data-testid="input-contact-notes" />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => { setShowForm(false); setEditingContact(null); }} data-testid="button-cancel-contact">Cancel</Button>
+                  <Button onClick={handleSave} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-save-contact">
+                    <Save className="w-4 h-4 mr-1" /> {editingContact ? "Update" : "Add"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {showImportCsv && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowImportCsv(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()} data-testid="modal-import-csv">
+              <h2 className="font-serif text-lg font-semibold mb-2">Import from CSV / Excel</h2>
+              <p className="text-xs text-gray-400 mb-3">Upload a CSV file or paste CSV data. Columns: Name, Email, Phone, Instagram, Source, Category, Stage, Notes, Estimated Value, Next Follow-Up</p>
+              <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
+              <Button variant="outline" size="sm" className="mb-3 h-8 text-xs" onClick={() => fileRef.current?.click()} data-testid="button-choose-file">
+                <Upload className="w-3 h-3 mr-1" /> Choose File
+              </Button>
+              <Textarea value={csvText} onChange={e => setCsvText(e.target.value)} placeholder="Name,Email,Phone,...&#10;John Doe,john@email.com,555-1234,..."
+                className="h-40 text-xs font-mono" data-testid="input-csv-data" />
+              <div className="flex justify-end gap-2 mt-3">
+                <Button variant="outline" onClick={() => setShowImportCsv(false)}>Cancel</Button>
+                <Button onClick={importCsv} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-run-import">
+                  <FileSpreadsheet className="w-4 h-4 mr-1" /> Import
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -4475,7 +5046,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -4729,6 +5300,10 @@ function AdminDashboard({ token }: { token: string }) {
     return <AnalyticsManager token={token} onBack={() => setView("clients")} />;
   }
 
+  if (view === "pipeline") {
+    return <PipelineManager token={token} onBack={() => setView("clients")} />;
+  }
+
   if (view === "create" || view === "edit") {
     const isEdit = view === "edit";
     return (
@@ -4939,6 +5514,16 @@ function AdminDashboard({ token }: { token: string }) {
             <p className="font-serif text-lg text-gray-900" data-testid="text-admin-title">Admin Panel</p>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("pipeline")}
+              data-testid="button-manage-pipeline"
+              className="h-8 text-xs border-stone-300 text-stone-700 font-medium"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" />
+              Book of Business
+            </Button>
             <Button
               variant="outline"
               size="sm"
