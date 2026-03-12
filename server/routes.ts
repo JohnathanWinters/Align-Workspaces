@@ -3572,8 +3572,15 @@ ${featuredSection}
         type: req.body.type || "note",
         note: req.body.note,
       });
-      await storage.updatePipelineContact(req.params.id, { lastContactDate: new Date() });
-      res.json(activity);
+      const updates: any = { lastContactDate: new Date() };
+      if (req.body.followUpDays && typeof req.body.followUpDays === "number") {
+        const next = new Date();
+        next.setDate(next.getDate() + req.body.followUpDays);
+        updates.nextFollowUp = next;
+      }
+      await storage.updatePipelineContact(req.params.id, updates);
+      const updated = await storage.getPipelineContact(req.params.id);
+      res.json({ activity, contact: updated });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

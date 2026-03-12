@@ -100,6 +100,7 @@ export interface IStorage {
   getLatestSpaceMessage(bookingId: string): Promise<SpaceMessage | undefined>;
   updateSpaceMessage(id: string, data: Partial<SpaceMessage>): Promise<void>;
   getPipelineContacts(): Promise<PipelineContact[]>;
+  getPipelineContact(id: string): Promise<PipelineContact | undefined>;
   createPipelineContact(data: InsertPipelineContact): Promise<PipelineContact>;
   updatePipelineContact(id: string, data: Partial<InsertPipelineContact>): Promise<PipelineContact>;
   deletePipelineContact(id: string): Promise<void>;
@@ -749,6 +750,11 @@ export class DatabaseStorage implements IStorage {
 
   async getPipelineContacts(): Promise<PipelineContact[]> {
     return db.select().from(pipelineContacts).orderBy(desc(pipelineContacts.updatedAt));
+  }
+
+  async getPipelineContact(id: string): Promise<PipelineContact | undefined> {
+    const [result] = await db.select().from(pipelineContacts).where(eq(pipelineContacts.id, id));
+    return result;
   }
 
   async createPipelineContact(data: InsertPipelineContact): Promise<PipelineContact> {

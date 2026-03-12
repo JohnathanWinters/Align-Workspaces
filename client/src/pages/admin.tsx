@@ -3971,7 +3971,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [editingContact, setEditingContact] = useState<PipelineContact | null>(null);
   const [selectedContact, setSelectedContact] = useState<PipelineContact | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
-  const [newActivity, setNewActivity] = useState({ type: "call", note: "" });
+  const [newActivity, setNewActivity] = useState({ type: "call", note: "", followUpDays: 0 });
   const [filter, setFilter] = useState<"all" | "portraits" | "spaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showImportCsv, setShowImportCsv] = useState(false);
@@ -4014,7 +4014,11 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         const res = await adminFetch(`/api/admin/pipeline/${editingContact.id}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
         });
-        if (res.ok) { toast({ title: "Contact updated" }); }
+        if (res.ok) {
+          const updated = await res.json();
+          if (selectedContact?.id === editingContact.id) setSelectedContact(updated);
+          toast({ title: "Contact updated" });
+        }
       } else {
         const res = await adminFetch("/api/admin/pipeline", {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -4049,13 +4053,20 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const logActivity = async () => {
     if (!selectedContact || !newActivity.note.trim()) return;
     try {
-      await adminFetch(`/api/admin/pipeline/${selectedContact.id}/activities`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newActivity),
+      const payload: any = { type: newActivity.type, note: newActivity.note };
+      if (newActivity.followUpDays > 0) payload.followUpDays = newActivity.followUpDays;
+      const res = await adminFetch(`/api/admin/pipeline/${selectedContact.id}/activities`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
-      setNewActivity({ type: "call", note: "" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.contact) setSelectedContact(data.contact);
+      }
+      setNewActivity({ type: "call", note: "", followUpDays: 0 });
       await loadActivities(selectedContact.id);
       await loadContacts();
-      toast({ title: "Activity logged" });
+      const followUpMsg = newActivity.followUpDays > 0 ? ` · Follow-up set in ${newActivity.followUpDays} days` : "";
+      toast({ title: `Activity logged${followUpMsg}` });
     } catch {}
   };
 
@@ -4150,8 +4161,24 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const totalValue = filteredContacts.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
   const followUpsDue = filteredContacts.filter(c => c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()).length;
 
+  const FOLLOW_UP_OPTIONS = [
+    { label: "No follow-up", days: 0 },
+    { label: "Tomorrow", days: 1 },
+    { label: "In 2 days", days: 2 },
+    { label: "In 3 days", days: 3 },
+    { label: "In 1 week", days: 7 },
+    { label: "In 2 weeks", days: 14 },
+    { label: "In 1 month", days: 30 },
+  ];
+
+  const callCount = activities.filter(a => a.type === "call").length;
+  const emailCount = activities.filter(a => a.type === "email").length;
+  const meetingCount = activities.filter(a => a.type === "meeting").length;
+  const totalAttempts = callCount + emailCount;
+
   if (selectedContact) {
     return (
+      <>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="sm" onClick={() => setSelectedContact(null)} data-testid="button-pipeline-detail-back">
@@ -4162,6 +4189,25 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             {stageOf(selectedContact.stage)?.label}
           </span>
         </div>
+
+        {totalAttempts > 0 && (
+          <div className="flex gap-3 mb-4" data-testid="contact-attempt-stats">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+              <Phone className="w-3 h-3" /> {callCount} {callCount === 1 ? "call" : "calls"}
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-medium">
+              <Send className="w-3 h-3" /> {emailCount} {emailCount === 1 ? "email" : "emails"}
+            </div>
+            {meetingCount > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                <Users className="w-3 h-3" /> {meetingCount} {meetingCount === 1 ? "meeting" : "meetings"}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium" data-testid="text-total-attempts">
+              {totalAttempts} total {totalAttempts === 1 ? "attempt" : "attempts"}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <Card className="border-gray-100">
@@ -4207,7 +4253,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         <Card className="border-gray-100 mb-6">
           <CardHeader className="pb-3"><CardTitle className="text-sm font-medium">Log Activity</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {ACTIVITY_TYPES.map(a => (
                 <button key={a.key} onClick={() => setNewActivity(p => ({ ...p, type: a.key }))}
                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${newActivity.type === a.key ? "bg-stone-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
@@ -4216,14 +4262,29 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             </div>
             <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
               placeholder="What happened? Quick notes..." className="h-20 text-sm" data-testid="input-activity-note" />
-            <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
-              <Plus className="w-3.5 h-3.5 mr-1" /> Log Activity
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <Label className="text-[11px] text-gray-500 mb-1 block">Schedule next follow-up</Label>
+                <Select value={String(newActivity.followUpDays)} onValueChange={v => setNewActivity(p => ({ ...p, followUpDays: parseInt(v) }))}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="select-followup-schedule"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {FOLLOW_UP_OPTIONS.map(o => (
+                      <SelectItem key={o.days} value={String(o.days)}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="pt-4">
+                <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Log Activity
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-700">Activity History</h3>
+          <h3 className="text-sm font-medium text-gray-700">Activity History {activities.length > 0 && <span className="text-gray-400 font-normal">({activities.length})</span>}</h3>
           {activities.length === 0 && <p className="text-sm text-gray-400">No activities logged yet.</p>}
           {activities.map((a: any) => {
             const at = ACTIVITY_TYPES.find(t => t.key === a.type);
@@ -4245,6 +4306,99 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           })}
         </div>
       </div>
+
+      <AnimatePresence>
+        {showForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setShowForm(false); setEditingContact(null); }}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} data-testid="form-contact">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-serif text-lg font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h2>
+                <button onClick={() => { setShowForm(false); setEditingContact(null); }} className="p-1 hover:bg-gray-100 rounded"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs text-gray-500">Name *</Label>
+                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-name" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Email</Label>
+                    <Input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-email" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Phone</Label>
+                    <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-phone" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Instagram</Label>
+                    <Input value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" className="h-9 text-sm" data-testid="input-contact-instagram" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Source</Label>
+                    <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-source"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="referral">Referral</SelectItem>
+                        <SelectItem value="social">Social Media</SelectItem>
+                        <SelectItem value="walk-in">Walk-in</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                        <SelectItem value="import">Import</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Category</Label>
+                    <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-category"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="portraits">Portraits</SelectItem>
+                        <SelectItem value="spaces">Spaces</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Stage</Label>
+                    <Select value={form.stage} onValueChange={v => setForm(p => ({ ...p, stage: v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-stage"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PIPELINE_STAGES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Estimated Value ($)</Label>
+                    <Input type="number" value={form.estimatedValue} onChange={e => setForm(p => ({ ...p, estimatedValue: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-value" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
+                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Notes</Label>
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-20 text-sm" data-testid="input-contact-notes" />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => { setShowForm(false); setEditingContact(null); }} data-testid="button-cancel-contact">Cancel</Button>
+                  <Button onClick={handleSave} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-save-contact">
+                    <Save className="w-4 h-4 mr-1" /> {editingContact ? "Update" : "Add"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </>
     );
   }
 
