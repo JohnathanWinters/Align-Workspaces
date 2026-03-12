@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -21,8 +22,17 @@ import {
   XCircle,
   Ban,
   Info,
+  CalendarDays,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  type WeekSchedule,
+  getDayOfWeek,
+  getAvailableTimeSlots,
+  getMaxHoursFromSlot,
+  formatTime,
+} from "./availability-schedule-editor";
 import type { SpaceBooking, SpaceMessage } from "@shared/schema";
 
 interface EnrichedBooking extends SpaceBooking {
@@ -32,6 +42,7 @@ interface EnrichedBooking extends SpaceBooking {
   latestMessage: { message: string; createdAt: string; senderRole: string; messageType: string } | null;
   unreadCount: number;
   role: "guest" | "host";
+  spaceSchedule?: string;
 }
 
 const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
@@ -48,7 +59,7 @@ const paymentStatusConfig: Record<string, { color: string; label: string }> = {
   paid: { color: "bg-green-50 text-green-700 border-green-200", label: "Paid" },
 };
 
-function formatTime(dateStr: string) {
+function formatRelativeTime(dateStr: string) {
   const d = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
@@ -128,7 +139,7 @@ function ConversationList({
                     {c.otherPartyName}
                   </span>
                   <span className="text-[11px] text-gray-400 flex-shrink-0">
-                    {c.latestMessage ? formatTime(c.latestMessage.createdAt) : ""}
+                    {c.latestMessage ? formatRelativeTime(c.latestMessage.createdAt) : ""}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1.5">
@@ -232,6 +243,10 @@ function ConversationView({
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDesc, setPaymentDesc] = useState("");
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleHours, setRescheduleHours] = useState(booking.bookingHours || 1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -254,6 +269,10 @@ function ConversationView({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  const spaceSchedule: import("./availability-schedule-editor").WeekSchedule | null = (() => {
+    try { return booking.spaceSchedule ? JSON.parse(booking.spaceSchedule) : null; } catch { return null; }
+  })();
+
   const sendMutation = useMutation({
     mutationFn: async (text: string) => {
       await apiRequest("POST", `/api/space-bookings/${booking.id}/messages`, { message: text });
@@ -261,6 +280,41 @@ function ConversationView({
     onSuccess: () => {
       setNewMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
+    },
+  });
+
+  const rescheduleMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/space-bookings/${booking.id}/reschedule`, {
+        newDate: rescheduleDate,
+        newStartTime: rescheduleTime,
+        newHours: rescheduleHours,
+      });
+    },
+    onSuccess: () => {
+      setShowReschedule(false);
+      setRescheduleDate("");
+      setRescheduleTime("");
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+      toast({ title: "Reschedule request sent" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const rescheduleRespondMutation = useMutation({
+    mutationFn: async ({ messageId, action }: { messageId: string; action: "accept" | "decline" }) => {
+      await apiRequest("POST", `/api/space-bookings/${booking.id}/reschedule-respond`, { messageId, action });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+      toast({ title: "Reschedule response sent" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
@@ -338,11 +392,165 @@ function ConversationView({
             </div>
             <p className="text-xs text-gray-500 truncate">
               {booking.spaceName} · {isHost ? "You're the host" : "You're the guest"}
-              {booking.bookingDate && ` · ${booking.bookingDate}`}
-              {booking.bookingHours && ` · ${booking.bookingHours}hr${booking.bookingHours > 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
+
+        {booking.bookingDate && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="bg-stone-50 rounded-lg p-3 flex items-center gap-3" data-testid="booking-info-card">
+              <div className="w-10 h-10 rounded-lg bg-gray-900 text-white flex flex-col items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-medium leading-none">
+                  {(() => { try { return new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { month: "short" }); } catch { return ""; } })()}
+                </span>
+                <span className="text-sm font-bold leading-none">
+                  {(() => { try { return new Date(booking.bookingDate + "T12:00:00").getDate(); } catch { return ""; } })()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">
+                  {(() => { try { return new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }); } catch { return booking.bookingDate; } })()}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {booking.bookingStartTime ? (() => {
+                    const [h, m] = booking.bookingStartTime.split(":").map(Number);
+                    const period = h >= 12 ? "PM" : "AM";
+                    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                    const timeStr = m === 0 ? `${hour12} ${period}` : `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+                    return `${timeStr} · `;
+                  })() : ""}
+                  {booking.bookingHours} hour{booking.bookingHours > 1 ? "s" : ""}
+                  {booking.paymentAmount ? ` · $${(booking.paymentAmount / 100).toFixed(2)} paid` : ""}
+                </p>
+              </div>
+              {booking.status === "approved" && (
+                <button
+                  onClick={() => setShowReschedule(!showReschedule)}
+                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
+                  data-testid="button-reschedule"
+                >
+                  Reschedule
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showReschedule && (
+          <div className="mt-3 pt-3 border-t border-gray-100 space-y-3" data-testid="reschedule-panel">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5" />
+                Propose new date & time
+              </p>
+              <button onClick={() => setShowReschedule(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {!spaceSchedule ? (
+              <div className="text-center py-3">
+                <p className="text-xs text-gray-500">This space doesn't have a set schedule. Contact the host to arrange a new time.</p>
+                <Button size="sm" variant="outline" onClick={() => setShowReschedule(false)} className="mt-2 text-xs">Close</Button>
+              </div>
+            ) : !rescheduleDate ? (
+              <div className="flex justify-center">
+                <Calendar
+                  mode="single"
+                  selected={undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, "0");
+                      const dd = String(date.getDate()).padStart(2, "0");
+                      setRescheduleDate(`${yyyy}-${mm}-${dd}`);
+                      setRescheduleTime("");
+                    }
+                  }}
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (date < today) return true;
+                    if (!spaceSchedule) return false;
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, "0");
+                    const dd = String(date.getDate()).padStart(2, "0");
+                    const dayKey = getDayOfWeek(`${yyyy}-${mm}-${dd}`);
+                    return dayKey ? spaceSchedule[dayKey] === null : true;
+                  }}
+                  className="rounded-lg border border-stone-200 bg-white"
+                  data-testid="reschedule-calendar"
+                />
+              </div>
+            ) : !rescheduleTime ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setRescheduleDate("")} className="text-gray-400 hover:text-gray-600"><ArrowLeft className="w-4 h-4" /></button>
+                  <p className="text-xs text-gray-500">
+                    {new Date(rescheduleDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                  </p>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(spaceSchedule ? getAvailableTimeSlots(spaceSchedule, rescheduleDate) : []).map((slot) => (
+                    <button
+                      key={slot}
+                      onClick={() => setRescheduleTime(slot)}
+                      className="px-2 py-2 rounded-lg text-xs font-medium bg-white border border-stone-200 text-gray-700 hover:border-gray-400 transition-colors"
+                      data-testid={`reschedule-slot-${slot}`}
+                    >
+                      {formatTime(slot)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">New date</span>
+                    <span className="font-medium">{new Date(rescheduleDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">New time</span>
+                    <span className="font-medium">{formatTime(rescheduleTime)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Duration</span>
+                    <select
+                      value={rescheduleHours}
+                      onChange={(e) => setRescheduleHours(parseInt(e.target.value))}
+                      className="h-7 rounded-md border border-input bg-white px-2 text-xs"
+                      data-testid="reschedule-hours"
+                    >
+                      {Array.from({ length: spaceSchedule ? getMaxHoursFromSlot(spaceSchedule, rescheduleDate, rescheduleTime) : 8 }, (_, i) => i + 1).map((h) => (
+                        <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setRescheduleTime(""); }}
+                    className="text-xs"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => rescheduleMutation.mutate()}
+                    disabled={rescheduleMutation.isPending}
+                    className="bg-gray-900 text-white hover:bg-black text-xs flex-1"
+                    data-testid="button-send-reschedule"
+                  >
+                    {rescheduleMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />}
+                    Send Reschedule Request
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {isHost && booking.status === "pending" && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
@@ -454,6 +662,70 @@ function ConversationView({
               return (
                 <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-payment-${msg.id}`}>
                   <PaymentRequestMessage message={msg} booking={booking} userId={userId} />
+                </div>
+              );
+            }
+
+            if (msg.messageType === "reschedule_request" || msg.messageType === "reschedule_accepted" || msg.messageType === "reschedule_declined") {
+              let data: any = {};
+              try { data = JSON.parse(msg.message); } catch {}
+              const isRequest = msg.messageType === "reschedule_request";
+              const isAccepted = msg.messageType === "reschedule_accepted";
+              const isPending = isRequest && !data.resolved;
+              const canRespond = isPending && !isOwn;
+
+              let dateDisplay = data.newDate || "";
+              try { dateDisplay = new Date(data.newDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); } catch {}
+
+              return (
+                <div key={msg.id} className="flex justify-center" data-testid={`message-reschedule-${msg.id}`}>
+                  <div className={`rounded-xl px-4 py-3 max-w-[85%] border ${
+                    isAccepted ? "bg-emerald-50 border-emerald-200" :
+                    msg.messageType === "reschedule_declined" ? "bg-red-50 border-red-200" :
+                    "bg-blue-50 border-blue-200"
+                  }`}>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <RefreshCw className="w-3.5 h-3.5 text-gray-600" />
+                      <span className="text-xs font-medium text-gray-700">
+                        {isRequest ? `${msg.senderName} proposed a reschedule` :
+                         isAccepted ? "Reschedule accepted" : "Reschedule declined"}
+                      </span>
+                    </div>
+                    {isRequest && (
+                      <div className="text-sm text-gray-800 space-y-0.5">
+                        <p>{dateDisplay}{data.newStartTime ? ` at ${formatTime(data.newStartTime)}` : ""}</p>
+                        <p className="text-xs text-gray-500">{data.newHours} hour{data.newHours > 1 ? "s" : ""}</p>
+                      </div>
+                    )}
+                    {isAccepted && <p className="text-xs text-emerald-700">Booking updated to {dateDisplay}{data.newStartTime ? ` at ${formatTime(data.newStartTime)}` : ""}</p>}
+                    {msg.messageType === "reschedule_declined" && <p className="text-xs text-red-700">Original booking kept</p>}
+                    {canRespond && (
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          onClick={() => rescheduleRespondMutation.mutate({ messageId: msg.id, action: "accept" })}
+                          disabled={rescheduleRespondMutation.isPending}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-3"
+                          data-testid={`button-accept-reschedule-${msg.id}`}
+                        >
+                          <Check className="w-3 h-3 mr-1" /> Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => rescheduleRespondMutation.mutate({ messageId: msg.id, action: "decline" })}
+                          disabled={rescheduleRespondMutation.isPending}
+                          className="text-red-600 border-red-200 hover:bg-red-50 text-xs h-7 px-3"
+                          data-testid={`button-decline-reschedule-${msg.id}`}
+                        >
+                          <X className="w-3 h-3 mr-1" /> Decline
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  </div>
                 </div>
               );
             }

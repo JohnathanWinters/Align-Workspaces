@@ -38,7 +38,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
 import type { Space } from "@shared/schema";
+import {
+  type WeekSchedule,
+  getDayOfWeek,
+  getAvailableTimeSlots,
+  getMaxHoursFromSlot,
+  formatTime,
+} from "@/components/availability-schedule-editor";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -348,7 +356,9 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [expanded, setExpanded] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [bookingDate, setBookingDate] = useState("");
+  const [bookingStartTime, setBookingStartTime] = useState("");
   const [bookingHours, setBookingHours] = useState(1);
+  const [bookingStep, setBookingStep] = useState<"date" | "time" | "confirm">("date");
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
@@ -375,10 +385,28 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const renterFee = Math.round(basePriceCents * 0.07);
   const totalCharge = basePriceCents + renterFee;
 
+  const schedule: WeekSchedule | null = (() => {
+    try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
+  })();
+
+  const availableSlots = bookingDate && schedule ? getAvailableTimeSlots(schedule, bookingDate) : [];
+  const maxHours = bookingDate && bookingStartTime && schedule ? getMaxHoursFromSlot(schedule, bookingDate, bookingStartTime) : 8;
+
+  const isDateAvailable = (date: Date): boolean => {
+    if (!schedule) return true;
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const dayKey = getDayOfWeek(dateStr);
+    return dayKey ? schedule[dayKey] !== null : false;
+  };
+
   const bookMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/spaces/${space.id}/book`, {
         bookingDate,
+        bookingStartTime,
         bookingHours,
       });
       return res.json();
@@ -854,69 +882,145 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                   </AnimatePresence>
                 )}
                 {showBooking && !(showAuthPrompt && !isAuthenticated) && (
-                  <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3">
+                  <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3" data-testid={`booking-panel-${space.id}`}>
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-foreground">Book this space</p>
-                      <button onClick={() => setShowBooking(false)} className="text-foreground/40 hover:text-foreground/60">
+                      <div className="flex items-center gap-2">
+                        {bookingStep !== "date" && (
+                          <button
+                            onClick={() => {
+                              if (bookingStep === "confirm") setBookingStep("time");
+                              else { setBookingStep("date"); setBookingDate(""); setBookingStartTime(""); }
+                            }}
+                            className="text-foreground/40 hover:text-foreground/60"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </button>
+                        )}
+                        <p className="text-sm font-medium text-foreground">
+                          {bookingStep === "date" ? "Pick a date" : bookingStep === "time" ? "Choose a time" : "Confirm booking"}
+                        </p>
+                      </div>
+                      <button onClick={() => { setShowBooking(false); setBookingStep("date"); setBookingDate(""); setBookingStartTime(""); setBookingHours(1); }} className="text-foreground/40 hover:text-foreground/60">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] text-foreground/50 mb-1 block">Date</label>
-                        <Input
-                          type="date"
-                          value={bookingDate}
-                          onChange={(e) => setBookingDate(e.target.value)}
-                          min={new Date().toISOString().split("T")[0]}
-                          className="text-sm bg-white h-9"
-                          data-testid={`input-booking-date-${space.id}`}
+                    {bookingStep === "date" && (
+                      <div className="flex justify-center">
+                        <Calendar
+                          mode="single"
+                          selected={bookingDate ? new Date(bookingDate + "T12:00:00") : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              const yyyy = date.getFullYear();
+                              const mm = String(date.getMonth() + 1).padStart(2, "0");
+                              const dd = String(date.getDate()).padStart(2, "0");
+                              setBookingDate(`${yyyy}-${mm}-${dd}`);
+                              setBookingStartTime("");
+                              setBookingHours(1);
+                              setBookingStep("time");
+                            }
+                          }}
+                          disabled={(date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (date < today) return true;
+                            return !isDateAvailable(date);
+                          }}
+                          className="rounded-lg border border-stone-200 bg-white"
+                          data-testid={`calendar-${space.id}`}
                         />
                       </div>
-                      <div>
-                        <label className="text-[11px] text-foreground/50 mb-1 block">Hours</label>
-                        <select
-                          value={bookingHours}
-                          onChange={(e) => setBookingHours(parseInt(e.target.value))}
-                          className="w-full h-9 rounded-md border border-input bg-white px-3 text-sm"
-                          data-testid={`select-booking-hours-${space.id}`}
+                    )}
+
+                    {bookingStep === "time" && (
+                      <div className="space-y-3">
+                        <p className="text-xs text-foreground/50">
+                          {new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                        </p>
+                        <div>
+                          <label className="text-[11px] text-foreground/50 mb-2 block">Start time</label>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {availableSlots.map((slot) => (
+                              <button
+                                key={slot}
+                                onClick={() => { setBookingStartTime(slot); setBookingHours(1); setBookingStep("confirm"); }}
+                                className={`px-2 py-2 rounded-lg text-xs font-medium transition-colors ${
+                                  bookingStartTime === slot
+                                    ? "bg-gray-900 text-white"
+                                    : "bg-white border border-stone-200 text-foreground/70 hover:border-gray-400"
+                                }`}
+                                data-testid={`time-slot-${slot}-${space.id}`}
+                              >
+                                {formatTime(slot)}
+                              </button>
+                            ))}
+                          </div>
+                          {availableSlots.length === 0 && (
+                            <p className="text-xs text-foreground/40 text-center py-4">No available time slots for this date.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {bookingStep === "confirm" && (
+                      <div className="space-y-3">
+                        <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-foreground/70">Date</span>
+                            <span className="font-medium">{new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-foreground/70">Time</span>
+                            <span className="font-medium">{formatTime(bookingStartTime)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-foreground/70">Duration</span>
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={bookingHours}
+                                onChange={(e) => setBookingHours(parseInt(e.target.value))}
+                                className="h-7 rounded-md border border-input bg-white px-2 text-xs"
+                                data-testid={`select-booking-hours-${space.id}`}
+                              >
+                                {Array.from({ length: maxHours }, (_, i) => i + 1).map((h) => (
+                                  <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-1.5">
+                          <div className="flex justify-between text-xs text-foreground/60">
+                            <span>${space.pricePerHour}/hr x {bookingHours} hour{bookingHours > 1 ? "s" : ""}</span>
+                            <span>${(basePriceCents / 100).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-foreground/60">
+                            <span>Service fee (7%)</span>
+                            <span>${(renterFee / 100).toFixed(2)}</span>
+                          </div>
+                          <div className="border-t border-stone-200 pt-1.5 flex justify-between text-sm font-medium text-foreground">
+                            <span>Total</span>
+                            <span>${(totalCharge / 100).toFixed(2)}</span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => bookMutation.mutate()}
+                          disabled={bookMutation.isPending || !bookingDate || !bookingStartTime}
+                          className="w-full bg-foreground text-background hover:opacity-90"
+                          data-testid={`button-submit-booking-${space.id}`}
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
-                            <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
-                          ))}
-                        </select>
+                          {bookMutation.isPending ? (
+                            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
+                          ) : (
+                            <>Book &amp; Pay ${(totalCharge / 100).toFixed(2)}</>
+                          )}
+                        </Button>
+                        <p className="text-[10px] text-foreground/40 text-center">Secure payment via Stripe. You can message the host in your portal.</p>
                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-1.5">
-                      <div className="flex justify-between text-xs text-foreground/60">
-                        <span>${space.pricePerHour}/hr x {bookingHours} hour{bookingHours > 1 ? "s" : ""}</span>
-                        <span>${(basePriceCents / 100).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs text-foreground/60">
-                        <span>Service fee (7%)</span>
-                        <span>${(renterFee / 100).toFixed(2)}</span>
-                      </div>
-                      <div className="border-t border-stone-200 pt-1.5 flex justify-between text-sm font-medium text-foreground">
-                        <span>Total</span>
-                        <span>${(totalCharge / 100).toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={() => bookMutation.mutate()}
-                      disabled={bookMutation.isPending || !bookingDate}
-                      className="w-full bg-foreground text-background hover:opacity-90"
-                      data-testid={`button-submit-booking-${space.id}`}
-                    >
-                      {bookMutation.isPending ? (
-                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
-                      ) : (
-                        <>Book &amp; Pay ${(totalCharge / 100).toFixed(2)}</>
-                      )}
-                    </Button>
-                    <p className="text-[10px] text-foreground/40 text-center">Secure payment via Stripe. You can message the host in your portal.</p>
+                    )}
                   </div>
                 )}
               </div>

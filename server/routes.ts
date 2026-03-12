@@ -2530,7 +2530,7 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Space not found" });
       }
 
-      const { bookingDate, bookingHours } = req.body;
+      const { bookingDate, bookingStartTime, bookingHours } = req.body;
       if (!bookingDate) return res.status(400).json({ message: "Booking date is required" });
       const hours = parseInt(bookingHours) || 1;
 
@@ -2554,6 +2554,7 @@ export async function registerRoutes(
         userEmail: user.claims?.email || null,
         status: "awaiting_payment",
         bookingDate,
+        bookingStartTime: bookingStartTime || null,
         bookingHours: hours,
         paymentAmount: fees.totalCharge,
         renterFeeAmount: fees.renterFee,
@@ -2594,6 +2595,7 @@ export async function registerRoutes(
           spaceName: space.name,
           hostEmail: space.contactEmail || "ArmandoRamirezRomero89@gmail.com",
           bookingDate,
+          bookingStartTime: bookingStartTime || "",
           bookingHours: String(hours),
         },
       };
@@ -2644,6 +2646,7 @@ export async function registerRoutes(
           ...b,
           spaceName: space?.name || b.spaceName || "Unknown Space",
           spaceType: space?.type,
+          spaceSchedule: space?.availabilitySchedule || null,
           otherPartyName: role === "guest" ? (space?.hostName || "Host") : (b.userName || "Guest"),
           latestMessage: latest ? { message: latest.message, createdAt: latest.createdAt, senderRole: latest.senderRole, messageType: latest.messageType } : null,
           unreadCount,
@@ -2829,6 +2832,120 @@ export async function registerRoutes(
       res.json({ url: session.url });
     } catch (err: any) {
       res.status(500).json({ message: err.message || "Failed to create checkout" });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/reschedule", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      const isGuest = booking.userId === userId;
+      const isHost = space && space.userId === userId;
+      if (!isGuest && !isHost) return res.status(403).json({ message: "Not authorized" });
+      if (booking.status !== "approved") return res.status(400).json({ message: "Can only reschedule confirmed bookings" });
+
+      const { newDate, newStartTime, newHours } = req.body;
+      if (!newDate || !newStartTime || !newHours) return res.status(400).json({ message: "Missing reschedule details" });
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) return res.status(400).json({ message: "Invalid date format" });
+      if (!/^\d{2}:\d{2}$/.test(newStartTime)) return res.status(400).json({ message: "Invalid time format" });
+      const hours = Number(newHours);
+      if (!Number.isInteger(hours) || hours < 1 || hours > 24) return res.status(400).json({ message: "Invalid hours" });
+
+      const proposedDate = new Date(newDate + "T12:00:00");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (proposedDate < today) return res.status(400).json({ message: "Date must be in the future" });
+
+      const messages = await storage.getSpaceMessages(booking.id);
+      const hasPending = messages.some((m: any) => {
+        if (m.messageType !== "reschedule_request") return false;
+        try { const d = JSON.parse(m.message); return !d.resolved; } catch { return false; }
+      });
+      if (hasPending) return res.status(400).json({ message: "There is already a pending reschedule request" });
+
+      const senderRole = isGuest ? "guest" : "host";
+      const senderName = isGuest ? (booking.userName || "Guest") : (space?.hostName || "Host");
+
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: userId,
+        senderName,
+        senderRole,
+        message: JSON.stringify({ newDate, newStartTime, newHours: hours, resolved: false }),
+        messageType: "reschedule_request",
+      });
+
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/reschedule-respond", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      const isGuest = booking.userId === userId;
+      const isHost = space && space.userId === userId;
+      if (!isGuest && !isHost) return res.status(403).json({ message: "Not authorized" });
+
+      if (booking.status !== "approved") return res.status(400).json({ message: "Can only respond to reschedule for confirmed bookings" });
+
+      const { messageId, action } = req.body;
+      if (!messageId || !["accept", "decline"].includes(action)) {
+        return res.status(400).json({ message: "Invalid request" });
+      }
+
+      const messages = await storage.getSpaceMessages(booking.id);
+      const rescheduleMsg = messages.find((m: any) => String(m.id) === String(messageId) && m.messageType === "reschedule_request");
+      if (!rescheduleMsg) return res.status(404).json({ message: "Reschedule request not found" });
+
+      if (rescheduleMsg.senderId === userId) return res.status(400).json({ message: "Cannot respond to your own reschedule request" });
+
+      let rescheduleData: any;
+      try { rescheduleData = JSON.parse(rescheduleMsg.message); } catch { return res.status(400).json({ message: "Invalid reschedule data" }); }
+      if (rescheduleData.resolved) return res.status(400).json({ message: "Already responded to" });
+
+      const senderRole = isGuest ? "guest" : "host";
+      const senderName = isGuest ? (booking.userName || "Guest") : (space?.hostName || "Host");
+
+      if (action === "accept") {
+        await storage.updateSpaceBooking(booking.id, {
+          bookingDate: rescheduleData.newDate,
+          bookingStartTime: rescheduleData.newStartTime,
+          bookingHours: rescheduleData.newHours,
+        });
+
+        await storage.createSpaceMessage({
+          spaceBookingId: booking.id,
+          senderId: userId,
+          senderName,
+          senderRole,
+          message: JSON.stringify({ ...rescheduleData, resolved: true }),
+          messageType: "reschedule_accepted",
+        });
+      } else {
+        await storage.createSpaceMessage({
+          spaceBookingId: booking.id,
+          senderId: userId,
+          senderName,
+          senderRole,
+          message: JSON.stringify({ ...rescheduleData, resolved: true }),
+          messageType: "reschedule_declined",
+        });
+      }
+
+      const updatedData = { ...rescheduleData, resolved: true };
+      await storage.updateSpaceMessage(rescheduleMsg.id, { message: JSON.stringify(updatedData) });
+
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   });
 

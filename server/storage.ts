@@ -98,6 +98,7 @@ export interface IStorage {
   getSpaceMessages(spaceBookingId: string): Promise<SpaceMessage[]>;
   createSpaceMessage(msg: InsertSpaceMessage): Promise<SpaceMessage>;
   getLatestSpaceMessage(bookingId: string): Promise<SpaceMessage | undefined>;
+  updateSpaceMessage(id: string, data: Partial<SpaceMessage>): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -734,6 +735,10 @@ export class DatabaseStorage implements IStorage {
   async getLatestSpaceMessage(bookingId: string): Promise<SpaceMessage | undefined> {
     const [result] = await db.select().from(spaceMessages).where(eq(spaceMessages.spaceBookingId, bookingId)).orderBy(desc(spaceMessages.createdAt)).limit(1);
     return result;
+  }
+
+  async updateSpaceMessage(id: string, data: Partial<SpaceMessage>): Promise<void> {
+    await db.update(spaceMessages).set(data).where(eq(spaceMessages.id, id));
   }
 }
 

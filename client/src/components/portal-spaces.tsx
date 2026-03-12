@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
+import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
 
 const SPACE_TYPES = [
   { value: "office", label: "Office" },
@@ -272,6 +273,15 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
 
 function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }) {
   const { toast } = useToast();
+  const [schedule, setSchedule] = useState<WeekSchedule>(() => {
+    try {
+      return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : {
+        mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
+        wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
+        fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+      };
+    } catch { return { mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" }, wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" }, fri: { open: "09:00", close: "17:00" }, sat: null, sun: null }; }
+  });
   const [formData, setFormData] = useState({
     name: space.name || "",
     type: space.type || "office",
@@ -284,7 +294,6 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     capacity: String(space.capacity || ""),
     amenities: (space.amenities || []).join(", "),
     targetProfession: space.targetProfession || "",
-    availableHours: space.availableHours || "",
     hostName: space.hostName || "",
   });
 
@@ -296,6 +305,8 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
         pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
         capacity: formData.capacity ? Number(formData.capacity) : undefined,
         amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
+        availabilitySchedule: JSON.stringify(schedule),
+        availableHours: scheduleToDisplayText(schedule),
       };
       await apiRequest("PATCH", `/api/spaces/${space.id}`, payload);
     },
@@ -367,11 +378,8 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
           <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
           <Input value={formData.targetProfession} onChange={(e) => update("targetProfession", e.target.value)} data-testid={`edit-input-target-${space.id}`} />
         </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Available Hours</label>
-          <Input value={formData.availableHours} onChange={(e) => update("availableHours", e.target.value)} data-testid={`edit-input-hours-${space.id}`} />
-        </div>
       </div>
+      <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
       <div>
         <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
         <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} data-testid={`edit-input-short-desc-${space.id}`} />
@@ -405,6 +413,11 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
 
 function NewSpaceForm({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
+  const [schedule, setSchedule] = useState<WeekSchedule>({
+    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
+    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
+    fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+  });
   const [formData, setFormData] = useState({
     name: "",
     type: "office",
@@ -417,7 +430,6 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     capacity: "",
     amenities: "",
     targetProfession: "",
-    availableHours: "",
     hostName: "",
   });
 
@@ -426,6 +438,8 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
       const payload = {
         ...formData,
         amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
+        availabilitySchedule: JSON.stringify(schedule),
+        availableHours: scheduleToDisplayText(schedule),
       };
       await apiRequest("POST", "/api/spaces", payload);
     },
@@ -499,11 +513,9 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
             <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
             <Input value={formData.targetProfession} onChange={(e) => update("targetProfession", e.target.value)} placeholder="e.g. Therapists & Counselors" data-testid="input-space-target" />
           </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Available Hours</label>
-            <Input value={formData.availableHours} onChange={(e) => update("availableHours", e.target.value)} placeholder="Mon-Fri 9am-5pm" data-testid="input-space-hours" />
-          </div>
         </div>
+
+        <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
 
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Short Description</label>

@@ -31,14 +31,30 @@ export class WebhookHandlers {
 
           const guestName = session.metadata.guestName || booking?.userName || "Guest";
           const bookingDate = session.metadata.bookingDate || booking?.bookingDate || "";
+          const bookingStartTime = session.metadata.bookingStartTime || booking?.bookingStartTime || "";
           const bookingHours = parseInt(session.metadata.bookingHours) || booking?.bookingHours || 1;
+
+          const formatTimeStr = (t: string) => {
+            if (!t) return "";
+            const [h, m] = t.split(":").map(Number);
+            const period = h >= 12 ? "PM" : "AM";
+            const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+            return m === 0 ? `${hour12} ${period}` : `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+          };
+          const timeStr = bookingStartTime ? ` at ${formatTimeStr(bookingStartTime)}` : "";
+
+          let dateDisplay = bookingDate;
+          try {
+            const d = new Date(bookingDate + "T12:00:00");
+            dateDisplay = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+          } catch {}
 
           await storage.createSpaceMessage({
             spaceBookingId: bookingId,
             senderId: session.metadata.userId || "system",
             senderName: guestName,
             senderRole: "guest",
-            message: `Booked ${session.metadata.spaceName || "this space"} on ${bookingDate} for ${bookingHours} hour${bookingHours > 1 ? "s" : ""}.`,
+            message: `Booked ${session.metadata.spaceName || "this space"} — ${dateDisplay}${timeStr}, ${bookingHours} hour${bookingHours > 1 ? "s" : ""}.`,
           });
 
           await storage.createSpaceMessage({
