@@ -3973,6 +3973,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [selectedContact, setSelectedContact] = useState<PipelineContact | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [newActivity, setNewActivity] = useState({ type: "call", note: "", followUpDays: 0 });
+  const [activityJustLogged, setActivityJustLogged] = useState(false);
   const [filter, setFilter] = useState<"all" | "portraits" | "spaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showImportCsv, setShowImportCsv] = useState(false);
@@ -4064,6 +4065,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         if (data.contact) setSelectedContact(data.contact);
       }
       setNewActivity({ type: "call", note: "", followUpDays: 0 });
+      setActivityJustLogged(true);
+      setTimeout(() => setActivityJustLogged(false), 3000);
       await loadActivities(selectedContact.id);
       await loadContacts();
       const followUpMsg = newActivity.followUpDays > 0 ? ` · Follow-up set in ${newActivity.followUpDays} days` : "";
@@ -4181,41 +4184,41 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   if (selectedContact) {
     return (
       <>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedContact(null)} data-testid="button-pipeline-detail-back">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
+          <Button variant="ghost" size="sm" className="h-8 px-2 flex-shrink-0" onClick={() => setSelectedContact(null)} data-testid="button-pipeline-detail-back">
+            <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h1 className="font-serif text-xl font-semibold">{selectedContact.name}</h1>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${stageOf(selectedContact.stage)?.color || "bg-gray-100"}`}>
+          <h1 className="font-serif text-lg sm:text-xl font-semibold truncate">{selectedContact.name}</h1>
+          <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${stageOf(selectedContact.stage)?.color || "bg-gray-100"}`}>
             {stageOf(selectedContact.stage)?.label}
           </span>
         </div>
 
         {totalAttempts > 0 && (
-          <div className="flex gap-3 mb-4" data-testid="contact-attempt-stats">
+          <div className="flex flex-wrap gap-1.5 sm:gap-3 mb-4" data-testid="contact-attempt-stats">
             {callCount > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                <Phone className="w-3 h-3" /> {callCount} {callCount === 1 ? "call" : "calls"}
+              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 text-blue-700 rounded-full text-[11px] sm:text-xs font-medium">
+                <Phone className="w-3 h-3" /> {callCount}
               </div>
             )}
             {textCount > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium">
-                <MessageCircle className="w-3 h-3" /> {textCount} {textCount === 1 ? "text" : "texts"}
+              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-[11px] sm:text-xs font-medium">
+                <MessageCircle className="w-3 h-3" /> {textCount}
               </div>
             )}
             {emailCount > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-medium">
-                <Send className="w-3 h-3" /> {emailCount} {emailCount === 1 ? "email" : "emails"}
+              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-violet-50 text-violet-700 rounded-full text-[11px] sm:text-xs font-medium">
+                <Send className="w-3 h-3" /> {emailCount}
               </div>
             )}
             {meetingCount > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                <Users className="w-3 h-3" /> {meetingCount} {meetingCount === 1 ? "meeting" : "meetings"}
+              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-green-50 text-green-700 rounded-full text-[11px] sm:text-xs font-medium">
+                <Users className="w-3 h-3" /> {meetingCount}
               </div>
             )}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium" data-testid="text-total-attempts">
-              {totalAttempts} total {totalAttempts === 1 ? "attempt" : "attempts"}
+            <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-100 text-gray-600 rounded-full text-[11px] sm:text-xs font-medium" data-testid="text-total-attempts">
+              {totalAttempts} total
             </div>
           </div>
         )}
@@ -4251,29 +4254,37 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         </div>
 
         <div className="mb-4">
-          <Label className="text-sm font-medium text-gray-700 mb-1 block">Move to Stage</Label>
-          <div className="flex flex-wrap gap-1.5">
+          <Label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Move to Stage</Label>
+          <div className="flex flex-wrap gap-1">
             {PIPELINE_STAGES.map(s => (
               <button key={s.key} onClick={() => { moveStage(selectedContact, s.key); setSelectedContact({ ...selectedContact, stage: s.key }); }}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${selectedContact.stage === s.key ? s.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
+                className={`px-2 sm:px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${selectedContact.stage === s.key ? s.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
                 data-testid={`button-stage-${s.key}`}>{s.label}</button>
             ))}
           </div>
         </div>
 
-        <Card className="border-gray-100 mb-6">
-          <CardHeader className="pb-3"><CardTitle className="text-sm font-medium">Log Activity</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
+        <Card className="border-gray-100 mb-4 sm:mb-6">
+          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6"><CardTitle className="text-sm font-medium">Log Activity</CardTitle></CardHeader>
+          <CardContent className="space-y-2.5 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
+            <AnimatePresence>
+              {activityJustLogged && (
+                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium" data-testid="activity-success-banner">
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" /> Activity logged!
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
               {ACTIVITY_TYPES.map(a => (
                 <button key={a.key} onClick={() => setNewActivity(p => ({ ...p, type: a.key }))}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${newActivity.type === a.key ? "bg-stone-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                  data-testid={`button-activity-type-${a.key}`}><a.icon className="w-3 h-3" /> {a.label}</button>
+                  className={`flex items-center justify-center sm:justify-start gap-1 px-2 sm:px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${newActivity.type === a.key ? "bg-stone-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  data-testid={`button-activity-type-${a.key}`}><a.icon className="w-3 h-3" /> <span className="hidden sm:inline">{a.label}</span><span className="sm:hidden">{a.label.split(" ").pop()}</span></button>
               ))}
             </div>
             <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
-              placeholder="What happened? Quick notes..." className="h-20 text-sm" data-testid="input-activity-note" />
-            <div className="flex items-center gap-3">
+              placeholder="What happened? Quick notes..." className="h-16 sm:h-20 text-sm" data-testid="input-activity-note" />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <div className="flex-1">
                 <Label className="text-[11px] text-gray-500 mb-1 block">Schedule next follow-up</Label>
                 <Select value={String(newActivity.followUpDays)} onValueChange={v => setNewActivity(p => ({ ...p, followUpDays: parseInt(v) }))}>
@@ -4285,11 +4296,9 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   </SelectContent>
                 </Select>
               </div>
-              <div className="pt-4">
-                <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Log Activity
-                </Button>
-              </div>
+              <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white w-full sm:w-auto sm:mt-4" data-testid="button-log-activity">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Log Activity
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -4413,149 +4422,183 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
     );
   }
 
+  const [showActions, setShowActions] = useState(false);
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-pipeline-back">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
+        <div className="flex items-center gap-2 min-w-0">
+          <Button variant="ghost" size="sm" className="h-8 px-2 flex-shrink-0" onClick={onBack} data-testid="button-pipeline-back">
+            <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h1 className="font-serif text-xl font-semibold" data-testid="text-pipeline-title">Book of Business</h1>
+          <h1 className="font-serif text-lg sm:text-xl font-semibold truncate" data-testid="text-pipeline-title">Book of Business</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={importLeads} data-testid="button-import-leads">
-            <ArrowRight className="w-3 h-3 mr-1" /> Import Leads
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowImportCsv(true)} data-testid="button-import-csv">
-            <Upload className="w-3 h-3 mr-1" /> Import CSV
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={exportCsv} data-testid="button-export-csv">
-            <FileSpreadsheet className="w-3 h-3 mr-1" /> Export CSV
-          </Button>
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={importLeads} data-testid="button-import-leads">
+              <ArrowRight className="w-3 h-3 mr-1" /> Import Leads
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowImportCsv(true)} data-testid="button-import-csv">
+              <Upload className="w-3 h-3 mr-1" /> Import CSV
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 text-xs" onClick={exportCsv} data-testid="button-export-csv">
+              <FileSpreadsheet className="w-3 h-3 mr-1" /> Export CSV
+            </Button>
+          </div>
+          <div className="relative sm:hidden">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setShowActions(!showActions)} data-testid="button-more-actions">
+              <Plus className={`w-4 h-4 transition-transform ${showActions ? "rotate-45" : ""}`} />
+            </Button>
+            <AnimatePresence>
+              {showActions && (
+                <motion.div initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  className="absolute right-0 top-10 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-40 w-48" data-testid="mobile-actions-menu">
+                  <button onClick={() => { importLeads(); setShowActions(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" data-testid="button-import-leads-mobile">
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-400" /> Import Leads
+                  </button>
+                  <button onClick={() => { setShowImportCsv(true); setShowActions(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" data-testid="button-import-csv-mobile">
+                    <Upload className="w-3.5 h-3.5 text-gray-400" /> Import CSV
+                  </button>
+                  <button onClick={() => { exportCsv(); setShowActions(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2" data-testid="button-export-csv-mobile">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-gray-400" /> Export CSV
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", estimatedValue: "", nextFollowUp: "" }); }} data-testid="button-add-contact">
-            <Plus className="w-3.5 h-3.5 mr-1" /> Add Contact
+            <Plus className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Add Contact</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-5">
-        <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
-          {(["all", "portraits", "spaces"] as const).map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === f ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
-              data-testid={`filter-${f}`}>{f === "all" ? "All" : f === "portraits" ? "Portraits" : "Spaces"}</button>
-          ))}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-5">
+        <div className="flex items-center gap-2">
+          <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
+            {(["all", "portraits", "spaces"] as const).map(f => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filter === f ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                data-testid={`filter-${f}`}>{f === "all" ? "All" : f === "portraits" ? "Portraits" : "Spaces"}</button>
+            ))}
+          </div>
+          <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5 sm:ml-auto sm:order-last">
+            <button onClick={() => setViewMode("board")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "board" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-board">Board</button>
+            <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-list">List</button>
+          </div>
         </div>
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative flex-1 sm:max-w-xs">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search contacts..."
             className="h-8 text-xs pl-8" data-testid="input-pipeline-search" />
         </div>
-        <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5 ml-auto">
-          <button onClick={() => setViewMode("board")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "board" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-board">Board</button>
-          <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-list">List</button>
-        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <div className="bg-white rounded-lg border border-gray-100 p-3" data-testid="stat-total-contacts">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Contacts</p>
-          <p className="text-2xl font-semibold text-gray-900">{filteredContacts.length}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
+        <div className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3" data-testid="stat-total-contacts">
+          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Contacts</p>
+          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{filteredContacts.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-3" data-testid="stat-pipeline-value">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Pipeline Value</p>
-          <p className="text-2xl font-semibold text-gray-900">${totalValue.toLocaleString()}</p>
+        <div className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3" data-testid="stat-pipeline-value">
+          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Value</p>
+          <p className="text-xl sm:text-2xl font-semibold text-gray-900">${totalValue.toLocaleString()}</p>
         </div>
-        <div className={`rounded-lg border p-3 ${followUpsDue > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Follow-ups Due</p>
-          <p className={`text-2xl font-semibold ${followUpsDue > 0 ? "text-red-600" : "text-gray-900"}`}>{followUpsDue}</p>
+        <div className={`rounded-lg border p-2.5 sm:p-3 ${followUpsDue > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
+          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Due</p>
+          <p className={`text-xl sm:text-2xl font-semibold ${followUpsDue > 0 ? "text-red-600" : "text-gray-900"}`}>{followUpsDue}</p>
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : viewMode === "board" ? (
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4">
+        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory sm:snap-none">
           {PIPELINE_STAGES.map(stage => {
             const stageContacts = getStageContacts(stage.key);
             return (
-              <div key={stage.key} className="min-w-[240px] max-w-[280px] flex-shrink-0" data-testid={`pipeline-column-${stage.key}`}
+              <div key={stage.key} className="min-w-[200px] sm:min-w-[240px] max-w-[280px] flex-shrink-0 snap-start" data-testid={`pipeline-column-${stage.key}`}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
                   const cid = e.dataTransfer.getData("contactId");
                   if (cid) moveStage(contacts.find(c => c.id === cid)!, stage.key);
                 }}>
-                <div className="flex items-center gap-2 mb-2.5 px-1">
+                <div className="flex items-center gap-2 mb-2 px-1">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
                   <span className="text-[10px] text-gray-400">{stageContacts.length}</span>
                 </div>
                 <div className="space-y-2">
                   {stageContacts.map(c => (
                     <div key={c.id} draggable onDragStart={e => e.dataTransfer.setData("contactId", c.id)}
-                      className="bg-white rounded-lg border border-gray-100 p-3 cursor-pointer hover:shadow-sm hover:border-gray-200 transition-all group"
+                      className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3 cursor-pointer hover:shadow-sm hover:border-gray-200 transition-all active:scale-[0.98]"
                       onClick={() => openDetail(c)} data-testid={`contact-card-${c.id}`}>
                       <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
                       {c.email && <p className="text-[10px] text-gray-400 truncate">{c.email}</p>}
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-1.5">
                         {c.category === "spaces" && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">Spaces</span>}
                         {c.estimatedValue && <span className="text-[10px] text-green-600 font-medium">${c.estimatedValue}</span>}
                         {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
                       </div>
-                      <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="text-[10px] text-gray-400 hover:text-gray-700 px-1.5 py-0.5 rounded bg-gray-50" data-testid={`button-edit-card-${c.id}`}>Edit</button>
-                        <button onClick={e => { e.stopPropagation(); handleDelete(c.id); }} className="text-[10px] text-red-400 hover:text-red-600 px-1.5 py-0.5 rounded bg-gray-50" data-testid={`button-delete-card-${c.id}`}>Delete</button>
-                      </div>
                     </div>
                   ))}
-                  {stageContacts.length === 0 && <div className="text-center py-8 text-[10px] text-gray-300 border border-dashed border-gray-200 rounded-lg">No contacts</div>}
+                  {stageContacts.length === 0 && <div className="text-center py-6 text-[10px] text-gray-300 border border-dashed border-gray-200 rounded-lg">No contacts</div>}
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-100 overflow-hidden">
-          <table className="w-full text-sm" data-testid="pipeline-list-table">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Name</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Contact</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Stage</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Category</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Value</th>
-                <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Follow-up</th>
-                <th className="text-right px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContacts.map(c => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer" onClick={() => openDetail(c)} data-testid={`pipeline-row-${c.id}`}>
-                  <td className="px-3 py-2.5 font-medium text-gray-900">{c.name}</td>
-                  <td className="px-3 py-2.5 text-gray-500">{c.email || c.phone || "—"}</td>
-                  <td className="px-3 py-2.5"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span></td>
-                  <td className="px-3 py-2.5 text-gray-500 capitalize">{c.category}</td>
-                  <td className="px-3 py-2.5 text-gray-700">{c.estimatedValue ? `$${c.estimatedValue}` : "—"}</td>
-                  <td className="px-3 py-2.5">
-                    {c.nextFollowUp ? (
-                      <span className={`text-xs ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                        {new Date(c.nextFollowUp).toLocaleDateString()}
-                      </span>
-                    ) : "—"}
-                  </td>
-                  <td className="px-3 py-2.5 text-right">
-                    <button onClick={e => { e.stopPropagation(); openEdit(c); }} className="text-xs text-gray-400 hover:text-gray-700 mr-2" data-testid={`button-list-edit-${c.id}`}>Edit</button>
-                    <button onClick={e => { e.stopPropagation(); handleDelete(c.id); }} className="text-xs text-red-400 hover:text-red-600" data-testid={`button-list-delete-${c.id}`}>Delete</button>
-                  </td>
+        <div className="space-y-0">
+          <div className="hidden sm:block bg-white rounded-lg border border-gray-100 overflow-hidden">
+            <table className="w-full text-sm table-fixed" data-testid="pipeline-list-table">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase w-[30%]">Name</th>
+                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase w-[20%]">Stage</th>
+                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Category</th>
+                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Value</th>
+                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase hidden md:table-cell">Follow-up</th>
                 </tr>
-              ))}
-              {filteredContacts.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">No contacts found</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredContacts.map(c => (
+                  <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer" onClick={() => openDetail(c)} data-testid={`pipeline-row-${c.id}`}>
+                    <td className="px-3 py-2.5 font-medium text-gray-900 truncate" title={c.name}>{c.name}</td>
+                    <td className="px-3 py-2.5"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span></td>
+                    <td className="px-3 py-2.5 text-gray-500 capitalize">{c.category}</td>
+                    <td className="px-3 py-2.5 text-gray-700">{c.estimatedValue ? `$${c.estimatedValue}` : "—"}</td>
+                    <td className="px-3 py-2.5 hidden md:table-cell">
+                      {c.nextFollowUp ? (
+                        <span className={`text-xs ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                          {new Date(c.nextFollowUp).toLocaleDateString()}
+                        </span>
+                      ) : "—"}
+                    </td>
+                  </tr>
+                ))}
+                {filteredContacts.length === 0 && (
+                  <tr><td colSpan={5} className="text-center py-12 text-gray-400">No contacts found</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="sm:hidden space-y-2" data-testid="pipeline-list-mobile">
+            {filteredContacts.map(c => (
+              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-3 cursor-pointer active:scale-[0.98] transition-transform"
+                onClick={() => openDetail(c)} data-testid={`pipeline-row-${c.id}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-gray-900 truncate flex-1">{c.name}</p>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-400">
+                  {c.email && <span className="truncate">{c.email}</span>}
+                  {c.estimatedValue && <span className="text-green-600 font-medium flex-shrink-0">${c.estimatedValue}</span>}
+                  {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-red-500 font-medium flex-shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
+                </div>
+              </div>
+            ))}
+            {filteredContacts.length === 0 && <p className="text-center py-12 text-gray-400 text-sm">No contacts found</p>}
+          </div>
         </div>
       )}
-
       <AnimatePresence>
         {showForm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setShowForm(false); setEditingContact(null); }}>
