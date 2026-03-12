@@ -32,6 +32,8 @@ import {
   ArrowUpDown,
   BadgeCheck,
   Sparkles,
+  ChevronDown,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -1007,6 +1009,8 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                           </div>
                         </div>
 
+                        <CancellationPolicy />
+
                         <Button
                           onClick={() => bookMutation.mutate()}
                           disabled={bookMutation.isPending || !bookingDate || !bookingStartTime}
@@ -1031,6 +1035,60 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function CancellationPolicy() {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white overflow-hidden" data-testid="cancellation-policy">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+        data-testid="button-toggle-cancellation-policy"
+      >
+        <span className="flex items-center gap-1.5 text-xs font-medium text-foreground/70">
+          <Shield className="w-3.5 h-3.5" />
+          Cancellation Policy
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-foreground/40 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-3 space-y-2">
+              <ul className="space-y-1.5">
+                <li className="flex items-start gap-2 text-[11px] text-foreground/60">
+                  <Check className="w-3 h-3 mt-0.5 text-emerald-500 flex-shrink-0" />
+                  <span>Full refund if canceled 24+ hours before booking</span>
+                </li>
+                <li className="flex items-start gap-2 text-[11px] text-foreground/60">
+                  <X className="w-3 h-3 mt-0.5 text-red-400 flex-shrink-0" />
+                  <span>Cancellations within 24 hours are non-refundable</span>
+                </li>
+                <li className="flex items-start gap-2 text-[11px] text-foreground/60">
+                  <X className="w-3 h-3 mt-0.5 text-red-400 flex-shrink-0" />
+                  <span>No-shows are non-refundable</span>
+                </li>
+                <li className="flex items-start gap-2 text-[11px] text-foreground/60">
+                  <X className="w-3 h-3 mt-0.5 text-red-400 flex-shrink-0" />
+                  <span>Service fees may not be refunded</span>
+                </li>
+              </ul>
+              <div className="border-t border-stone-100 pt-2">
+                <p className="text-[10px] text-foreground/40">Refunds are processed automatically to your original payment method. Processing may take 3–5 business days.</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 

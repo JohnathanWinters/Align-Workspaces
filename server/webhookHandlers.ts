@@ -27,7 +27,12 @@ export class WebhookHandlers {
           const bookingId = session.metadata.bookingId;
           const booking = await storage.getSpaceBookingById(bookingId);
 
-          await storage.updateSpaceBooking(bookingId, { paymentStatus: "paid", status: "approved" });
+          const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
+          await storage.updateSpaceBooking(bookingId, {
+            paymentStatus: "paid",
+            status: "approved",
+            ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
+          });
 
           const guestName = session.metadata.guestName || booking?.userName || "Guest";
           const bookingDate = session.metadata.bookingDate || booking?.bookingDate || "";

@@ -2738,6 +2738,37 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid status" });
       }
 
+      let refundResult: { refunded: boolean; amount?: number; reason?: string } = { refunded: false };
+
+      if (status === "cancelled" && booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
+        try {
+          const stripe = getUncachableStripeClient();
+          const bookingDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+          const hoursUntilBooking = (bookingDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+
+          if (hoursUntilBooking >= 24) {
+            const refund = await stripe.refunds.create({
+              payment_intent: booking.stripePaymentIntentId,
+            });
+            const refundedAmount = refund.amount;
+            await storage.updateSpaceBooking(booking.id, {
+              refundStatus: "refunded",
+              refundAmount: refundedAmount,
+              paymentStatus: "refunded",
+            });
+            refundResult = { refunded: true, amount: refundedAmount, reason: "Cancelled 24+ hours before booking" };
+          } else {
+            await storage.updateSpaceBooking(booking.id, {
+              refundStatus: "non_refundable",
+            });
+            refundResult = { refunded: false, reason: "Cancelled within 24 hours — non-refundable per cancellation policy" };
+          }
+        } catch (refundErr: any) {
+          console.error("Refund error:", refundErr.message);
+          refundResult = { refunded: false, reason: "Refund processing failed — please contact support" };
+        }
+      }
+
       const updated = await storage.updateSpaceBookingStatus(booking.id, status);
 
       const statusLabels: Record<string, string> = { approved: "approved", rejected: "declined", cancelled: "cancelled" };
@@ -2747,11 +2778,31 @@ export async function registerRoutes(
         senderId: "system",
         senderName: "System",
         senderRole: space?.userId === userId ? "host" : "guest",
-        message: `${actorName} ${statusLabels[status]} this booking request.`,
+        message: `${actorName} ${statusLabels[status]} this booking.`,
         messageType: "system",
       });
 
-      res.json(updated);
+      if (status === "cancelled" && refundResult.refunded) {
+        await storage.createSpaceMessage({
+          spaceBookingId: booking.id,
+          senderId: "system",
+          senderName: "System",
+          senderRole: "system",
+          message: `Full refund of $${((refundResult.amount || 0) / 100).toFixed(2)} issued. Refunds are processed automatically to your original payment method and may take 3–5 business days.`,
+          messageType: "system",
+        });
+      } else if (status === "cancelled" && booking.paymentStatus === "paid" && !refundResult.refunded) {
+        await storage.createSpaceMessage({
+          spaceBookingId: booking.id,
+          senderId: "system",
+          senderName: "System",
+          senderRole: "system",
+          message: refundResult.reason || "This cancellation is non-refundable per the cancellation policy.",
+          messageType: "system",
+        });
+      }
+
+      res.json({ ...updated, refundResult });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

@@ -245,6 +245,7 @@ function ConversationView({
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDesc, setPaymentDesc] = useState("");
   const [showReschedule, setShowReschedule] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [rescheduleHours, setRescheduleHours] = useState(booking.bookingHours || 1);
@@ -399,43 +400,102 @@ function ConversationView({
         </div>
 
         {booking.bookingDate && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <div className="bg-stone-50 rounded-lg p-3 flex items-center gap-3" data-testid="booking-info-card">
-              <div className="w-10 h-10 rounded-lg bg-gray-900 text-white flex flex-col items-center justify-center flex-shrink-0">
-                <span className="text-[10px] font-medium leading-none">
-                  {(() => { try { return new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { month: "short" }); } catch { return ""; } })()}
-                </span>
-                <span className="text-sm font-bold leading-none">
-                  {(() => { try { return new Date(booking.bookingDate + "T12:00:00").getDate(); } catch { return ""; } })()}
-                </span>
+          <>
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="bg-stone-50 rounded-lg p-3 flex items-center gap-3" data-testid="booking-info-card">
+                <div className="w-10 h-10 rounded-lg bg-gray-900 text-white flex flex-col items-center justify-center flex-shrink-0">
+                  <span className="text-[10px] font-medium leading-none">
+                    {(() => { try { return new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { month: "short" }); } catch { return ""; } })()}
+                  </span>
+                  <span className="text-sm font-bold leading-none">
+                    {(() => { try { return new Date(booking.bookingDate + "T12:00:00").getDate(); } catch { return ""; } })()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">
+                    {(() => { try { return new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }); } catch { return booking.bookingDate; } })()}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {booking.bookingStartTime ? (() => {
+                      const [h, m] = booking.bookingStartTime.split(":").map(Number);
+                      const period = h >= 12 ? "PM" : "AM";
+                      const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                      const timeStr = m === 0 ? `${hour12} ${period}` : `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+                      return `${timeStr} · `;
+                    })() : ""}
+                    {booking.bookingHours} hour{booking.bookingHours > 1 ? "s" : ""}
+                    {booking.paymentAmount ? ` · $${(booking.paymentAmount / 100).toFixed(2)} paid` : ""}
+                  </p>
+                </div>
+                {booking.status === "approved" && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => setShowReschedule(!showReschedule)}
+                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors"
+                      data-testid="button-reschedule"
+                    >
+                      Reschedule
+                    </button>
+                    <button
+                      onClick={() => setShowCancelConfirm(!showCancelConfirm)}
+                      className="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
+                      data-testid="button-cancel-booking"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
-                  {(() => { try { return new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }); } catch { return booking.bookingDate; } })()}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {booking.bookingStartTime ? (() => {
-                    const [h, m] = booking.bookingStartTime.split(":").map(Number);
-                    const period = h >= 12 ? "PM" : "AM";
-                    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                    const timeStr = m === 0 ? `${hour12} ${period}` : `${hour12}:${String(m).padStart(2, "0")} ${period}`;
-                    return `${timeStr} · `;
-                  })() : ""}
-                  {booking.bookingHours} hour{booking.bookingHours > 1 ? "s" : ""}
-                  {booking.paymentAmount ? ` · $${(booking.paymentAmount / 100).toFixed(2)} paid` : ""}
-                </p>
-              </div>
-              {booking.status === "approved" && (
-                <button
-                  onClick={() => setShowReschedule(!showReschedule)}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
-                  data-testid="button-reschedule"
-                >
-                  Reschedule
-                </button>
-              )}
             </div>
-          </div>
+
+            {showCancelConfirm && booking.status === "approved" && (
+              <div className="mt-3 pt-3 border-t border-gray-100 space-y-2" data-testid="cancel-confirm-panel">
+                {(() => {
+                  const bookingDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+                  const hoursUntil = (bookingDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+                  const isRefundable = hoursUntil >= 24;
+                  return (
+                    <>
+                      <div className={`rounded-lg p-3 text-xs space-y-1.5 ${isRefundable ? "bg-emerald-50 border border-emerald-200" : "bg-amber-50 border border-amber-200"}`}>
+                        <p className={`font-medium ${isRefundable ? "text-emerald-800" : "text-amber-800"}`}>
+                          {isRefundable ? "You're eligible for a full refund" : "This cancellation is non-refundable"}
+                        </p>
+                        <p className={`${isRefundable ? "text-emerald-600" : "text-amber-600"}`}>
+                          {isRefundable
+                            ? "Your booking is 24+ hours away. You'll receive a full refund to your original payment method within 3–5 business days."
+                            : "Your booking is within 24 hours. Per our cancellation policy, this cancellation is non-refundable."
+                          }
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShowCancelConfirm(false)}
+                          className="text-xs"
+                        >
+                          Keep Booking
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            statusMutation.mutate("cancelled");
+                            setShowCancelConfirm(false);
+                          }}
+                          disabled={statusMutation.isPending}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs flex-1"
+                          data-testid="button-confirm-cancel"
+                        >
+                          {statusMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                          {isRefundable ? "Cancel & Refund" : "Cancel Anyway"}
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </>
         )}
 
         {showReschedule && (
