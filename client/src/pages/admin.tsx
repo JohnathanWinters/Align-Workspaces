@@ -3795,25 +3795,64 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                   <div className="h-64">
                     <div className="flex items-end gap-[2px] h-full">
                       {data.daily.map((d: any, i: number) => {
+                        const prev = data.daily[i - 1];
                         const maxViews = Math.max(...data.daily.map((x: any) => x.views), 1);
-                        const height = (d.views / maxViews) * 100;
+                        const viewsHeight = (d.views / maxViews) * 100;
+                        const visitorsHeight = (d.visitors / maxViews) * 100;
+                        const isUp = !prev || d.views >= prev.views;
                         const date = new Date(d.date + "T12:00:00");
                         const label = `${date.getMonth() + 1}/${date.getDate()}`;
+                        const bodyBottom = Math.min(viewsHeight, visitorsHeight);
+                        const bodyTop = Math.max(viewsHeight, visitorsHeight);
+                        const bodyHeight = Math.max(bodyTop - bodyBottom, 2);
                         return (
                           <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
                             <div className="absolute -top-8 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                               {label}: {d.views} views, {d.visitors} visitors
                             </div>
-                            <div
-                              className="w-full bg-[#c4956a]/70 hover:bg-[#c4956a] rounded-t-sm transition-colors min-h-[2px]"
-                              style={{ height: `${Math.max(height, 1)}%` }}
-                            />
+                            <div className="relative flex flex-col items-center justify-end" style={{ height: `${Math.max(viewsHeight, 1)}%` }}>
+                              <div
+                                className="w-[2px] absolute top-0 left-1/2 -translate-x-1/2"
+                                style={{
+                                  height: `${Math.max(viewsHeight - bodyTop, 0)}%`,
+                                  backgroundColor: isUp ? "#c4956a" : "#9ca3af",
+                                }}
+                              />
+                              <div
+                                className="w-full rounded-sm transition-colors"
+                                style={{
+                                  height: `${bodyHeight}%`,
+                                  minHeight: "4px",
+                                  backgroundColor: isUp ? "#c4956a" : "#d1d5db",
+                                  border: `1px solid ${isUp ? "#b38456" : "#9ca3af"}`,
+                                }}
+                              />
+                              {bodyBottom > 1 && (
+                                <div
+                                  className="w-[2px] absolute bottom-0 left-1/2 -translate-x-1/2"
+                                  style={{
+                                    height: `${bodyBottom}%`,
+                                    backgroundColor: isUp ? "#c4956a" : "#9ca3af",
+                                  }}
+                                />
+                              )}
+                            </div>
                             {(i === 0 || i === data.daily.length - 1 || i % Math.ceil(data.daily.length / 7) === 0) && (
                               <span className="text-[9px] text-gray-400 mt-1 leading-none">{label}</span>
                             )}
                           </div>
                         );
                       })}
+                    </div>
+                    <div className="flex items-center gap-4 mt-3 justify-end">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-sm bg-[#c4956a] border border-[#b38456]" />
+                        <span className="text-[10px] text-gray-500">Up from previous day</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-sm bg-[#d1d5db] border border-[#9ca3af]" />
+                        <span className="text-[10px] text-gray-500">Down from previous day</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
