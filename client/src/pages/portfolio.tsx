@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star } from "lucide-react";
+import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
@@ -184,6 +184,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
 export default function PortfolioPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<PortfolioPhoto | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<"people" | "spaces">("people");
 
   useEffect(() => {
     document.title = "Portfolio | Miami Personal Branding Photography | Align";
@@ -192,6 +193,8 @@ export default function PortfolioPage() {
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
     queryKey: ["/api/portfolio-photos"],
   });
+
+  const filteredPhotos = photos?.filter(p => (p.category || "people") === activeCategory) || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,15 +261,46 @@ export default function PortfolioPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-portfolio-title">
-            First Impressions
+            {activeCategory === "people" ? "First Impressions" : "Our Spaces"}
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-portfolio-desc">
-            Each of these sessions was designed around one question: How should clients feel before the first conversation begins?
+            {activeCategory === "people"
+              ? "Each of these sessions was designed around one question: How should clients feel before the first conversation begins?"
+              : "Creative spaces where vision meets atmosphere. Browse locations featured in our work."}
           </p>
         </motion.div>
+
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex bg-stone-100 rounded-full p-1 gap-1" data-testid="toggle-portfolio-category">
+            <button
+              onClick={() => setActiveCategory("people")}
+              data-testid="toggle-category-people"
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                activeCategory === "people"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              People
+            </button>
+            <button
+              onClick={() => setActiveCategory("spaces")}
+              data-testid="toggle-category-spaces"
+              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                activeCategory === "spaces"
+                  ? "bg-white text-stone-900 shadow-sm"
+                  : "text-stone-500 hover:text-stone-700"
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              Spaces
+            </button>
+          </div>
+        </div>
 
         {isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -276,17 +310,29 @@ export default function PortfolioPage() {
           </div>
         )}
 
-        {!isLoading && photos && photos.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" data-testid="portfolio-full-grid">
-            {photos.map((photo, index) => (
-              <PortfolioCard key={photo.id} photo={photo} index={index} onPhotoClick={setSelectedPhoto} />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {!isLoading && filteredPhotos.length > 0 && (
+            <motion.div
+              key={activeCategory}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+              data-testid="portfolio-full-grid"
+            >
+              {filteredPhotos.map((photo, index) => (
+                <PortfolioCard key={photo.id} photo={photo} index={index} onPhotoClick={setSelectedPhoto} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {!isLoading && (!photos || photos.length === 0) && (
+        {!isLoading && filteredPhotos.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-muted-foreground">Portfolio coming soon.</p>
+            <p className="text-muted-foreground">
+              {activeCategory === "spaces" ? "Space photos coming soon." : "Portfolio coming soon."}
+            </p>
           </div>
         )}
       </div>

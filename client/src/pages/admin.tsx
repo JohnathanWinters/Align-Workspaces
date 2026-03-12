@@ -2569,6 +2569,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
 interface PortfolioPhoto {
   id: string;
   imageUrl: string;
+  category: string;
   environments: string[];
   brandMessages: string[];
   emotionalImpacts: string[];
@@ -2583,13 +2584,15 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState<PortfolioPhoto | null>(null);
+  const [adminCategory, setAdminCategory] = useState<"people" | "spaces">("people");
   const [tagForm, setTagForm] = useState<{
     environments: string[];
     brandMessages: string[];
     emotionalImpacts: string[];
     colorPalette: Array<{ hex: string; keyword: string }>;
     locationSpaceId: string | null;
-  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null });
+    category: string;
+  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, category: "people" });
   const [newColorHex, setNewColorHex] = useState("#8B7355");
   const [newColorKeyword, setNewColorKeyword] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -2622,6 +2625,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       fd.append("brandMessages", JSON.stringify([]));
       fd.append("emotionalImpacts", JSON.stringify([]));
       fd.append("colorPalette", JSON.stringify([]));
+      fd.append("category", adminCategory);
       try {
         const res = await adminFetch("/api/admin/portfolio/upload", { method: "POST", body: fd });
         if (!res.ok) throw new Error("Upload failed");
@@ -2654,6 +2658,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       emotionalImpacts: photo.emotionalImpacts || [],
       colorPalette: photo.colorPalette || [],
       locationSpaceId: photo.locationSpaceId || null,
+      category: photo.category || "people",
     });
   };
 
@@ -2709,15 +2714,17 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   const brandLabels: Record<string, string> = { assured: "Welcoming", empathy: "Warm", confidence: "Confident", motivation: "Motivated" };
   const moodLabels: Record<string, string> = { cozy: "Comfortable", bright: "Inspired", powerful: "Reassured", cinematic: "Cinematic" };
 
+  const filteredAdminPhotos = photos.filter(p => (p.category || "people") === adminCategory);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-portfolio-back">
             <ChevronLeft className="w-4 h-4 mr-1" /> Back
           </Button>
           <h1 className="font-serif text-xl font-semibold" data-testid="text-portfolio-title">Portfolio / Our Work</h1>
-          <Badge variant="secondary" className="text-xs">{photos.length} photos</Badge>
+          <Badge variant="secondary" className="text-xs">{filteredAdminPhotos.length} photos</Badge>
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -2741,18 +2748,47 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
         </div>
       </div>
 
+      <div className="flex justify-center mb-6">
+        <div className="inline-flex bg-stone-100 rounded-full p-1 gap-1" data-testid="admin-toggle-portfolio-category">
+          <button
+            onClick={() => setAdminCategory("people")}
+            data-testid="admin-toggle-category-people"
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              adminCategory === "people"
+                ? "bg-white text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            People
+          </button>
+          <button
+            onClick={() => setAdminCategory("spaces")}
+            data-testid="admin-toggle-category-spaces"
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              adminCategory === "spaces"
+                ? "bg-white text-stone-900 shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            Spaces
+          </button>
+        </div>
+      </div>
+
       {loading ? (
         <div className="text-center py-20 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
-      ) : photos.length === 0 ? (
+      ) : filteredAdminPhotos.length === 0 ? (
         <div className="text-center py-20">
           <Images className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">No portfolio photos yet</p>
-          <p className="text-gray-400 text-sm">Upload photos to showcase your work</p>
+          <p className="text-gray-500 mb-2">No {adminCategory} photos yet</p>
+          <p className="text-gray-400 text-sm">Upload photos to showcase your {adminCategory}</p>
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {photos.map(photo => (
+            {filteredAdminPhotos.map(photo => (
               <div key={photo.id} className="group relative rounded-lg overflow-hidden bg-stone-100 aspect-[3/4]" data-testid={`card-portfolio-${photo.id}`}>
                 <img
                   src={photo.imageUrl}
@@ -2814,6 +2850,30 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Category</Label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setTagForm(prev => ({ ...prev, category: "people" }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        tagForm.category === "people" ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                      data-testid="tag-category-people"
+                    >
+                      People
+                    </button>
+                    <button
+                      onClick={() => setTagForm(prev => ({ ...prev, category: "spaces" }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        tagForm.category === "spaces" ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                      data-testid="tag-category-spaces"
+                    >
+                      Spaces
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Environment</Label>
                   <p className="text-xs text-gray-400 mb-2">Where was this shot taken?</p>

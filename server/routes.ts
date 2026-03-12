@@ -303,7 +303,7 @@ export async function registerRoutes(
 
   app.get("/api/portfolio-photos", async (req, res) => {
     try {
-      const { environment, brandMessage, emotionalImpact } = req.query;
+      const { environment, brandMessage, emotionalImpact, category } = req.query;
       if (environment && brandMessage && emotionalImpact) {
         const photos = await storage.getPortfolioPhotosByTags(
           environment as string,
@@ -312,7 +312,10 @@ export async function registerRoutes(
         );
         res.json(photos);
       } else {
-        const photos = await storage.getPortfolioPhotos();
+        let photos = await storage.getPortfolioPhotos();
+        if (category) {
+          photos = photos.filter(p => p.category === category);
+        }
         res.json(photos);
       }
     } catch {
@@ -353,12 +356,14 @@ export async function registerRoutes(
       const brandMessages = JSON.parse(req.body.brandMessages || "[]");
       const emotionalImpacts = JSON.parse(req.body.emotionalImpacts || "[]");
       const colorPalette = JSON.parse(req.body.colorPalette || "[]");
+      const category = req.body.category || "people";
       const photo = await storage.createPortfolioPhoto({
         imageUrl,
         environments,
         brandMessages,
         emotionalImpacts,
         colorPalette,
+        category,
       });
       res.json(photo);
     } catch (err: any) {
@@ -368,14 +373,16 @@ export async function registerRoutes(
 
   app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
     try {
-      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId } = req.body;
-      const photo = await storage.updatePortfolioPhoto(req.params.id, {
+      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category } = req.body;
+      const updates: any = {
         environments,
         brandMessages,
         emotionalImpacts,
         colorPalette,
         locationSpaceId: locationSpaceId || null,
-      });
+      };
+      if (category) updates.category = category;
+      const photo = await storage.updatePortfolioPhoto(req.params.id, updates);
       res.json(photo);
     } catch (err: any) {
       res.status(500).json({ message: err.message });

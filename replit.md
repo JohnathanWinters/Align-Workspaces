@@ -51,6 +51,7 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Booking Flow**: Users select date/time, duration, see fee breakdown, and complete payment via Stripe Checkout. Auto-approval and Google Calendar event creation on successful payment.
 - **Cancellation Policy**: Full refund if cancelled 24+ hours before booking; non-refundable within 24 hours.
 - **Reschedule Flow**: Either party can propose a reschedule from chat, creating a request that the other party can accept or decline.
+- **Portfolio Categories**: `portfolio_photos.category` field (`people` or `spaces`) enables a People/Spaces toggle on the `/portfolio` page. Admin panel includes category filtering, category-aware uploads, and category editing per photo.
 - **Portfolio-Space Link**: `portfolio_photos.location_space_id` links photos to spaces, allowing users to view photos taken at a specific space.
 - **Photo Management**: Supports batched multi-file uploads, drag-and-drop, drag-to-reorder, and individual photo deletion.
 

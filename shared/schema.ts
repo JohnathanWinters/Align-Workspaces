@@ -40,6 +40,7 @@ export type ColorSwatch = z.infer<typeof colorSwatchSchema>;
 export const portfolioPhotos = pgTable("portfolio_photos", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   imageUrl: text("image_url").notNull(),
+  category: varchar("category", { length: 20 }).notNull().default("people"),
   environments: text("environments").array().notNull(),
   brandMessages: text("brand_messages").array().notNull(),
   emotionalImpacts: text("emotional_impacts").array().notNull(),
