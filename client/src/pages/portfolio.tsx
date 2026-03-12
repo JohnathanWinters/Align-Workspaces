@@ -335,6 +335,59 @@ export default function PortfolioPage() {
             </p>
           </div>
         )}
+
+        <motion.div
+          key={`cta-${activeCategory}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-16 mb-4"
+        >
+          {activeCategory === "people" ? (
+            <div className="text-center bg-stone-50 rounded-2xl px-6 py-12 sm:py-16" data-testid="cta-people-portfolio">
+              <h2 className="font-serif text-2xl sm:text-3xl mb-3">Ready to Create Your Own?</h2>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
+                Design a portrait session tailored to your brand. Our builder walks you through every detail — from setting to style.
+              </p>
+              <Link href="/portraits/builder">
+                <button
+                  data-testid="button-cta-builder"
+                  className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-8 py-3.5 rounded-full hover:bg-stone-800 transition-all duration-300 font-medium"
+                >
+                  <Camera className="w-4 h-4" />
+                  Start Your Session
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div className="text-center bg-stone-50 rounded-2xl px-6 py-12 sm:py-16" data-testid="cta-spaces-portfolio">
+              <h2 className="font-serif text-2xl sm:text-3xl mb-3">Find or List a Space</h2>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
+                Discover creative workspaces for your next session, or share your own space with the Align community.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link href="/browse">
+                  <button
+                    data-testid="button-cta-browse-spaces"
+                    className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-8 py-3.5 rounded-full hover:bg-stone-800 transition-all duration-300 font-medium"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Explore Spaces
+                  </button>
+                </Link>
+                <Link href="/portal">
+                  <button
+                    data-testid="button-cta-list-space"
+                    className="inline-flex items-center gap-2 text-sm tracking-widest uppercase border border-stone-300 text-stone-700 px-8 py-3.5 rounded-full hover:bg-stone-100 transition-all duration-300 font-medium"
+                  >
+                    <Building2 className="w-4 h-4" />
+                    List Your Space
+                  </button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </motion.div>
       </div>
 
       <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />

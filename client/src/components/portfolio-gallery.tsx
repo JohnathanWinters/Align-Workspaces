@@ -99,7 +99,8 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
       });
       const res = await fetch(`/api/portfolio-photos?${params}`);
       if (!res.ok) throw new Error("Failed to fetch photos");
-      return res.json();
+      const photos = await res.json();
+      return photos.filter((p: PortfolioPhoto) => (p.category || "people") === "people");
     },
     enabled: !!environment && !!brandMessage && !!emotionalImpact,
   });
@@ -107,9 +108,9 @@ export function PortfolioGallery({ environment, brandMessage, emotionalImpact }:
   const hasMatches = matchedPhotos && matchedPhotos.length > 0;
 
   const { data: allPhotos, isLoading: allLoading } = useQuery<PortfolioPhoto[]>({
-    queryKey: ["/api/portfolio-photos"],
+    queryKey: ["/api/portfolio-photos", "people"],
     queryFn: async () => {
-      const res = await fetch("/api/portfolio-photos");
+      const res = await fetch("/api/portfolio-photos?category=people");
       if (!res.ok) throw new Error("Failed to fetch photos");
       return res.json();
     },

@@ -147,7 +147,12 @@ export function PortfolioSection() {
   const [selectedPhoto, setSelectedPhoto] = useState<PortfolioPhoto | null>(null);
 
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
-    queryKey: ["/api/portfolio-photos"],
+    queryKey: ["/api/portfolio-photos", "people"],
+    queryFn: async () => {
+      const res = await fetch("/api/portfolio-photos?category=people");
+      if (!res.ok) throw new Error("Failed to fetch photos");
+      return res.json();
+    },
   });
 
   if (isLoading) {
