@@ -371,6 +371,19 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/portfolio/reorder", isAdmin, async (req, res) => {
+    try {
+      const { orderedIds } = req.body;
+      if (!Array.isArray(orderedIds)) return res.status(400).json({ message: "orderedIds array required" });
+      for (let i = 0; i < orderedIds.length; i++) {
+        await storage.updatePortfolioPhoto(orderedIds[i], { displayOrder: i } as any);
+      }
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
     try {
       const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category } = req.body;

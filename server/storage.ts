@@ -1,6 +1,6 @@
 import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages } from "@shared/schema";
 import { db } from "./db";
-import { sql, eq, desc, and, isNull, ne, ilike } from "drizzle-orm";
+import { sql, eq, desc, asc, and, isNull, ne, ilike } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -117,7 +117,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPortfolioPhotos(): Promise<PortfolioPhoto[]> {
-    return db.select().from(portfolioPhotos);
+    return db.select().from(portfolioPhotos).orderBy(asc(portfolioPhotos.displayOrder), asc(portfolioPhotos.createdAt));
   }
 
   async getPortfolioPhotosByTags(environment: string, brandMessage: string, emotionalImpact: string): Promise<PortfolioPhoto[]> {

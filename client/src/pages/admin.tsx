@@ -2599,6 +2599,8 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   const [eyedropperOpen, setEyedropperOpen] = useState(false);
   const [eyedropperHover, setEyedropperHover] = useState<string | null>(null);
   const eyedropperCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [portfolioDragIdx, setPortfolioDragIdx] = useState<number | null>(null);
+  const [portfolioDragOverIdx, setPortfolioDragOverIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [availableSpaces, setAvailableSpaces] = useState<Array<{ id: string; name: string; neighborhood: string | null }>>([]);
 
@@ -2755,6 +2757,26 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     }
   };
 
+  const handlePortfolioDrop = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const reordered = [...filteredAdminPhotos];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    setPhotos(prev => {
+      const otherCategory = prev.filter(p => (p.category || "people") !== adminCategory);
+      return [...otherCategory, ...reordered];
+    });
+    try {
+      await adminFetch("/api/admin/portfolio/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: reordered.map(p => p.id) }),
+      });
+    } catch {
+      loadPhotos();
+    }
+  };
+
   const envOptions = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym", "kitchen"];
   const brandOptions = ["assured", "empathy", "confidence", "motivation"];
   const moodOptions = ["cozy", "bright", "powerful"];
@@ -2835,13 +2857,26 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
         </div>
       ) : (
         <div className="space-y-6">
+          <p className="text-[10px] text-gray-400 mb-2">Drag photos to reorder. Order is preserved on the live site.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {filteredAdminPhotos.map(photo => (
-              <div key={photo.id} className="group relative rounded-lg overflow-hidden bg-stone-100 aspect-[3/4]" data-testid={`card-portfolio-${photo.id}`}>
+            {filteredAdminPhotos.map((photo, idx) => (
+              <div
+                key={photo.id}
+                draggable
+                onDragStart={() => setPortfolioDragIdx(idx)}
+                onDragOver={e => { e.preventDefault(); setPortfolioDragOverIdx(idx); }}
+                onDragLeave={() => setPortfolioDragOverIdx(null)}
+                onDrop={e => { e.preventDefault(); if (portfolioDragIdx !== null) handlePortfolioDrop(portfolioDragIdx, idx); setPortfolioDragIdx(null); setPortfolioDragOverIdx(null); }}
+                onDragEnd={() => { setPortfolioDragIdx(null); setPortfolioDragOverIdx(null); }}
+                className={`group relative rounded-lg overflow-hidden bg-stone-100 aspect-[3/4] cursor-grab active:cursor-grabbing transition-all ${
+                  portfolioDragIdx === idx ? "opacity-40 scale-95" : ""
+                } ${portfolioDragOverIdx === idx && portfolioDragIdx !== null && portfolioDragIdx !== idx ? "ring-2 ring-[#c4956a] scale-105" : ""}`}
+                data-testid={`card-portfolio-${photo.id}`}
+              >
                 <img
                   src={photo.imageUrl}
                   alt="Portfolio"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover pointer-events-none"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end opacity-0 group-hover:opacity-100">
