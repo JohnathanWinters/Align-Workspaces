@@ -103,6 +103,11 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    if (req.isAuthenticated() && !req.query.switch) {
+      const returnTo = (req.query.returnTo as string) || "/portal";
+      return res.redirect(returnTo);
+    }
+
     const returnTo = req.query.returnTo as string;
     if (returnTo && returnTo.startsWith("/")) {
       (req.session as any).returnTo = returnTo;
@@ -110,6 +115,7 @@ export async function setupAuth(app: Express) {
     ensureStrategy(req.hostname);
     passport.authenticate(`replitauth:${req.hostname}`, {
       scope: ["openid", "email", "profile", "offline_access"],
+      prompt: "login",
     })(req, res, next);
   });
 

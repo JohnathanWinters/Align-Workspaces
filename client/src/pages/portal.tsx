@@ -1712,23 +1712,39 @@ function PortalContent() {
             <span className="hidden sm:inline">Back</span>
           </button>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
-          <div className="flex items-center gap-3">
-            <Avatar className="w-7 h-7" data-testid="img-user-avatar">
-              {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} alt={user?.firstName || "User"} />}
-              <AvatarFallback className="bg-gray-100 text-gray-500">
-                <User className="w-3.5 h-3.5" />
-              </AvatarFallback>
-            </Avatar>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => logout()}
-              disabled={isLoggingOut}
-              data-testid="button-logout"
-              className="text-foreground/50 hover:text-foreground p-1"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mr-1">
+              <Avatar className="w-7 h-7" data-testid="img-user-avatar">
+                {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} alt={user?.firstName || "User"} />}
+                <AvatarFallback className="bg-gray-100 text-gray-500">
+                  <User className="w-3.5 h-3.5" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden sm:block text-xs text-foreground/50 max-w-[120px] truncate" data-testid="text-user-email">
+                {user?.firstName || user?.email || ""}
+              </span>
+            </div>
+            <div className="flex items-center border-l border-stone-200 pl-2 gap-1">
+              <button
+                onClick={() => { window.location.href = "/api/login?switch=1&returnTo=/portal"; }}
+                data-testid="button-switch-account"
+                className="text-[10px] text-foreground/40 hover:text-foreground transition-colors px-1.5 py-1"
+                title="Switch account"
+              >
+                Switch
+              </button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => logout()}
+                disabled={isLoggingOut}
+                data-testid="button-logout"
+                className="text-foreground/40 hover:text-foreground p-1 h-7"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
