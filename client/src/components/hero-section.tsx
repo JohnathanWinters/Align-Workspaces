@@ -154,13 +154,14 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             transition={{ duration: 0.8, delay: 1.1 }}
             className="mt-5 sm:mt-10 flex flex-col items-center gap-3"
           >
-            <button
-              onClick={onStart}
-              data-testid="button-start-configurator"
-              className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-white text-black px-8 py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
-            >
-              Begin Your Session
-            </button>
+            <Link href="/portraits/builder">
+              <button
+                data-testid="button-start-configurator"
+                className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-white text-black px-8 py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
+              >
+                Begin Your Session
+              </button>
+            </Link>
             <Link href="/featured">
               <button
                 data-testid="button-featured-hero"
