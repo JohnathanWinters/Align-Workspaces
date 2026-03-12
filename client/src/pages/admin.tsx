@@ -43,6 +43,7 @@ import {
   Building2,
   CheckCircle,
   XCircle,
+  BarChart3,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -3682,6 +3683,230 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   );
 }
 
+function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(30);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminFetch(`/api/admin/analytics?days=${days}`, token);
+      if (res.ok) setData(await res.json());
+    } catch {} finally {
+      setLoading(false);
+    }
+  }, [token, days]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const formatDuration = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  const pageLabel = (path: string) => {
+    const labels: Record<string, string> = {
+      "/": "Home",
+      "/portraits": "Build My Photo",
+      "/portfolio": "Portfolio",
+      "/about": "Photographers",
+      "/portal": "Client Portal",
+      "/featured": "Featured",
+      "/spaces": "Spaces Landing",
+      "/spaces/browse": "Browse Spaces",
+    };
+    return labels[path] || path;
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onBack}
+              data-testid="button-analytics-back"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </button>
+            <p className="font-serif text-lg text-gray-900" data-testid="text-analytics-title">Analytics</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {[7, 14, 30, 90].map((d) => (
+              <button
+                key={d}
+                onClick={() => setDays(d)}
+                data-testid={`button-analytics-${d}d`}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                  days === d ? "bg-[#1a1a1a] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : !data ? (
+          <p className="text-center text-gray-500 py-20">No analytics data available yet.</p>
+        ) : (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card className="bg-white border-gray-100">
+                <CardContent className="pt-6">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider">Page Views</p>
+                  <p className="text-3xl font-serif text-gray-900 mt-1" data-testid="text-total-views">{data.totalViews.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400 mt-1">Last {days} days</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white border-gray-100">
+                <CardContent className="pt-6">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider">Unique Visitors</p>
+                  <p className="text-3xl font-serif text-gray-900 mt-1" data-testid="text-unique-visitors">{data.uniqueVisitors.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400 mt-1">Last {days} days</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white border-gray-100">
+                <CardContent className="pt-6">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider">Avg. Time on Page</p>
+                  <p className="text-3xl font-serif text-gray-900 mt-1" data-testid="text-avg-duration">{formatDuration(data.avgDuration)}</p>
+                  <p className="text-xs text-gray-400 mt-1">Per page view</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {data.daily.length > 0 && (
+              <Card className="bg-white border-gray-100">
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-gray-700">Daily Traffic</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <div className="flex items-end gap-[2px] h-full">
+                      {data.daily.map((d: any, i: number) => {
+                        const maxViews = Math.max(...data.daily.map((x: any) => x.views), 1);
+                        const height = (d.views / maxViews) * 100;
+                        const date = new Date(d.date + "T12:00:00");
+                        const label = `${date.getMonth() + 1}/${date.getDate()}`;
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                            <div className="absolute -top-8 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                              {label}: {d.views} views, {d.visitors} visitors
+                            </div>
+                            <div
+                              className="w-full bg-[#c4956a]/70 hover:bg-[#c4956a] rounded-t-sm transition-colors min-h-[2px]"
+                              style={{ height: `${Math.max(height, 1)}%` }}
+                            />
+                            {(i === 0 || i === data.daily.length - 1 || i % Math.ceil(data.daily.length / 7) === 0) && (
+                              <span className="text-[9px] text-gray-400 mt-1 leading-none">{label}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-white border-gray-100">
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-gray-700">Top Pages</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {data.topPages.length === 0 ? (
+                    <p className="text-sm text-gray-400">No page data yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {data.topPages.map((p: any, i: number) => {
+                        const maxCount = data.topPages[0]?.count || 1;
+                        return (
+                          <div key={i}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-gray-700 truncate max-w-[200px]" data-testid={`text-page-${i}`}>
+                                {pageLabel(p.page)}
+                              </span>
+                              <span className="text-xs text-gray-400 tabular-nums">{p.count}</span>
+                            </div>
+                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#c4956a] rounded-full transition-all"
+                                style={{ width: `${(p.count / maxCount) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="space-y-6">
+                <Card className="bg-white border-gray-100">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium text-gray-700">Devices</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {data.devices.length === 0 ? (
+                      <p className="text-sm text-gray-400">No device data yet</p>
+                    ) : (
+                      <div className="flex gap-4">
+                        {data.devices.map((d: any) => {
+                          const total = data.devices.reduce((s: number, x: any) => s + x.count, 0);
+                          const pct = Math.round((d.count / total) * 100);
+                          return (
+                            <div key={d.device} className="flex-1 text-center">
+                              <div className="text-2xl font-serif text-gray-900" data-testid={`text-device-${d.device}`}>{pct}%</div>
+                              <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 capitalize">{d.device}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white border-gray-100">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium text-gray-700">Top Referrers</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {data.topReferrers.length === 0 ? (
+                      <p className="text-sm text-gray-400">No referrer data yet</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {data.topReferrers.slice(0, 5).map((r: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600 truncate max-w-[180px]" data-testid={`text-referrer-${i}`}>{r.source}</span>
+                            <span className="text-xs text-gray-400 tabular-nums">{r.count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function EmployeeManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
@@ -3957,7 +4182,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -4205,6 +4430,10 @@ function AdminDashboard({ token }: { token: string }) {
 
   if (view === "spaces") {
     return <AdminSpacesManager token={token} onBack={() => setView("clients")} />;
+  }
+
+  if (view === "analytics") {
+    return <AnalyticsManager token={token} onBack={() => setView("clients")} />;
   }
 
   if (view === "create" || view === "edit") {
@@ -4473,6 +4702,16 @@ function AdminDashboard({ token }: { token: string }) {
             >
               <Building2 className="w-3.5 h-3.5 mr-1.5" />
               Spaces
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("analytics")}
+              data-testid="button-manage-analytics"
+              className="h-8 text-xs border-gray-200 text-gray-600"
+            >
+              <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
+              Analytics
             </Button>
           </div>
         </div>

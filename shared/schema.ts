@@ -414,3 +414,17 @@ export const insertSpaceMessageSchema = createInsertSchema(spaceMessages).omit({
 
 export type InsertSpaceMessage = z.infer<typeof insertSpaceMessageSchema>;
 export type SpaceMessage = typeof spaceMessages.$inferSelect;
+
+export const pageViews = pgTable("page_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull(),
+  path: text("path").notNull(),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  country: text("country"),
+  device: text("device"),
+  duration: integer("duration").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PageView = typeof pageViews.$inferSelect;

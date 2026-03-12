@@ -1,7 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, pageViews } from "@shared/schema";
+import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification } from "./gmail";
@@ -3327,6 +3328,141 @@ ${featuredSection}
 - Portfolio: ${SITE_URL}/portfolio
 - Featured Professionals (Miami Stories): ${SITE_URL}/featured
 `);
+  });
+
+  app.post("/api/track", async (req, res) => {
+    try {
+      const { sessionId, viewId, path: pagePath, referrer } = req.body;
+      if (!sessionId || !pagePath || !viewId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const ua = req.headers["user-agent"] || "";
+      let device = "desktop";
+      if (/mobile|android|iphone|ipad/i.test(ua)) {
+        device = /ipad|tablet/i.test(ua) ? "tablet" : "mobile";
+      }
+
+      const isBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu|duckduck|slurp|ia_archiver|facebookexternalhit|twitterbot|linkedinbot|semrushbot|ahrefsbot|mj12bot|dotbot/i.test(ua);
+      if (isBot) {
+        return res.status(200).json({ ok: true });
+      }
+
+      await db.insert(pageViews).values({
+        id: viewId,
+        sessionId: String(sessionId).substring(0, 100),
+        path: String(pagePath).substring(0, 500),
+        referrer: referrer ? String(referrer).substring(0, 1000) : null,
+        userAgent: ua.substring(0, 500),
+        device,
+        duration: 0,
+      });
+
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      res.status(200).json({ ok: true });
+    }
+  });
+
+  app.post("/api/track/duration", async (req, res) => {
+    try {
+      const { viewId, duration } = req.body;
+      if (!viewId || typeof duration !== "number" || duration < 0 || duration > 86400) {
+        return res.status(200).json({ ok: true });
+      }
+
+      const { eq } = await import("drizzle-orm");
+      await db
+        .update(pageViews)
+        .set({ duration: Math.round(duration) })
+        .where(eq(pageViews.id, viewId));
+
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      res.status(200).json({ ok: true });
+    }
+  });
+
+  app.get("/api/admin/analytics", isAdmin, async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+
+      const { sql: sqlTag } = await import("drizzle-orm");
+
+      const allViews = await db
+        .select()
+        .from(pageViews)
+        .where(sqlTag`${pageViews.createdAt} >= ${since}`)
+        .orderBy(pageViews.createdAt);
+
+      const totalViews = allViews.length;
+      const uniqueSessions = new Set(allViews.map(v => v.sessionId)).size;
+
+      const pageCounts: Record<string, number> = {};
+      const dailyCounts: Record<string, { views: number; sessions: Set<string> }> = {};
+      const deviceCounts: Record<string, number> = {};
+      const referrerCounts: Record<string, number> = {};
+      const durations: number[] = [];
+
+      for (const v of allViews) {
+        pageCounts[v.path] = (pageCounts[v.path] || 0) + 1;
+
+        const day = v.createdAt ? new Date(v.createdAt).toISOString().slice(0, 10) : "unknown";
+        if (!dailyCounts[day]) dailyCounts[day] = { views: 0, sessions: new Set() };
+        dailyCounts[day].views++;
+        dailyCounts[day].sessions.add(v.sessionId);
+
+        const dev = v.device || "desktop";
+        deviceCounts[dev] = (deviceCounts[dev] || 0) + 1;
+
+        if (v.referrer) {
+          try {
+            const host = new URL(v.referrer).hostname.replace(/^www\./, "");
+            referrerCounts[host] = (referrerCounts[host] || 0) + 1;
+          } catch {
+            referrerCounts[v.referrer] = (referrerCounts[v.referrer] || 0) + 1;
+          }
+        }
+
+        if (v.duration && v.duration > 0) durations.push(v.duration);
+      }
+
+      const topPages = Object.entries(pageCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([page, count]) => ({ page, count }));
+
+      const daily = Object.entries(dailyCounts)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, data]) => ({ date, views: data.views, visitors: data.sessions.size }));
+
+      const devices = Object.entries(deviceCounts)
+        .map(([device, count]) => ({ device, count }));
+
+      const topReferrers = Object.entries(referrerCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([source, count]) => ({ source, count }));
+
+      const avgDuration = durations.length > 0
+        ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+        : 0;
+
+      res.json({
+        totalViews,
+        uniqueVisitors: uniqueSessions,
+        avgDuration,
+        topPages,
+        daily,
+        devices,
+        topReferrers,
+      });
+    } catch (err) {
+      console.error("Analytics error:", err);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
   });
 
   return httpServer;

@@ -26,7 +26,7 @@ The application uses a monorepo structure, separating the React frontend (`clien
 
 ### Backend
 - **Framework & API**: Express 5 on Node.js with TypeScript, providing a RESTful JSON API.
-- **Admin Panel**: A password-protected `/admin` panel for managing photoshoots, galleries, edit tokens, featured professionals, and portfolio photos with tagging (environments, brand messages, emotional impacts, color palette).
+- **Admin Panel**: A password-protected `/admin` panel for managing photoshoots, galleries, edit tokens, featured professionals, portfolio photos with tagging (environments, brand messages, emotional impacts, color palette), and a built-in Analytics dashboard.
 - **File Management**: `multer` for file uploads, streaming to Replit Object Storage, with temporary files cleaned post-upload. Supports image uploads up to 50MB per file, with batched processing.
 - **Notifications**: Google Mail for email notifications (bookings, collaborations, edit requests) and Web Push (VAPID) for real-time chat messages between clients and admins.
 - **Stripe Integration**: Handles checkout sessions for downpayments, edit token purchases, and space booking payments. Allows admins to create and send itemized invoices using the Stripe Invoicing API. Stripe Connect Express for host payouts on space bookings (7% renter fee + 7% host fee hybrid model).

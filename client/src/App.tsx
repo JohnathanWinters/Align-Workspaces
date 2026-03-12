@@ -13,6 +13,7 @@ import EmployeePage from "@/pages/employee";
 import FeaturedPage from "@/pages/featured";
 import AlignSpacesPage from "@/pages/align-spaces";
 import SpacesBrowsePage from "@/pages/spaces-browse";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 function BuildMyPhoto() {
   return <HomePage autoStart />;
@@ -37,12 +38,19 @@ function Router() {
   );
 }
 
+function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
+  useAnalytics();
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <AnalyticsWrapper>
+          <Toaster />
+          <Router />
+        </AnalyticsWrapper>
       </TooltipProvider>
     </QueryClientProvider>
   );
