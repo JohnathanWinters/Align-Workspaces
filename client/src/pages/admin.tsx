@@ -3710,13 +3710,13 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
   const pageLabel = (path: string) => {
     const labels: Record<string, string> = {
       "/": "Home",
-      "/portraits": "Build My Photo",
+      "/portraits": "Portraits Landing",
+      "/portraits/builder": "Build My Photo",
       "/portfolio": "Portfolio",
       "/about": "Photographers",
       "/portal": "Client Portal",
       "/featured": "Featured",
-      "/spaces": "Spaces Landing",
-      "/spaces/browse": "Browse Spaces",
+      "/browse": "Browse Spaces",
     };
     return labels[path] || path;
   };

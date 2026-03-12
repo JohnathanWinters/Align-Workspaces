@@ -146,7 +146,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.8, delay: 1.1 }}
             className="mt-8 sm:mt-10 flex flex-col items-center gap-4"
           >
-            <Link href="/spaces/browse">
+            <Link href="/browse">
               <button
                 data-testid="button-explore-spaces"
                 className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-white text-black px-8 py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"

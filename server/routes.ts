@@ -2585,7 +2585,7 @@ export async function registerRoutes(
         ],
         mode: "payment",
         success_url: `${baseUrl}/portal?space_payment=success`,
-        cancel_url: `${baseUrl}/spaces/browse?space_payment=cancelled`,
+        cancel_url: `${baseUrl}/browse?space_payment=cancelled`,
         customer_email: user.claims?.email || booking.userEmail,
         metadata: {
           type: "space_booking",
@@ -3144,6 +3144,8 @@ Sitemap: ${SITE_URL}/sitemap.xml
 
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
+      { loc: "/browse", priority: "0.9", changefreq: "daily" },
+      { loc: "/portraits", priority: "0.9", changefreq: "weekly" },
       { loc: "/portfolio", priority: "0.8", changefreq: "weekly" },
       { loc: "/featured", priority: "0.9", changefreq: "daily" },
     ];
@@ -3229,7 +3231,9 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
 - Email: ArmandoRamirezRomero89@gmail.com
 
 ## Key Pages
-- Home / Design Your Portrait: ${SITE_URL}/
+- Home / Align Spaces: ${SITE_URL}/
+- Browse Workspaces: ${SITE_URL}/browse
+- Portraits / Design Your Portrait: ${SITE_URL}/portraits
 - Portfolio: ${SITE_URL}/portfolio
 - Featured Professionals (Miami Stories): ${SITE_URL}/featured
 `);
@@ -3324,7 +3328,9 @@ ${featuredSection}
 - Hours: Monday–Sunday 8:00 AM – 8:00 PM
 
 ## Key Pages
-- Home / Design Your Portrait: ${SITE_URL}/
+- Home / Align Spaces: ${SITE_URL}/
+- Browse Workspaces: ${SITE_URL}/browse
+- Portraits / Design Your Portrait: ${SITE_URL}/portraits
 - Portfolio: ${SITE_URL}/portfolio
 - Featured Professionals (Miami Stories): ${SITE_URL}/featured
 `);

@@ -99,7 +99,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                   transition={{ duration: 0.2 }}
                   className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                 >
-                  <button onClick={() => { setLocation("/spaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
+                  <button onClick={() => { setLocation("/browse"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
                     <Building2 className="w-4 h-4" />
                     Align Spaces
                   </button>

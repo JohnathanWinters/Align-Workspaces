@@ -22,15 +22,15 @@ function BuildMyPhoto() {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/portraits" component={BuildMyPhoto} />
+      <Route path="/" component={AlignSpacesPage} />
+      <Route path="/browse" component={SpacesBrowsePage} />
+      <Route path="/portraits/builder" component={BuildMyPhoto} />
+      <Route path="/portraits" component={HomePage} />
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/portal" component={PortalPage} />
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />
-      <Route path="/spaces/browse" component={SpacesBrowsePage} />
-      <Route path="/spaces" component={AlignSpacesPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/team" component={EmployeePage} />
       <Route component={NotFound} />
