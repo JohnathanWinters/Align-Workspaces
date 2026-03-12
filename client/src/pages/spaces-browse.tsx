@@ -35,6 +35,8 @@ import {
   ChevronDown,
   Shield,
   Info,
+  CalendarDays,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -359,10 +361,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const { user, isAuthenticated } = useAuth();
   const [expanded, setExpanded] = useState(!!autoBook);
   const [showBooking, setShowBooking] = useState(!!(autoBook && isAuthenticated));
-  const [bookingDate, setBookingDate] = useState("");
-  const [bookingStartTime, setBookingStartTime] = useState("");
-  const [bookingHours, setBookingHours] = useState(1);
-  const [bookingStep, setBookingStep] = useState<"date" | "time" | "confirm">("date");
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(!!(autoBook && !isAuthenticated));
@@ -384,34 +382,18 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
     return () => clearPolling();
   }, [clearPolling]);
 
-  const basePriceCents = space.pricePerHour * 100 * bookingHours;
-  const renterFee = Math.round(basePriceCents * 0.07);
-  const totalCharge = basePriceCents + renterFee;
-
   const schedule: WeekSchedule | null = (() => {
     try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
   })();
 
   const bufferMinutes = space.bufferMinutes ?? 15;
-  const availableSlots = bookingDate && schedule ? getAvailableTimeSlots(schedule, bookingDate, bufferMinutes) : [];
-  const maxHours = bookingDate && bookingStartTime && schedule ? getMaxHoursFromSlot(schedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
-
-  const isDateAvailable = (date: Date): boolean => {
-    if (!schedule) return true;
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    const dateStr = `${yyyy}-${mm}-${dd}`;
-    const dayKey = getDayOfWeek(dateStr);
-    return dayKey ? schedule[dayKey] !== null : false;
-  };
 
   const bookMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (params: { bookingDate: string; bookingStartTime: string; bookingHours: number }) => {
       const res = await apiRequest("POST", `/api/spaces/${space.id}/book`, {
-        bookingDate,
-        bookingStartTime,
-        bookingHours,
+        bookingDate: params.bookingDate,
+        bookingStartTime: params.bookingStartTime,
+        bookingHours: params.bookingHours,
       });
       return res.json();
     },
@@ -457,7 +439,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
       return;
     }
     setShowBooking(true);
-    setExpanded(true);
   };
 
   const handleRegisterClick = () => {
@@ -905,156 +886,443 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                     </div>
                   </AnimatePresence>
                 )}
-                {showBooking && !(showAuthPrompt && !isAuthenticated) && (
-                  <div className="bg-stone-50 rounded-lg p-4 mt-2 space-y-3" data-testid={`booking-panel-${space.id}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {bookingStep !== "date" && (
-                          <button
-                            onClick={() => {
-                              if (bookingStep === "confirm") setBookingStep("time");
-                              else { setBookingStep("date"); setBookingDate(""); setBookingStartTime(""); }
-                            }}
-                            className="text-foreground/40 hover:text-foreground/60"
-                          >
-                            <ArrowLeft className="w-4 h-4" />
-                          </button>
-                        )}
-                        <p className="text-sm font-medium text-foreground">
-                          {bookingStep === "date" ? "Pick a date" : bookingStep === "time" ? "Choose a time" : "Confirm booking"}
-                        </p>
-                      </div>
-                      <button onClick={() => { setShowBooking(false); setBookingStep("date"); setBookingDate(""); setBookingStartTime(""); setBookingHours(1); }} className="text-foreground/40 hover:text-foreground/60">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {bookingStep === "date" && (
-                      <div className="flex justify-center">
-                        <Calendar
-                          mode="single"
-                          selected={bookingDate ? new Date(bookingDate + "T12:00:00") : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              const yyyy = date.getFullYear();
-                              const mm = String(date.getMonth() + 1).padStart(2, "0");
-                              const dd = String(date.getDate()).padStart(2, "0");
-                              setBookingDate(`${yyyy}-${mm}-${dd}`);
-                              setBookingStartTime("");
-                              setBookingHours(1);
-                              setBookingStep("time");
-                            }
-                          }}
-                          disabled={(date) => {
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            if (date < today) return true;
-                            return !isDateAvailable(date);
-                          }}
-                          className="rounded-lg border border-stone-200 bg-white"
-                          data-testid={`calendar-${space.id}`}
-                        />
-                      </div>
-                    )}
-
-                    {bookingStep === "time" && (
-                      <div className="space-y-3">
-                        <p className="text-xs text-foreground/50">
-                          {new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                        </p>
-                        <div>
-                          <label className="text-[11px] text-foreground/50 mb-2 block">Start time</label>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {availableSlots.map((slot) => (
-                              <button
-                                key={slot}
-                                onClick={() => { setBookingStartTime(slot); setBookingHours(1); setBookingStep("confirm"); }}
-                                className={`px-2 py-2 rounded-lg text-xs font-medium transition-colors ${
-                                  bookingStartTime === slot
-                                    ? "bg-gray-900 text-white"
-                                    : "bg-white border border-stone-200 text-foreground/70 hover:border-gray-400"
-                                }`}
-                                data-testid={`time-slot-${slot}-${space.id}`}
-                              >
-                                {formatTime(slot)}
-                              </button>
-                            ))}
-                          </div>
-                          {availableSlots.length === 0 && (
-                            <p className="text-xs text-foreground/40 text-center py-4">No available time slots for this date.</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {bookingStep === "confirm" && (
-                      <div className="space-y-3">
-                        <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-foreground/70">Date</span>
-                            <span className="font-medium">{new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-foreground/70">Time</span>
-                            <span className="font-medium">{formatTime(bookingStartTime)}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-foreground/70">Duration</span>
-                            <div className="flex items-center gap-2">
-                              <select
-                                value={bookingHours}
-                                onChange={(e) => setBookingHours(parseInt(e.target.value))}
-                                className="h-7 rounded-md border border-input bg-white px-2 text-xs"
-                                data-testid={`select-booking-hours-${space.id}`}
-                              >
-                                {Array.from({ length: maxHours }, (_, i) => i + 1).map((h) => (
-                                  <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-white rounded-lg p-3 border border-stone-200 space-y-1.5">
-                          <div className="flex justify-between text-xs text-foreground/60">
-                            <span>${space.pricePerHour}/hr x {bookingHours} hour{bookingHours > 1 ? "s" : ""}</span>
-                            <span>${(basePriceCents / 100).toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between text-xs text-foreground/60">
-                            <span>Service fee (7%)</span>
-                            <span>${(renterFee / 100).toFixed(2)}</span>
-                          </div>
-                          <div className="border-t border-stone-200 pt-1.5 flex justify-between text-sm font-medium text-foreground">
-                            <span>Total</span>
-                            <span>${(totalCharge / 100).toFixed(2)}</span>
-                          </div>
-                        </div>
-
-                        <CancellationPolicy />
-
-                        <Button
-                          onClick={() => bookMutation.mutate()}
-                          disabled={bookMutation.isPending || !bookingDate || !bookingStartTime}
-                          className="w-full bg-foreground text-background hover:opacity-90"
-                          data-testid={`button-submit-booking-${space.id}`}
-                        >
-                          {bookMutation.isPending ? (
-                            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
-                          ) : (
-                            <>Book &amp; Pay ${(totalCharge / 100).toFixed(2)}</>
-                          )}
-                        </Button>
-                        <p className="text-[10px] text-foreground/40 text-center">Secure payment via Stripe. You can message the host in your portal.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                
               </div>
             </motion.div>
           )}
         </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showBooking && isAuthenticated && (
+          <BookingPopup
+            space={space}
+            onClose={() => setShowBooking(false)}
+            schedule={schedule}
+            bufferMinutes={bufferMinutes}
+            bookMutation={bookMutation}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function StepCheckmark({ onComplete }: { onComplete: () => void }) {
+  return (
+    <motion.div
+      className="flex items-center justify-center py-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      onAnimationComplete={() => {
+        setTimeout(onComplete, 400);
+      }}
+    >
+      <motion.div
+        className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center"
+        initial={{ scale: 0 }}
+        animate={{ scale: [0, 1.2, 1] }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <motion.div
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ delay: 0.15, duration: 0.3 }}
+        >
+          <Check className="w-8 h-8 text-emerald-500" strokeWidth={3} />
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function AnimatedPrice({ value, prefix = "$" }: { value: number; prefix?: string }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const target = value;
+    const duration = 600;
+    const steps = 20;
+    const increment = target / steps;
+    let current = 0;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      current = Math.min(current + increment, target);
+      setDisplay(current);
+      if (step >= steps) { clearInterval(timer); setDisplay(target); }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [value]);
+  return <span>{prefix}{(display / 100).toFixed(2)}</span>;
+}
+
+function BookingPopup({
+  space,
+  onClose,
+  schedule,
+  bufferMinutes,
+  bookMutation,
+}: {
+  space: Space;
+  onClose: () => void;
+  schedule: WeekSchedule | null;
+  bufferMinutes: number;
+  bookMutation: any;
+}) {
+  const [step, setStep] = useState<"date" | "date-check" | "time" | "time-check" | "confirm">("date");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingStartTime, setBookingStartTime] = useState("");
+  const [bookingHours, setBookingHours] = useState(1);
+  const [direction, setDirection] = useState(1);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const availableSlots = bookingDate && schedule ? getAvailableTimeSlots(schedule, bookingDate, bufferMinutes) : [];
+  const maxHours = bookingDate && bookingStartTime && schedule ? getMaxHoursFromSlot(schedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
+  const basePriceCents = space.pricePerHour * 100 * bookingHours;
+  const renterFee = Math.round(basePriceCents * 0.07);
+  const totalCharge = basePriceCents + renterFee;
+
+  const isDateAvailable = (date: Date): boolean => {
+    if (!schedule) return true;
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const dayKey = getDayOfWeek(dateStr);
+    return dayKey ? schedule[dayKey] !== null : false;
+  };
+
+  const stepIndex = step === "date" || step === "date-check" ? 0 : step === "time" || step === "time-check" ? 1 : 2;
+  const steps = [
+    { label: "Date", icon: CalendarDays },
+    { label: "Time", icon: Clock },
+    { label: "Confirm", icon: CreditCard },
+  ];
+
+  const goBack = () => {
+    setDirection(-1);
+    if (step === "time") { setStep("date"); setBookingDate(""); setBookingStartTime(""); }
+    else if (step === "confirm") { setStep("time"); setBookingStartTime(""); }
+  };
+
+  const slideVariants = {
+    enter: (d: number) => ({ x: d > 0 ? 80 : -80, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (d: number) => ({ x: d > 0 ? -80 : 80, opacity: 0 }),
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      data-testid={`booking-popup-${space.id}`}
+    >
+      <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <motion.div
+        className="relative bg-white w-full sm:w-[440px] sm:rounded-2xl rounded-t-2xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col"
+        initial={{ y: 100, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 100, opacity: 0, scale: 0.95 }}
+        transition={{ type: "spring", damping: 28, stiffness: 350 }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="relative h-28 sm:h-32 overflow-hidden flex-shrink-0">
+          {space.imageUrls && space.imageUrls[0] ? (
+            <img src={space.imageUrls[0]} alt={space.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-stone-200 to-stone-100" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            data-testid="button-close-booking-popup"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-3 left-4 right-4">
+            <h3 className="text-white font-serif text-lg font-semibold truncate">{space.name}</h3>
+            <p className="text-white/70 text-xs flex items-center gap-1.5">
+              <MapPin className="w-3 h-3" /> {space.neighborhood || space.address}
+              <span className="mx-1">·</span>
+              <span className="text-white font-medium">${space.pricePerHour}/hr</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="px-5 pt-4 pb-2 flex-shrink-0">
+          <div className="flex items-center justify-between mb-1">
+            {steps.map((s, i) => (
+              <div key={i} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <motion.div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ${
+                      i < stepIndex ? "bg-emerald-500 text-white" :
+                      i === stepIndex ? "bg-[#c4956a] text-white shadow-lg shadow-[#c4956a]/30" :
+                      "bg-stone-100 text-stone-400"
+                    }`}
+                    animate={i === stepIndex ? { scale: [1, 1.1, 1] } : {}}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {i < stepIndex ? <Check className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
+                  </motion.div>
+                  <span className={`text-[10px] mt-1 font-medium ${i <= stepIndex ? "text-foreground/70" : "text-foreground/30"}`}>{s.label}</span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="flex-1 h-0.5 mx-1 mb-5 rounded-full overflow-hidden bg-stone-100">
+                    <motion.div
+                      className="h-full bg-emerald-500 rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: i < stepIndex ? "100%" : "0%" }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 pb-5">
+          <AnimatePresence mode="wait" custom={direction}>
+            {step === "date" && (
+              <motion.div
+                key="date"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="space-y-3"
+              >
+                <p className="text-sm font-medium text-foreground/80 text-center">When would you like to visit?</p>
+                <div className="flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={bookingDate ? new Date(bookingDate + "T12:00:00") : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const yyyy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, "0");
+                        const dd = String(date.getDate()).padStart(2, "0");
+                        setBookingDate(`${yyyy}-${mm}-${dd}`);
+                        setBookingStartTime("");
+                        setBookingHours(1);
+                        setDirection(1);
+                        setStep("date-check");
+                      }
+                    }}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      if (date < today) return true;
+                      return !isDateAvailable(date);
+                    }}
+                    className="rounded-xl border border-stone-200 bg-white shadow-sm"
+                    data-testid={`popup-calendar-${space.id}`}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {step === "date-check" && (
+              <motion.div key="date-check" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <StepCheckmark onComplete={() => setStep("time")} />
+              </motion.div>
+            )}
+
+            {step === "time" && (
+              <motion.div
+                key="time"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="space-y-4"
+              >
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground/80">Pick your start time</p>
+                  <motion.p
+                    className="text-xs text-[#c4956a] font-medium mt-1"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                  </motion.p>
+                </div>
+                {availableSlots.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableSlots.map((slot, i) => (
+                      <motion.button
+                        key={slot}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.2 }}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => {
+                          setBookingStartTime(slot);
+                          setBookingHours(1);
+                          setDirection(1);
+                          setStep("time-check");
+                        }}
+                        className={`relative px-3 py-3 rounded-xl text-sm font-medium transition-all border-2 ${
+                          bookingStartTime === slot
+                            ? "border-[#c4956a] bg-[#c4956a]/5 text-[#c4956a] shadow-md shadow-[#c4956a]/10"
+                            : "border-stone-200 bg-white text-foreground/70 hover:border-stone-300 hover:shadow-sm"
+                        }`}
+                        data-testid={`popup-time-slot-${slot}-${space.id}`}
+                      >
+                        {formatTime(slot)}
+                      </motion.button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-foreground/40">No available slots for this date</p>
+                    <Button variant="outline" size="sm" className="mt-3" onClick={() => { setDirection(-1); setStep("date"); setBookingDate(""); }}>
+                      Pick another date
+                    </Button>
+                  </div>
+                )}
+                <button
+                  onClick={goBack}
+                  className="flex items-center gap-1 text-xs text-foreground/40 hover:text-foreground/60 transition-colors mx-auto"
+                  data-testid="button-booking-back-to-date"
+                >
+                  <ArrowLeft className="w-3 h-3" /> Change date
+                </button>
+              </motion.div>
+            )}
+
+            {step === "time-check" && (
+              <motion.div key="time-check" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <StepCheckmark onComplete={() => setStep("confirm")} />
+              </motion.div>
+            )}
+
+            {step === "confirm" && (
+              <motion.div
+                key="confirm"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="space-y-4"
+              >
+                <p className="text-sm font-medium text-foreground/80 text-center">Review your booking</p>
+
+                <motion.div
+                  className="bg-stone-50 rounded-xl p-4 space-y-3 border border-stone-100"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-foreground/70">
+                      <CalendarDays className="w-4 h-4 text-[#c4956a]" />
+                      <span>Date</span>
+                    </div>
+                    <span className="text-sm font-semibold">{new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-foreground/70">
+                      <Clock className="w-4 h-4 text-[#c4956a]" />
+                      <span>Time</span>
+                    </div>
+                    <span className="text-sm font-semibold">{formatTime(bookingStartTime)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-foreground/70">
+                      <Users className="w-4 h-4 text-[#c4956a]" />
+                      <span>Duration</span>
+                    </div>
+                    <select
+                      value={bookingHours}
+                      onChange={(e) => setBookingHours(parseInt(e.target.value))}
+                      className="h-8 rounded-lg border border-stone-200 bg-white px-3 text-sm font-semibold text-foreground focus:border-[#c4956a] focus:ring-1 focus:ring-[#c4956a]/30 outline-none"
+                      data-testid={`popup-select-hours-${space.id}`}
+                    >
+                      {Array.from({ length: maxHours }, (_, i) => i + 1).map((h) => (
+                        <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="bg-white rounded-xl p-4 border border-stone-200 space-y-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="flex justify-between text-sm text-foreground/60">
+                    <span>${space.pricePerHour}/hr x {bookingHours} hr{bookingHours > 1 ? "s" : ""}</span>
+                    <AnimatedPrice value={basePriceCents} />
+                  </div>
+                  <div className="flex justify-between text-sm text-foreground/60">
+                    <span>Service fee (7%)</span>
+                    <AnimatedPrice value={renterFee} />
+                  </div>
+                  <div className="border-t border-stone-200 pt-2 flex justify-between text-base font-bold text-foreground">
+                    <span>Total</span>
+                    <motion.span
+                      key={totalCharge}
+                      initial={{ scale: 1.15, color: "#c4956a" }}
+                      animate={{ scale: 1, color: "#1a1a1a" }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <AnimatedPrice value={totalCharge} />
+                    </motion.span>
+                  </div>
+                </motion.div>
+
+                <CancellationPolicy />
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={goBack}
+                    className="px-4 py-3 rounded-xl border border-stone-200 text-sm font-medium text-foreground/60 hover:bg-stone-50 transition-colors"
+                    data-testid="button-booking-back-to-time"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => bookMutation.mutate({ bookingDate, bookingStartTime, bookingHours })}
+                    disabled={bookMutation.isPending}
+                    className="flex-1 py-3 rounded-xl bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    data-testid={`popup-submit-booking-${space.id}`}
+                  >
+                    {bookMutation.isPending ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                    ) : (
+                      <>
+                        <CreditCard className="w-4 h-4" />
+                        Book & Pay ${(totalCharge / 100).toFixed(2)}
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+                <p className="text-[10px] text-foreground/35 text-center">Secure payment via Stripe</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
