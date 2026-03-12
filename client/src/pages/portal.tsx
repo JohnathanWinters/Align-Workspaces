@@ -458,10 +458,9 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
           ) : (
             <div className="space-y-3">
               {photos.map(photo => {
-                const originalSrc = photo.imageUrl.startsWith("/") ? photo.imageUrl : `/objects/${photo.imageUrl}`;
-                const finishedSrc = photo.finishedImageUrl
-                  ? (photo.finishedImageUrl.startsWith("/") ? photo.finishedImageUrl : `/objects/${photo.finishedImageUrl}`)
-                  : null;
+                const resolveSrc = (url: string) => url.startsWith("/") || url.startsWith("http") ? url : `/objects/${url}`;
+                const originalSrc = resolveSrc(photo.imageUrl);
+                const finishedSrc = photo.finishedImageUrl ? resolveSrc(photo.finishedImageUrl) : null;
                 return (
                   <div key={photo.id} data-testid={`edit-photo-${photo.id}`}>
                     {finishedSrc ? (
@@ -536,7 +535,7 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
             <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
               <button
                 onClick={() => {
-                  const src = lightboxPhoto.imageUrl.startsWith("/") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`;
+                  const src = lightboxPhoto.imageUrl.startsWith("/") || lightboxPhoto.imageUrl.startsWith("http") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`;
                   const a = document.createElement("a");
                   a.href = src;
                   a.download = lightboxPhoto.originalFilename || "photo.jpg";
@@ -556,7 +555,7 @@ function EditRequestCard({ request, getStatusBadge, defaultOpen }: { request: Ed
               </button>
             </div>
             <img
-              src={lightboxPhoto.imageUrl.startsWith("/") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`}
+              src={lightboxPhoto.imageUrl.startsWith("/") || lightboxPhoto.imageUrl.startsWith("http") ? lightboxPhoto.imageUrl : `/objects/${lightboxPhoto.imageUrl}`}
               alt={lightboxPhoto.originalFilename || "Edit request photo"}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
             />
