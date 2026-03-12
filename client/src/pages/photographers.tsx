@@ -4,12 +4,13 @@ import { ArrowLeft, Camera, X, Menu, MapPin, Star, Users, Info } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
+import armandoPhoto from "@assets/14764699-b1dd-4fe8-88ff-ed19c87cc1f8_1773349252752.png";
 
 const photographers = [
   {
     name: "Armando Ramirez Romero",
     role: "Founder / Photographer",
-    image: "/images/photographer-armando.webp",
+    image: armandoPhoto,
     bio: "With over 9 years behind the lens, Armando founded Align to help professionals share the story behind their business. Through both photography and technology, he's building a platform that makes it easier for professionals to showcase who they are, what they do, and why they do it.",
   },
 ];
