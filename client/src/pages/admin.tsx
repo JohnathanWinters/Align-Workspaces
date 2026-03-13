@@ -4014,7 +4014,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const { toast } = useToast();
   const [contacts, setContacts] = useState<PipelineContact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  const [viewMode, setViewMode] = useState<"board" | "list">("list");
   const [showForm, setShowForm] = useState(false);
   const [editingContact, setEditingContact] = useState<PipelineContact | null>(null);
   const [selectedContact, setSelectedContact] = useState<PipelineContact | null>(null);
@@ -4231,7 +4231,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
 
   if (selectedContact) {
     return (
-      <>
+      <div className="min-h-screen bg-[#faf9f7]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <Button variant="ghost" size="sm" className="h-8 px-2 flex-shrink-0" onClick={() => setSelectedContact(null)} data-testid="button-pipeline-detail-back">
@@ -4466,13 +4466,14 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           </motion.div>
         )}
       </AnimatePresence>
-      </>
+      </div>
     );
   }
 
   const [showActions, setShowActions] = useState(false);
 
   return (
+    <div className="min-h-screen bg-[#faf9f7]">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 min-w-0">
@@ -4779,6 +4780,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   );
 }
