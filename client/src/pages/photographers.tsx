@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, X, Menu, MapPin, Star, Users, Info } from "lucide-react";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
@@ -10,7 +10,7 @@ import { UserIndicator } from "@/components/user-indicator";
 const photographers = [
   {
     name: "Armando Ramirez Romero",
-    role: "Founder / Photographer",
+    role: "Founder",
     image: armandoPhoto,
     bio: "With over 9 years behind the lens, Armando founded Align to help professionals share the story behind their business. Through both photography and technology, he's building a platform that makes it easier for professionals to showcase who they are, what they do, and why they do it.",
   },
@@ -131,7 +131,7 @@ export default function PhotographersPage() {
                 </div>
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <Camera className="w-4 h-4 text-muted-foreground" />
+                    <Sparkles className="w-4 h-4 text-muted-foreground" />
                     <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-page-role-${index}`}>
                       {photographer.role}
                     </p>
