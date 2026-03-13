@@ -85,7 +85,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
   const { user, isAuthenticated: isLoggedIn } = useAuth();
 
   useEffect(() => {
-    document.title = "Align | Portrait Photographer in Miami for Therapists & Small Business Professionals";
+    document.title = "Align | Portrait Photographer in Miami, FL — Design Your Portrait Online";
     if (window.location.hash === "#configurator" && currentStep === 0) {
       setCurrentStep(1);
     }

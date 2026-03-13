@@ -40,7 +40,7 @@ async function geocodeAddress(address: string): Promise<{ lat: string; lng: stri
     const encoded = encodeURIComponent(cleaned);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "AlignSpaces/1.0 (alignphotodesign.com)" },
+      headers: { "User-Agent": "AlignSpaces/1.0 (alignworkspaces.com)" },
     });
     if (!res.ok) return null;
     const results = await res.json() as Array<{ lat: string; lon: string }>;
@@ -3207,7 +3207,7 @@ export async function registerRoutes(
     }
   });
 
-  const SITE_URL = "https://alignphotodesign.com";
+  const SITE_URL = "https://alignworkspaces.com";
 
   app.get("/robots.txt", (_req, res) => {
     res.type("text/plain").send(`User-agent: *
@@ -3290,8 +3290,10 @@ Sitemap: ${SITE_URL}/sitemap.xml
       { loc: "/", priority: "1.0", changefreq: "weekly" },
       { loc: "/browse", priority: "0.9", changefreq: "daily" },
       { loc: "/portraits", priority: "0.9", changefreq: "weekly" },
+      { loc: "/portraits/builder", priority: "0.8", changefreq: "monthly" },
       { loc: "/portfolio", priority: "0.8", changefreq: "weekly" },
       { loc: "/featured", priority: "0.9", changefreq: "daily" },
+      { loc: "/about", priority: "0.6", changefreq: "monthly" },
     ];
 
     const today = new Date().toISOString().split("T")[0];
@@ -3328,46 +3330,48 @@ Sitemap: ${SITE_URL}/sitemap.xml
 
   app.get("/llms.txt", (_req, res) => {
     res.set("Cache-Control", "public, max-age=86400");
-    res.type("text/plain").send(`# Align — Portrait Photographer in Miami, Florida
+    res.type("text/plain").send(`# Align Workspaces
 
-> Design your portrait photoshoot online. A storytelling platform for Miami small business owners.
+> Workspace rentals and portrait photography for independent professionals in Miami, Florida.
 
-## What Is Align?
-Align is a portrait photographer based in Miami, Florida. What makes Align different is that clients design their photoshoot online before booking. Using an interactive 6-step configurator, you choose your environment, brand message, and emotional tone — then book your session. No guesswork, no generic shoots.
+## What Is Align Workspaces?
+Align Workspaces is a platform that connects independent professionals and growing practices with bookable creative workspaces in Miami. We also offer portrait photography services through an interactive online configurator.
 
-Align is also a storytelling platform for Miami's small business community. Through the Featured Professionals directory, local business owners share their stories, mission, and work with the Miami community in an editorial magazine-style format.
+## Workspace Rentals (Align Spaces)
+Browse and book professional workspaces by the hour — therapy offices, creative studios, commercial kitchens, photo studios, and more. Spaces are verified with amenities listed upfront and secure Stripe payments.
 
-## Who We Photograph
-Small business owners and professionals in Miami, Florida:
+### Who it's for
+Independent professionals and growing practices in Miami:
 - Therapists & Counselors
 - Chefs & Culinary Professionals
 - Personal Trainers & Fitness Coaches
+- Photographers & Creatives
 - Real Estate Agents & Realtors
 - Barbers & Hairstylists
-- Lawyers & Legal Professionals
-- Entrepreneurs & Startup Founders
-- Artists & Designers
-- Electricians, Plumbers, HVAC Technicians
-- Any small business professional in Miami
+- Lawyers & Consultants
+- Entrepreneurs & Small Business Owners
+- Designers & Architects
 
-## How to Design Your Portrait
-1. Select your profession/industry
-2. Choose an environment (office, kitchen, gym, urban, nature, restaurant, studio)
-3. Define your brand message (assured, confidence, approachable, bold, warmth)
-4. Pick an emotional impact (bright, cozy, cinematic, powerful)
-5. Review your personalized concept with clothing recommendations
-6. Book your session with a 50% downpayment or request a collaboration
+### How booking works
+1. Browse available spaces by type, location, and amenities
+2. Select your preferred date, time, and duration
+3. Review the fee breakdown
+4. Complete payment securely via Stripe
+5. Booking is confirmed automatically and added to your calendar
 
-## Pricing (Miami Portrait Sessions)
-- Indoor (office, kitchen, studio): Starting at $200
-- Outdoor (urban, nature): Starting at $250
-- Premium (restaurant, gym): Starting at $300
+## Portrait Photography (Align Portraits)
+Design your portrait photoshoot online using a 6-step interactive configurator. Choose your environment, brand message, and emotional tone — then book your session.
 
-## Featured Professionals — Miami Small Business Stories
-Align profiles Miami small business owners through portrait photography and editorial storytelling. Each featured professional gets a dedicated page with their portrait, story, profession, and social links. Anyone can nominate a Miami professional to be featured.
+### Pricing
+- Indoor environments (office, kitchen, studio): from $200
+- Outdoor environments (urban, nature): from $250
+- Premium environments (restaurant, gym): from $300
+
+## Featured Professionals
+A storytelling platform for Miami small business owners. Professionals are featured with editorial-style profiles, portraits, and their story.
 
 ## Service Area
-Miami, Florida — serving all of Miami-Dade County:
+Miami, Florida — all of Miami-Dade County:
 Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Kendall, Homestead
 
 ## Contact
@@ -3377,9 +3381,11 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
 ## Key Pages
 - Home / Align Spaces: ${SITE_URL}/
 - Browse Workspaces: ${SITE_URL}/browse
-- Portraits / Design Your Portrait: ${SITE_URL}/portraits
+- Portraits: ${SITE_URL}/portraits
+- Design Your Portrait: ${SITE_URL}/portraits/builder
 - Portfolio: ${SITE_URL}/portfolio
-- Featured Professionals (Miami Stories): ${SITE_URL}/featured
+- Featured Professionals: ${SITE_URL}/featured
+- About: ${SITE_URL}/about
 `);
   });
 
@@ -3403,22 +3409,39 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
     } catch {}
 
     res.set("Cache-Control", "public, max-age=86400");
-    res.type("text/plain").send(`# Align — Portrait Photographer in Miami, Florida (Full Context)
+    res.type("text/plain").send(`# Align Workspaces — Full Context
 
-> Design your portrait photoshoot online. A storytelling platform for Miami small business owners.
+> Workspace rentals and portrait photography for independent professionals in Miami, Florida.
 
-## What Is Align?
-Align is a portrait photographer based in Miami, Florida with two core functions:
+## What Is Align Workspaces?
+Align Workspaces is a platform for independent professionals and growing practices in Miami with two core offerings:
 
-1. **Portrait Photography Service**: Clients design their photoshoot online using a 6-step interactive configurator, then book their session. No generic shoots — every portrait is designed around the client's profession, brand, and personality.
+1. **Workspace Rentals (Align Spaces)**: Browse and book professional workspaces by the hour — therapy offices, creative studios, commercial kitchens, photo studios, and more. Each space is verified with amenities listed upfront, transparent pricing, and secure Stripe payments.
 
-2. **Miami Small Business Storytelling Platform**: Through the Featured Professionals directory, Align profiles local small business owners with portrait photography and editorial storytelling, sharing their journey, mission, and work with the Miami community.
+2. **Portrait Photography (Align Portraits)**: Design your photoshoot online using a 6-step interactive configurator. Every portrait is designed around the client's profession, brand, and personality — no generic shoots.
 
-## Who We Photograph
-Small business owners and professionals in Miami, Florida:
+Align is also a storytelling platform for Miami's small business community. Through the Featured Professionals directory, local business owners share their stories, mission, and work.
+
+## Workspace Rentals
+### How booking works
+1. Browse available spaces by type, location, and amenities
+2. Select your preferred date, time, and duration
+3. Review the transparent fee breakdown
+4. Complete payment securely via Stripe
+5. Booking is confirmed automatically and added to your calendar
+
+### Cancellation policy
+Full refund if cancelled 24+ hours before booking. Non-refundable within 24 hours.
+
+### Listing your space
+Space owners can submit listings through the Client Portal. Listings go through admin approval before appearing on the marketplace. Hosts receive payouts via Stripe Connect.
+
+## Who We Serve
+Independent professionals and growing practices in Miami, Florida:
 - Therapists & Counselors
 - Chefs & Culinary Professionals
 - Personal Trainers & Fitness Coaches
+- Photographers & Creatives
 - Real Estate Agents & Realtors
 - Barbers & Hairstylists
 - Lawyers & Legal Professionals
@@ -3427,8 +3450,8 @@ Small business owners and professionals in Miami, Florida:
 - Electricians, Plumbers, HVAC Technicians
 - Any small business professional in the Miami area
 
-## How to Design Your Portrait Online
-Align's website features a 6-step interactive configurator that guides you through designing your photoshoot:
+## Portrait Photography
+### How to design your portrait online
 1. **Profession**: Select your industry (therapist, chef, trainer, tradesperson, creative, etc.)
 2. **Environment**: Choose where you want to be photographed (office, kitchen, gym, urban, nature, restaurant, studio)
 3. **Brand Message**: Define how you want to come across (assured, confident, approachable, bold, warm)
@@ -3438,14 +3461,14 @@ Align's website features a 6-step interactive configurator that guides you throu
 
 The configurator updates a visual preview gallery in real time as you make selections.
 
-## Client Portal
+### Client Portal
 After booking, clients receive access to a private portal where they can:
 - View their finished photos in a side-by-side comparison gallery
 - Purchase edit tokens for additional retouching
 - Chat directly with their photographer
 - Download their final images
 
-## Pricing (Miami Portrait Sessions)
+### Pricing
 - Indoor environments (office, kitchen, studio): Starting at $200
 - Outdoor environments (urban, nature): Starting at $250
 - Premium environments (restaurant, gym): Starting at $300
@@ -3453,7 +3476,7 @@ After booking, clients receive access to a private portal where they can:
 - 50% downpayment required at booking, remainder due at session
 
 ## Featured Professionals Platform
-Align's Featured Professionals is more than a client gallery — it's a storytelling platform for Miami's small business community. Each featured professional receives:
+A storytelling platform for Miami's small business community. Each featured professional receives:
 - A dedicated editorial-style profile page
 - Professional portrait photography
 - A written story about their work, mission, and impact

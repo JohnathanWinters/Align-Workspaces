@@ -4,4 +4,4 @@ Disallow: /admin
 Disallow: /portal
 Disallow: /api/
 
-Sitemap: https://alignphotodesign.com/sitemap.xml
+Sitemap: https://alignworkspaces.com/sitemap.xml

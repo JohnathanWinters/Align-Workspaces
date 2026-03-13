@@ -1,17 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://alignphotodesign.com/</loc>
+    <loc>https://alignworkspaces.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://alignphotodesign.com/portfolio</loc>
+    <loc>https://alignworkspaces.com/browse</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://alignworkspaces.com/portraits</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://alignworkspaces.com/portraits/builder</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://alignworkspaces.com/featured</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://alignphotodesign.com/about</loc>
+    <loc>https://alignworkspaces.com/portfolio</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://alignworkspaces.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
