@@ -981,20 +981,30 @@ function BookingPopup({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const availableSlots = bookingDate && schedule ? getAvailableTimeSlots(schedule, bookingDate, bufferMinutes) : [];
-  const maxHours = bookingDate && bookingStartTime && schedule ? getMaxHoursFromSlot(schedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
+  const DEFAULT_SCHEDULE: WeekSchedule = {
+    mon: { open: "09:00", close: "17:00" },
+    tue: { open: "09:00", close: "17:00" },
+    wed: { open: "09:00", close: "17:00" },
+    thu: { open: "09:00", close: "17:00" },
+    fri: { open: "09:00", close: "17:00" },
+    sat: { open: "10:00", close: "15:00" },
+    sun: null,
+  };
+  const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
+
+  const availableSlots = bookingDate ? getAvailableTimeSlots(effectiveSchedule, bookingDate, bufferMinutes) : [];
+  const maxHours = bookingDate && bookingStartTime ? getMaxHoursFromSlot(effectiveSchedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
   const basePriceCents = space.pricePerHour * 100 * bookingHours;
   const renterFee = Math.round(basePriceCents * 0.07);
   const totalCharge = basePriceCents + renterFee;
 
   const isDateAvailable = (date: Date): boolean => {
-    if (!schedule) return true;
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
     const dd = String(date.getDate()).padStart(2, "0");
     const dateStr = `${yyyy}-${mm}-${dd}`;
     const dayKey = getDayOfWeek(dateStr);
-    return dayKey ? schedule[dayKey] !== null : false;
+    return dayKey ? effectiveSchedule[dayKey] !== null : false;
   };
 
   const stepIndex = step === "date" || step === "date-check" ? 0 : step === "time" || step === "time-check" ? 1 : 2;
