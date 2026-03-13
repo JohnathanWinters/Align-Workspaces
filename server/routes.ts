@@ -3330,17 +3330,28 @@ Sitemap: ${SITE_URL}/sitemap.xml
 
   app.get("/llms.txt", (_req, res) => {
     res.set("Cache-Control", "public, max-age=86400");
-    res.type("text/plain").send(`# Align Workspaces
+    res.type("text/plain").send(`# Align
 
-> Workspace rentals and portrait photography for independent professionals in Miami, Florida.
+> Align helps independent professionals find flexible workspaces and visually present their brand through curated spaces, photography, and visual planning tools.
 
-## What Is Align Workspaces?
-Align Workspaces is a platform that connects independent professionals and growing practices with bookable creative workspaces in Miami. We also offer portrait photography services through an interactive online configurator.
+## What Is Align?
+Align is a platform that helps small business professionals find flexible workspaces that match their needs, brand, and client experience. It connects professionals with short-term or fluid workspaces, while also providing tools and services that help them present themselves and their environment intentionally.
 
-## Workspace Rentals (Align Spaces)
-Browse and book professional workspaces by the hour — therapy offices, creative studios, commercial kitchens, photo studios, and more. Spaces are verified with amenities listed upfront and secure Stripe payments.
+## What Align Offers
 
-### Who it's for
+### 1. Workspace Discovery
+Professionals can find flexible workspaces that suit their work style, client needs, and the type of experience they want to create. Spaces are curated and organized to help users find environments that align with their work.
+
+### 2. Visual Alignment Tools
+Align includes a photo builder that helps users define the emotional tone, setting, and client experience they want to communicate through imagery. This is not a generic photo session — it's a planning tool that ensures your visual presence matches your brand.
+
+### 3. Professional Photography Services
+Headshots and space photography so professionals and space owners can present themselves and their environments clearly and professionally.
+
+### 4. Curated Space Matching
+Spaces on the platform are organized and presented in a way that helps users find environments that align with their work and the experience they want to create for clients.
+
+## Who Align Is For
 Independent professionals and growing practices in Miami:
 - Therapists & Counselors
 - Chefs & Culinary Professionals
@@ -3351,21 +3362,6 @@ Independent professionals and growing practices in Miami:
 - Lawyers & Consultants
 - Entrepreneurs & Small Business Owners
 - Designers & Architects
-
-### How booking works
-1. Browse available spaces by type, location, and amenities
-2. Select your preferred date, time, and duration
-3. Review the fee breakdown
-4. Complete payment securely via Stripe
-5. Booking is confirmed automatically and added to your calendar
-
-## Portrait Photography (Align Portraits)
-Design your portrait photoshoot online using a 6-step interactive configurator. Choose your environment, brand message, and emotional tone — then book your session.
-
-### Pricing
-- Indoor environments (office, kitchen, studio): from $200
-- Outdoor environments (urban, nature): from $250
-- Premium environments (restaurant, gym): from $300
 
 ## Featured Professionals
 A storytelling platform for Miami small business owners. Professionals are featured with editorial-style profiles, portraits, and their story.
@@ -3379,10 +3375,10 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
 - Email: hello@alignworkspaces.com
 
 ## Key Pages
-- Home / Align Spaces: ${SITE_URL}/
+- Home: ${SITE_URL}/
 - Browse Workspaces: ${SITE_URL}/browse
 - Portraits: ${SITE_URL}/portraits
-- Design Your Portrait: ${SITE_URL}/portraits/builder
+- Visual Planning Tool: ${SITE_URL}/portraits/builder
 - Portfolio: ${SITE_URL}/portfolio
 - Featured Professionals: ${SITE_URL}/featured
 - About: ${SITE_URL}/about
@@ -3409,34 +3405,63 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
     } catch {}
 
     res.set("Cache-Control", "public, max-age=86400");
-    res.type("text/plain").send(`# Align Workspaces — Full Context
+    res.type("text/plain").send(`# Align — Full Context
 
-> Workspace rentals and portrait photography for independent professionals in Miami, Florida.
+> Align helps independent professionals find flexible workspaces and visually present their brand through curated spaces, photography, and visual planning tools.
 
-## What Is Align Workspaces?
-Align Workspaces is a platform for independent professionals and growing practices in Miami with two core offerings:
+## What Is Align?
+Align is a platform that helps small business professionals find flexible workspaces that match their needs, brand, and client experience. It connects professionals with short-term or fluid workspaces, while also providing tools and services that help them present themselves and their environment intentionally.
 
-1. **Workspace Rentals (Align Spaces)**: Browse and book professional workspaces by the hour — therapy offices, creative studios, commercial kitchens, photo studios, and more. Each space is verified with amenities listed upfront, transparent pricing, and secure Stripe payments.
+## What Align Offers
 
-2. **Portrait Photography (Align Portraits)**: Design your photoshoot online using a 6-step interactive configurator. Every portrait is designed around the client's profession, brand, and personality — no generic shoots.
+### 1. Workspace Discovery
+Professionals can find flexible workspaces that suit their work style, client needs, and the type of experience they want to create. Spaces include therapy offices, creative studios, commercial kitchens, photo studios, and more — each curated and organized to help users find environments that align with their work.
 
-Align is also a storytelling platform for Miami's small business community. Through the Featured Professionals directory, local business owners share their stories, mission, and work.
-
-## Workspace Rentals
-### How booking works
+#### How booking works
 1. Browse available spaces by type, location, and amenities
 2. Select your preferred date, time, and duration
 3. Review the transparent fee breakdown
 4. Complete payment securely via Stripe
 5. Booking is confirmed automatically and added to your calendar
 
-### Cancellation policy
+#### Cancellation policy
 Full refund if cancelled 24+ hours before booking. Non-refundable within 24 hours.
 
-### Listing your space
-Space owners can submit listings through the Client Portal. Listings go through admin approval before appearing on the marketplace. Hosts receive payouts via Stripe Connect.
+#### Listing your space
+Space owners can submit listings through the Client Portal. Listings go through approval before appearing on the platform. Hosts receive payouts via Stripe Connect.
 
-## Who We Serve
+### 2. Visual Alignment Tools
+Align includes a photo builder that helps users define the emotional tone, setting, and client experience they want to communicate through imagery. The 6-step process:
+1. **Profession**: Select your industry (therapist, chef, trainer, tradesperson, creative, etc.)
+2. **Environment**: Choose where you want to be photographed (office, kitchen, gym, urban, nature, restaurant, studio)
+3. **Brand Message**: Define how you want to come across (assured, confident, approachable, bold, warm)
+4. **Emotional Impact**: Pick the mood of your photos (bright, cozy, cinematic, powerful)
+5. **Concept Review**: See a personalized concept summary with clothing recommendations tailored to your selections
+6. **Book**: Reserve your session with a 50% downpayment via Stripe, or request a collaboration
+
+The tool updates a visual preview gallery in real time as you make selections. This is not a generic photo session — it's a planning tool that ensures your visual presence matches your brand.
+
+### 3. Professional Photography Services
+Headshots and space photography so professionals and space owners can present themselves and their environments clearly and professionally.
+
+#### Pricing
+- Indoor environments (office, kitchen, studio): Starting at $200
+- Outdoor environments (urban, nature): Starting at $250
+- Premium environments (restaurant, gym): Starting at $300
+- 50% downpayment required at booking, remainder due at session
+
+### 4. Curated Space Matching
+Spaces are organized and presented in a way that helps users find environments that align with their work and the experience they want to create for clients. Each space is verified with amenities, photos, and availability listed upfront.
+
+## Client Portal
+After booking, clients receive access to a private portal where they can:
+- View their finished photos in a side-by-side comparison gallery
+- Purchase edit tokens for additional retouching
+- Chat directly with their photographer
+- Download their final images
+- Submit and manage their own workspace listings
+
+## Who Align Is For
 Independent professionals and growing practices in Miami, Florida:
 - Therapists & Counselors
 - Chefs & Culinary Professionals
@@ -3450,32 +3475,7 @@ Independent professionals and growing practices in Miami, Florida:
 - Electricians, Plumbers, HVAC Technicians
 - Any small business professional in the Miami area
 
-## Portrait Photography
-### How to design your portrait online
-1. **Profession**: Select your industry (therapist, chef, trainer, tradesperson, creative, etc.)
-2. **Environment**: Choose where you want to be photographed (office, kitchen, gym, urban, nature, restaurant, studio)
-3. **Brand Message**: Define how you want to come across (assured, confident, approachable, bold, warm)
-4. **Emotional Impact**: Pick the mood of your photos (bright, cozy, cinematic, powerful)
-5. **Concept Review**: See a personalized concept summary with clothing recommendations tailored to your selections
-6. **Book**: Reserve your session with a 50% downpayment via Stripe, or request a collaboration
-
-The configurator updates a visual preview gallery in real time as you make selections.
-
-### Client Portal
-After booking, clients receive access to a private portal where they can:
-- View their finished photos in a side-by-side comparison gallery
-- Purchase edit tokens for additional retouching
-- Chat directly with their photographer
-- Download their final images
-
-### Pricing
-- Indoor environments (office, kitchen, studio): Starting at $200
-- Outdoor environments (urban, nature): Starting at $250
-- Premium environments (restaurant, gym): Starting at $300
-- Edit tokens available for individual photo retouching
-- 50% downpayment required at booking, remainder due at session
-
-## Featured Professionals Platform
+## Featured Professionals
 A storytelling platform for Miami's small business community. Each featured professional receives:
 - A dedicated editorial-style profile page
 - Professional portrait photography
@@ -3495,11 +3495,13 @@ ${featuredSection}
 - Hours: Monday–Sunday 8:00 AM – 8:00 PM
 
 ## Key Pages
-- Home / Align Spaces: ${SITE_URL}/
+- Home: ${SITE_URL}/
 - Browse Workspaces: ${SITE_URL}/browse
-- Portraits / Design Your Portrait: ${SITE_URL}/portraits
+- Portraits: ${SITE_URL}/portraits
+- Visual Planning Tool: ${SITE_URL}/portraits/builder
 - Portfolio: ${SITE_URL}/portfolio
-- Featured Professionals (Miami Stories): ${SITE_URL}/featured
+- Featured Professionals: ${SITE_URL}/featured
+- About: ${SITE_URL}/about
 `);
   });
 

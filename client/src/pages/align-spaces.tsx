@@ -53,7 +53,7 @@ export default function AlignSpacesPage() {
   }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   useEffect(() => {
-    document.title = "Align Workspaces | Rent Professional Workspaces in Miami, FL";
+    document.title = "Align | Flexible Workspaces & Visual Branding for Professionals in Miami";
   }, []);
 
   return (
