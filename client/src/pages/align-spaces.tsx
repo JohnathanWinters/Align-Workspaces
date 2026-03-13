@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Camera, Star, Info, User, Building2 } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -13,16 +13,33 @@ export default function AlignSpacesPage() {
     document.title = "Align | Flexible Workspaces & Visual Branding for Professionals in Miami";
   }, []);
 
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (menuOpen && !(e.target as HTMLElement).closest("[data-menu-container]")) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [menuOpen]);
+
   return (
     <div className="relative min-h-[100dvh] flex flex-col bg-stone-900" data-testid="section-split-hero">
-      <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-6 sm:py-8">
+      <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-5 sm:py-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="w-9" />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.15 }}
             className="relative"
+            data-menu-container
           >
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -39,7 +56,7 @@ export default function AlignSpacesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
+                  className="absolute left-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                 >
                   <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-split">
                     <Camera className="w-4 h-4" />
@@ -69,6 +86,19 @@ export default function AlignSpacesPage() {
               )}
             </AnimatePresence>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.05 }}
+            className="absolute left-1/2 -translate-x-1/2"
+          >
+            <Link href="/" className="flex items-center gap-2.5" data-testid="link-home-logo">
+              <img src="/images/logo-align-mark.png" alt="Align" className="w-8 h-8 rounded" />
+              <span className="text-white font-serif text-xl tracking-wide hidden sm:inline">Align</span>
+            </Link>
+          </motion.div>
+
           <UserIndicator variant="light" />
         </div>
       </nav>
@@ -78,8 +108,8 @@ export default function AlignSpacesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.1 }}
-          className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-end md:items-center justify-center overflow-hidden group cursor-pointer"
-          onClick={() => setLocation("/portraits")}
+          className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-center justify-center overflow-hidden group cursor-pointer"
+          onClick={() => setLocation("/portraits/builder")}
           data-testid="panel-portraits"
         >
           <div
@@ -90,22 +120,37 @@ export default function AlignSpacesPage() {
               filter: "brightness(0.8) contrast(1.05)",
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40 md:bg-gradient-to-t md:from-black/60 md:via-black/15 md:to-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/40" />
 
-          <div className="relative z-10 text-center px-6 pb-10 pt-24 md:pb-0 md:pt-0 max-w-md mx-auto">
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight">
+          <div className="relative z-10 text-center px-6 max-w-md mx-auto">
+            <motion.h2
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight"
+            >
               Your Portrait Is
               <br />
               <span className="italic font-normal">Your First</span>
               <br />
               Impression
-            </h2>
+            </motion.h2>
 
-            <p className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal">
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal"
+            >
               Design a photoshoot that aligns your work, character, and the impression you want your clients to feel.
-            </p>
+            </motion.p>
 
-            <div className="mt-6 flex flex-col items-center gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.55 }}
+              className="mt-6 flex flex-col items-center gap-3"
+            >
               <Link
                 href="/portraits/builder"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -115,18 +160,27 @@ export default function AlignSpacesPage() {
                 Begin Your Session
               </Link>
               <Link
-                href="/featured"
+                href="/portfolio"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                data-testid="button-featured-portraits"
+                data-testid="button-portfolio-portraits"
                 className="inline-flex items-center gap-2 text-[10px] sm:text-xs tracking-widest uppercase text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/40 hover:border-white/80 hover:bg-white/10 transition-all duration-300"
               >
-                Meet Our Featured Professionals
+                See Our Portfolio
               </Link>
-            </div>
+            </motion.div>
           </div>
 
           <div className="hidden md:block absolute bottom-6 left-0 right-0 text-center">
             <span className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Portraits</span>
+          </div>
+
+          <div className="md:hidden absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <ChevronDown className="w-5 h-5 text-white/40" />
+            </motion.div>
           </div>
         </motion.div>
 
@@ -136,7 +190,7 @@ export default function AlignSpacesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.25 }}
-          className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-start md:items-center justify-center overflow-hidden group cursor-pointer"
+          className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-center justify-center overflow-hidden group cursor-pointer"
           onClick={() => setLocation("/browse")}
           data-testid="panel-spaces"
         >
@@ -148,20 +202,35 @@ export default function AlignSpacesPage() {
               filter: "brightness(0.8) contrast(1.05)",
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/15 to-black/50 md:bg-gradient-to-t md:from-black/60 md:via-black/15 md:to-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/35" />
 
-          <div className="relative z-10 text-center px-6 pt-10 pb-10 md:pb-0 md:pt-0 max-w-md mx-auto">
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight">
+          <div className="relative z-10 text-center px-6 max-w-md mx-auto">
+            <motion.h2
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight"
+            >
               Where Your Work
               <br />
               <span className="italic font-normal">and Space</span> Align
-            </h2>
+            </motion.h2>
 
-            <p className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal">
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.55 }}
+              className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal"
+            >
               Book professional workspaces across Miami — therapy offices, studios, meeting rooms, and more.
-            </p>
+            </motion.p>
 
-            <div className="mt-6 flex flex-col items-center gap-3">
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+              className="mt-6 flex flex-col items-center gap-3"
+            >
               <Link
                 href="/browse"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -178,7 +247,7 @@ export default function AlignSpacesPage() {
               >
                 Meet Our Featured Professionals
               </Link>
-            </div>
+            </motion.div>
           </div>
 
           <div className="hidden md:block absolute bottom-6 left-0 right-0 text-center">
