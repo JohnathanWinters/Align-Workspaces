@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { INTERESTS } from "./newsletter-signup";
 import {
   User,
   Camera,
@@ -21,6 +22,9 @@ import {
   ZoomIn,
   ZoomOut,
   X,
+  Bell,
+  BellOff,
+  MapPin,
 } from "lucide-react";
 
 export default function PortalSettings() {
@@ -39,6 +43,7 @@ export default function PortalSettings() {
       <NameSection user={user} />
       <PasswordSection user={user} />
       <EmailSection user={user} />
+      <NewsletterSection user={user} />
     </motion.div>
   );
 }
@@ -688,6 +693,192 @@ function EmailSection({ user }: { user: AuthUser }) {
             </Button>
           </div>
         </motion.div>
+      )}
+    </div>
+  );
+}
+
+function NewsletterSection({ user }: { user: AuthUser }) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [subscribed, setSubscribed] = useState(false);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [zipCode, setZipCode] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [unsubscribing, setUnsubscribing] = useState(false);
+
+  useEffect(() => {
+    if (!user.email) return;
+    fetch(`/api/newsletter/status?email=${encodeURIComponent(user.email)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setSubscribed(data.subscribed);
+        if (data.subscribed) {
+          setInterests(data.interests || []);
+          setZipCode(data.zipCode || "");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user.email]);
+
+  async function handleSubscribe() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, firstName: user.firstName || null }),
+      });
+      if (res.ok) {
+        setSubscribed(true);
+        toast({ title: "Subscribed to newsletter" });
+      }
+    } catch {}
+    setSaving(false);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/newsletter/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ interests, zipCode: zipCode.trim() || null }),
+      });
+      if (res.ok) {
+        toast({ title: "Preferences saved" });
+      }
+    } catch {}
+    setSaving(false);
+  }
+
+  async function handleUnsubscribe() {
+    setUnsubscribing(true);
+    try {
+      const res = await fetch("/api/newsletter/unsubscribe", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setSubscribed(false);
+        setInterests([]);
+        setZipCode("");
+        toast({ title: "Unsubscribed from newsletter" });
+      }
+    } catch {}
+    setUnsubscribing(false);
+  }
+
+  function toggleInterest(id: string) {
+    setInterests((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-100 p-5" data-testid="section-newsletter-settings">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-gray-300" />
+          <p className="text-sm text-gray-400">Loading newsletter preferences...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-5" data-testid="section-newsletter-settings">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          {subscribed ? <Bell className="w-4 h-4 text-gray-700" /> : <BellOff className="w-4 h-4 text-gray-400" />}
+          <p className="text-sm font-medium text-gray-900">Newsletter</p>
+        </div>
+        {subscribed && (
+          <span className="text-[10px] tracking-wider uppercase text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">
+            Subscribed
+          </span>
+        )}
+      </div>
+
+      {!subscribed ? (
+        <div className="mt-3">
+          <p className="text-xs text-gray-500 mb-3">Get updates on new spaces, featured professionals, and more.</p>
+          <Button
+            size="sm"
+            onClick={handleSubscribe}
+            disabled={saving}
+            className="h-8 text-xs bg-gray-900 text-white"
+            data-testid="button-newsletter-subscribe"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
+            Subscribe
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-3 space-y-4">
+          <div>
+            <p className="text-xs text-gray-500 mb-2">What are you interested in?</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {INTERESTS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => toggleInterest(item.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-medium transition-all ${
+                    interests.includes(item.id)
+                      ? "border-gray-800 bg-gray-800 text-white"
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                  }`}
+                  data-testid={`button-pref-${item.id}`}
+                >
+                  <span className="text-sm">{item.emoji}</span>
+                  {item.label}
+                  {interests.includes(item.id) && <Check className="w-3 h-3 ml-auto" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs text-gray-500 mb-1.5 block">Zip code (for nearby spaces)</Label>
+            <div className="relative">
+              <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Input
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                placeholder="e.g. 33127"
+                inputMode="numeric"
+                maxLength={5}
+                className="h-8 text-xs pl-8"
+                data-testid="input-pref-zip"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={saving}
+              className="h-8 text-xs bg-gray-900 text-white"
+              data-testid="button-newsletter-save"
+            >
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Check className="w-3.5 h-3.5 mr-1.5" />}
+              Save preferences
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleUnsubscribe}
+              disabled={unsubscribing}
+              className="h-8 text-xs text-gray-400 hover:text-red-500"
+              data-testid="button-newsletter-unsubscribe"
+            >
+              {unsubscribing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Unsubscribe"}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -79,6 +79,9 @@ export interface IStorage {
   deleteNomination(id: string): Promise<void>;
   createNewsletterSubscriber(data: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
   getNewsletterSubscribers(): Promise<NewsletterSubscriber[]>;
+  getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined>;
+  updateNewsletterSubscriber(id: string, data: Partial<InsertNewsletterSubscriber>): Promise<NewsletterSubscriber>;
+  deleteNewsletterSubscriber(id: string): Promise<void>;
   getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]>;
   getSpaceBySlug(slug: string): Promise<Space | undefined>;
   getSpaceById(id: string): Promise<Space | undefined>;
@@ -644,6 +647,20 @@ export class DatabaseStorage implements IStorage {
 
   async getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
     return db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.createdAt));
+  }
+
+  async getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined> {
+    const [result] = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, email));
+    return result;
+  }
+
+  async updateNewsletterSubscriber(id: string, data: Partial<InsertNewsletterSubscriber>): Promise<NewsletterSubscriber> {
+    const [result] = await db.update(newsletterSubscribers).set(data).where(eq(newsletterSubscribers.id, id)).returning();
+    return result;
+  }
+
+  async deleteNewsletterSubscriber(id: string): Promise<void> {
+    await db.delete(newsletterSubscribers).where(eq(newsletterSubscribers.id, id));
   }
 
   async getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]> {

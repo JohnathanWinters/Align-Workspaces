@@ -1,15 +1,16 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, MapPin, Sparkles, Check, ChevronRight, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
-const INTERESTS = [
-  { id: "portraits", label: "Portraits", emoji: "📸" },
-  { id: "spaces", label: "New Spaces", emoji: "🏢" },
-  { id: "featured", label: "Featured Pros", emoji: "⭐" },
-  { id: "updates", label: "Updates & News", emoji: "📰" },
+export const INTERESTS = [
+  { id: "portraits", label: "Portraits", emoji: "\u{1F4F8}" },
+  { id: "spaces", label: "New Spaces", emoji: "\u{1F3E2}" },
+  { id: "featured", label: "Featured Pros", emoji: "\u2B50" },
+  { id: "updates", label: "Updates & News", emoji: "\u{1F4F0}" },
 ];
 
-type Step = "idle" | "email" | "zip" | "interests" | "done" | "already";
+type Step = "hidden" | "idle" | "email" | "zip" | "interests" | "done" | "already";
 
 interface NewsletterSignupProps {
   variant?: "dark" | "light";
@@ -17,7 +18,8 @@ interface NewsletterSignupProps {
 
 export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
   const isDark = variant === "dark";
-  const [step, setStep] = useState<Step>("idle");
+  const { user } = useAuth();
+  const [step, setStep] = useState<Step>("hidden");
   const [email, setEmail] = useState("");
   const [zip, setZip] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -25,7 +27,23 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
   const emailRef = useRef<HTMLInputElement>(null);
   const zipRef = useRef<HTMLInputElement>(null);
 
-  async function submit(finalInterests?: string[]) {
+  useEffect(() => {
+    const userEmail = user?.email;
+    if (userEmail) {
+      fetch(`/api/newsletter/status?email=${encodeURIComponent(userEmail)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setStep(data.subscribed ? "hidden" : "idle");
+        })
+        .catch(() => setStep("idle"));
+    } else {
+      setStep("idle");
+    }
+  }, [user?.email]);
+
+  if (step === "hidden") return null;
+
+  async function submit() {
     setSubmitting(true);
     try {
       const res = await fetch("/api/newsletter/subscribe", {
@@ -34,7 +52,7 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
         body: JSON.stringify({
           email: email.trim(),
           zipCode: zip.trim() || null,
-          interests: finalInterests || selected,
+          interests: selected,
         }),
       });
       const data = await res.json();
@@ -54,7 +72,6 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
   const bg = isDark ? "bg-white/[0.04]" : "bg-stone-50/80";
   const border = isDark ? "border-white/[0.08]" : "border-stone-200/60";
   const textMuted = isDark ? "text-white/40" : "text-stone-400";
-  const textPrimary = isDark ? "text-white/80" : "text-stone-700";
   const textHeading = isDark ? "text-white/90" : "text-stone-800";
   const inputBg = isDark ? "bg-white/[0.06] border-white/10 text-white placeholder:text-white/25" : "bg-white border-stone-200 text-stone-900 placeholder:text-stone-300";
   const chipBase = isDark
@@ -77,8 +94,14 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -8 }}
             onClick={() => {
-              setStep("email");
-              setTimeout(() => emailRef.current?.focus(), 100);
+              if (user?.email) {
+                setEmail(user.email);
+                setStep("zip");
+                setTimeout(() => zipRef.current?.focus(), 100);
+              } else {
+                setStep("email");
+                setTimeout(() => emailRef.current?.focus(), 100);
+              }
             }}
             className={`w-full px-5 py-4 flex items-center justify-between group cursor-pointer`}
             data-testid="button-newsletter-open"
@@ -258,7 +281,7 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
               {step === "already" ? "You're already subscribed!" : "You're in!"}
             </p>
             <p className={`text-xs ${textMuted} mt-1`}>
-              {step === "already" ? "We've got you — stay tuned." : "We'll keep you posted on what's new."}
+              {step === "already" ? "We've got you \u2014 stay tuned." : "We'll keep you posted on what's new."}
             </p>
           </motion.div>
         )}

@@ -1949,6 +1949,48 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/newsletter/status", async (req, res) => {
+    try {
+      const email = req.query.email as string;
+      if (!email) return res.json({ subscribed: false });
+      const sub = await storage.getNewsletterSubscriberByEmail(email);
+      if (!sub) return res.json({ subscribed: false });
+      res.json({ subscribed: true, interests: sub.interests || [], zipCode: sub.zipCode });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/newsletter/preferences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      if (!userEmail) return res.status(401).json({ message: "No email found" });
+      const sub = await storage.getNewsletterSubscriberByEmail(userEmail);
+      if (!sub) return res.status(404).json({ message: "Not subscribed" });
+      const { interests, zipCode } = req.body;
+      const updated = await storage.updateNewsletterSubscriber(sub.id, {
+        ...(interests !== undefined ? { interests } : {}),
+        ...(zipCode !== undefined ? { zipCode } : {}),
+      });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/newsletter/unsubscribe", isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      if (!userEmail) return res.status(401).json({ message: "No email found" });
+      const sub = await storage.getNewsletterSubscriberByEmail(userEmail);
+      if (!sub) return res.status(404).json({ message: "Not subscribed" });
+      await storage.deleteNewsletterSubscriber(sub.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/admin/newsletter", isAdmin, async (_req, res) => {
     try {
       const subs = await storage.getNewsletterSubscribers();
