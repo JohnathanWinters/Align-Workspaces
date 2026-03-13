@@ -15,6 +15,7 @@ import {
   Trash2,
   Edit,
   ChevronLeft,
+  ChevronRight,
   Loader2,
   User,
   Image,
@@ -4530,7 +4531,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             ))}
           </div>
           <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5 sm:ml-auto sm:order-last">
-            <button onClick={() => setViewMode("board")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "board" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-board">Board</button>
+            <button onClick={() => setViewMode("board")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "board" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-board">Overview</button>
             <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-list">List</button>
           </div>
         </div>
@@ -4559,39 +4560,98 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : viewMode === "board" ? (
-        <div className="space-y-4">
-          {PIPELINE_STAGES.map(stage => {
-            const stageContacts = getStageContacts(stage.key);
-            return (
-              <div key={stage.key} data-testid={`pipeline-column-${stage.key}`}
-                onDragOver={e => e.preventDefault()}
-                onDrop={e => {
-                  const cid = e.dataTransfer.getData("contactId");
-                  if (cid) moveStage(contacts.find(c => c.id === cid)!, stage.key);
-                }}>
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
-                  <span className="text-[10px] text-gray-400">{stageContacts.length}</span>
+        <div className="space-y-5" data-testid="pipeline-overview">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            {PIPELINE_STAGES.map(stage => {
+              const stageContacts = getStageContacts(stage.key);
+              const stageValue = stageContacts.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+              const stageDue = stageContacts.filter(c => c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()).length;
+              return (
+                <div key={stage.key} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 hover:shadow-sm transition-shadow" data-testid={`pipeline-column-${stage.key}`}>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-semibold text-gray-900">{stageContacts.length}</p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {stageValue > 0 && <span className="text-[11px] text-green-600 font-medium">${stageValue.toLocaleString()}</span>}
+                    {stageDue > 0 && <span className="text-[11px] text-red-500 font-medium flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> {stageDue} due</span>}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {stageContacts.map(c => (
-                    <div key={c.id} draggable onDragStart={e => e.dataTransfer.setData("contactId", c.id)}
-                      className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3 cursor-pointer hover:shadow-sm hover:border-gray-200 transition-all active:scale-[0.98]"
-                      onClick={() => openDetail(c)} data-testid={`contact-card-${c.id}`}>
-                      <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
-                      {c.email && <p className="text-[10px] text-gray-400 truncate">{c.email}</p>}
-                      <div className="flex items-center gap-2 mt-1.5">
-                        {c.category === "spaces" && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">Spaces</span>}
-                        {c.estimatedValue && <span className="text-[10px] text-green-600 font-medium">${c.estimatedValue}</span>}
-                        {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
+              );
+            })}
+          </div>
+
+          {(() => {
+            const needsAttention = filteredContacts.filter(c => 
+              (c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()) ||
+              (c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000)
+            );
+            if (needsAttention.length === 0) return null;
+            return (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-red-500" /> Needs Attention
+                </h3>
+                <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+                  {needsAttention.map(c => (
+                    <button key={c.id} onClick={() => openDetail(c)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                      data-testid={`attention-contact-${c.id}`}>
+                      <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-medium text-red-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                       </div>
-                    </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                        <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && (
+                          <p className="text-[11px] text-red-500 font-medium">Follow-up overdue</p>
+                        )}
+                        {c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000 && (
+                          <p className="text-[11px] text-amber-600 font-medium">New — no action yet</p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                    </button>
                   ))}
-                  {stageContacts.length === 0 && <div className="text-center py-4 text-[10px] text-gray-300 border border-dashed border-gray-200 rounded-lg col-span-full">No contacts</div>}
                 </div>
               </div>
             );
-          })}
+          })()}
+
+          {(() => {
+            const recent = [...filteredContacts]
+              .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+              .slice(0, 5);
+            if (recent.length === 0) return null;
+            return (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-gray-400" /> Recently Added
+                </h3>
+                <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+                  {recent.map(c => (
+                    <button key={c.id} onClick={() => openDetail(c)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                      data-testid={`recent-contact-${c.id}`}>
+                      <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                        {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                      {c.estimatedValue && <span className="text-xs text-green-600 font-medium shrink-0 hidden sm:inline">${c.estimatedValue}</span>}
+                      <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}</span>
+                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <div className="space-y-4" data-testid="pipeline-list-table">
