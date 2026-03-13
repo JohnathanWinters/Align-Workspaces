@@ -5,7 +5,7 @@ import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insert
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification } from "./gmail";
+import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail } from "./gmail";
 import { sendPushToUser, sendPushToRole } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees } from "@shared/pricing";

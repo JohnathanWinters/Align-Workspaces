@@ -48,6 +48,48 @@ async function getUncachableGmailClient() {
   return google.gmail({ version: 'v1', auth: oauth2Client });
 }
 
+export async function sendMagicLinkEmail(email: string, magicUrl: string) {
+  const gmail = await getUncachableGmailClient();
+
+  const subject = `Your Align Workspaces Sign-In Link`;
+
+  const body = [
+    `Hi there,`,
+    ``,
+    `Tap the link below to sign in to Align Workspaces:`,
+    ``,
+    magicUrl,
+    ``,
+    `This link expires in 15 minutes and can only be used once.`,
+    ``,
+    `If you didn't request this, you can safely ignore this email.`,
+    ``,
+    `— Align Workspaces`,
+  ].join('\n');
+
+  const rawMessage = [
+    `To: ${email}`,
+    `From: hello@alignworkspaces.com`,
+    `Subject: ${subject}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    ``,
+    body,
+  ].join('\n');
+
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: {
+      raw: encodedMessage,
+    },
+  });
+}
+
 interface BookingEmailData {
   name: string;
   email: string;

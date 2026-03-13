@@ -140,10 +140,15 @@ export async function setupAuth(app: Express) {
   });
 }
 
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
+export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
+  if (req.session?.magicUserId) {
+    req.user = { claims: { sub: req.session.magicUserId } };
+    return next();
+  }
+
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated?.() || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 

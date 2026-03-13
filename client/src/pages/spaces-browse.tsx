@@ -37,6 +37,7 @@ import {
   Info,
   CalendarDays,
   CreditCard,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -357,6 +358,178 @@ function PhotoCarousel({ images, spaceName, onClose }: { images: string[]; space
   );
 }
 
+function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess }: { spaceId: string; returnTo?: string; onClose: () => void; onSuccess: () => void }) {
+  const [magicEmail, setMagicEmail] = useState("");
+  const [magicName, setMagicName] = useState("");
+  const [magicStep, setMagicStep] = useState<"email" | "name" | "sent">("email");
+  const [magicError, setMagicError] = useState("");
+  const [magicLoading, setMagicLoading] = useState(false);
+
+  const sendMagicLink = async (email: string, firstName?: string) => {
+    setMagicLoading(true);
+    setMagicError("");
+    try {
+      const returnTo = customReturnTo || `/browse?book=${encodeURIComponent(spaceId)}`;
+
+      if (firstName) {
+        await fetch("/api/auth/magic-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, firstName }),
+        });
+      }
+
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, firstName, returnTo }),
+      });
+      const data = await res.json();
+
+      if (data.needsName) {
+        setMagicStep("name");
+      } else if (data.sent) {
+        setMagicStep("sent");
+      } else {
+        setMagicError(data.message || "Something went wrong");
+      }
+    } catch {
+      setMagicError("Failed to send sign-in link. Please try again.");
+    } finally {
+      setMagicLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center" onClick={onClose}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ type: "spring", damping: 28, stiffness: 350 }}
+          className="relative bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl"
+          onClick={e => e.stopPropagation()}
+          data-testid={`magic-link-modal-${spaceId}`}
+        >
+          <button onClick={onClose} className="absolute top-4 right-4 text-foreground/40 hover:text-foreground/60" data-testid="button-close-magic-modal">
+            <X className="w-5 h-5" />
+          </button>
+
+          {magicStep === "email" && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                  <Mail className="w-7 h-7 text-[#c4956a]" />
+                </div>
+                <h3 className="font-serif text-lg font-semibold mb-1">Sign In to Book</h3>
+                <p className="text-sm text-foreground/50">
+                  Enter your email and we'll send you a sign-in link.
+                </p>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (magicEmail.trim()) sendMagicLink(magicEmail.trim());
+              }}>
+                <div className="space-y-3">
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={magicEmail}
+                    onChange={e => setMagicEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:border-[#c4956a] focus:ring-1 focus:ring-[#c4956a]/30 outline-none"
+                    autoFocus
+                    required
+                    data-testid="input-magic-email"
+                  />
+                  {magicError && <p className="text-xs text-red-500">{magicError}</p>}
+                  <Button
+                    type="submit"
+                    disabled={magicLoading || !magicEmail.trim()}
+                    className="w-full bg-foreground text-background hover:opacity-90 py-3"
+                    data-testid="button-send-magic-link"
+                  >
+                    {magicLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</>
+                    ) : (
+                      "Continue"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {magicStep === "name" && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                  <User className="w-7 h-7 text-emerald-500" />
+                </div>
+                <h3 className="font-serif text-lg font-semibold mb-1">Welcome!</h3>
+                <p className="text-sm text-foreground/50">
+                  Looks like you're new here. What's your first name?
+                </p>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (magicName.trim()) sendMagicLink(magicEmail.trim(), magicName.trim());
+              }}>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    value={magicName}
+                    onChange={e => setMagicName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:border-[#c4956a] focus:ring-1 focus:ring-[#c4956a]/30 outline-none"
+                    autoFocus
+                    required
+                    data-testid="input-magic-name"
+                  />
+                  {magicError && <p className="text-xs text-red-500">{magicError}</p>}
+                  <Button
+                    type="submit"
+                    disabled={magicLoading || !magicName.trim()}
+                    className="w-full bg-foreground text-background hover:opacity-90 py-3"
+                    data-testid="button-send-magic-name"
+                  >
+                    {magicLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending link...</>
+                    ) : (
+                      "Send Sign-In Link"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {magicStep === "sent" && (
+            <div className="space-y-4 text-center py-2">
+              <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                <Check className="w-7 h-7 text-emerald-500" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold">Check your email</h3>
+              <p className="text-sm text-foreground/50 max-w-xs mx-auto">
+                We sent a sign-in link to <span className="font-medium text-foreground/70">{magicEmail}</span>. Tap the link to continue.
+              </p>
+              <p className="text-xs text-foreground/30">
+                The link expires in 15 minutes.
+              </p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}
+
 function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount, autoBook }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number; autoBook?: boolean }) {
   const { user, isAuthenticated } = useAuth();
   const [expanded, setExpanded] = useState(!!autoBook);
@@ -364,23 +537,11 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [showAuthPrompt, setShowAuthPrompt] = useState(!!(autoBook && !isAuthenticated));
-  const [authPending, setAuthPending] = useState(false);
   const [activeColor, setActiveColor] = useState<number | null>(null);
   const [spacePhotos, setSpacePhotos] = useState<Array<{ id: string; imageUrl: string }>>([]);
   const [showSpacePhotos, setShowSpacePhotos] = useState(false);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
-  const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
   const { toast } = useToast();
-
-  const clearPolling = useCallback(() => {
-    if (pollRef.current.interval) clearInterval(pollRef.current.interval);
-    if (pollRef.current.timeout) clearTimeout(pollRef.current.timeout);
-    pollRef.current = {};
-  }, []);
-
-  useEffect(() => {
-    return () => clearPolling();
-  }, [clearPolling]);
 
   const schedule: WeekSchedule | null = (() => {
     try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
@@ -434,12 +595,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
 
   const handleBookClick = () => {
     if (!isAuthenticated) {
-      const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-      if (isMobile) {
-        const returnPath = `/browse?book=${encodeURIComponent(space.id)}`;
-        window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
-        return;
-      }
       setShowAuthPrompt(true);
       setExpanded(true);
       return;
@@ -447,77 +602,16 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
     setShowBooking(true);
   };
 
-  const handleRegisterClick = () => {
-    const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-    if (isMobile) {
-      const returnPath = `/browse?book=${encodeURIComponent(space.id)}`;
-      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
-      return;
-    }
-
-    setAuthPending(true);
-    const popup = window.open("/api/login?returnTo=/auth-success", "alignAuth", "width=500,height=700,left=200,top=100");
-
-    if (!popup || popup.closed) {
-      const returnPath = window.location.pathname + window.location.search;
-      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
-      return;
-    }
-
-    pollRef.current.interval = setInterval(async () => {
-      if (popup.closed) {
-        clearPolling();
-        setAuthPending(false);
-        try {
-          const res = await fetch("/api/auth/user", { credentials: "include" });
-          if (res.ok) {
-            const userData = await res.json();
-            if (userData?.id) {
-              setShowAuthPrompt(false);
-              setShowBooking(true);
-              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-            }
-          }
-        } catch {}
-        return;
-      }
-      try {
-        const res = await fetch("/api/auth/user", { credentials: "include" });
-        if (res.ok) {
-          const userData = await res.json();
-          if (userData && userData.id) {
-            clearPolling();
-            setAuthPending(false);
-            setShowAuthPrompt(false);
-            setShowBooking(true);
-            queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-            if (!popup.closed) popup.close();
-          }
-        }
-      } catch {}
-    }, 1500);
-
-    pollRef.current.timeout = setTimeout(() => {
-      clearPolling();
-      setAuthPending(false);
-    }, 120000);
-  };
-
   const handleDismissAuth = () => {
-    clearPolling();
-    setAuthPending(false);
     setShowAuthPrompt(false);
   };
 
   useEffect(() => {
     if (isAuthenticated && showAuthPrompt) {
-      clearPolling();
-      setAuthPending(false);
       setShowAuthPrompt(false);
       setShowBooking(true);
     }
-  }, [isAuthenticated, showAuthPrompt, clearPolling]);
+  }, [isAuthenticated, showAuthPrompt]);
 
   return (
     <motion.div
@@ -842,55 +936,14 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                 </button>
 
                 {showAuthPrompt && !isAuthenticated && (
-                  <AnimatePresence>
-                    <div className="fixed inset-0 z-[2000] flex items-center justify-center px-6" onClick={handleDismissAuth}>
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/50"
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        transition={{ duration: 0.2 }}
-                        className="relative bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-5"
-                        onClick={e => e.stopPropagation()}
-                        data-testid={`auth-prompt-${space.id}`}
-                      >
-                        <button onClick={handleDismissAuth} className="absolute top-4 right-4 text-foreground/40 hover:text-foreground/60">
-                          <X className="w-5 h-5" />
-                        </button>
-                        <div className="text-center">
-                          <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
-                            <User className="w-7 h-7 text-[#c4956a]" />
-                          </div>
-                          <h3 className="font-serif text-lg font-semibold mb-2">Register to Schedule</h3>
-                          <p className="text-sm text-foreground/50 max-w-xs mx-auto">
-                            Create a free account to send booking requests, chat with hosts, and manage your reservations.
-                          </p>
-                        </div>
-                        <Button
-                          onClick={handleRegisterClick}
-                          disabled={authPending}
-                          className="w-full bg-[#c4956a] text-white hover:bg-[#b3845d] py-3"
-                          data-testid={`button-register-${space.id}`}
-                        >
-                          {authPending ? (
-                            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Waiting for sign in...</>
-                          ) : (
-                            <><User className="w-4 h-4 mr-2" /> Create Account / Sign In</>
-                          )}
-                        </Button>
-                        {authPending && (
-                          <p className="text-[10px] text-foreground/40 text-center">
-                            Complete sign in in the popup window. This page will update automatically.
-                          </p>
-                        )}
-                      </motion.div>
-                    </div>
-                  </AnimatePresence>
+                  <MagicLinkModal
+                    spaceId={space.id}
+                    onClose={handleDismissAuth}
+                    onSuccess={() => {
+                      setShowAuthPrompt(false);
+                      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+                    }}
+                  />
                 )}
                 
               </div>
@@ -1390,66 +1443,12 @@ const LIST_SPACE_TYPES = [
 function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const [authPending, setAuthPending] = useState(false);
-  const pollRef = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
+  const [showListMagicLink, setShowListMagicLink] = useState(false);
   const [formData, setFormData] = useState({
     name: "", type: "office", description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     capacity: "", amenities: "", targetProfession: "", availableHours: "", hostName: "",
   });
-
-  const clearPolling = useCallback(() => {
-    if (pollRef.current.interval) clearInterval(pollRef.current.interval);
-    if (pollRef.current.timeout) clearTimeout(pollRef.current.timeout);
-    pollRef.current = {};
-  }, []);
-
-  useEffect(() => () => clearPolling(), [clearPolling]);
-
-  const handleAuthClick = () => {
-    const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-    if (isMobile) {
-      const returnPath = window.location.pathname + window.location.search;
-      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
-      return;
-    }
-
-    setAuthPending(true);
-    const popup = window.open("/api/login?returnTo=/auth-success", "alignAuth", "width=500,height=700,left=200,top=100");
-    if (!popup || popup.closed) {
-      const returnPath = window.location.pathname + window.location.search;
-      window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
-      return;
-    }
-    pollRef.current.interval = setInterval(async () => {
-      if (popup.closed) {
-        clearPolling(); setAuthPending(false);
-        try {
-          const res = await fetch("/api/auth/user", { credentials: "include" });
-          if (res.ok) {
-            const userData = await res.json();
-            if (userData?.id) {
-              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-            }
-          }
-        } catch {}
-        return;
-      }
-      try {
-        const res = await fetch("/api/auth/user", { credentials: "include" });
-        if (res.ok) {
-          const userData = await res.json();
-          if (userData?.id) {
-            clearPolling(); setAuthPending(false);
-            queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-            if (!popup.closed) popup.close();
-          }
-        }
-      } catch {}
-    }, 1500);
-    pollRef.current.timeout = setTimeout(() => { clearPolling(); setAuthPending(false); }, 120000);
-  };
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -1495,29 +1494,31 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
           <div className="p-6 space-y-5">
             <div className="text-center">
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
-                <User className="w-7 h-7 text-[#c4956a]" />
+                <Mail className="w-7 h-7 text-[#c4956a]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-2">Create an Account First</h3>
+              <h3 className="font-serif text-lg font-semibold mb-2">Sign In to List Your Space</h3>
               <p className="text-sm text-foreground/50 max-w-sm mx-auto">
-                Sign in to list your workspace. It takes just a moment and your listing will be reviewed by our team.
+                Enter your email to get started. Your listing will be reviewed by our team.
               </p>
             </div>
-            <Button
-              onClick={handleAuthClick}
-              disabled={authPending}
-              className="w-full bg-[#c4956a] text-white hover:bg-[#b3845d] py-3"
-              data-testid="button-auth-list-space"
-            >
-              {authPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Waiting for sign in...</>
-              ) : (
-                <><User className="w-4 h-4 mr-2" /> Create Account / Sign In</>
-              )}
-            </Button>
-            {authPending && (
-              <p className="text-[10px] text-foreground/40 text-center">
-                Complete sign in in the popup window. This page will update automatically.
-              </p>
+            {!showListMagicLink ? (
+              <Button
+                onClick={() => setShowListMagicLink(true)}
+                className="w-full bg-foreground text-background hover:opacity-90 py-3"
+                data-testid="button-auth-list-space"
+              >
+                <Mail className="w-4 h-4 mr-2" /> Sign In with Email
+              </Button>
+            ) : (
+              <MagicLinkModal
+                spaceId="list-space"
+                returnTo="/browse"
+                onClose={() => setShowListMagicLink(false)}
+                onSuccess={() => {
+                  setShowListMagicLink(false);
+                  queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+                }}
+              />
             )}
           </div>
         ) : (
