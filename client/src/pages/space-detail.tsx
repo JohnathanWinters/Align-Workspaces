@@ -37,7 +37,7 @@ import {
 } from "@/components/availability-schedule-editor";
 import { SiteFooter } from "@/components/site-footer";
 
-function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string } | null {
+function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string; explanation?: string } | null {
   if (!raw) return null;
   try {
     let parsed = JSON.parse(raw);
@@ -48,7 +48,11 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
         c != null && typeof c === "object" && typeof (c as any).hex === "string" && typeof (c as any).name === "string"
       );
     if (colors.length === 0) return null;
-    return { colors, feel: typeof parsed.feel === "string" ? parsed.feel : undefined };
+    return {
+      colors,
+      feel: typeof parsed.feel === "string" ? parsed.feel : undefined,
+      explanation: typeof parsed.explanation === "string" ? parsed.explanation : undefined,
+    };
   } catch { return null; }
 }
 
@@ -855,8 +859,8 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                     <h2 className="text-sm font-semibold text-stone-800">Space Color Palette</h2>
                   </div>
                   <p className="text-[11px] text-stone-400 mb-4">Colors shape how clients feel in your space — they influence mood, trust, and comfort</p>
-                  <div className="flex items-center gap-4 mb-3">
-                    {paletteData.colors.map((c, i) => (
+                  <div className="flex items-center gap-5 mb-3">
+                    {paletteData.colors.slice(0, 3).map((c, i) => (
                       <div key={i} className="flex flex-col items-center gap-1.5">
                         <div className="w-12 h-12 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: c.hex }} />
                         <span className="text-[10px] text-stone-500 font-medium">{c.name}</span>
@@ -865,6 +869,12 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                   </div>
                   {paletteData.feel && (
                     <p className="text-sm text-stone-500 leading-relaxed italic">{paletteData.feel}</p>
+                  )}
+                  {paletteData.explanation && (
+                    <div className="mt-3 pt-3 border-t border-stone-200/60">
+                      <p className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2">How These Colors Work Together</p>
+                      <p className="text-xs text-stone-500 leading-relaxed">{paletteData.explanation}</p>
+                    </div>
                   )}
                 </div>
               )}

@@ -531,7 +531,7 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
   );
 }
 
-function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string } | null {
+function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string; explanation?: string } | null {
   if (!raw) return null;
   try {
     let parsed = JSON.parse(raw);
@@ -542,13 +542,18 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
         c != null && typeof c === "object" && typeof (c as any).hex === "string" && typeof (c as any).name === "string"
       );
     if (colors.length === 0) return null;
-    return { colors, feel: typeof parsed.feel === "string" ? parsed.feel : undefined };
+    return {
+      colors,
+      feel: typeof parsed.feel === "string" ? parsed.feel : undefined,
+      explanation: typeof parsed.explanation === "string" ? parsed.explanation : undefined,
+    };
   } catch { return null; }
 }
 
 function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
+  const [paletteExpanded, setPaletteExpanded] = useState(false);
 
   return (
     <motion.div
@@ -710,22 +715,51 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           const paletteData = parseColorPalette(space.colorPalette);
           if (!paletteData) return null;
           return (
-            <div className="mb-4 p-3 bg-stone-50/80 rounded-lg border border-stone-100" data-testid={`palette-preview-${space.id}`}>
+            <div
+              className={`mb-4 p-3 rounded-lg border transition-all duration-300 ${paletteExpanded ? "bg-stone-50 border-stone-200 shadow-sm" : "bg-stone-50/80 border-stone-100 cursor-pointer hover:border-stone-200 hover:shadow-sm"}`}
+              data-testid={`palette-preview-${space.id}`}
+              onClick={(e) => {
+                if (paletteData.explanation) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setPaletteExpanded(!paletteExpanded);
+                }
+              }}
+            >
               <div className="flex items-center gap-2 mb-2">
                 <Palette className="w-3.5 h-3.5 text-[#c4956a]" />
                 <span className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider">Space Color Palette</span>
+                {paletteData.explanation && (
+                  <ChevronDown className={`w-3 h-3 text-stone-400 ml-auto transition-transform duration-200 ${paletteExpanded ? "rotate-180" : ""}`} />
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                {paletteData.colors.map((c, i) => (
+              <div className="flex items-center gap-3">
+                {paletteData.colors.slice(0, 3).map((c, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
-                    <div className="w-7 h-7 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: c.hex }} />
+                    <div className={`rounded-full border-2 border-white shadow-sm transition-all duration-200 ${paletteExpanded ? "w-9 h-9" : "w-7 h-7"}`} style={{ backgroundColor: c.hex }} />
                     <span className="text-[8px] text-stone-400 font-medium leading-tight text-center max-w-[48px] truncate">{c.name}</span>
                   </div>
                 ))}
               </div>
-              {paletteData.feel && (
+              {!paletteExpanded && paletteData.feel && (
                 <p className="text-[11px] text-stone-400 italic mt-2 line-clamp-1">{paletteData.feel}</p>
               )}
+              <AnimatePresence>
+                {paletteExpanded && paletteData.explanation && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 pt-3 border-t border-stone-200/60">
+                      <p className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2">How These Colors Work Together</p>
+                      <p className="text-xs text-stone-500 leading-relaxed">{paletteData.explanation}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           );
         })()}
