@@ -22,7 +22,13 @@ export const leads = pgTable("leads", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertLeadSchema = createInsertSchema(leads).omit({
+export const insertLeadSchema = createInsertSchema(leads, {
+  environment: z.string().nullish().transform(v => v ?? ""),
+  brandMessage: z.string().nullish().transform(v => v ?? ""),
+  emotionalImpact: z.string().nullish().transform(v => v ?? ""),
+  shootIntent: z.string().nullish().transform(v => v ?? ""),
+  preferredDate: z.string().nullish().transform(v => v ?? ""),
+}).omit({
   id: true,
   createdAt: true,
 });
