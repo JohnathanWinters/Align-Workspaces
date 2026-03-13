@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Mail, MapPin } from "lucide-react";
+import { NewsletterSignup } from "./newsletter-signup";
 
 interface SiteFooterProps {
   variant?: "dark" | "light";
@@ -23,6 +24,10 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
   return (
     <footer className={`relative z-10 w-full px-6 py-8 sm:py-10 pb-16 sm:pb-10`} data-testid="site-footer">
       <div className={`max-w-4xl mx-auto border-t ${dividerColor} pt-8`}>
+        <div className="mb-8 px-2">
+          <NewsletterSignup variant={variant} />
+        </div>
+
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href}>
