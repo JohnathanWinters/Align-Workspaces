@@ -1,7 +1,12 @@
-// Gmail integration via Replit connector (google-mail)
 import { google } from 'googleapis';
 
 let connectionSettings: any;
+
+const FROM_NAME = 'Align Workspaces';
+const FROM_EMAIL = 'hello@alignworkspaces.com';
+const FROM_HEADER = `${FROM_NAME} <${FROM_EMAIL}>`;
+const ADMIN_EMAIL = 'armando@alignworkspaces.com';
+const SITE_URL = 'https://alignworkspaces.com';
 
 async function getAccessToken() {
   if (connectionSettings && connectionSettings.settings.expires_at && new Date(connectionSettings.settings.expires_at).getTime() > Date.now()) {
@@ -48,46 +53,97 @@ async function getUncachableGmailClient() {
   return google.gmail({ version: 'v1', auth: oauth2Client });
 }
 
-export async function sendMagicLinkEmail(email: string, magicUrl: string) {
-  const gmail = await getUncachableGmailClient();
+function emailLayout(content: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f3f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f3f0;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <tr><td style="background-color:#1a1a1a;padding:28px 32px;text-align:center;">
+          <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#ffffff;letter-spacing:0.5px;">align</span>
+        </td></tr>
+        <tr><td style="padding:32px;">
+          ${content}
+        </td></tr>
+        <tr><td style="padding:0 32px 28px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="border-top:1px solid #e8e4df;padding-top:20px;text-align:center;">
+              <p style="margin:0 0 4px;font-size:12px;color:#9a9590;">Align Workspaces &middot; Miami, FL</p>
+              <p style="margin:0;font-size:12px;color:#b5b0ab;">
+                <a href="${SITE_URL}" style="color:#c4956a;text-decoration:none;">alignworkspaces.com</a>
+              </p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
 
-  const subject = `Your Align Workspaces Sign-In Link`;
+function infoRow(label: string, value: string): string {
+  return `<tr>
+    <td style="padding:6px 0;font-size:14px;color:#9a9590;width:140px;vertical-align:top;">${label}</td>
+    <td style="padding:6px 0;font-size:14px;color:#1a1a1a;font-weight:500;">${value}</td>
+  </tr>`;
+}
 
-  const body = [
-    `Hi there,`,
-    ``,
-    `Tap the link below to sign in to Align Workspaces:`,
-    ``,
-    magicUrl,
-    ``,
-    `This link expires in 15 minutes and can only be used once.`,
-    ``,
-    `If you didn't request this, you can safely ignore this email.`,
-    ``,
-    `— Align Workspaces`,
-  ].join('\n');
+function sectionHeading(text: string): string {
+  return `<p style="margin:24px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#c4956a;font-weight:600;">${text}</p>`;
+}
 
-  const rawMessage = [
-    `To: ${email}`,
-    `From: hello@alignworkspaces.com`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+function sendEmail(to: string, subject: string, htmlBody: string) {
+  return getUncachableGmailClient().then(gmail => {
+    const rawMessage = [
+      `MIME-Version: 1.0`,
+      `To: ${to}`,
+      `From: ${FROM_HEADER}`,
+      `Reply-To: ${FROM_HEADER}`,
+      `Subject: ${subject}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      ``,
+      htmlBody,
+    ].join('\r\n');
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    const encodedMessage = Buffer.from(rawMessage)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
+    return gmail.users.messages.send({
+      userId: 'me',
+      requestBody: { raw: encodedMessage },
+    });
   });
+}
+
+export async function sendMagicLinkEmail(email: string, magicUrl: string) {
+  const subject = `Your sign-in link for Align Workspaces`;
+
+  const html = emailLayout(`
+    <div style="text-align:center;">
+      <div style="width:56px;height:56px;border-radius:50%;background-color:#f5f3f0;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:24px;">&#9993;</span>
+      </div>
+      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Sign in to Align</h1>
+      <p style="margin:0 0 28px;font-size:14px;color:#6b6560;line-height:1.5;">
+        Tap the button below to securely sign in. No password needed.
+      </p>
+      <a href="${magicUrl}" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:14px 40px;border-radius:8px;font-size:15px;font-weight:500;text-decoration:none;letter-spacing:0.3px;">
+        Sign In
+      </a>
+      <p style="margin:20px 0 0;font-size:12px;color:#b5b0ab;line-height:1.5;">
+        This link expires in 15 minutes and can only be used once.<br>
+        If you didn't request this, you can safely ignore this email.
+      </p>
+    </div>
+  `);
+
+  await sendEmail(email, subject, html);
 }
 
 interface BookingEmailData {
@@ -105,53 +161,37 @@ interface BookingEmailData {
 }
 
 export async function sendBookingNotification(data: BookingEmailData) {
-  const gmail = await getUncachableGmailClient();
-
   const subject = `New Booking: ${data.name} — ${data.preferredDate === "TBD" ? "Inquiry" : data.preferredDate}`;
 
-  const body = [
-    `New booking submission from Align`,
-    ``,
-    `--- Client Information ---`,
-    `Name: ${data.name}`,
-    `Email: ${data.email}`,
-    `Phone: ${data.phone}`,
-    `Preferred Date: ${data.preferredDate}`,
-    ``,
-    `--- Selections ---`,
-    `Environment: ${data.environment}`,
-    `Brand Message: ${data.brandMessage}`,
-    `Emotional Impact: ${data.emotionalImpact}`,
-    `Shoot Intent: ${data.shootIntent}`,
-    ``,
-    `--- Estimated Investment ---`,
-    `$${data.estimatedMin} – $${data.estimatedMax}`,
-    ``,
-    data.notes ? `--- Notes ---\n${data.notes}` : '',
-  ].join('\n');
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">New Portrait Booking</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">A new session has been submitted through the portrait configurator.</p>
 
-  const to = 'armando@alignworkspaces.com';
+    ${sectionHeading('Client Information')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.name)}
+      ${infoRow('Email', `<a href="mailto:${data.email}" style="color:#c4956a;text-decoration:none;">${data.email}</a>`)}
+      ${infoRow('Phone', data.phone)}
+      ${infoRow('Preferred Date', data.preferredDate)}
+    </table>
 
-  const rawMessage = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+    ${sectionHeading('Concept Selections')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Environment', data.environment)}
+      ${infoRow('Brand Message', data.brandMessage)}
+      ${infoRow('Emotional Impact', data.emotionalImpact)}
+      ${infoRow('Shoot Intent', data.shootIntent)}
+    </table>
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    ${sectionHeading('Estimated Investment')}
+    <div style="background-color:#f5f3f0;border-radius:8px;padding:16px;text-align:center;">
+      <span style="font-size:22px;font-weight:600;color:#1a1a1a;">$${data.estimatedMin} – $${data.estimatedMax}</span>
+    </div>
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+    ${data.notes ? `${sectionHeading('Client Notes')}<p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.5;background-color:#f5f3f0;border-radius:8px;padding:16px;">${data.notes}</p>` : ''}
+  `);
+
+  await sendEmail(ADMIN_EMAIL, subject, html);
 }
 
 interface HelpRequestData {
@@ -161,43 +201,25 @@ interface HelpRequestData {
 }
 
 export async function sendHelpRequest(data: HelpRequestData) {
-  const gmail = await getUncachableGmailClient();
+  const subject = `Help Request — ${data.clientName}`;
 
-  const subject = `Client Help Request — ${data.clientName}`;
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Client Help Request</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">A client submitted a help request from the Client Portal.</p>
 
-  const body = [
-    `A client has submitted a help request from the Client Portal.`,
-    ``,
-    `--- Client ---`,
-    `Name: ${data.clientName}`,
-    `Email: ${data.clientEmail}`,
-    ``,
-    `--- Message ---`,
-    data.message,
-  ].join('\n');
+    ${sectionHeading('Client')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.clientName)}
+      ${infoRow('Email', `<a href="mailto:${data.clientEmail}" style="color:#c4956a;text-decoration:none;">${data.clientEmail}</a>`)}
+    </table>
 
-  const to = 'armando@alignworkspaces.com';
+    ${sectionHeading('Message')}
+    <div style="background-color:#f5f3f0;border-radius:8px;padding:16px;">
+      <p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.message}</p>
+    </div>
+  `);
 
-  const rawMessage = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
-
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+  await sendEmail(ADMIN_EMAIL, subject, html);
 }
 
 interface CollaborateMessageData {
@@ -211,51 +233,34 @@ interface CollaborateMessageData {
 }
 
 export async function sendCollaborateMessage(data: CollaborateMessageData) {
-  const gmail = await getUncachableGmailClient();
-
   const subject = `New Collaboration Request — ${data.clientName}`;
 
   const selections = [
-    data.environment ? `Environment: ${data.environment}` : null,
-    data.brandMessage ? `Brand Message: ${data.brandMessage}` : null,
-    data.emotionalImpact ? `Emotional Impact: ${data.emotionalImpact}` : null,
-    data.shootIntent ? `Shoot Intent: ${data.shootIntent}` : null,
-  ].filter(Boolean);
+    data.environment ? infoRow('Environment', data.environment) : '',
+    data.brandMessage ? infoRow('Brand Message', data.brandMessage) : '',
+    data.emotionalImpact ? infoRow('Emotional Impact', data.emotionalImpact) : '',
+    data.shootIntent ? infoRow('Shoot Intent', data.shootIntent) : '',
+  ].filter(Boolean).join('');
 
-  const body = [
-    `A new client has submitted a collaboration request from Align.`,
-    ``,
-    `--- Client ---`,
-    `Name: ${data.clientName}`,
-    `Email: ${data.clientEmail}`,
-    ``,
-    ...(selections.length > 0 ? [`--- Concept Selections ---`, ...selections, ``] : []),
-    `--- Message ---`,
-    data.message,
-  ].join('\n');
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Collaboration Request</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">A new client is interested in collaborating.</p>
 
-  const to = 'armando@alignworkspaces.com';
+    ${sectionHeading('Client')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.clientName)}
+      ${infoRow('Email', `<a href="mailto:${data.clientEmail}" style="color:#c4956a;text-decoration:none;">${data.clientEmail}</a>`)}
+    </table>
 
-  const rawMessage = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+    ${selections ? `${sectionHeading('Concept Selections')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">${selections}</table>` : ''}
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    ${sectionHeading('Message')}
+    <div style="background-color:#f5f3f0;border-radius:8px;padding:16px;">
+      <p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.message}</p>
+    </div>
+  `);
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+  await sendEmail(ADMIN_EMAIL, subject, html);
 }
 
 interface InvoiceLineItem {
@@ -273,55 +278,42 @@ interface InvoiceEmailData {
 }
 
 export async function sendInvoiceEmail(data: InvoiceEmailData) {
-  const gmail = await getUncachableGmailClient();
+  const subject = `Invoice for ${data.shootTitle} — Align Workspaces`;
 
-  const subject = `Align Portrait Design — Invoice for ${data.shootTitle}`;
+  const itemsHtml = data.lineItems
+    .map(item => `
+      <tr>
+        <td style="padding:10px 0;font-size:14px;color:#1a1a1a;border-bottom:1px solid #e8e4df;">${item.description}</td>
+        <td style="padding:10px 0;font-size:14px;color:#1a1a1a;text-align:right;font-weight:500;border-bottom:1px solid #e8e4df;">$${item.amount.toFixed(2)}</td>
+      </tr>
+    `).join('');
 
-  const itemRows = data.lineItems
-    .map((item) => `  ${item.description}: $${item.amount.toFixed(2)}`)
-    .join('\n');
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Invoice</h1>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;">Hi ${data.clientName}, here's the invoice for your session.</p>
 
-  const body = [
-    `Hi ${data.clientName},`,
-    ``,
-    `Thank you for choosing Align Portrait Design. Below is the invoice for your session.`,
-    ``,
-    `——————————————————`,
-    `Session: ${data.shootTitle}`,
-    ``,
-    `Itemization:`,
-    itemRows,
-    ``,
-    `Total: $${data.totalAmount.toFixed(2)}`,
-    `——————————————————`,
-    ``,
-    data.notes ? `Note: ${data.notes}\n` : '',
-    `If you have any questions about this invoice, please reply to this email.`,
-    ``,
-    `Best regards,`,
-    `Align Portrait Design`,
-  ].join('\n');
+    <div style="border:1px solid #e8e4df;border-radius:8px;overflow:hidden;">
+      <div style="background-color:#f5f3f0;padding:14px 16px;">
+        <p style="margin:0;font-size:13px;color:#9a9590;text-transform:uppercase;letter-spacing:0.8px;">Session</p>
+        <p style="margin:4px 0 0;font-size:16px;color:#1a1a1a;font-weight:600;">${data.shootTitle}</p>
+      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:4px 16px;">
+        ${itemsHtml}
+        <tr>
+          <td style="padding:14px 0 10px;font-size:16px;color:#1a1a1a;font-weight:700;">Total</td>
+          <td style="padding:14px 0 10px;font-size:16px;color:#1a1a1a;font-weight:700;text-align:right;">$${data.totalAmount.toFixed(2)}</td>
+        </tr>
+      </table>
+    </div>
 
-  const rawMessage = [
-    `To: ${data.clientEmail}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+    ${data.notes ? `<p style="margin:16px 0 0;font-size:13px;color:#6b6560;background-color:#f5f3f0;border-radius:8px;padding:12px 16px;"><strong>Note:</strong> ${data.notes}</p>` : ''}
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    <p style="margin:24px 0 0;font-size:14px;color:#6b6560;line-height:1.5;">
+      If you have any questions about this invoice, simply reply to this email.
+    </p>
+  `);
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+  await sendEmail(data.clientEmail, subject, html);
 }
 
 interface EditRequestNotificationData {
@@ -333,49 +325,34 @@ interface EditRequestNotificationData {
 }
 
 export async function sendEditRequestNotification(data: EditRequestNotificationData) {
-  const gmail = await getUncachableGmailClient();
+  const subject = `Edit Request — ${data.clientName} (${data.photoCount} photo${data.photoCount !== 1 ? 's' : ''})`;
 
-  const subject = `New Edit Request — ${data.clientName} (${data.photoCount} photo${data.photoCount !== 1 ? 's' : ''})`;
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">New Edit Request</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">A client has submitted photos for editing.</p>
 
-  const bodyLines = [
-    `A client has submitted photos for editing.`,
-    ``,
-    `--- Client ---`,
-    `Name: ${data.clientName}`,
-    `Email: ${data.clientEmail}`,
-    ``,
-    `--- Request Details ---`,
-    `Photos submitted: ${data.photoCount}`,
-    `Tokens used: ${data.tokensUsed}`,
-  ];
-  if (data.notes) {
-    bodyLines.push(``, `--- Client Instructions ---`, data.notes);
-  }
-  bodyLines.push(``, `Log in to the admin panel to view the photos and start a conversation.`);
-  const body = bodyLines.join('\n');
+    ${sectionHeading('Client')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.clientName)}
+      ${infoRow('Email', `<a href="mailto:${data.clientEmail}" style="color:#c4956a;text-decoration:none;">${data.clientEmail}</a>`)}
+    </table>
 
-  const to = 'armando@alignworkspaces.com';
+    ${sectionHeading('Request Details')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Photos', `${data.photoCount} photo${data.photoCount !== 1 ? 's' : ''}`)}
+      ${infoRow('Tokens Used', String(data.tokensUsed))}
+    </table>
 
-  const rawMessage = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+    ${data.notes ? `${sectionHeading('Client Instructions')}<div style="background-color:#f5f3f0;border-radius:8px;padding:16px;"><p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.notes}</p></div>` : ''}
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${SITE_URL}/admin" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        View in Admin Panel
+      </a>
+    </div>
+  `);
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+  await sendEmail(ADMIN_EMAIL, subject, html);
 }
 
 export async function sendNewSpaceSubmissionNotification(data: {
@@ -386,48 +363,34 @@ export async function sendNewSpaceSubmissionNotification(data: {
   submitterName: string;
   submitterEmail: string;
 }) {
-  const gmail = await getUncachableGmailClient();
-
   const subject = `New Space Listing: ${data.spaceName} — Pending Approval`;
 
-  const body = [
-    `A new space listing has been submitted on Align Spaces and is pending your approval.`,
-    ``,
-    `--- Space Details ---`,
-    `Name: ${data.spaceName}`,
-    `Type: ${data.spaceType}`,
-    `Address: ${data.address}`,
-    `Host: ${data.hostName}`,
-    ``,
-    `--- Submitted By ---`,
-    `Name: ${data.submitterName}`,
-    `Email: ${data.submitterEmail}`,
-    ``,
-    `Log in to the admin panel to review and approve this listing.`,
-  ].join('\n');
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">New Space Listing</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">A new space has been submitted and is awaiting your approval.</p>
 
-  const to = 'armando@alignworkspaces.com';
+    ${sectionHeading('Space Details')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.spaceName)}
+      ${infoRow('Type', data.spaceType)}
+      ${infoRow('Address', data.address)}
+      ${infoRow('Host', data.hostName)}
+    </table>
 
-  const rawMessage = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+    ${sectionHeading('Submitted By')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.submitterName)}
+      ${infoRow('Email', `<a href="mailto:${data.submitterEmail}" style="color:#c4956a;text-decoration:none;">${data.submitterEmail}</a>`)}
+    </table>
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${SITE_URL}/admin" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        Review in Admin Panel
+      </a>
+    </div>
+  `);
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+  await sendEmail(ADMIN_EMAIL, subject, html);
 }
 
 export async function sendSpaceBookingNotification(data: {
@@ -439,51 +402,38 @@ export async function sendSpaceBookingNotification(data: {
   bookingDate?: string;
   bookingHours?: number;
 }) {
-  const gmail = await getUncachableGmailClient();
+  const subject = `New Booking: ${data.spaceName} — ${data.guestName}`;
 
-  const subject = `New Booking Request: ${data.spaceName} — from ${data.guestName}`;
+  const dateRows = data.bookingDate
+    ? `${infoRow('Date', data.bookingDate)}${infoRow('Duration', `${data.bookingHours || 1} hour${(data.bookingHours || 1) > 1 ? 's' : ''}`)}`
+    : '';
 
-  const dateInfo = data.bookingDate
-    ? [`--- Booking Details ---`, `Date: ${data.bookingDate}`, `Duration: ${data.bookingHours || 1} hour${(data.bookingHours || 1) > 1 ? 's' : ''}`, ``]
-    : [];
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Space Booking Confirmed</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">Someone has booked your space on Align.</p>
 
-  const body = [
-    `Someone has booked your space on Align Spaces!`,
-    ``,
-    `--- Space ---`,
-    `${data.spaceName}`,
-    ``,
-    ...dateInfo,
-    `--- Guest ---`,
-    `Name: ${data.guestName}`,
-    `Email: ${data.guestEmail}`,
-    ``,
-    `--- Message ---`,
-    data.message || '(No message provided)',
-    ``,
-    `Log in to your Align client portal to view the booking and start a conversation.`,
-  ].join('\n');
+    ${sectionHeading('Space')}
+    <div style="background-color:#f5f3f0;border-radius:8px;padding:14px 16px;">
+      <p style="margin:0;font-size:16px;font-weight:600;color:#1a1a1a;">${data.spaceName}</p>
+    </div>
 
-  const to = data.hostEmail || 'armando@alignworkspaces.com';
+    ${dateRows ? `${sectionHeading('Booking Details')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">${dateRows}</table>` : ''}
 
-  const rawMessage = [
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    body,
-  ].join('\n');
+    ${sectionHeading('Guest')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">
+      ${infoRow('Name', data.guestName)}
+      ${infoRow('Email', `<a href="mailto:${data.guestEmail}" style="color:#c4956a;text-decoration:none;">${data.guestEmail}</a>`)}
+    </table>
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    ${data.message ? `${sectionHeading('Message')}<div style="background-color:#f5f3f0;border-radius:8px;padding:16px;"><p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.message}</p></div>` : ''}
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${SITE_URL}/portal" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        View in Client Portal
+      </a>
+    </div>
+  `);
+
+  const to = data.hostEmail || ADMIN_EMAIL;
+  await sendEmail(to, subject, html);
 }
