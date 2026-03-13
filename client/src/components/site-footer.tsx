@@ -56,6 +56,9 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
           </a>
         </div>
 
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <img src="/images/logo-align-mark.png" alt="Align" className="w-7 h-7 rounded" />
+        </div>
         <p className={`text-center text-xs ${textColor}`} data-testid="text-footer-copyright">
           &copy; 2026 Align
         </p>

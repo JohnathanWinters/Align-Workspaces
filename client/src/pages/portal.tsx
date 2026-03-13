@@ -1730,7 +1730,10 @@ function PortalContent() {
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
           </button>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
+          <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">
+            <img src="/images/logo-align-mark.png" alt="Align" className="w-6 h-6 rounded" />
+            <span className="hidden sm:inline">Client Portal</span>
+          </span>
           <div className="flex items-center gap-2">
             <div className="relative z-[10000]">
               <button

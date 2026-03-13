@@ -61,8 +61,9 @@ function emailLayout(content: string): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f3f0;padding:32px 16px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-        <tr><td style="background-color:#1a1a1a;padding:28px 32px;text-align:center;">
-          <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#ffffff;letter-spacing:0.5px;">Align</span>
+        <tr><td style="background-color:#1a1a1a;padding:24px 32px;text-align:center;">
+          <img src="${SITE_URL}/images/logo-align-mark.png" alt="Align" width="48" height="48" style="display:block;margin:0 auto 10px;border-radius:6px;" />
+          <span style="font-family:Georgia,'Times New Roman',serif;font-size:18px;color:#ffffff;letter-spacing:0.5px;">Align</span>
         </td></tr>
         <tr><td style="padding:32px;">
           ${content}
