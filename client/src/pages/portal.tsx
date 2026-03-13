@@ -1704,14 +1704,14 @@ function PortalContent() {
       <HelpButton />
       <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-10">
         <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
-          <button
-            onClick={() => window.history.back()}
+          <Link
+            href="/"
             data-testid="button-back-home"
             className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
-          </button>
+          </Link>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -2102,7 +2102,7 @@ export default function PortalPage() {
                 Sign In
               </Button>
             </a>
-            <Link href="/portraits/builder">
+            <Link href="/">
               <Button
                 variant="outline"
                 size="lg"

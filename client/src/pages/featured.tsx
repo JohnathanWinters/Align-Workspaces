@@ -80,16 +80,16 @@ function getCropZoom(crop: { x: number; y: number; zoom?: number } | null | unde
 
 const CATEGORY_ORDER = ["Therapists", "Counselors", "Chefs", "Personal Trainers"];
 
-function FeaturedNav() {
+function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
       <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
-          <button onClick={() => window.history.back()} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-featured">
+          <Link href={backTo} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-featured">
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
-          </button>
+          </Link>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Featured Pros</span>
           <div className="relative">
             <button
@@ -714,7 +714,7 @@ function FeaturedListingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <FeaturedNav />
+      <FeaturedNav backTo="/" />
 
       {weeklyPro && !activeCategory && <HeroFeature pro={weeklyPro} />}
 
@@ -1016,10 +1016,10 @@ function ProfilePage({ slug }: { slug: string }) {
         ) : null}
 
         <div className="absolute top-6 left-6 z-10">
-          <button onClick={() => window.history.back()} className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
+          <Link href="/featured" className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             Back
-          </button>
+          </Link>
         </div>
       </section>
 
