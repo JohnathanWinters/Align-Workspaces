@@ -4594,70 +4594,83 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100" data-testid="pipeline-list-table">
-          {filteredContacts.map(c => {
-            const isListExpanded = expandedListContact === c.id;
+        <div className="space-y-4" data-testid="pipeline-list-table">
+          {PIPELINE_STAGES.map(stage => {
+            const stageContacts = getStageContacts(stage.key);
+            if (stageContacts.length === 0) return null;
             return (
-              <div key={c.id}>
-                <button
-                  onClick={() => setExpandedListContact(isListExpanded ? null : c.id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
-                  data-testid={`pipeline-row-${c.id}`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                    {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                  {c.estimatedValue && <span className="text-xs text-green-600 font-medium shrink-0 hidden sm:inline">${c.estimatedValue}</span>}
-                  {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
-                  <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isListExpanded ? "rotate-180" : ""}`} />
-                </button>
-                <AnimatePresence>
-                  {isListExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-4 pb-4 pt-1 ml-11 space-y-3">
-                        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
-                          {c.email && <span className="flex items-center gap-1"><Send className="w-3 h-3 text-gray-400" /> {c.email}</span>}
-                          {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-gray-400" /> {c.phone}</span>}
-                          {c.instagram && <span className="flex items-center gap-1"><Instagram className="w-3 h-3 text-gray-400" /> @{c.instagram.replace("@", "")}</span>}
-                          <span className="capitalize flex items-center gap-1"><Camera className="w-3 h-3 text-gray-400" /> {c.category}</span>
-                          {c.estimatedValue && <span className="flex items-center gap-1 text-green-600"><Coins className="w-3 h-3" /> ${c.estimatedValue}</span>}
-                          <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-gray-400" /> {c.source}</span>
-                        </div>
-                        {c.nextFollowUp && (
-                          <p className={`text-xs flex items-center gap-1 ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                            <CalendarDays className="w-3 h-3" /> Follow-up: {new Date(c.nextFollowUp).toLocaleDateString()}
-                          </p>
-                        )}
-                        {c.lastContactDate && (
-                          <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Last contact: {new Date(c.lastContactDate).toLocaleDateString()}</p>
-                        )}
-                        {c.notes && <p className="text-xs text-gray-600">{c.notes}</p>}
-                        <div className="flex items-center gap-2 pt-1">
-                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openDetail(c)} data-testid={`button-detail-contact-${c.id}`}>
-                            <MessageCircle className="w-3 h-3 mr-1" /> Activities
-                          </Button>
-                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(c)} data-testid={`button-edit-contact-${c.id}`}>
-                            <Edit className="w-3 h-3 mr-1" /> Edit
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(c.id)} data-testid={`button-delete-contact-${c.id}`}>
-                            <Trash2 className="w-3 h-3 mr-1" /> Delete
-                          </Button>
-                        </div>
+              <div key={stage.key}>
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
+                  <span className="text-[10px] text-gray-400">{stageContacts.length}</span>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+                  {stageContacts.map(c => {
+                    const isListExpanded = expandedListContact === c.id;
+                    return (
+                      <div key={c.id}>
+                        <button
+                          onClick={() => setExpandedListContact(isListExpanded ? null : c.id)}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                          data-testid={`pipeline-row-${c.id}`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                            {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
+                          </div>
+                          {c.estimatedValue && <span className="text-xs text-green-600 font-medium shrink-0 hidden sm:inline">${c.estimatedValue}</span>}
+                          {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
+                          <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isListExpanded ? "rotate-180" : ""}`} />
+                        </button>
+                        <AnimatePresence>
+                          {isListExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-4 pb-4 pt-1 ml-11 space-y-3">
+                                <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
+                                  {c.email && <span className="flex items-center gap-1"><Send className="w-3 h-3 text-gray-400" /> {c.email}</span>}
+                                  {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-gray-400" /> {c.phone}</span>}
+                                  {c.instagram && <span className="flex items-center gap-1"><Instagram className="w-3 h-3 text-gray-400" /> @{c.instagram.replace("@", "")}</span>}
+                                  <span className="capitalize flex items-center gap-1"><Camera className="w-3 h-3 text-gray-400" /> {c.category}</span>
+                                  {c.estimatedValue && <span className="flex items-center gap-1 text-green-600"><Coins className="w-3 h-3" /> ${c.estimatedValue}</span>}
+                                  <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-gray-400" /> {c.source}</span>
+                                </div>
+                                {c.nextFollowUp && (
+                                  <p className={`text-xs flex items-center gap-1 ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                                    <CalendarDays className="w-3 h-3" /> Follow-up: {new Date(c.nextFollowUp).toLocaleDateString()}
+                                  </p>
+                                )}
+                                {c.lastContactDate && (
+                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Last contact: {new Date(c.lastContactDate).toLocaleDateString()}</p>
+                                )}
+                                {c.notes && <p className="text-xs text-gray-600">{c.notes}</p>}
+                                <div className="flex items-center gap-2 pt-1">
+                                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openDetail(c)} data-testid={`button-detail-contact-${c.id}`}>
+                                    <MessageCircle className="w-3 h-3 mr-1" /> Activities
+                                  </Button>
+                                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(c)} data-testid={`button-edit-contact-${c.id}`}>
+                                    <Edit className="w-3 h-3 mr-1" /> Edit
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(c.id)} data-testid={`button-delete-contact-${c.id}`}>
+                                    <Trash2 className="w-3 h-3 mr-1" /> Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
