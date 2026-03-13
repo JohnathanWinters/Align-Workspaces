@@ -133,9 +133,9 @@ export default function AlignSpacesPage() {
           style={{ y }}
         >
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
-            Your Space,
+            Where Your Work
             <br />
-            <span className="italic font-normal">Your Practice</span>
+            <span className="italic font-normal">and Space</span> Align
           </h1>
 
           <motion.p
