@@ -531,97 +531,9 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
   );
 }
 
-function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount, autoBook }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number; autoBook?: boolean }) {
-  const { user, isAuthenticated } = useAuth();
-  const [expanded, setExpanded] = useState(!!autoBook);
-  const [showBooking, setShowBooking] = useState(!!(autoBook && isAuthenticated));
+function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
-  const [showAuthPrompt, setShowAuthPrompt] = useState(!!(autoBook && !isAuthenticated));
-  const [activeColor, setActiveColor] = useState<number | null>(null);
-  const [spacePhotos, setSpacePhotos] = useState<Array<{ id: string; imageUrl: string }>>([]);
-  const [showSpacePhotos, setShowSpacePhotos] = useState(false);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
-
-  useEffect(() => {
-    if (showDescription) {
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
-    }
-  }, [showDescription]);
-
-  const { toast } = useToast();
-
-  const schedule: WeekSchedule | null = (() => {
-    try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
-  })();
-
-  const bufferMinutes = space.bufferMinutes ?? 15;
-
-  const bookMutation = useMutation({
-    mutationFn: async (params: { bookingDate: string; bookingStartTime: string; bookingHours: number }) => {
-      const res = await apiRequest("POST", `/api/spaces/${space.id}/book`, {
-        bookingDate: params.bookingDate,
-        bookingStartTime: params.bookingStartTime,
-        bookingHours: params.bookingHours,
-      });
-      return res.json();
-    },
-    onSuccess: (data: any) => {
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        toast({ title: "Booking created", description: "Check your portal for updates." });
-        setShowBooking(false);
-        setShowAuthPrompt(false);
-      }
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const handleViewPhotos = async () => {
-    if (spacePhotos.length > 0) {
-      setShowSpacePhotos(true);
-      return;
-    }
-    setLoadingPhotos(true);
-    try {
-      const res = await fetch(`/api/portfolio-photos/by-space/${space.id}`);
-      if (res.ok) {
-        const photos = await res.json();
-        setSpacePhotos(photos);
-        if (photos.length > 0) {
-          setShowSpacePhotos(true);
-        } else {
-          toast({ title: "No photos yet", description: "No portfolio photos have been linked to this space yet." });
-        }
-      }
-    } catch {}
-    setLoadingPhotos(false);
-  };
-
-  const handleBookClick = () => {
-    if (!isAuthenticated) {
-      setShowAuthPrompt(true);
-      setExpanded(true);
-      return;
-    }
-    setShowBooking(true);
-  };
-
-  const handleDismissAuth = () => {
-    setShowAuthPrompt(false);
-  };
-
-  useEffect(() => {
-    if (isAuthenticated && showAuthPrompt) {
-      setShowAuthPrompt(false);
-      setShowBooking(true);
-    }
-  }, [isAuthenticated, showAuthPrompt]);
 
   return (
     <motion.div
@@ -698,14 +610,13 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </div>
         )}
         {(portfolioPhotoCount ?? 0) > 0 && (
-          <button
-            onClick={(e) => { e.stopPropagation(); handleViewPhotos(); }}
-            className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full hover:bg-black/75 transition-colors z-10"
+          <div
+            className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full z-10"
             data-testid={`badge-photos-${space.id}`}
           >
             <Camera className="w-3 h-3" />
-            {portfolioPhotoCount} photo{portfolioPhotoCount !== 1 ? "s" : ""}
-          </button>
+            {portfolioPhotoCount} photo{portfolioPhotoCount !== 1 ? "s" : ""} here
+          </div>
         )}
       </div>
 
@@ -719,47 +630,16 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showSpacePhotos && spacePhotos.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black/90 flex flex-col"
-            onClick={() => setShowSpacePhotos(false)}
-          >
-            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" onClick={e => e.stopPropagation()}>
-              <div>
-                <p className="text-white font-serif text-lg">{space.name}</p>
-                <p className="text-white/60 text-xs">{spacePhotos.length} photo{spacePhotos.length !== 1 ? "s" : ""} taken at this space</p>
-              </div>
-              <button onClick={() => setShowSpacePhotos(false)} className="text-white/60 hover:text-white p-2" data-testid="button-close-space-photos">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-6" onClick={e => e.stopPropagation()}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-4xl mx-auto">
-                {spacePhotos.map((photo, i) => (
-                  <div key={photo.id} className="aspect-[3/4] rounded-lg overflow-hidden bg-white/5" data-testid={`grid-space-photo-${i}`}>
-                    <img
-                      src={photo.imageUrl}
-                      alt={`Photo ${i + 1} at ${space.name}`}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-serif text-lg font-semibold text-foreground mb-1" data-testid={`text-space-name-${space.id}`}>
+      <Link
+        href={`/spaces/${space.slug}`}
+        className="block p-5 flex flex-col flex-1"
+        data-testid={`link-space-${space.id}`}
+      >
+        <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1" data-testid={`text-space-name-${space.id}`}>
           {space.name}
         </h3>
 
-        <div className="flex items-center gap-1.5 text-foreground/50 text-sm mb-3">
+        <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-3">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="truncate">{space.neighborhood || space.address}</span>
           {distance != null && (
@@ -769,22 +649,22 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           )}
         </div>
 
-        <p className="text-foreground/60 text-sm leading-relaxed mb-4 line-clamp-2 whitespace-pre-line">
+        <p className="text-stone-500 text-sm leading-relaxed mb-4 line-clamp-2 whitespace-pre-line">
           {space.shortDescription || space.description}
         </p>
 
         <div className="flex items-center gap-4 text-sm mb-4">
-          <div className="flex items-center gap-1.5 text-foreground/70">
+          <div className="flex items-center gap-1.5 text-stone-700">
             <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
             <span className="font-semibold">${space.pricePerHour}/hr</span>
           </div>
           {space.pricePerDay && (
-            <div className="flex items-center gap-1.5 text-foreground/50">
+            <div className="flex items-center gap-1.5 text-stone-500">
               <span>${space.pricePerDay}/day</span>
             </div>
           )}
           {space.capacity && (
-            <div className="flex items-center gap-1.5 text-foreground/50">
+            <div className="flex items-center gap-1.5 text-stone-500">
               <Users className="w-3.5 h-3.5" />
               <span>Up to {space.capacity}</span>
             </div>
@@ -797,214 +677,27 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </p>
         )}
 
-        {space.amenities && space.amenities.length > 0 && !expanded && (
+        {space.amenities && space.amenities.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {space.amenities.slice(0, 3).map((amenity, i) => (
-              <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 dark:bg-stone-800 text-foreground/55 px-2 py-0.5 rounded-full">
+            {space.amenities.slice(0, 4).map((amenity, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 text-stone-500 px-2 py-0.5 rounded-full">
                 <Check className="w-2.5 h-2.5 text-[#c4956a]" />
                 {amenity}
               </span>
             ))}
-            {space.amenities.length > 3 && (
-              <span className="text-[11px] text-foreground/35 px-1 py-0.5">+{space.amenities.length - 3} more</span>
+            {space.amenities.length > 4 && (
+              <span className="text-[11px] text-stone-400 px-1 py-0.5">+{space.amenities.length - 4} more</span>
             )}
           </div>
         )}
 
-        <div className="mt-auto space-y-2">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex-1 py-2.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm font-medium text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 hover:border-stone-400 active:bg-stone-100 transition-all flex items-center justify-center gap-1.5 shadow-sm"
-            data-testid={`button-expand-space-${space.id}`}
-          >
-            {expanded ? "Show less" : "Details"}
-            <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`} />
-          </button>
-          <button
-            onClick={handleBookClick}
-            className="flex-1 py-2.5 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 active:opacity-80 transition-all flex items-center justify-center gap-1.5 shadow-sm"
-            data-testid={`button-book-card-${space.id}`}
-          >
-            <Send className="w-3.5 h-3.5" />
-            Book
-          </button>
+        <div className="mt-auto pt-2">
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors">
+            View Details
+            <ChevronRight className="w-4 h-4" />
+          </span>
         </div>
-
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="pt-3 border-t border-stone-100 dark:border-stone-700 mt-3 space-y-3">
-                {space.amenities && space.amenities.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold text-foreground/40 uppercase tracking-wider mb-2">Amenities</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {space.amenities.map((amenity, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 dark:bg-stone-800 text-foreground/60 px-2 py-0.5 rounded-full">
-                          <Check className="w-2.5 h-2.5 text-[#c4956a]" />
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-start gap-2 text-sm text-foreground/50">
-                  <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  <span>{space.address}</span>
-                </div>
-
-                {space.availableHours && (
-                  <div className="flex items-start gap-2 text-sm text-foreground/50">
-                    <Clock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    <span>{space.availableHours}</span>
-                  </div>
-                )}
-
-                {space.hostName && (
-                  <p className="text-xs text-foreground/35">Hosted by {space.hostName}</p>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowDescription(true)}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-[#c4956a] bg-[#c4956a]/5 hover:bg-[#c4956a]/10 px-3 py-2 rounded-lg transition-colors"
-                    data-testid={`button-read-more-${space.id}`}
-                  >
-                    <Info className="w-3 h-3" />
-                    Read More
-                  </button>
-                  {(portfolioPhotoCount ?? 0) > 0 && (
-                    <button
-                      onClick={handleViewPhotos}
-                      disabled={loadingPhotos}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 px-3 py-2 rounded-lg transition-colors"
-                      data-testid={`button-view-photos-${space.id}`}
-                    >
-                      {loadingPhotos ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
-                      Photos ({portfolioPhotoCount})
-                    </button>
-                  )}
-                </div>
-
-                {showAuthPrompt && !isAuthenticated && (
-                  <MagicLinkModal
-                    spaceId={space.id}
-                    onClose={handleDismissAuth}
-                    onSuccess={() => {
-                      setShowAuthPrompt(false);
-                      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-                    }}
-                  />
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showDescription && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-              onClick={() => setShowDescription(false)}
-            >
-              <motion.div
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 40, opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                className="bg-white dark:bg-stone-900 w-full sm:max-w-lg sm:rounded-xl rounded-t-xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 dark:border-stone-700 flex-shrink-0">
-                  <div>
-                    <h3 className="font-serif text-lg font-semibold text-foreground">{space.name}</h3>
-                    <p className="text-xs text-foreground/40 mt-0.5">{space.neighborhood || space.address}</p>
-                  </div>
-                  <button onClick={() => setShowDescription(false)} className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" data-testid={`button-close-desc-${space.id}`}>
-                    <X className="w-4 h-4 text-foreground/40" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-                  <div className="text-sm text-foreground/70 leading-relaxed">
-                    {space.description.split(/\n\n+/).map((paragraph, i) => (
-                      <p key={i} className={i > 0 ? "mt-3" : ""}>{paragraph}</p>
-                    ))}
-                  </div>
-
-                  {(() => {
-                    let paletteData: { colors: { hex: string; name: string }[]; feel: string } | null = null;
-                    try { if (space.colorPalette) paletteData = JSON.parse(space.colorPalette); } catch {}
-                    if (!paletteData || !paletteData.colors?.length) return null;
-                    return (
-                      <div data-testid={`palette-${space.id}`}>
-                        <p className="text-[10px] font-semibold text-foreground/40 uppercase tracking-wider mb-2">Color Palette</p>
-                        <div className="flex items-center gap-3 mb-2">
-                          {paletteData.colors.map((c, i) => (
-                            <div key={i} className="flex flex-col items-center gap-1">
-                              <div className="w-9 h-9 rounded-full border-2 border-stone-200 dark:border-stone-600" style={{ backgroundColor: c.hex }} />
-                              <span className="text-[9px] text-foreground/40 font-medium">{c.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                        {paletteData.feel && (
-                          <p className="text-sm text-foreground/50 leading-relaxed italic bg-stone-50 dark:bg-stone-800 p-3 rounded-lg">{paletteData.feel}</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  <div className="flex items-center gap-4 text-sm text-foreground/50">
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
-                      <span className="font-semibold">${space.pricePerHour}/hr</span>
-                    </div>
-                    {space.capacity && (
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>Up to {space.capacity}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="px-5 py-3 border-t border-stone-100 dark:border-stone-700 flex-shrink-0">
-                  <button
-                    onClick={() => { setShowDescription(false); handleBookClick(); }}
-                    className="w-full py-2.5 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
-                    data-testid={`button-book-desc-${space.id}`}
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    Book This Space
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {showBooking && isAuthenticated && (
-          <BookingPopup
-            space={space}
-            onClose={() => setShowBooking(false)}
-            schedule={schedule}
-            bufferMinutes={bufferMinutes}
-            bookMutation={bookMutation}
-          />
-        )}
-      </AnimatePresence>
+      </Link>
     </motion.div>
   );
 }
@@ -1652,18 +1345,6 @@ export default function SpacesBrowsePage() {
   const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [autoBookSpaceId, setAutoBookSpaceId] = useState<string | null>(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("book");
-  });
-
-  useEffect(() => {
-    if (autoBookSpaceId) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("book");
-      window.history.replaceState({}, "", url.pathname + url.search);
-    }
-  }, [autoBookSpaceId]);
 
   useEffect(() => {
     if (!showTypeDropdown) return;
@@ -2125,7 +1806,6 @@ export default function SpacesBrowsePage() {
                         isHighlighted={hoveredCardId === space.id}
                         distance={getDistanceForSpace(space)}
                         portfolioPhotoCount={photoCounts[space.id]}
-                        autoBook={autoBookSpaceId === space.id}
                       />
                     </div>
                   ))}

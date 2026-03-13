@@ -14,6 +14,7 @@ import EmployeePage from "@/pages/employee";
 import FeaturedPage from "@/pages/featured";
 import AlignSpacesPage from "@/pages/align-spaces";
 import SpacesBrowsePage from "@/pages/spaces-browse";
+import SpaceDetailPage from "@/pages/space-detail";
 import { useAnalytics } from "@/hooks/use-analytics";
 
 function BuildMyPhoto() {
@@ -25,6 +26,7 @@ function Router() {
     <Switch>
       <Route path="/" component={AlignSpacesPage} />
       <Route path="/browse" component={SpacesBrowsePage} />
+      <Route path="/spaces/:slug" component={SpaceDetailPage} />
       <Route path="/portraits/builder" component={BuildMyPhoto} />
       <Route path="/portraits" component={HomePage} />
       <Route path="/portfolio" component={PortfolioPage} />

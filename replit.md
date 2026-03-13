@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **Home / Spaces Landing Page**: The hero page at `/` with the "Your Space, Your Practice" heading. Component: `client/src/pages/align-spaces.tsx`.
 - **Portraits Landing Page**: The hero page at `/portraits` with the "Your Portrait Is Your First Impression" heading. Component: `client/src/components/hero-section.tsx`.
 - **Browse Spaces**: The spaces marketplace at `/browse`. Component: `client/src/pages/spaces-browse.tsx`.
+- **Space Detail**: Individual space page at `/spaces/:slug`. Component: `client/src/pages/space-detail.tsx`.
 - **Portraits Builder**: The 6-step configurator at `/portraits/builder`. Component: `client/src/pages/home.tsx` (with `autoStart`).
 
 ## System Architecture
@@ -56,7 +57,8 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Schema Sharing**: Drizzle table definitions and Zod schemas are shared between frontend and backend for consistent validation.
 
 ### Align Spaces Specifics
-- **Browse Page**: Split-view layout with scrollable space cards and an interactive Leaflet map. Supports filtering, mobile toggles between list/map, and displays "Verified by Align" badges and amenities.
+- **Browse Page**: Split-view layout with scrollable space cards and an interactive Leaflet map. Supports filtering, mobile toggles between list/map, and displays "Verified by Align" badges and amenities. Cards link to dedicated detail pages.
+- **Space Detail Page**: `/spaces/:slug` — dedicated page for each space showing full description, all amenities, color palette, booking widget, and "Photos taken at this space" section with portfolio photos linked to the space. Component: `client/src/pages/space-detail.tsx`.
 - **Booking System**: `space_bookings` table tracks bookings with payment details, Google Calendar integration, and unread tracking. `space_messages` table enables chat between guest and host.
 - **Client Space Management**: Authenticated clients can submit and edit space listings via the Client Portal. Submitted spaces require admin approval.
 - **Structured Availability**: `availabilitySchedule` JSON field on spaces stores day-by-day open/close hours. `bufferMinutes` allows hosts to set gaps between booking slots.
