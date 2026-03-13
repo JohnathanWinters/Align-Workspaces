@@ -1758,16 +1758,16 @@ function PortalContent() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -4, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-lg py-1 min-w-[180px] z-[9999]"
+                      className="absolute right-0 top-full mt-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg py-1 min-w-[180px] z-[9999]"
                     >
-                      <div className="px-3 py-2 border-b border-stone-100">
-                        <p className="text-xs font-medium text-foreground/80 truncate">{user?.firstName} {user?.lastName || ""}</p>
-                        <p className="text-[10px] text-foreground/40 truncate">{user?.email || ""}</p>
+                      <div className="px-3 py-2 border-b border-stone-100 dark:border-stone-700">
+                        <p className="text-xs font-medium text-stone-700 dark:text-stone-200 truncate">{user?.firstName} {user?.lastName || ""}</p>
+                        <p className="text-[10px] text-stone-400 dark:text-stone-500 truncate">{user?.email || ""}</p>
                       </div>
                       <button
                         onClick={() => { setAccountMenuOpen(false); window.location.href = "/api/login?switch=1&returnTo=/portal"; }}
                         data-testid="button-switch-account"
-                        className="w-full text-left px-3 py-2 text-xs text-foreground/60 hover:bg-stone-50 hover:text-foreground transition-colors flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 text-xs text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white transition-colors flex items-center gap-2"
                       >
                         <User className="w-3.5 h-3.5" />
                         Switch Account
@@ -1776,7 +1776,7 @@ function PortalContent() {
                         onClick={() => { setAccountMenuOpen(false); logout(); }}
                         disabled={isLoggingOut}
                         data-testid="button-logout"
-                        className="w-full text-left px-3 py-2 text-xs text-red-500/70 hover:bg-red-50 hover:text-red-600 transition-colors flex items-center gap-2"
+                        className="w-full text-left px-3 py-2 text-xs text-red-500/70 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 transition-colors flex items-center gap-2"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         Sign Out
