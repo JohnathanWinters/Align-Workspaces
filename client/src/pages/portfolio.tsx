@@ -47,7 +47,7 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.08 }}
+      transition={{ duration: 0.3, delay: index * 0.04 }}
       className={`${isSpaces ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-md overflow-hidden relative cursor-pointer group`}
       onClick={() => onPhotoClick(photo)}
       data-testid={`portfolio-full-card-${index}`}
@@ -274,9 +274,9 @@ export default function PortfolioPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-12 sm:py-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
           className="text-center mb-8"
         >
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-portfolio-title">
@@ -333,7 +333,7 @@ export default function PortfolioPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
               className={`grid gap-4 ${activeCategory === "spaces" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}
               data-testid="portfolio-full-grid"
             >
@@ -354,9 +354,9 @@ export default function PortfolioPage() {
 
         <motion.div
           key={`cta-${activeCategory}`}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
           className="mt-16 mb-4"
         >
           {activeCategory === "people" ? (

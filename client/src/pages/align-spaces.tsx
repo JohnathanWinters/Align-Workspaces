@@ -76,7 +76,7 @@ export default function AlignSpacesPage() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
             className="relative"
           >
             <button
@@ -128,7 +128,7 @@ export default function AlignSpacesPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, delay: 0.2 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
           className="text-center max-w-2xl mx-auto"
           style={{ y }}
         >
@@ -139,18 +139,18 @@ export default function AlignSpacesPage() {
           </h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
             className="text-white/90 text-base sm:text-lg max-w-md mx-auto leading-relaxed mt-6 sm:mt-8 font-normal text-center"
           >
             Book professional workspaces across Miami, therapy offices, studios, meeting rooms, and more. Designed for independent professionals and growing practices.
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.1 }}
+            transition={{ duration: 0.5, delay: 0.55 }}
             className="mt-8 sm:mt-10 flex flex-col items-center gap-4"
           >
             <Link href="/browse">

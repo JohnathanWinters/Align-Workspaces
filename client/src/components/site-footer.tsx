@@ -1,6 +1,7 @@
 import { Link } from "wouter";
-import { Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Sun, Moon } from "lucide-react";
 import { NewsletterSignup } from "./newsletter-signup";
+import { useTheme } from "./theme-provider";
 
 interface SiteFooterProps {
   variant?: "dark" | "light";
@@ -8,9 +9,10 @@ interface SiteFooterProps {
 
 export function SiteFooter({ variant = "light" }: SiteFooterProps) {
   const isDark = variant === "dark";
-  const textColor = isDark ? "text-white/60" : "text-stone-500";
-  const hoverColor = isDark ? "hover:text-white" : "hover:text-stone-900";
-  const dividerColor = isDark ? "border-white/10" : "border-stone-200";
+  const textColor = isDark ? "text-white/60" : "text-stone-500 dark:text-white/60";
+  const hoverColor = isDark ? "hover:text-white" : "hover:text-stone-900 dark:hover:text-white";
+  const dividerColor = isDark ? "border-white/10" : "border-stone-200 dark:border-white/10";
+  const { theme, toggleTheme } = useTheme();
 
   const navLinks = [
     { label: "Portraits", href: "/portraits" },
@@ -32,7 +34,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href}>
               <span
-                className={`text-xs tracking-widest uppercase ${textColor} ${hoverColor} transition-colors duration-300 cursor-pointer`}
+                className={`text-xs tracking-widest uppercase ${textColor} ${hoverColor} transition-colors duration-200 cursor-pointer`}
                 data-testid={`link-footer-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 {link.label}
@@ -48,7 +50,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
           </span>
           <a
             href="mailto:hello@alignworkspaces.com"
-            className={`flex items-center gap-1.5 text-xs ${textColor} ${hoverColor} transition-colors duration-300`}
+            className={`flex items-center gap-1.5 text-xs ${textColor} ${hoverColor} transition-colors duration-200`}
             data-testid="link-footer-email"
           >
             <Mail className="w-3 h-3" />
@@ -56,8 +58,16 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
           </a>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-1">
+        <div className="flex items-center justify-center gap-3 mb-2">
           <img src="/images/logo-align-mark.png" alt="Align" className="w-7 h-7 rounded" />
+          <button
+            onClick={toggleTheme}
+            className={`p-1.5 rounded-full transition-colors duration-200 ${isDark ? "text-white/50 hover:text-white hover:bg-white/10" : "text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/10"}`}
+            data-testid="button-theme-toggle"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
         <p className={`text-center text-xs ${textColor}`} data-testid="text-footer-copyright">
           &copy; 2026 Align

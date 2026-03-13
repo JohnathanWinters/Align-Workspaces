@@ -93,9 +93,9 @@ export default function PhotographersPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-12 sm:py-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
           className="text-center mb-12"
         >
           <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
@@ -115,7 +115,7 @@ export default function PhotographersPage() {
               key={photographer.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
+              transition={{ duration: 0.35, delay: index * 0.06 }}
               className="max-w-md w-full"
             >
               <Card className="overflow-visible p-0" data-testid={`card-photographer-page-${index}`}>

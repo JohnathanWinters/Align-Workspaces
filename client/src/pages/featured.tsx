@@ -532,7 +532,7 @@ function ShareYourStoryModal({ open, onClose }: { open: boolean; onClose: () => 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
         className="bg-white rounded-2xl p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl relative"
         onClick={e => e.stopPropagation()}
       >
@@ -1029,9 +1029,9 @@ function ProfilePage({ slug }: { slug: string }) {
 
       <div className="sm:hidden px-5 pt-6 pb-6">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
         >
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold mb-2">{pro.profession}</p>
           <h1 className="font-serif text-[2rem] font-semibold leading-[1.05] mb-2 text-foreground" data-testid="text-profile-name-mobile">
@@ -1070,9 +1070,9 @@ function ProfilePage({ slug }: { slug: string }) {
 
       <section className="hidden sm:block max-w-3xl mx-auto px-6 pt-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
         >
           <p className="text-xs uppercase tracking-[0.15em] text-foreground/50 mb-2">{pro.profession}</p>
           <h1 className="font-serif text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
@@ -1113,7 +1113,7 @@ function ProfilePage({ slug }: { slug: string }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
           className="space-y-16"
         >
           <blockquote className="py-10 sm:py-14 border-y border-foreground/10" data-testid="text-profile-quote">

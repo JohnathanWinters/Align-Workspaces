@@ -271,7 +271,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.35 }}
           className="text-center max-w-md"
         >
           <div className="w-16 h-16 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-6">
@@ -869,7 +869,7 @@ function StepContent({
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
       >
         <h2 className={`font-serif mb-2 text-[#c4956a] ${heroTitle ? "text-3xl sm:text-4xl font-bold" : "text-2xl sm:text-3xl"} ${centerTitle ? "text-center" : ""}`}>{title}</h2>
         <p className={`text-sm sm:text-base mb-8 ${heroTitle ? "text-base sm:text-lg text-foreground/70" : "text-muted-foreground"} ${centerTitle ? "text-center" : ""}`}>{subtitle}</p>
@@ -877,7 +877,7 @@ function StepContent({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.7 }}
+        transition={{ duration: 0.3, delay: 0.25 }}
       >
         {children}
       </motion.div>

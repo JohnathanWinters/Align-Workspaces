@@ -20,8 +20,9 @@ The application uses a monorepo structure, separating the React frontend (`clien
 ### Frontend
 - **Framework & UI**: React with TypeScript, Vite, Wouter for routing, and shadcn/ui (New York style) built on Radix UI with Tailwind CSS for styling.
 - **State & Forms**: Local React state for the configurator, TanStack React Query for server data, React Hook Form with Zod for form validation.
-- **Visuals**: Framer Motion for animations, warm neutral color palette, and Google Fonts (Plus Jakarta Sans, Playfair Display).
-- **Key Features**: A 6-step configurator with dynamic image previews (`ImageGallery`), a live `ConceptSummary`, labeled step indicator, clickable selection summary chips for quick step navigation, staggered reveal animations, and a `BookingForm`. A shared `SiteFooter` component handles navigation and contact information.
+- **Visuals**: Framer Motion for animations (streamlined: hero ~0.7s, transitions ~0.2-0.35s, staggers ~0.04-0.06/item), warm neutral color palette, and Google Fonts (Plus Jakarta Sans, Playfair Display).
+- **Dark Mode**: `ThemeProvider` at `client/src/components/theme-provider.tsx` wraps the app. Toggle in `SiteFooter`. Uses `darkMode: ["class"]` in Tailwind with `.dark` CSS variables in `index.css`. Preference persisted in localStorage (`align-theme`).
+- **Key Features**: A 6-step configurator with dynamic image previews (`ImageGallery`), a live `ConceptSummary`, labeled step indicator, clickable selection summary chips for quick step navigation, staggered reveal animations, and a `BookingForm`. A shared `SiteFooter` component handles navigation, contact information, and the dark mode toggle.
 
 ### Backend
 - **Framework & API**: Express 5 on Node.js with TypeScript, providing a RESTful JSON API.
