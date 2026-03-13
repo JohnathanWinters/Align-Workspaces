@@ -4560,11 +4560,11 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : viewMode === "board" ? (
-        <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory sm:snap-none">
+        <div className="space-y-4">
           {PIPELINE_STAGES.map(stage => {
             const stageContacts = getStageContacts(stage.key);
             return (
-              <div key={stage.key} className="min-w-[200px] sm:min-w-[240px] max-w-[280px] flex-shrink-0 snap-start" data-testid={`pipeline-column-${stage.key}`}
+              <div key={stage.key} data-testid={`pipeline-column-${stage.key}`}
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
                   const cid = e.dataTransfer.getData("contactId");
@@ -4574,7 +4574,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
                   <span className="text-[10px] text-gray-400">{stageContacts.length}</span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {stageContacts.map(c => (
                     <div key={c.id} draggable onDragStart={e => e.dataTransfer.setData("contactId", c.id)}
                       className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3 cursor-pointer hover:shadow-sm hover:border-gray-200 transition-all active:scale-[0.98]"
@@ -4588,7 +4588,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       </div>
                     </div>
                   ))}
-                  {stageContacts.length === 0 && <div className="text-center py-6 text-[10px] text-gray-300 border border-dashed border-gray-200 rounded-lg">No contacts</div>}
+                  {stageContacts.length === 0 && <div className="text-center py-4 text-[10px] text-gray-300 border border-dashed border-gray-200 rounded-lg col-span-full">No contacts</div>}
                 </div>
               </div>
             );
