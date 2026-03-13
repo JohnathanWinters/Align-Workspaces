@@ -434,6 +434,12 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
 
   const handleBookClick = () => {
     if (!isAuthenticated) {
+      const isMobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      if (isMobile) {
+        const returnPath = `/browse?book=${encodeURIComponent(space.id)}`;
+        window.location.href = `/api/login?returnTo=${encodeURIComponent(returnPath)}`;
+        return;
+      }
       setShowAuthPrompt(true);
       setExpanded(true);
       return;
