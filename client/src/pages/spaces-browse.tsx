@@ -531,6 +531,21 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
   );
 }
 
+function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string } | null {
+  if (!raw) return null;
+  try {
+    let parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) parsed = { colors: parsed };
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.colors)) return null;
+    const colors = parsed.colors
+      .filter((c: unknown): c is { hex: string; name: string } =>
+        c != null && typeof c === "object" && typeof (c as any).hex === "string" && typeof (c as any).name === "string"
+      );
+    if (colors.length === 0) return null;
+    return { colors, feel: typeof parsed.feel === "string" ? parsed.feel : undefined };
+  } catch { return null; }
+}
+
 function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
@@ -690,6 +705,30 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             )}
           </div>
         )}
+
+        {(() => {
+          const paletteData = parseColorPalette(space.colorPalette);
+          if (!paletteData) return null;
+          return (
+            <div className="mb-4 p-3 bg-stone-50/80 rounded-lg border border-stone-100" data-testid={`palette-preview-${space.id}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Palette className="w-3.5 h-3.5 text-[#c4956a]" />
+                <span className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider">Space Color Palette</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {paletteData.colors.map((c, i) => (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <div className="w-7 h-7 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: c.hex }} />
+                    <span className="text-[8px] text-stone-400 font-medium leading-tight text-center max-w-[48px] truncate">{c.name}</span>
+                  </div>
+                ))}
+              </div>
+              {paletteData.feel && (
+                <p className="text-[11px] text-stone-400 italic mt-2 line-clamp-1">{paletteData.feel}</p>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="mt-auto pt-2">
           <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors">
