@@ -1732,7 +1732,7 @@ function PortalContent() {
           </button>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
           <div className="flex items-center gap-2">
-            <div className="relative">
+            <div className="relative z-[10000]">
               <button
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -1783,7 +1783,7 @@ function PortalContent() {
                 )}
               </AnimatePresence>
             </div>
-            <div className="relative">
+            <div className="relative z-[10000]">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 data-testid="button-portal-menu"
