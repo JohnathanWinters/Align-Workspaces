@@ -554,6 +554,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [paletteExpanded, setPaletteExpanded] = useState(false);
+  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
 
   return (
     <motion.div
@@ -699,14 +700,20 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
 
         {space.amenities && space.amenities.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {space.amenities.slice(0, 4).map((amenity, i) => (
+            {(amenitiesExpanded ? space.amenities : space.amenities.slice(0, 4)).map((amenity, i) => (
               <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 text-stone-500 px-2 py-0.5 rounded-full">
                 <Check className="w-2.5 h-2.5 text-[#c4956a]" />
                 {amenity}
               </span>
             ))}
             {space.amenities.length > 4 && (
-              <span className="text-[11px] text-stone-400 px-1 py-0.5">+{space.amenities.length - 4} more</span>
+              <span
+                className="text-[11px] text-[#c4956a] hover:text-[#b3845d] px-1 py-0.5 cursor-pointer transition-colors"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAmenitiesExpanded(!amenitiesExpanded); }}
+                data-testid={`toggle-amenities-${space.id}`}
+              >
+                {amenitiesExpanded ? "Show less" : `+${space.amenities.length - 4} more`}
+              </span>
             )}
           </div>
         )}
