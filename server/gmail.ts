@@ -146,6 +146,37 @@ export async function sendMagicLinkEmail(email: string, magicUrl: string) {
   await sendEmail(email, subject, html);
 }
 
+export async function sendEmailChangeConfirmation(currentEmail: string, confirmUrl: string, newEmail: string) {
+  const subject = `Confirm your email change`;
+
+  const html = emailLayout(`
+    <div style="text-align:center;">
+      <div style="width:56px;height:56px;border-radius:50%;background-color:#f5f3f0;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:24px;">&#9993;</span>
+      </div>
+      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Confirm Email Change</h1>
+      <p style="margin:0 0 8px;font-size:14px;color:#6b6560;line-height:1.5;">
+        You requested to change your email to:
+      </p>
+      <p style="margin:0 0 24px;font-size:15px;font-weight:600;color:#1a1a1a;">
+        ${newEmail}
+      </p>
+      <p style="margin:0 0 28px;font-size:14px;color:#6b6560;line-height:1.5;">
+        Tap the button below to confirm this change.
+      </p>
+      <a href="${confirmUrl}" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:14px 40px;border-radius:8px;font-size:15px;font-weight:500;text-decoration:none;letter-spacing:0.3px;">
+        Confirm Email Change
+      </a>
+      <p style="margin:20px 0 0;font-size:12px;color:#b5b0ab;line-height:1.5;">
+        This link expires in 30 minutes.<br>
+        If you didn't request this, you can safely ignore this email.
+      </p>
+    </div>
+  `);
+
+  await sendEmail(currentEmail, subject, html);
+}
+
 interface BookingEmailData {
   name: string;
   email: string;

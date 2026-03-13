@@ -25,15 +25,21 @@ The application uses a monorepo structure, separating the React frontend (`clien
 
 ### Backend
 - **Framework & API**: Express 5 on Node.js with TypeScript, providing a RESTful JSON API.
-- **Admin Panel**: A password-protected `/admin` panel for managing photoshoots, galleries, edit tokens, featured professionals, portfolio photos with tagging, and an Analytics dashboard.
+- **Admin Panel**: A password-protected `/admin` panel for managing photoshoots, galleries, edit tokens, featured professionals, portfolio photos with tagging, an Analytics dashboard, and user profile photo editing.
 - **File Management**: `multer` for file uploads, streaming to Replit Object Storage, with temporary files cleaned post-upload. Supports image uploads up to 50MB per file.
 - **Notifications**: Google Mail for email notifications and Web Push (VAPID) for real-time chat messages.
 - **Stripe Integration**: Handles checkout sessions for downpayments, edit token purchases, and space booking payments. Admins can create and send itemized invoices. Stripe Connect Express facilitates host payouts on space bookings (7% renter fee + 7% host fee hybrid model).
 
 ### Database
 - **PostgreSQL**: The primary data store, managed with Drizzle ORM.
-- **Schema**: `shared/schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, push subscriptions, nominations, spaces, and space bookings.
+- **Schema**: `shared/schema.ts` defines tables for leads, shoots, galleries, edit tokens, edit requests, push subscriptions, nominations, spaces, and space bookings. `shared/models/auth.ts` defines users (with `password`, `pendingEmail`, `pendingEmailToken` fields) and magic tokens.
 - **Pricing**: `shared/pricing.ts` contains server-authoritative pricing logic.
+
+### Client Portal Settings
+- **Settings Tab**: The portal (`/portal`) includes a Settings tab with profile photo upload, name editing, password management (set/change with bcryptjs), and email change (via confirmation link to current email).
+- **Email Change Flow**: Two-step: GET renders a confirmation page, POST finalizes the swap. Token expires in 30 minutes.
+- **Password**: Optional — users who signed up via magic link can set a password. `hasPassword` boolean sent to frontend (actual hash never exposed).
+- **Profile Photo**: Uploaded via multer, processed to 400x400 WebP via sharp, stored in object storage. Admin can also upload user profile photos.
 
 ### Domain Redirects
 - **Primary domain**: `alignworkspaces.com`

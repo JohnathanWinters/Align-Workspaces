@@ -19,6 +19,8 @@ import sharp from "sharp";
 import { randomUUID, createHash, scryptSync, randomBytes } from "crypto";
 import { objectStorageClient, ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
 import { authStorage } from "./replit_integrations/auth";
+import { users } from "@shared/models/auth";
+import { eq } from "drizzle-orm";
 
 const objectStorageService = new ObjectStorageService();
 
@@ -249,6 +251,67 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  app.post("/api/auth/profile-photo", isAuthenticated, upload.single("photo"), async (req: any, res) => {
+    try {
+      const userId = req.session?.magicUserId || req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      if (!req.file) return res.status(400).json({ message: "No file provided" });
+
+      const buffer = await sharp(req.file.path)
+        .rotate()
+        .resize(400, 400, { fit: "cover" })
+        .webp({ quality: 85 })
+        .toBuffer();
+
+      await fs.promises.unlink(req.file.path).catch(() => {});
+
+      const objectUrl = await uploadBufferToObjectStorage(buffer, "image/webp");
+
+      const [updated] = await db.update(users).set({
+        profileImageUrl: objectUrl,
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId)).returning();
+
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      const { password: _p, pendingEmail: _pe, pendingEmailToken: _pt, pendingEmailExpiresAt: _pea, ...safe } = updated;
+      res.json({ ...safe, hasPassword: !!updated.password });
+    } catch (error: any) {
+      console.error("Profile photo upload error:", error);
+      if (req.file?.path) await fs.promises.unlink(req.file.path).catch(() => {});
+      res.status(500).json({ message: "Failed to upload photo" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/photo", isAdmin, upload.single("photo"), async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      if (!req.file) return res.status(400).json({ message: "No file provided" });
+
+      const buffer = await sharp(req.file.path)
+        .rotate()
+        .resize(400, 400, { fit: "cover" })
+        .webp({ quality: 85 })
+        .toBuffer();
+
+      await fs.promises.unlink(req.file.path).catch(() => {});
+
+      const objectUrl = await uploadBufferToObjectStorage(buffer, "image/webp");
+
+      const [updated] = await db.update(users).set({
+        profileImageUrl: objectUrl,
+        updatedAt: new Date(),
+      }).where(eq(users.id, id)).returning();
+
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      const { password: _p, pendingEmail: _pe, pendingEmailToken: _pt, pendingEmailExpiresAt: _pea, ...safe } = updated;
+      res.json(safe);
+    } catch (error: any) {
+      console.error("Admin photo upload error:", error);
+      if (req.file?.path) await fs.promises.unlink(req.file.path).catch(() => {});
+      res.status(500).json({ message: "Failed to upload photo" });
+    }
+  });
+
   app.post("/api/leads", async (req, res) => {
     try {
       const data = insertLeadSchema.parse(req.body);

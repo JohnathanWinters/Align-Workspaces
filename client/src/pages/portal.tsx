@@ -48,10 +48,12 @@ import {
   Menu,
   Star,
   Info,
+  Settings,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
 import PortalMessagesSection, { useUnreadCount } from "@/components/portal-messages";
+import PortalSettings from "@/components/portal-settings";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { playNotificationSound } from "@/lib/notification-sound";
@@ -729,6 +731,22 @@ function EditTokenSection() {
       url.searchParams.delete("stripe_connect");
       window.history.replaceState({}, "", url.toString());
       queryClient.invalidateQueries({ queryKey: ["/api/stripe/connect/status"] });
+    }
+    const emailChange = params.get("emailChange");
+    if (emailChange) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("emailChange");
+      window.history.replaceState({}, "", url.toString());
+      if (emailChange === "success") {
+        toast({ title: "Email updated", description: "Your email has been changed successfully." });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      } else if (emailChange === "expired") {
+        toast({ title: "Link expired", description: "The email change link has expired. Please try again.", variant: "destructive" });
+      } else if (emailChange === "taken") {
+        toast({ title: "Email unavailable", description: "That email is already in use by another account.", variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: "Something went wrong with the email change.", variant: "destructive" });
+      }
     }
   }, [toast]);
 
@@ -1677,7 +1695,7 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
-  const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "messages" | "spaces">("shoots");
+  const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "messages" | "spaces" | "settings">("shoots");
   const unreadCount = useUnreadCount();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -1924,9 +1942,29 @@ function PortalContent() {
                 />
               )}
             </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              data-testid="tab-settings"
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                activeTab === "settings"
+                  ? "text-gray-900"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              Settings
+              {activeTab === "settings" && (
+                <motion.div
+                  layoutId="portal-tab-indicator"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                />
+              )}
+            </button>
           </div>
 
-          {activeTab === "messages" ? (
+          {activeTab === "settings" ? (
+            <PortalSettings />
+          ) : activeTab === "messages" ? (
             <PortalMessagesSection userId={user?.id || ""} />
           ) : activeTab === "spaces" ? (
             <PortalSpacesSection userId={user?.id || ""} />

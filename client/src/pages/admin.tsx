@@ -5334,6 +5334,8 @@ function AdminDashboard({ token }: { token: string }) {
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editUserForm, setEditUserForm] = useState({ firstName: "", lastName: "", email: "" });
   const [savingUser, setSavingUser] = useState(false);
+  const [uploadingUserPhoto, setUploadingUserPhoto] = useState<string | null>(null);
+  const userPhotoInputRef = useRef<HTMLInputElement>(null);
   const [deletingUser, setDeletingUser] = useState<UserType | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -5499,6 +5501,30 @@ function AdminDashboard({ token }: { token: string }) {
       toast({ title: "Error", description: "Failed to update client", variant: "destructive" });
     } finally {
       setSavingUser(false);
+    }
+  };
+
+  const handleUploadUserPhoto = async (userId: string, file: File) => {
+    setUploadingUserPhoto(userId);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      const res = await adminFetch(`/api/admin/users/${userId}/photo`, token, {
+        method: "POST",
+        body: formData,
+        isFormData: true,
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+        toast({ title: "Photo updated" });
+      } else {
+        toast({ title: "Error", description: "Failed to upload photo", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to upload photo", variant: "destructive" });
+    } finally {
+      setUploadingUserPhoto(null);
     }
   };
 
@@ -5940,6 +5966,19 @@ function AdminDashboard({ token }: { token: string }) {
               </CardContent>
             </Card>
           ) : (
+            <>
+            <input
+              ref={userPhotoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                const userId = (e.target as HTMLInputElement).dataset.userId;
+                if (file && userId) handleUploadUserPhoto(userId, file);
+                e.target.value = "";
+              }}
+            />
             <div className="space-y-1">
               {filteredUsers.map((user) => {
                 const userShoots = getUserShoots(user.id);
@@ -6066,6 +6105,22 @@ function AdminDashboard({ token }: { token: string }) {
                                   <Button
                                     variant="outline"
                                     size="sm"
+                                    disabled={uploadingUserPhoto === user.id}
+                                    onClick={() => {
+                                      if (userPhotoInputRef.current) {
+                                        userPhotoInputRef.current.dataset.userId = user.id;
+                                        userPhotoInputRef.current.click();
+                                      }
+                                    }}
+                                    data-testid={`button-photo-user-${user.id}`}
+                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                  >
+                                    {uploadingUserPhoto === user.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Camera className="w-3 h-3 mr-1" />}
+                                    Photo
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => {
                                       setDeletingUser(user);
                                       setDeletePassword("");
@@ -6184,6 +6239,7 @@ function AdminDashboard({ token }: { token: string }) {
                 );
               })}
             </div>
+            </>
           )}
         </motion.div>
       </main>
