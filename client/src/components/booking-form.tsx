@@ -15,12 +15,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CalendarDays, Users, CreditCard, Handshake, CheckCircle, X, LogIn } from "lucide-react";
+import { Loader2, CalendarDays, Users, CreditCard, Handshake, CheckCircle, X, LogIn, User } from "lucide-react";
 import { SiInstagram } from "react-icons/si";
 import { useState } from "react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 const bookingSchema = z.object({
   name: z.string().min(2, "Please enter your name"),
@@ -29,9 +30,17 @@ const bookingSchema = z.object({
   notes: z.string().optional(),
 });
 
+const authBookingSchema = z.object({
+  notes: z.string().optional(),
+});
+
 const collaborateSchema = z.object({
   firstName: z.string().min(2, "Please enter your first name"),
   email: z.string().email("Please enter a valid email"),
+  message: z.string().min(3, "Please share your vision or questions"),
+});
+
+const authCollaborateSchema = z.object({
   message: z.string().min(3, "Please share your vision or questions"),
 });
 
@@ -60,44 +69,66 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
   const [collaborateSubmitted, setCollaborateSubmitted] = useState(false);
   const [collaboratePending, setCollaboratePending] = useState(false);
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+  const hasProfile = isAuthenticated && !!user?.email && !!user?.firstName;
 
   const form = useForm<BookingFormValues>({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(hasProfile ? authBookingSchema as any : bookingSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: hasProfile ? (user.firstName + (user.lastName ? ` ${user.lastName}` : "")) : "",
+      email: hasProfile ? user.email : "",
       phone: "",
       notes: "",
     },
   });
 
   const collaborateForm = useForm<CollaborateFormValues>({
-    resolver: zodResolver(collaborateSchema),
+    resolver: zodResolver(hasProfile ? authCollaborateSchema as any : collaborateSchema),
     defaultValues: {
-      firstName: "",
-      email: "",
+      firstName: hasProfile ? user.firstName : "",
+      email: hasProfile ? user.email : "",
       message: "",
     },
   });
 
   function handleBookingSubmit(values: BookingFormValues) {
     if (!selectedDate) return;
-    onCheckout({
-      ...values,
-      preferredDate: selectedDate.toISOString().split("T")[0],
-    });
+    const submitData = hasProfile
+      ? {
+          name: user.firstName + (user.lastName ? ` ${user.lastName}` : ""),
+          email: user.email!,
+          phone: values.phone || "",
+          notes: values.notes,
+          preferredDate: selectedDate.toISOString().split("T")[0],
+        }
+      : {
+          ...values,
+          preferredDate: selectedDate.toISOString().split("T")[0],
+        };
+    onCheckout(submitData);
   }
 
   async function handleCollaborateSubmit(values: CollaborateFormValues) {
     setCollaboratePending(true);
     try {
-      await apiRequest("POST", "/api/collaborate", {
-        ...values,
-        environment: selections?.environment,
-        brandMessage: selections?.brandMessage,
-        emotionalImpact: selections?.emotionalImpact,
-        shootIntent: selections?.shootIntent,
-      });
+      const submitData = hasProfile
+        ? {
+            firstName: user.firstName!,
+            email: user.email!,
+            message: values.message,
+            environment: selections?.environment,
+            brandMessage: selections?.brandMessage,
+            emotionalImpact: selections?.emotionalImpact,
+            shootIntent: selections?.shootIntent,
+          }
+        : {
+            ...values,
+            environment: selections?.environment,
+            brandMessage: selections?.brandMessage,
+            emotionalImpact: selections?.emotionalImpact,
+            shootIntent: selections?.shootIntent,
+          };
+      await apiRequest("POST", "/api/collaborate", submitData);
       setCollaborateSubmitted(true);
     } catch (err: any) {
       toast({
@@ -246,6 +277,18 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
                   >
+                    {hasProfile && (
+                      <div className="mb-4 p-3 rounded-lg bg-[#c4956a]/10 border border-[#c4956a]/20 flex items-center gap-3" data-testid="section-booking-as">
+                        <div className="w-8 h-8 rounded-full bg-[#c4956a]/20 flex items-center justify-center shrink-0">
+                          <User className="w-4 h-4 text-[#c4956a]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate" data-testid="text-booking-user-name">{user.firstName}{user.lastName ? ` ${user.lastName}` : ""}</p>
+                          <p className="text-xs text-muted-foreground truncate" data-testid="text-booking-user-email">{user.email}</p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mb-6 text-center">
                       <p className="text-sm text-muted-foreground mb-3">Shoots available Fridays & Saturdays</p>
                       <div className="flex justify-center">
@@ -268,62 +311,66 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
 
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(handleBookingSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Name</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Your full name"
-                                    {...field}
-                                    data-testid="input-name"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        {!hasProfile && (
+                          <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="Your full name"
+                                        {...field}
+                                        data-testid="input-name"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
 
-                          <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Your phone number"
-                                    {...field}
-                                    data-testid="input-phone"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                              <FormField
+                                control={form.control}
+                                name="phone"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Phone</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="Your phone number"
+                                        {...field}
+                                        data-testid="input-phone"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
 
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="email"
-                                  placeholder="your@email.com"
-                                  {...field}
-                                  data-testid="input-email"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                            <FormField
+                              control={form.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Email</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="email"
+                                      placeholder="your@email.com"
+                                      {...field}
+                                      data-testid="input-email"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </>
+                        )}
 
                         <FormField
                           control={form.control}
@@ -381,44 +428,59 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
                   >
+                    {hasProfile && (
+                      <div className="mb-4 p-3 rounded-lg bg-[#c4956a]/10 border border-[#c4956a]/20 flex items-center gap-3" data-testid="section-collaborate-as">
+                        <div className="w-8 h-8 rounded-full bg-[#c4956a]/20 flex items-center justify-center shrink-0">
+                          <User className="w-4 h-4 text-[#c4956a]" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{user.firstName}{user.lastName ? ` ${user.lastName}` : ""}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                      </div>
+                    )}
                     <Form {...collaborateForm}>
                       <form onSubmit={collaborateForm.handleSubmit(handleCollaborateSubmit)} className="space-y-4">
-                        <FormField
-                          control={collaborateForm.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Your first name"
-                                  {...field}
-                                  data-testid="input-collaborate-firstname"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {!hasProfile && (
+                          <>
+                            <FormField
+                              control={collaborateForm.control}
+                              name="firstName"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>First Name</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Your first name"
+                                      {...field}
+                                      data-testid="input-collaborate-firstname"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
 
-                        <FormField
-                          control={collaborateForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="email"
-                                  placeholder="your@email.com"
-                                  {...field}
-                                  data-testid="input-collaborate-email"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                            <FormField
+                              control={collaborateForm.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Email</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="email"
+                                      placeholder="your@email.com"
+                                      {...field}
+                                      data-testid="input-collaborate-email"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </>
+                        )}
 
                         <FormField
                           control={collaborateForm.control}
