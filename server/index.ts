@@ -67,8 +67,6 @@ async function initStripe() {
   }
 }
 
-initStripe().catch((err) => console.error('Stripe init error:', err));
-
 app.post(
   '/api/stripe/webhook',
   express.raw({ type: 'application/json' }),
@@ -151,9 +149,6 @@ app.use((req, res, next) => {
 (async () => {
   await setupAuth(app);
   registerAuthRoutes(app);
-  await seedPortfolioIfEmpty();
-  await seedSpacesIfEmpty();
-  await fixPortfolioImageExtensions();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -185,6 +180,15 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+
+      Promise.all([
+        seedPortfolioIfEmpty().catch(err => console.warn('Portfolio seed error (non-fatal):', err.message)),
+        seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
+        fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
+        initStripe().catch(err => console.warn('Stripe init error (non-fatal):', err.message)),
+      ]).then(() => {
+        log('Background initialization complete');
+      });
     },
   );
 })();
