@@ -7,6 +7,9 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { db } from "../../db";
+import { users } from "@shared/models/auth";
+import { eq } from "drizzle-orm";
 
 const getOidcConfig = memoize(
   async () => {
@@ -142,6 +145,19 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   if (req.session?.magicUserId) {
+    try {
+      const [dbUser] = await db.select().from(users).where(eq(users.id, req.session.magicUserId));
+      if (dbUser) {
+        req.user = {
+          claims: {
+            sub: dbUser.id,
+            email: dbUser.email,
+            first_name: dbUser.firstName || dbUser.email?.split('@')[0] || 'Guest',
+          }
+        };
+        return next();
+      }
+    } catch {}
     req.user = { claims: { sub: req.session.magicUserId } };
     return next();
   }
