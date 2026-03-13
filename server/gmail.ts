@@ -62,7 +62,7 @@ function emailLayout(content: string): string {
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
         <tr><td style="background-color:#1a1a1a;padding:28px 32px;text-align:center;">
-          <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#ffffff;letter-spacing:0.5px;">align</span>
+          <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#ffffff;letter-spacing:0.5px;">Align</span>
         </td></tr>
         <tr><td style="padding:32px;">
           ${content}
@@ -95,6 +95,11 @@ function sectionHeading(text: string): string {
   return `<p style="margin:24px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#c4956a;font-weight:600;">${text}</p>`;
 }
 
+function mimeEncodeSubject(subject: string) {
+  if (/^[\x20-\x7E]*$/.test(subject)) return subject;
+  return '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
+}
+
 function sendEmail(to: string, subject: string, htmlBody: string) {
   return getUncachableGmailClient().then(gmail => {
     const rawMessage = [
@@ -102,7 +107,7 @@ function sendEmail(to: string, subject: string, htmlBody: string) {
       `To: ${to}`,
       `From: ${FROM_HEADER}`,
       `Reply-To: ${FROM_HEADER}`,
-      `Subject: ${subject}`,
+      `Subject: ${mimeEncodeSubject(subject)}`,
       `Content-Type: text/html; charset="UTF-8"`,
       ``,
       htmlBody,
