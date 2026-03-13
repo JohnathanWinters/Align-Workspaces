@@ -52,6 +52,7 @@ import {
   CalendarDays,
   Instagram,
   Globe,
+  ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -5272,14 +5273,23 @@ function AdminDashboard({ token }: { token: string }) {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
 
-  const filteredUsers = users.filter((u) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    const email = (u.email || "").toLowerCase();
-    const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
-    return email.includes(q) || name.includes(q);
-  });
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      const email = (u.email || "").toLowerCase();
+      const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+      return email.includes(q) || name.includes(q);
+    });
+  }, [users, searchQuery]);
+
+  useEffect(() => {
+    if (expandedClient && !filteredUsers.some(u => u.id === expandedClient)) {
+      setExpandedClient(null);
+    }
+  }, [filteredUsers, expandedClient]);
 
   const tokenMap = new Map<string, EditToken>();
   allEditTokens.forEach((t) => tokenMap.set(t.userId, t));
@@ -5816,7 +5826,12 @@ function AdminDashboard({ token }: { token: string }) {
           </div>
         )}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <h2 className="font-serif text-2xl text-gray-900 mb-6">Clients & Photoshoots</h2>
+          <div className="flex items-baseline gap-2 mb-6">
+            <h2 className="font-serif text-2xl text-gray-900">Clients</h2>
+            {users.length > 0 && (
+              <span className="text-sm text-gray-400 font-medium">({filteredUsers.length}{searchQuery ? ` of ${users.length}` : ""})</span>
+            )}
+          </div>
 
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -5859,84 +5874,132 @@ function AdminDashboard({ token }: { token: string }) {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-1">
               {filteredUsers.map((user) => {
                 const userShoots = getUserShoots(user.id);
+                const isExpanded = expandedClient === user.id;
+                const displayName = user.firstName || user.lastName
+                  ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                  : "No name";
                 return (
-                  <Card key={user.id} className="bg-white" data-testid={`card-client-${user.id}`}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10 shrink-0">
-                          {user.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
-                          <AvatarFallback className="bg-gray-100 text-gray-500">
-                            <User className="w-5 h-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          {editingUser === user.id ? (
-                            <div className="space-y-2">
-                              <div className="flex gap-2">
+                  <div key={user.id} data-testid={`card-client-${user.id}`}>
+                    <button
+                      onClick={() => setExpandedClient(isExpanded ? null : user.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${isExpanded ? "bg-white shadow-sm ring-1 ring-gray-200" : "bg-white/60 hover:bg-white"}`}
+                      data-testid={`button-expand-client-${user.id}`}
+                    >
+                      <Avatar className="w-8 h-8 shrink-0">
+                        {user.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
+                        <AvatarFallback className="bg-gray-100 text-gray-500 text-xs">
+                          <User className="w-4 h-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
+                        <p className="text-xs text-gray-400 truncate">{user.email || "No email"}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {userShoots.length > 0 && (
+                          <span className="text-[11px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+                            {userShoots.length} shoot{userShoots.length !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                      </div>
+                    </button>
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="bg-white rounded-b-lg shadow-sm ring-1 ring-gray-200 ring-t-0 -mt-1 px-4 pb-4 pt-2">
+                            {editingUser === user.id ? (
+                              <div className="space-y-2 py-2">
+                                <div className="flex gap-2">
+                                  <Input
+                                    value={editUserForm.firstName}
+                                    onChange={(e) => setEditUserForm({ ...editUserForm, firstName: e.target.value })}
+                                    placeholder="First name"
+                                    data-testid={`input-edit-firstname-${user.id}`}
+                                    className="h-8 text-sm"
+                                  />
+                                  <Input
+                                    value={editUserForm.lastName}
+                                    onChange={(e) => setEditUserForm({ ...editUserForm, lastName: e.target.value })}
+                                    placeholder="Last name"
+                                    data-testid={`input-edit-lastname-${user.id}`}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
                                 <Input
-                                  value={editUserForm.firstName}
-                                  onChange={(e) => setEditUserForm({ ...editUserForm, firstName: e.target.value })}
-                                  placeholder="First name"
-                                  data-testid={`input-edit-firstname-${user.id}`}
+                                  value={editUserForm.email}
+                                  onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                                  placeholder="Email"
+                                  type="email"
+                                  data-testid={`input-edit-email-${user.id}`}
                                   className="h-8 text-sm"
                                 />
-                                <Input
-                                  value={editUserForm.lastName}
-                                  onChange={(e) => setEditUserForm({ ...editUserForm, lastName: e.target.value })}
-                                  placeholder="Last name"
-                                  data-testid={`input-edit-lastname-${user.id}`}
-                                  className="h-8 text-sm"
-                                />
+                                <div className="flex gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveUser(user.id)}
+                                    disabled={savingUser}
+                                    data-testid={`button-save-user-${user.id}`}
+                                    className="h-7 bg-[#1a1a1a] text-white text-xs"
+                                  >
+                                    {savingUser ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingUser(null)}
+                                    className="h-7 text-xs"
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
                               </div>
-                              <Input
-                                value={editUserForm.email}
-                                onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
-                                placeholder="Email"
-                                type="email"
-                                data-testid={`input-edit-email-${user.id}`}
-                                className="h-8 text-sm"
-                              />
-                              <div className="flex gap-1.5">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleSaveUser(user.id)}
-                                  disabled={savingUser}
-                                  data-testid={`button-save-user-${user.id}`}
-                                  className="h-7 bg-[#1a1a1a] text-white text-xs"
-                                >
-                                  {savingUser ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
-                                  Save
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => setEditingUser(null)}
-                                  className="h-7 text-xs"
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <CardTitle className="text-base font-medium text-gray-900 truncate">
-                                    {user.firstName || user.lastName
-                                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                                      : "No name"}
-                                  </CardTitle>
-                                  <button
+                            ) : (
+                              <>
+                                <div className="flex flex-wrap items-center gap-2 py-2 border-b border-gray-100">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => startCreate(user)}
+                                    data-testid={`button-add-shoot-${user.id}`}
+                                    className="bg-[#1a1a1a] text-white h-7 text-xs"
+                                  >
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    Add Shoot
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => { setSelectedTokenUser(user); setView("tokens"); }}
+                                    data-testid={`button-tokens-${user.id}`}
+                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                  >
+                                    <ImagePlus className="w-3 h-3 mr-1" />
+                                    Editor
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => startEditUser(user)}
                                     data-testid={`button-edit-user-${user.id}`}
-                                    className="text-gray-400 hover:text-gray-700 shrink-0"
+                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
                                   >
-                                    <Edit className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
+                                    <Edit className="w-3 h-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => {
                                       setDeletingUser(user);
                                       setDeletePassword("");
@@ -5944,132 +6007,114 @@ function AdminDashboard({ token }: { token: string }) {
                                       setDeleteError("");
                                     }}
                                     data-testid={`button-delete-user-${user.id}`}
-                                    className="text-gray-400 hover:text-red-500 shrink-0"
+                                    className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  onClick={() => startCreate(user)}
-                                  data-testid={`button-add-shoot-${user.id}`}
-                                  className="bg-[#1a1a1a] text-white shrink-0"
-                                >
-                                  <Plus className="w-3.5 h-3.5 mr-1.5" />
-                                  Add Shoot
-                                </Button>
-                              </div>
-                              <p className="text-xs text-gray-500 truncate">{user.email || "No email"}</p>
-                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                <Badge variant="secondary" className="text-xs" data-testid={`badge-annual-tokens-${user.id}`}>
-                                  <Coins className="w-3 h-3 mr-1" />
-                                  Annual: {tokenMap.get(user.id)?.annualTokens ?? 0}
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs" data-testid={`badge-purchased-tokens-${user.id}`}>
-                                  <Coins className="w-3 h-3 mr-1" />
-                                  Purchased: {tokenMap.get(user.id)?.purchasedTokens ?? 0}
-                                </Badge>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => { setSelectedTokenUser(user); setView("tokens"); }}
-                                  data-testid={`button-tokens-${user.id}`}
-                                  className="h-6 text-xs px-2 text-gray-600 border-gray-200"
-                                >
-                                  <ImagePlus className="w-3 h-3 mr-1" />
-                                  Editor
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {userShoots.length === 0 ? (
-                        <p className="text-sm text-gray-400 italic py-2">No photoshoots assigned</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {userShoots.map((shoot) => (
-                            <div
-                              key={shoot.id}
-                              className="p-3 rounded-lg bg-gray-50"
-                              data-testid={`shoot-row-${shoot.id}`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <Camera className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{shoot.title}</p>
-                                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                                    {shoot.status && (
-                                      <span className="capitalize">{shoot.status}</span>
-                                    )}
-                                    {shoot.environment && (
-                                      <>
-                                        <span>·</span>
-                                        <span className="capitalize">{shoot.environment}</span>
-                                      </>
-                                    )}
-                                    {shoot.shootDate && (
-                                      <>
-                                        <span>·</span>
-                                        <span>
-                                          {new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
-                                          {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => openGallery(shoot)}
-                                      data-testid={`button-gallery-${shoot.id}`}
-                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                    >
-                                      <Images className="w-3 h-3 mr-1" />
-                                      Gallery
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => startEdit(shoot)}
-                                      data-testid={`button-edit-shoot-${shoot.id}`}
-                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                    >
-                                      <Edit className="w-3 h-3 mr-1" />
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => setInvoiceShoot(shoot)}
-                                      data-testid={`button-invoice-${shoot.id}`}
-                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                    >
-                                      <Receipt className="w-3 h-3 mr-1" />
-                                      Invoice
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDeleteShoot(shoot.id)}
-                                      data-testid={`button-delete-shoot-${shoot.id}`}
-                                      className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="w-3 h-3 mr-1" />
-                                      Delete
-                                    </Button>
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                  <div className="flex items-center gap-1.5 ml-auto">
+                                    <Badge variant="secondary" className="text-[11px]" data-testid={`badge-annual-tokens-${user.id}`}>
+                                      <Coins className="w-3 h-3 mr-1" />
+                                      Annual: {tokenMap.get(user.id)?.annualTokens ?? 0}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-[11px]" data-testid={`badge-purchased-tokens-${user.id}`}>
+                                      <Coins className="w-3 h-3 mr-1" />
+                                      Purchased: {tokenMap.get(user.id)?.purchasedTokens ?? 0}
+                                    </Badge>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+
+                                <div className="pt-3">
+                                  {userShoots.length === 0 ? (
+                                    <p className="text-sm text-gray-400 italic py-1">No photoshoots assigned</p>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {userShoots.map((shoot) => (
+                                        <div
+                                          key={shoot.id}
+                                          className="p-3 rounded-lg bg-gray-50"
+                                          data-testid={`shoot-row-${shoot.id}`}
+                                        >
+                                          <div className="flex items-start gap-3">
+                                            <Camera className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-gray-900 truncate">{shoot.title}</p>
+                                              <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                                {shoot.status && (
+                                                  <span className="capitalize">{shoot.status}</span>
+                                                )}
+                                                {shoot.environment && (
+                                                  <>
+                                                    <span>·</span>
+                                                    <span className="capitalize">{shoot.environment}</span>
+                                                  </>
+                                                )}
+                                                {shoot.shootDate && (
+                                                  <>
+                                                    <span>·</span>
+                                                    <span>
+                                                      {new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
+                                                      {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+                                                    </span>
+                                                  </>
+                                                )}
+                                              </div>
+                                              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => openGallery(shoot)}
+                                                  data-testid={`button-gallery-${shoot.id}`}
+                                                  className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                >
+                                                  <Images className="w-3 h-3 mr-1" />
+                                                  Gallery
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => startEdit(shoot)}
+                                                  data-testid={`button-edit-shoot-${shoot.id}`}
+                                                  className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                >
+                                                  <Edit className="w-3 h-3 mr-1" />
+                                                  Edit
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => setInvoiceShoot(shoot)}
+                                                  data-testid={`button-invoice-${shoot.id}`}
+                                                  className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                >
+                                                  <Receipt className="w-3 h-3 mr-1" />
+                                                  Invoice
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleDeleteShoot(shoot.id)}
+                                                  data-testid={`button-delete-shoot-${shoot.id}`}
+                                                  className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
+                                                >
+                                                  <Trash2 className="w-3 h-3 mr-1" />
+                                                  Delete
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </motion.div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </AnimatePresence>
+                  </div>
                 );
               })}
             </div>
