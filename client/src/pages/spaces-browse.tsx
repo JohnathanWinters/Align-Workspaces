@@ -910,28 +910,25 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
 }
 
 function StepCheckmark({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 350);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
   return (
     <motion.div
       className="flex items-center justify-center py-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      onAnimationComplete={() => {
-        setTimeout(onComplete, 400);
-      }}
+      transition={{ duration: 0.1 }}
     >
       <motion.div
-        className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center"
-        initial={{ scale: 0 }}
-        animate={{ scale: [0, 1.2, 1] }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center"
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <motion.div
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.3 }}
-        >
-          <Check className="w-8 h-8 text-emerald-500" strokeWidth={3} />
-        </motion.div>
+        <Check className="w-7 h-7 text-emerald-500" strokeWidth={3} />
       </motion.div>
     </motion.div>
   );
@@ -941,8 +938,8 @@ function AnimatedPrice({ value, prefix = "$" }: { value: number; prefix?: string
   const [display, setDisplay] = useState(0);
   useEffect(() => {
     const target = value;
-    const duration = 600;
-    const steps = 20;
+    const duration = 300;
+    const steps = 12;
     const increment = target / steps;
     let current = 0;
     let step = 0;
@@ -1021,9 +1018,9 @@ function BookingPopup({
   };
 
   const slideVariants = {
-    enter: (d: number) => ({ x: d > 0 ? 80 : -80, opacity: 0 }),
+    enter: (d: number) => ({ x: d > 0 ? 40 : -40, opacity: 0 }),
     center: { x: 0, opacity: 1 },
-    exit: (d: number) => ({ x: d > 0 ? -80 : 80, opacity: 0 }),
+    exit: (d: number) => ({ x: d > 0 ? -40 : 40, opacity: 0 }),
   };
 
   return (
@@ -1101,7 +1098,7 @@ function BookingPopup({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
+        <div className="flex-1 overflow-y-auto px-5 pb-5 min-h-[320px]">
           <AnimatePresence mode="wait" custom={direction}>
             {step === "date" && (
               <motion.div
@@ -1111,7 +1108,7 @@ function BookingPopup({
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
                 className="space-y-3"
               >
                 <p className="text-sm font-medium text-foreground/80 text-center">When would you like to visit?</p>
@@ -1158,28 +1155,23 @@ function BookingPopup({
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
                 className="space-y-4"
               >
                 <div className="text-center">
                   <p className="text-sm font-medium text-foreground/80">Pick your start time</p>
-                  <motion.p
-                    className="text-xs text-[#c4956a] font-medium mt-1"
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
+                  <p className="text-xs text-[#c4956a] font-medium mt-1">
                     {new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                  </motion.p>
+                  </p>
                 </div>
                 {availableSlots.length > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
                     {availableSlots.map((slot, i) => (
                       <motion.button
                         key={slot}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.04, duration: 0.2 }}
+                        transition={{ delay: i * 0.02, duration: 0.15 }}
                         whileTap={{ scale: 0.92 }}
                         onClick={() => {
                           setBookingStartTime(slot);
@@ -1230,17 +1222,12 @@ function BookingPopup({
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
                 className="space-y-4"
               >
                 <p className="text-sm font-medium text-foreground/80 text-center">Review your booking</p>
 
-                <motion.div
-                  className="bg-stone-50 rounded-xl p-4 space-y-3 border border-stone-100"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
+                <div className="bg-stone-50 rounded-xl p-4 space-y-3 border border-stone-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-foreground/70">
                       <CalendarDays className="w-4 h-4 text-[#c4956a]" />
@@ -1271,14 +1258,9 @@ function BookingPopup({
                       ))}
                     </select>
                   </div>
-                </motion.div>
+                </div>
 
-                <motion.div
-                  className="bg-white rounded-xl p-4 border border-stone-200 space-y-2"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
+                <div className="bg-white rounded-xl p-4 border border-stone-200 space-y-2">
                   <div className="flex justify-between text-sm text-foreground/60">
                     <span>${space.pricePerHour}/hr x {bookingHours} hr{bookingHours > 1 ? "s" : ""}</span>
                     <AnimatedPrice value={basePriceCents} />
@@ -1298,7 +1280,7 @@ function BookingPopup({
                       <AnimatedPrice value={totalCharge} />
                     </motion.span>
                   </div>
-                </motion.div>
+                </div>
 
                 <CancellationPolicy />
 
