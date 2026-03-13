@@ -321,6 +321,8 @@ export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
   firstName: text("first_name"),
+  zipCode: text("zip_code"),
+  interests: text("interests").array().default(sql`'{}'::text[]`),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
