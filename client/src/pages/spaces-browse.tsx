@@ -1637,7 +1637,7 @@ export default function SpacesBrowsePage() {
           <div ref={typeDropdownRef} className="relative flex-shrink-0" data-testid="dropdown-space-type">
             <button
               onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm font-medium text-foreground hover:border-stone-300 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm font-medium text-foreground hover:border-stone-300 transition-colors"
               data-testid="button-space-type-dropdown"
             >
               {(() => {
