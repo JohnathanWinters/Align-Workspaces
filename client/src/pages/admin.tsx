@@ -4027,6 +4027,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [csvText, setCsvText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [expandedListContact, setExpandedListContact] = useState<string | null>(null);
+  const [showActions, setShowActions] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
     category: "portraits", stage: "new", notes: "", estimatedValue: "",
@@ -4469,8 +4470,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       </div>
     );
   }
-
-  const [showActions, setShowActions] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
