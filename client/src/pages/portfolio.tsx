@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
+import { UserIndicator } from "@/components/user-indicator";
 import { environments, brandMessages, emotionalImpacts } from "@/lib/configurator-data";
 import {
   Dialog,
@@ -212,7 +213,9 @@ export default function PortfolioPage() {
               <span className="hidden sm:inline">Back</span>
             </Link>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Our Work</span>
-            <div className="relative">
+            <div className="flex items-center gap-3">
+              <UserIndicator />
+              <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 data-testid="button-portfolio-menu"
@@ -263,6 +266,7 @@ export default function PortfolioPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>

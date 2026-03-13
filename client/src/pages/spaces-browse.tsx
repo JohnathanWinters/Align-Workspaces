@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
+import { UserIndicator } from "@/components/user-indicator";
 import {
   ArrowLeft,
   MapPin,
@@ -1770,6 +1771,7 @@ export default function SpacesBrowsePage() {
           </button>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
           <div className="flex items-center gap-2">
+            <UserIndicator />
             <button
               onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
               data-testid="button-toggle-map"

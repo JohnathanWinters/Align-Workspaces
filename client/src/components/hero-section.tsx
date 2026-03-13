@@ -3,6 +3,7 @@ import { User, Menu, X, Building2, Camera, Star, Info } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "./site-footer";
+import { UserIndicator } from "./user-indicator";
 
 interface HeroSectionProps {
   onStart: () => void;
@@ -75,7 +76,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 via-40% to-black/80" />
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-center">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="w-9" />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -123,6 +125,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
               )}
             </AnimatePresence>
           </motion.div>
+          <UserIndicator variant="light" />
         </div>
       </nav>
 

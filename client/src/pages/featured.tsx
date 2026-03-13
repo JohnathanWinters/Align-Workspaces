@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
+import { UserIndicator } from "@/components/user-indicator";
 
 interface FeaturedProfessional {
   id: string;
@@ -91,51 +92,54 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
             <span className="hidden sm:inline">Back</span>
           </Link>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Featured Pros</span>
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              data-testid="button-featured-menu-toggle"
-              className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
-            >
-              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-              <span className="hidden sm:inline">Menu</span>
-            </button>
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
-                >
-                  <Link href="/portraits">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-nav">
-                      <Camera className="w-4 h-4" />
-                      Align Portraits
-                    </button>
-                  </Link>
-                  <Link href="/">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-nav">
-                      <MapPin className="w-4 h-4" />
-                      Align Spaces
-                    </button>
-                  </Link>
-                  <Link href="/portfolio">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-nav">
-                      <Camera className="w-4 h-4" />
-                      Our Work
-                    </button>
-                  </Link>
-                  <Link href="/portal">
-                    <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-nav">
-                      <Users className="w-4 h-4" />
-                      Client Portal
-                    </button>
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="flex items-center gap-3">
+            <UserIndicator />
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                data-testid="button-featured-menu-toggle"
+                className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
+              >
+                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
+                  >
+                    <Link href="/portraits">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-nav">
+                        <Camera className="w-4 h-4" />
+                        Align Portraits
+                      </button>
+                    </Link>
+                    <Link href="/">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-nav">
+                        <MapPin className="w-4 h-4" />
+                        Align Spaces
+                      </button>
+                    </Link>
+                    <Link href="/portfolio">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-nav">
+                        <Camera className="w-4 h-4" />
+                        Our Work
+                      </button>
+                    </Link>
+                    <Link href="/portal">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-nav">
+                        <Users className="w-4 h-4" />
+                        Client Portal
+                      </button>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
