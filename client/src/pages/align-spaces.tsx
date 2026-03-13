@@ -21,6 +21,17 @@ interface Space {
   amenities: string[];
 }
 
+interface FeaturedPro {
+  id: string;
+  name: string;
+  profession: string;
+  location: string;
+  slug: string;
+  portraitImageUrl: string | null;
+  headline: string;
+  quote: string;
+}
+
 const testimonials = [
   {
     quote: "Exactly what therapists in Miami needed. Booking a professional room for sessions is finally simple and affordable.",
@@ -45,6 +56,10 @@ export default function AlignSpacesPage() {
 
   const { data: spaces, isLoading: spacesLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
+  });
+
+  const { data: featuredPros } = useQuery<FeaturedPro[]>({
+    queryKey: ["/api/featured"],
   });
 
   useEffect(() => {
@@ -177,7 +192,7 @@ export default function AlignSpacesPage() {
                 transition={{ duration: 0.6, delay: 0.25 }}
                 className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight"
               >
-                Your Portrait Is
+                Your Presence Is
                 <br />
                 <span className="italic font-normal">Your First</span>
                 <br />
@@ -190,7 +205,7 @@ export default function AlignSpacesPage() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal"
               >
-                Design a photoshoot that aligns your work, character, and the impression you want your clients to feel.
+                Design a professional image that aligns your work, character, and the experience you want clients to feel.
               </motion.p>
 
               <motion.div
@@ -213,7 +228,7 @@ export default function AlignSpacesPage() {
                   data-testid="button-portfolio-portraits"
                   className="inline-flex items-center gap-2 text-[10px] sm:text-xs tracking-widest uppercase text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/40 hover:border-white/80 hover:bg-white/10 transition-all duration-300"
                 >
-                  See Our Portfolio
+                  View Portfolio
                 </Link>
               </motion.div>
             </div>
@@ -274,7 +289,7 @@ export default function AlignSpacesPage() {
                 transition={{ duration: 0.5, delay: 0.55 }}
                 className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal"
               >
-                Find and book professional workspaces designed for therapists, coaches, and creators in Miami.
+                Discover and book professional workspaces across Miami — therapy offices, studios, meeting rooms, and more.
               </motion.p>
 
               <motion.div
@@ -422,6 +437,72 @@ export default function AlignSpacesPage() {
                 data-testid="link-browse-all-mobile"
               >
                 View all spaces
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {(featuredPros || []).length > 0 && (
+        <section className="py-16 sm:py-24 px-6" data-testid="section-featured-pros">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-end justify-between mb-10 sm:mb-12">
+              <div>
+                <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">Featured Professionals</h2>
+                <p className="text-stone-500 text-sm sm:text-base mt-2">Meet the Miami professionals who trust Align</p>
+              </div>
+              <Link
+                href="/featured"
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
+                data-testid="link-featured-all"
+              >
+                View all
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(featuredPros || []).slice(0, 3).map((pro) => (
+                <Link
+                  key={pro.id}
+                  href={`/featured/${pro.slug}`}
+                  className="group block rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300"
+                  data-testid={`featured-pro-${pro.id}`}
+                >
+                  <div className="aspect-[3/4] overflow-hidden bg-stone-100">
+                    {pro.portraitImageUrl ? (
+                      <img
+                        src={pro.portraitImageUrl}
+                        alt={pro.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="w-16 h-16 text-stone-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 sm:p-5">
+                    <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
+                    <p className="text-sm text-[#c4956a] font-medium mb-2">{pro.profession}</p>
+                    <p className="text-stone-500 text-sm leading-relaxed line-clamp-2">{pro.headline}</p>
+                    <div className="flex items-center gap-1.5 text-stone-400 text-xs mt-3">
+                      <MapPin className="w-3 h-3" />
+                      <span>{pro.location}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="sm:hidden text-center mt-8">
+              <Link
+                href="/featured"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
+                data-testid="link-featured-all-mobile"
+              >
+                View all professionals
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
