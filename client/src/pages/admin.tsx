@@ -2461,6 +2461,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
   const { toast } = useToast();
   const [nominations, setNominations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedNom, setExpandedNom] = useState<string | null>(null);
 
   const adminFetch = useCallback(async (url: string, opts: any = {}) => {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
@@ -2510,8 +2511,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
             <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-nominations-back">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="font-serif text-xl font-semibold">Nominations</h1>
-            <span className="text-sm text-gray-500">{nominations.length} total</span>
+            <h1 className="font-serif text-xl font-semibold">Nominations ({nominations.length})</h1>
           </div>
         </div>
       </header>
@@ -2528,46 +2528,68 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {nominations.map((nom: any) => (
-              <Card key={nom.id} className="bg-white">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-4">
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+            {nominations.map((nom: any) => {
+              const isExpanded = expandedNom === nom.id;
+              return (
+                <div key={nom.id}>
+                  <button
+                    onClick={() => setExpandedNom(isExpanded ? null : nom.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                    data-testid={`button-expand-nomination-${nom.id}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                      <Heart className="w-3.5 h-3.5 text-stone-500" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-base" data-testid={`text-nominee-name-${nom.id}`}>{nom.nomineeName}</h3>
-                        <span className="text-sm text-gray-500">{nom.nomineeProfession}</span>
-                        <Badge className={`text-[10px] ${statusColor(nom.status)}`} variant="secondary" data-testid={`badge-nomination-status-${nom.id}`}>
-                          {nom.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-700 mb-3 leading-relaxed" data-testid={`text-nominee-reason-${nom.id}`}>"{nom.reason}"</p>
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-400">
-                        {nom.nominatorName && <span>Nominated by: {nom.nominatorName}</span>}
-                        {nom.nomineeContact && <span>Contact: {nom.nomineeContact}</span>}
-                        <span>{new Date(nom.createdAt).toLocaleDateString()}</span>
-                      </div>
+                      <span className="text-sm font-medium text-gray-900" data-testid={`text-nominee-name-${nom.id}`}>{nom.nomineeName}</span>
+                      <span className="text-xs text-gray-400 ml-2">{nom.nomineeProfession}</span>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Select value={nom.status} onValueChange={(val) => updateStatus(nom.id, val)}>
-                        <SelectTrigger className="h-8 w-[120px] text-xs" data-testid={`select-nomination-status-${nom.id}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="reviewed">Reviewed</SelectItem>
-                          <SelectItem value="contacted">Contacted</SelectItem>
-                          <SelectItem value="declined">Declined</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 h-8 w-8 p-0" onClick={() => deleteNom(nom.id)} data-testid={`button-delete-nomination-${nom.id}`}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <Badge className={`text-[10px] ${statusColor(nom.status)} shrink-0`} variant="secondary" data-testid={`badge-nomination-status-${nom.id}`}>
+                      {nom.status}
+                    </Badge>
+                    <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{new Date(nom.createdAt).toLocaleDateString()}</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 pt-1 ml-11 space-y-3">
+                          <p className="text-sm text-gray-700 leading-relaxed italic" data-testid={`text-nominee-reason-${nom.id}`}>"{nom.reason}"</p>
+                          <div className="flex flex-wrap gap-4 text-xs text-gray-400">
+                            {nom.nominatorName && <span>Nominated by: <span className="text-gray-600">{nom.nominatorName}</span></span>}
+                            {nom.nomineeContact && <span>Contact: <span className="text-gray-600">{nom.nomineeContact}</span></span>}
+                            <span>{new Date(nom.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
+                            <Select value={nom.status} onValueChange={(val) => updateStatus(nom.id, val)}>
+                              <SelectTrigger className="h-8 w-[130px] text-xs" data-testid={`select-nomination-status-${nom.id}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="reviewed">Reviewed</SelectItem>
+                                <SelectItem value="contacted">Contacted</SelectItem>
+                                <SelectItem value="declined">Declined</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 h-8 w-8 p-0" onClick={() => deleteNom(nom.id)} data-testid={`button-delete-nomination-${nom.id}`}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
@@ -3226,6 +3248,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [heroCropPosition, setHeroCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 20, zoom: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [isHeroDragging, setIsHeroDragging] = useState(false);
+  const [expandedPro, setExpandedPro] = useState<string | null>(null);
   const cropContainerRef = useRef<HTMLDivElement>(null);
   const heroCropContainerRef = useRef<HTMLDivElement>(null);
   const formPortraitPreviewRef = useRef(formPortraitPreview);
@@ -3869,8 +3892,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-featured-back">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="font-serif text-xl font-semibold">Featured Professionals</h1>
-            <span className="text-sm text-gray-500">{professionals.length} profiles</span>
+            <h1 className="font-serif text-xl font-semibold">Featured Professionals ({professionals.length})</h1>
           </div>
           <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }} data-testid="button-add-featured">
             <Plus className="w-3.5 h-3.5 mr-1.5" />
@@ -3898,44 +3920,68 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
             {professionals.map(pro => {
               const initials = pro.name.split(" ").map(n => n[0]).join("").slice(0, 2);
+              const isExpanded = expandedPro === pro.id;
               return (
-                <Card key={pro.id} className="overflow-hidden" data-testid={`admin-featured-card-${pro.id}`}>
-                  <div className="aspect-[3/4] relative overflow-hidden bg-stone-200 group cursor-pointer"
-                    onClick={() => { setUploadTargetId(pro.id); fileInputRef.current?.click(); }}>
-                    {pro.portraitImageUrl ? (
-                      <img src={pro.portraitImageUrl} alt={pro.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-300 to-stone-400">
-                        <span className="text-4xl font-serif text-white/80">{initials}</span>
+                <div key={pro.id} data-testid={`admin-featured-card-${pro.id}`}>
+                  <button
+                    onClick={() => setExpandedPro(isExpanded ? null : pro.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                    data-testid={`button-expand-featured-${pro.id}`}
+                  >
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-stone-200 shrink-0">
+                      {pro.portraitImageUrl ? (
+                        <img src={pro.portraitImageUrl} alt={pro.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-300 to-stone-400">
+                          <span className="text-sm font-serif text-white/80">{initials}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">{pro.name}</span>
+                        {pro.isFeaturedOfWeek ? <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" /> : null}
                       </div>
+                      <span className="text-xs text-gray-500">{pro.profession} · {pro.location}</span>
+                    </div>
+                    <span className="text-xs text-gray-400 shrink-0 hidden sm:inline truncate max-w-[200px] italic">"{pro.headline}"</span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 pt-1 ml-[52px] space-y-3">
+                          <p className="text-sm text-gray-600 italic">"{pro.headline}"</p>
+                          <p className="text-xs text-gray-400">"{pro.quote}"</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => startEdit(pro)} data-testid={`button-edit-featured-${pro.id}`}>
+                              <Edit className="w-3 h-3 mr-1" /> Edit
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setUploadTargetId(pro.id); fileInputRef.current?.click(); }} data-testid={`button-upload-featured-${pro.id}`}>
+                              {uploading === pro.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
+                              {pro.portraitImageUrl ? "Change Photo" : "Upload Photo"}
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => window.open(`/featured/${pro.slug}`, "_blank")} data-testid={`button-view-featured-${pro.id}`}>
+                              <ExternalLink className="w-3 h-3 mr-1" /> View
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(pro.id)} data-testid={`button-delete-featured-${pro.id}`}>
+                              <Trash2 className="w-3 h-3 mr-1" /> Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                      {uploading === pro.id ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Upload className="w-6 h-6 text-white" />}
-                    </div>
-                    {pro.isFeaturedOfWeek ? (
-                      <div className="absolute top-2 right-2"><Star className="w-5 h-5 text-amber-400 fill-amber-400" /></div>
-                    ) : null}
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-sm mb-0.5">{pro.name}</h3>
-                    <p className="text-xs text-gray-500 mb-1">{pro.profession} · {pro.location}</p>
-                    <p className="text-xs text-gray-400 mb-3 truncate italic">"{pro.headline}"</p>
-                    <div className="flex items-center gap-1.5">
-                      <Button variant="outline" size="sm" className="h-7 text-xs flex-1" onClick={() => startEdit(pro)} data-testid={`button-edit-featured-${pro.id}`}>
-                        <Edit className="w-3 h-3 mr-1" /> Edit
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => window.open(`/featured/${pro.slug}`, "_blank")} data-testid={`button-view-featured-${pro.id}`}>
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                      <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => handleDelete(pro.id)} data-testid={`button-delete-featured-${pro.id}`}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </AnimatePresence>
+                </div>
               );
             })}
           </div>
@@ -3980,6 +4026,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [showImportCsv, setShowImportCsv] = useState(false);
   const [csvText, setCsvText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [expandedListContact, setExpandedListContact] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
     category: "portraits", stage: "new", notes: "", estimatedValue: "",
@@ -4547,57 +4594,76 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           })}
         </div>
       ) : (
-        <div className="space-y-0">
-          <div className="hidden sm:block bg-white rounded-lg border border-gray-100 overflow-hidden">
-            <table className="w-full text-sm table-fixed" data-testid="pipeline-list-table">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase w-[30%]">Name</th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase w-[20%]">Stage</th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Category</th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase">Value</th>
-                  <th className="text-left px-3 py-2 text-[10px] font-semibold text-gray-500 uppercase hidden md:table-cell">Follow-up</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredContacts.map(c => (
-                  <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer" onClick={() => openDetail(c)} data-testid={`pipeline-row-${c.id}`}>
-                    <td className="px-3 py-2.5 font-medium text-gray-900 truncate" title={c.name}>{c.name}</td>
-                    <td className="px-3 py-2.5"><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span></td>
-                    <td className="px-3 py-2.5 text-gray-500 capitalize">{c.category}</td>
-                    <td className="px-3 py-2.5 text-gray-700">{c.estimatedValue ? `$${c.estimatedValue}` : "—"}</td>
-                    <td className="px-3 py-2.5 hidden md:table-cell">
-                      {c.nextFollowUp ? (
-                        <span className={`text-xs ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                          {new Date(c.nextFollowUp).toLocaleDateString()}
-                        </span>
-                      ) : "—"}
-                    </td>
-                  </tr>
-                ))}
-                {filteredContacts.length === 0 && (
-                  <tr><td colSpan={5} className="text-center py-12 text-gray-400">No contacts found</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="sm:hidden space-y-2" data-testid="pipeline-list-mobile">
-            {filteredContacts.map(c => (
-              <div key={c.id} className="bg-white rounded-lg border border-gray-100 p-3 cursor-pointer active:scale-[0.98] transition-transform"
-                onClick={() => openDetail(c)} data-testid={`pipeline-row-${c.id}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-gray-900 truncate flex-1">{c.name}</p>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap flex-shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                </div>
-                <div className="flex items-center gap-3 mt-1 text-[11px] text-gray-400">
-                  {c.email && <span className="truncate">{c.email}</span>}
-                  {c.estimatedValue && <span className="text-green-600 font-medium flex-shrink-0">${c.estimatedValue}</span>}
-                  {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-red-500 font-medium flex-shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
-                </div>
+        <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100" data-testid="pipeline-list-table">
+          {filteredContacts.map(c => {
+            const isListExpanded = expandedListContact === c.id;
+            return (
+              <div key={c.id}>
+                <button
+                  onClick={() => setExpandedListContact(isListExpanded ? null : c.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                  data-testid={`pipeline-row-${c.id}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                    {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                  {c.estimatedValue && <span className="text-xs text-green-600 font-medium shrink-0 hidden sm:inline">${c.estimatedValue}</span>}
+                  {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isListExpanded ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {isListExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 pt-1 ml-11 space-y-3">
+                        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
+                          {c.email && <span className="flex items-center gap-1"><Send className="w-3 h-3 text-gray-400" /> {c.email}</span>}
+                          {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-gray-400" /> {c.phone}</span>}
+                          {c.instagram && <span className="flex items-center gap-1"><Instagram className="w-3 h-3 text-gray-400" /> @{c.instagram.replace("@", "")}</span>}
+                          <span className="capitalize flex items-center gap-1"><Camera className="w-3 h-3 text-gray-400" /> {c.category}</span>
+                          {c.estimatedValue && <span className="flex items-center gap-1 text-green-600"><Coins className="w-3 h-3" /> ${c.estimatedValue}</span>}
+                          <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-gray-400" /> {c.source}</span>
+                        </div>
+                        {c.nextFollowUp && (
+                          <p className={`text-xs flex items-center gap-1 ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                            <CalendarDays className="w-3 h-3" /> Follow-up: {new Date(c.nextFollowUp).toLocaleDateString()}
+                          </p>
+                        )}
+                        {c.lastContactDate && (
+                          <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Last contact: {new Date(c.lastContactDate).toLocaleDateString()}</p>
+                        )}
+                        {c.notes && <p className="text-xs text-gray-600">{c.notes}</p>}
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openDetail(c)} data-testid={`button-detail-contact-${c.id}`}>
+                            <MessageCircle className="w-3 h-3 mr-1" /> Activities
+                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(c)} data-testid={`button-edit-contact-${c.id}`}>
+                            <Edit className="w-3 h-3 mr-1" /> Edit
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(c.id)} data-testid={`button-delete-contact-${c.id}`}>
+                            <Trash2 className="w-3 h-3 mr-1" /> Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            ))}
-            {filteredContacts.length === 0 && <p className="text-center py-12 text-gray-400 text-sm">No contacts found</p>}
-          </div>
+            );
+          })}
+          {filteredContacts.length === 0 && (
+            <div className="text-center py-12 text-gray-400 text-sm">No contacts found</div>
+          )}
         </div>
       )}
       <AnimatePresence>
