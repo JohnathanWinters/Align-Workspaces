@@ -2384,6 +2384,45 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/space-favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const favorites = await storage.getSpaceFavorites(req.user.claims.sub);
+      const spaceIds = favorites.map(f => f.spaceId);
+      const allSpaces = await storage.getSpaces({ includeSamples: true });
+      const favoriteSpaces = allSpaces.filter(s => spaceIds.includes(s.id));
+      res.json(favoriteSpaces);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-favorites/:spaceId", isAuthenticated, async (req: any, res) => {
+    try {
+      const fav = await storage.addSpaceFavorite(req.user.claims.sub, req.params.spaceId);
+      res.json(fav);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/space-favorites/:spaceId", isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.removeSpaceFavorite(req.user.claims.sub, req.params.spaceId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/space-favorites/check/:spaceId", isAuthenticated, async (req: any, res) => {
+    try {
+      const isFav = await storage.isSpaceFavorited(req.user.claims.sub, req.params.spaceId);
+      res.json({ favorited: isFav });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/admin/spaces/all", isAdmin, async (_req, res) => {
     try {
       const allSpaces = await storage.getAllSpaces();

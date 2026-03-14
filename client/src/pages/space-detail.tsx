@@ -22,6 +22,7 @@ import {
   CalendarDays,
   CreditCard,
   Palette,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -692,6 +693,31 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     enabled: !!space?.id,
   });
 
+  const { user } = useAuth();
+  const { data: favStatus } = useQuery<{ favorited: boolean }>({
+    queryKey: ["/api/space-favorites/check", space?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/space-favorites/check/${space!.id}`, { credentials: "include" });
+      if (!res.ok) return { favorited: false };
+      return res.json();
+    },
+    enabled: !!space?.id && !!user,
+  });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (favStatus?.favorited) {
+        await apiRequest("DELETE", `/api/space-favorites/${space!.id}`);
+      } else {
+        await apiRequest("POST", `/api/space-favorites/${space!.id}`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-favorites/check", space?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-favorites"] });
+    },
+  });
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
@@ -791,9 +817,26 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
         <div className="px-4 py-6 sm:px-6">
           <div className="sm:flex sm:gap-8">
             <div className="sm:flex-1">
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 mb-2" data-testid="text-space-name">
-                {space.name}
-              </h1>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900" data-testid="text-space-name">
+                  {space.name}
+                </h1>
+                {user && (
+                  <button
+                    onClick={() => toggleFavorite.mutate()}
+                    className="p-2 rounded-full hover:bg-stone-100 transition-colors flex-shrink-0 mt-1"
+                    data-testid="button-toggle-favorite"
+                  >
+                    <Heart
+                      className={`w-5 h-5 transition-colors ${
+                        favStatus?.favorited
+                          ? "text-red-500 fill-red-500"
+                          : "text-stone-400"
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 text-stone-500 text-sm mb-4">
                 <MapPin className="w-4 h-4 flex-shrink-0" />

@@ -39,6 +39,7 @@ import {
   CalendarDays,
   CreditCard,
   Mail,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -555,6 +556,31 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [paletteExpanded, setPaletteExpanded] = useState(false);
   const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
+  const { user } = useAuth();
+
+  const { data: favStatus } = useQuery<{ favorited: boolean }>({
+    queryKey: ["/api/space-favorites/check", space.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/space-favorites/check/${space.id}`, { credentials: "include" });
+      if (!res.ok) return { favorited: false };
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (favStatus?.favorited) {
+        await apiRequest("DELETE", `/api/space-favorites/${space.id}`);
+      } else {
+        await apiRequest("POST", `/api/space-favorites/${space.id}`);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-favorites/check", space.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-favorites"] });
+    },
+  });
 
   return (
     <motion.div
@@ -638,6 +664,15 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             <Camera className="w-3 h-3" />
             {portfolioPhotoCount} photo{portfolioPhotoCount !== 1 ? "s" : ""} here
           </div>
+        )}
+        {user && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite.mutate(); }}
+            className="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors z-10"
+            data-testid={`button-favorite-${space.id}`}
+          >
+            <Heart className={`w-4 h-4 transition-colors ${favStatus?.favorited ? "text-red-500 fill-red-500" : "text-stone-400"}`} />
+          </button>
         )}
       </div>
 

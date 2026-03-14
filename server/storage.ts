@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, isNull, ne, ilike } from "drizzle-orm";
 
@@ -109,6 +109,10 @@ export interface IStorage {
   deletePipelineContact(id: string): Promise<void>;
   getPipelineActivities(contactId: string): Promise<PipelineActivity[]>;
   createPipelineActivity(data: InsertPipelineActivity): Promise<PipelineActivity>;
+  getSpaceFavorites(userId: string): Promise<SpaceFavorite[]>;
+  addSpaceFavorite(userId: string, spaceId: string): Promise<SpaceFavorite>;
+  removeSpaceFavorite(userId: string, spaceId: string): Promise<void>;
+  isSpaceFavorited(userId: string, spaceId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -796,6 +800,26 @@ export class DatabaseStorage implements IStorage {
   async createPipelineActivity(data: InsertPipelineActivity): Promise<PipelineActivity> {
     const [result] = await db.insert(pipelineActivities).values(data).returning();
     return result;
+  }
+
+  async getSpaceFavorites(userId: string): Promise<SpaceFavorite[]> {
+    return db.select().from(spaceFavorites).where(eq(spaceFavorites.userId, userId)).orderBy(desc(spaceFavorites.createdAt));
+  }
+
+  async addSpaceFavorite(userId: string, spaceId: string): Promise<SpaceFavorite> {
+    const existing = await db.select().from(spaceFavorites).where(and(eq(spaceFavorites.userId, userId), eq(spaceFavorites.spaceId, spaceId)));
+    if (existing.length > 0) return existing[0];
+    const [result] = await db.insert(spaceFavorites).values({ userId, spaceId }).returning();
+    return result;
+  }
+
+  async removeSpaceFavorite(userId: string, spaceId: string): Promise<void> {
+    await db.delete(spaceFavorites).where(and(eq(spaceFavorites.userId, userId), eq(spaceFavorites.spaceId, spaceId)));
+  }
+
+  async isSpaceFavorited(userId: string, spaceId: string): Promise<boolean> {
+    const result = await db.select().from(spaceFavorites).where(and(eq(spaceFavorites.userId, userId), eq(spaceFavorites.spaceId, spaceId)));
+    return result.length > 0;
   }
 }
 

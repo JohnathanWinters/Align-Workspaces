@@ -26,6 +26,9 @@ import {
   ExternalLink,
   CreditCard,
   ShieldCheck,
+  Heart,
+  Clock,
+  CalendarDays,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -710,7 +713,180 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
   );
 }
 
-export default function PortalSpacesSection({ userId }: { userId: string }) {
+function FavoritesTab() {
+  const { data: favoriteSpaces = [], isLoading } = useQuery<Space[]>({
+    queryKey: ["/api/space-favorites"],
+    queryFn: async () => {
+      const res = await fetch("/api/space-favorites", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const removeFavorite = useMutation({
+    mutationFn: async (spaceId: string) => {
+      await apiRequest("DELETE", `/api/space-favorites/${spaceId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-favorites"] });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (favoriteSpaces.length === 0) {
+    return (
+      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-favorites">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Heart className="w-7 h-7 text-gray-400" />
+          </div>
+          <h3 className="font-serif text-xl text-gray-900 mb-2">No favorites yet</h3>
+          <p className="text-gray-500 text-sm max-w-sm">
+            Browse spaces and tap the heart icon to save your favorites here.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-3">
+      {favoriteSpaces.map((space) => (
+        <Card key={space.id} className="overflow-hidden border border-gray-100" data-testid={`card-favorite-${space.id}`}>
+          <div className="flex gap-4 p-4">
+            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+              {(space.imageUrls as string[])?.[0] ? (
+                <img src={(space.imageUrls as string[])[0]} alt={space.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-gray-900 text-sm truncate">{space.name}</h4>
+              {space.address && (
+                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                  <MapPin className="w-3 h-3" />
+                  {space.address}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr · Up to {space.capacity} guests</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <button
+                onClick={() => removeFavorite.mutate(space.id)}
+                className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                data-testid={`button-unfavorite-${space.id}`}
+              >
+                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+              </button>
+              <a href={`/spaces/${space.slug}`} className="text-xs text-[#c4956a] hover:underline" data-testid={`link-view-space-${space.id}`}>
+                View
+              </a>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function PastSpacesTab() {
+  const { data: bookingsData, isLoading } = useQuery<{ guest: any[]; host: any[] }>({
+    queryKey: ["/api/space-bookings"],
+    queryFn: async () => {
+      const res = await fetch("/api/space-bookings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const bookings = bookingsData?.guest || [];
+
+  const { data: allSpaces = [] } = useQuery<Space[]>({
+    queryKey: ["/api/spaces"],
+    queryFn: async () => {
+      const res = await fetch("/api/spaces?includeSamples=true");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const pastBookings = bookings.filter((b: any) => {
+    if (!b.bookingDate) return false;
+    const bookingDate = new Date(b.bookingDate);
+    return bookingDate < now && (b.status === "confirmed" || b.status === "completed");
+  });
+
+  if (pastBookings.length === 0) {
+    return (
+      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-past-spaces">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Clock className="w-7 h-7 text-gray-400" />
+          </div>
+          <h3 className="font-serif text-xl text-gray-900 mb-2">No past bookings</h3>
+          <p className="text-gray-500 text-sm max-w-sm">
+            Spaces you've booked will appear here after your session.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const spaceMap = new Map(allSpaces.map(s => [s.id, s]));
+
+  return (
+    <div className="grid gap-3">
+      {pastBookings.map((booking: any) => {
+        const space = spaceMap.get(booking.spaceId);
+        return (
+          <Card key={booking.id} className="overflow-hidden border border-gray-100" data-testid={`card-past-booking-${booking.id}`}>
+            <div className="flex gap-4 p-4">
+              <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                {space && (space.imageUrls as string[])?.[0] ? (
+                  <img src={(space.imageUrls as string[])[0]} alt={space?.name || "Space"} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-gray-900 text-sm truncate">{space?.name || "Space"}</h4>
+                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                  <CalendarDays className="w-3 h-3" />
+                  {booking.bookingDate} · {booking.bookingStartTime} · {booking.bookingHours}hr
+                </p>
+                {booking.paymentAmount && (
+                  <p className="text-xs text-gray-500 mt-1">${(booking.paymentAmount / 100).toFixed(2)} paid</p>
+                )}
+              </div>
+              <div className="flex flex-col items-end">
+                <Badge className="text-[10px] bg-stone-100 text-stone-600">Completed</Badge>
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function MySpacesTab() {
   const [showForm, setShowForm] = useState(false);
 
   const { data: mySpaces = [], isLoading: spacesLoading } = useQuery<Space[]>({
@@ -729,11 +905,11 @@ export default function PortalSpacesSection({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <StripeConnectSection hasSpaces={mySpaces.length > 0} />
 
       <div className="flex items-center justify-between">
-        <h2 className="font-serif text-xl text-gray-900">My Spaces</h2>
+        <h3 className="font-medium text-gray-900 text-sm">Your Listings</h3>
         {!showForm && (
           <Button
             onClick={() => setShowForm(true)}
@@ -781,6 +957,42 @@ export default function PortalSpacesSection({ userId }: { userId: string }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+export default function PortalSpacesSection({ userId }: { userId: string }) {
+  const [spacesTab, setSpacesTab] = useState<"favorites" | "my-spaces" | "past">("favorites");
+
+  const tabs = [
+    { key: "favorites" as const, label: "Favorites", icon: Heart },
+    { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
+    { key: "past" as const, label: "Past Spaces", icon: Clock },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-1 bg-stone-100 rounded-lg p-1" data-testid="spaces-subtabs">
+        {tabs.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setSpacesTab(key)}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+              spacesTab === key
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+            data-testid={`tab-spaces-${key}`}
+          >
+            <Icon className="w-3.5 h-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {spacesTab === "favorites" && <FavoritesTab />}
+      {spacesTab === "my-spaces" && <MySpacesTab />}
+      {spacesTab === "past" && <PastSpacesTab />}
     </div>
   );
 }

@@ -468,6 +468,21 @@ export const insertPipelineContactSchema = createInsertSchema(pipelineContacts).
 export type InsertPipelineContact = z.infer<typeof insertPipelineContactSchema>;
 export type PipelineContact = typeof pipelineContacts.$inferSelect;
 
+export const spaceFavorites = pgTable("space_favorites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  spaceId: varchar("space_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSpaceFavoriteSchema = createInsertSchema(spaceFavorites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSpaceFavorite = z.infer<typeof insertSpaceFavoriteSchema>;
+export type SpaceFavorite = typeof spaceFavorites.$inferSelect;
+
 export const pipelineActivities = pgTable("pipeline_activities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   contactId: varchar("contact_id").notNull(),
