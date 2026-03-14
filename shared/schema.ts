@@ -282,6 +282,8 @@ export const featuredProfessionals = pgTable("featured_professionals", {
     misunderstanding: string;
   }>(),
   socialLinks: jsonb("social_links").$type<Array<{ platform: string; url: string }>>(),
+  yearsHosting: integer("years_hosting"),
+  locationCount: integer("location_count"),
   isFeaturedOfWeek: integer("is_featured_of_week").notNull().default(0),
   isSample: integer("is_sample").notNull().default(0),
   seoTitle: text("seo_title"),

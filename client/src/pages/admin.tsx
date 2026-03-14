@@ -1635,6 +1635,8 @@ const defaultFeaturedForm = {
   socialLinks: [] as Array<{ platform: string; url: string }>,
   isFeaturedOfWeek: false,
   seoTitle: "", metaDescription: "",
+  yearsHosting: "",
+  locationCount: "",
 };
 
 const SOCIAL_PLATFORMS = [
@@ -3329,6 +3331,8 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         storySections: { whyStarted: form.whyStarted, whatTheyLove: form.whatTheyLove, misunderstanding: form.misunderstanding },
         socialLinks: form.socialLinks.filter(s => s.platform && s.url.trim()),
         isFeaturedOfWeek: form.isFeaturedOfWeek ? 1 : 0,
+        yearsHosting: form.yearsHosting ? parseInt(form.yearsHosting) : null,
+        locationCount: form.locationCount ? parseInt(form.locationCount) : null,
         seoTitle: form.seoTitle || `${form.name} - ${form.profession} | Align`,
         metaDescription: form.metaDescription || form.headline,
       };

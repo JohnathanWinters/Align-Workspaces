@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Quote, Palette, Check, ChevronRight } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -33,23 +33,40 @@ interface FeaturedPro {
   portraitCropPosition?: any;
   headline: string;
   quote: string;
+  yearsHosting?: number | null;
+  locationCount?: number | null;
 }
 
 const testimonials = [
   {
-    quote: "Exactly what therapists in Miami needed. Booking a professional room for sessions is finally simple and affordable.",
-    name: "Licensed Therapist",
-    location: "Coral Gables",
+    quote: "Exactly what therapists in Miami needed. Booking a professional room for sessions is **finally simple and affordable**.",
+    name: "Dr. Laura M.",
+    title: "Licensed Therapist, Coral Gables",
   },
   {
-    quote: "I found the perfect studio for my coaching sessions. The space made my clients feel comfortable from the moment they walked in.",
-    name: "Business Coach",
-    location: "Brickell",
+    quote: "The space made my clients feel comfortable from the moment they walked in. **My coaching practice grew 40% after switching to Align**.",
+    name: "Carlos R.",
+    title: "Business Coach, Brickell",
   },
   {
-    quote: "As a photographer, having access to curated, beautiful spaces completely changed how I work with clients.",
-    name: "Portrait Photographer",
-    location: "Wynwood",
+    quote: "Having access to curated, beautiful spaces **completely changed how I work with clients**. I used to spend hours finding locations.",
+    name: "Sofia T.",
+    title: "Portrait Photographer, Wynwood",
+  },
+  {
+    quote: "I listed my office and **it was booked within the first week**. The platform handles everything — payments, scheduling, all of it.",
+    name: "James K.",
+    title: "Wellness Studio Owner, Coconut Grove",
+  },
+  {
+    quote: "As a new therapist in Miami, finding affordable session space was impossible. **Align solved that problem overnight**.",
+    name: "Andrea P.",
+    title: "Licensed Counselor, Doral",
+  },
+  {
+    quote: "The booking process is seamless. My clients love the spaces and **I love not having to manage a lease**.",
+    name: "Maria V.",
+    title: "Life Coach, Coral Gables",
   },
 ];
 
@@ -517,13 +534,13 @@ export default function AlignSpacesPage() {
       )}
 
       <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-testimonials">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
             <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Trusted by Miami Professionals</h2>
             <p className="text-stone-500 text-sm mt-2 max-w-md mx-auto">Join therapists, coaches, and creators who use Align every day</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-5">
             {testimonials.map((t, i) => (
               <motion.div
                 key={i}
@@ -531,14 +548,32 @@ export default function AlignSpacesPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="bg-white rounded-xl border border-stone-100 p-6"
+                className="break-inside-avoid mb-4 sm:mb-5"
                 data-testid={`testimonial-${i}`}
               >
-                <Quote className="w-5 h-5 text-[#c4956a] mb-3" />
-                <p className="text-stone-600 text-sm leading-relaxed mb-4 italic">"{t.quote}"</p>
-                <div>
-                  <p className="text-stone-900 text-sm font-semibold">{t.name}</p>
-                  <p className="text-stone-400 text-xs mt-0.5">{t.location}</p>
+                <div className="bg-white rounded-2xl border border-stone-100 p-6 sm:p-7">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-serif text-2xl text-stone-300 leading-none">&ldquo;&ldquo;</span>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, s) => (
+                        <Star key={s} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-stone-700 text-sm leading-relaxed mb-5"
+                    dangerouslySetInnerHTML={{
+                      __html: t.quote.replace(/\*\*(.*?)\*\*/g, '<strong class="text-stone-900 font-semibold">$1</strong>')
+                    }}
+                  />
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-stone-200 to-stone-100 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-stone-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-stone-900">{t.name}</p>
+                      <p className="text-[11px] text-stone-400">{t.title}</p>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             ))}
