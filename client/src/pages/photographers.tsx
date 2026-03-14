@@ -180,21 +180,20 @@ export default function PhotographersPage() {
                   </div>
                 </div>
                 <div className="p-6 sm:p-8 md:p-8 lg:p-10 md:w-[62%] md:flex md:flex-col md:justify-center">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#c9a96e]" />
-                    <p className="text-[11px] text-stone-400 tracking-[0.15em] uppercase font-medium" data-testid="text-photographer-page-role-0">
-                      Founder
-                    </p>
-                  </div>
-                  <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-6" data-testid="text-photographer-page-name-0">
+                  <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid="text-photographer-page-name-0">
                     Armando Ramirez Romero
                   </h3>
+                  <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid="text-photographer-page-role-0">Founder, Align</p>
+                  <p className="text-[12px] text-stone-400 mb-6 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    Miami, FL
+                  </p>
                   <div className="space-y-4" data-testid="text-photographer-page-bio-0">
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
                       I started Align because I kept seeing the same disconnect. Talented, dedicated professionals doing meaningful work in spaces that didn't reflect any of it.
                     </p>
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      These weren't people cutting corners. They were therapists, coaches, and creatives who cared deeply about the experience they created for their clients. But the environments available to them were impersonal, temporary, or simply wrong for the work.
+                      These weren't people cutting corners. They were therapists, coaches, and creatives who cared deeply about the experience they created for their clients. But the environments available were temporary, impersonal, or simply not built for their work.
                     </p>
                     <p className="text-[13px] sm:text-sm text-stone-600 leading-[1.7] font-medium">
                       I built Align to close that gap.
@@ -226,6 +225,9 @@ export default function PhotographersPage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12 sm:mb-16"
           >
+            <p className="text-[11px] tracking-[0.15em] uppercase text-stone-400 font-medium mb-4">
+              Built in Miami for therapists, coaches, and independent professionals.
+            </p>
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="w-6 h-px bg-stone-300/60" />
               <p className="text-[11px] tracking-[0.2em] uppercase text-[#c4956a] font-medium">
@@ -246,12 +248,12 @@ export default function PhotographersPage() {
               {
                 icon: Building2,
                 title: "A space that fits the work.",
-                desc: "Thoughtfully designed workspaces in Miami, available by the hour, matched to the experience you want to create for your clients.",
+                desc: "Miami spaces, available by the hour, matched to the experience you want to create.",
               },
               {
                 icon: Image,
-                title: "An image that reflects the quality.",
-                desc: "A portrait and branding experience so your online presence matches the professional walking into the room.",
+                title: "An image that reflects the work.",
+                desc: "Professional portraits and branding that match the experience clients walk into.",
               },
               {
                 icon: Heart,
@@ -319,25 +321,20 @@ export default function PhotographersPage() {
               <div className="w-6 h-px bg-stone-300/60" />
             </div>
             <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.8] mb-6">
-              We're building a Miami where independent professionals can build practices that feel intentional from the inside out. Where the space, the image, and the experience all tell the same story.
+              We're building a Miami where independent professionals can build practices that feel intentional from the inside out. Where the space, the image, and the experience tell the same story.
             </p>
             <p className="text-[#2a2a2a] font-serif text-lg sm:text-xl italic mb-10">
               One professional at a time.
             </p>
 
-            <div className="space-y-3">
-              <p className="text-stone-400 text-xs tracking-[0.2em] uppercase font-medium">
-                Your space is waiting
-              </p>
-              <Link
-                href="/workspaces"
-                data-testid="button-browse-workspaces-vision"
-                className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
-              >
-                Browse Workspaces
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <Link
+              href="/workspaces"
+              data-testid="button-browse-workspaces-vision"
+              className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+            >
+              Explore what Align offers
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </motion.div>
         </div>
       </section>
