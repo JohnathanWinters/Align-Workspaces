@@ -54,7 +54,7 @@ const testimonials = [
     title: "Portrait Photographer, Wynwood",
   },
   {
-    quote: "I listed my office and **it was booked within the first week**. The platform handles everything — payments, scheduling, all of it.",
+    quote: "I listed my office and **it was booked within the first week**. The platform handles everything, payments, scheduling, all of it.",
     name: "James K.",
     title: "Wellness Studio Owner, Coconut Grove",
   },
@@ -328,7 +328,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
           >
-            Discover professional workspaces across Miami — from therapy offices to studios and meeting rooms.
+            Discover professional workspaces across Miami, from therapy offices to studios and meeting rooms.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -393,7 +393,7 @@ export default function AlignSpacesPage() {
               {
                 step: "01",
                 title: "Discover Workspaces",
-                desc: "Explore flexible workspaces designed for professionals — from therapy offices and studios to meeting rooms and creative spaces.",
+                desc: "Explore flexible workspaces designed for professionals, from therapy offices and studios to meeting rooms and creative spaces.",
                 detail: "Align helps you find environments that support the work you do and the experience you want to create.",
               },
               {

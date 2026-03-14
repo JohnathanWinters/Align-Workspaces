@@ -10,7 +10,7 @@ import { UserIndicator } from "@/components/user-indicator";
 const founderSections = [
   {
     paragraphs: [
-      "Align was founded with a simple belief — the spaces where professionals meet their clients should reflect the care behind their work.",
+      "Align was founded with a simple belief, the spaces where professionals meet their clients should reflect the care behind their work.",
       "As more professionals build independent practices, the environment where that work happens becomes part of the experience itself. A thoughtful space can shape trust, comfort, and the way a service is perceived.",
     ],
   },
@@ -25,13 +25,13 @@ const founderSections = [
     title: "Why Align",
     paragraphs: [
       "Align was created to bring these elements together.",
-      "We help therapists, coaches, creatives, and independent professionals find thoughtful workspaces while also helping them present their work with clarity. The goal is simple — support small businesses in aligning their environment, their work, and the way they are seen.",
+      "We help therapists, coaches, creatives, and independent professionals find thoughtful workspaces while also helping them present their work with clarity. The goal is simple, support small businesses in aligning their environment, their work, and the way they are seen.",
     ],
   },
   {
     title: "Looking Ahead",
     paragraphs: [
-      "Our vision is to make it easier for professionals to build practices that feel intentional from the inside out — from the space they work in to the way their work is experienced.",
+      "Our vision is to make it easier for professionals to build practices that feel intentional from the inside out, from the space they work in to the way their work is experienced.",
     ],
   },
 ];
@@ -145,13 +145,13 @@ export default function PhotographersPage() {
               <div className="absolute -left-4 sm:-left-6 top-1 bottom-1 w-px bg-gradient-to-b from-[#c9a96e]/50 via-[#c9a96e]/20 to-transparent" />
               <div className="space-y-5 pl-2 sm:pl-4">
                 <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
-                  Align was created from a simple idea — the spaces where meaningful work happens should reflect the people doing it.
+                  Align was created from a simple idea, the spaces where meaningful work happens should reflect the people doing it.
                 </p>
                 <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
                   Many small business professionals rely on trust, presence, and connection in the room, yet the environments available to them often feel disconnected from the work they offer.
                 </p>
                 <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
-                  Align exists to bring those pieces together — helping professionals align their workspace, their image, and the experience they create for their clients.
+                  Align exists to bring those pieces together, helping professionals align their workspace, their image, and the experience they create for their clients.
                 </p>
               </div>
             </div>

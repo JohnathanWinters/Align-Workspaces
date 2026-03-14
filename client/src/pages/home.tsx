@@ -85,7 +85,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
   const { user, isAuthenticated: isLoggedIn } = useAuth();
 
   useEffect(() => {
-    document.title = "Align | Portrait Photographer in Miami, FL — Design Your Portrait Online";
+    document.title = "Align | Portrait Photographer in Miami, FL, Design Your Portrait Online";
     if (window.location.hash === "#configurator" && currentStep === 0) {
       setCurrentStep(1);
     }
@@ -108,7 +108,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
     } else if (payment === "cancelled") {
       toast({
         title: "Payment Cancelled",
-        description: "No worries — your booking wasn't charged. You can try again anytime.",
+        description: "No worries, your booking wasn't charged. You can try again anytime.",
       });
       window.history.replaceState({}, "", "/");
     }
@@ -600,7 +600,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                             Pricing varies based on venue rental costs and selected marketing usage rights.
                           </p>
                           <p className="text-xs text-[#c4956a] mt-3 font-medium">
-                            A 50% deposit secures your date — remainder due at the shoot.
+                            A 50% deposit secures your date, remainder due at the shoot.
                           </p>
                         </motion.div>
                       </StepContent>
