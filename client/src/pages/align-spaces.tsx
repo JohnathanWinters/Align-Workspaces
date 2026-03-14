@@ -491,13 +491,24 @@ export default function AlignSpacesPage() {
                   data-testid={`featured-pro-${pro.id}`}
                 >
                   <div className="aspect-[3/4] overflow-hidden bg-stone-100">
-                    {pro.portraitImageUrl ? (
-                      <img
-                        src={pro.portraitImageUrl}
-                        alt={pro.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
+                    {pro.portraitImageUrl ? (() => {
+                      const crop = pro.portraitCropPosition as any;
+                      const x = crop?.x ?? 50;
+                      const y = crop?.y ?? 50;
+                      const zoom = crop?.zoom ?? 1;
+                      return (
+                        <img
+                          src={pro.portraitImageUrl}
+                          alt={pro.name}
+                          className="w-full h-full object-cover transition-transform duration-500"
+                          style={{
+                            objectPosition: `${x}% ${y}%`,
+                            transform: `scale(${zoom})`,
+                            transformOrigin: `${x}% ${y}%`,
+                          }}
+                        />
+                      );
+                    })() : (
                       <div className="w-full h-full flex items-center justify-center">
                         <User className="w-16 h-16 text-stone-300" />
                       </div>
