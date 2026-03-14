@@ -18,7 +18,7 @@ const defaultSpaces = [
     pricePerDay: 200,
     capacity: 4,
     amenities: ["Sound insulated", "Comfortable seating", "Soft lighting", "Wi-Fi", "Waiting area", "Private restroom", "Climate control", "Street parking"],
-    imageUrls: ["/images/space-therapy-1.png", "/images/space-therapy-1b.png"],
+    imageUrls: ["/objects/uploads/space-8d155dd6-8bfc-4515-a32a-01dd72bcfbfa.webp", "/objects/uploads/space-c401b806-3712-4b45-8617-e3d30701873f.webp", "/objects/uploads/space-38729c2c-2978-452b-ac57-e8fede8559b1.webp"],
     colorPalette: JSON.stringify({ colors: [{ hex: "#D4C5B0", name: "Warm Sand" }, { hex: "#8B9E8B", name: "Sage Moss" }, { hex: "#F5EDE3", name: "Soft Linen" }], feel: "This palette wraps the room in quiet comfort — sandy neutrals ground and reassure, sage green whispers of natural healing, and soft linen opens space for honest conversation.", explanation: "Together, they create an environment where clients can exhale and feel held without saying a word. Warm Sand anchors the room with stability, Sage Moss connects to nature and growth, and Soft Linen keeps the space open and breathable." }),
     targetProfession: "Therapists & Counselors",
     availableHours: "Mon-Sat 8:00 AM - 8:00 PM",
@@ -42,7 +42,7 @@ const defaultSpaces = [
     pricePerDay: 400,
     capacity: 8,
     amenities: ["Professional lighting", "Backdrops", "Makeup station", "Client lounge", "Wi-Fi", "Bluetooth speaker", "Climate control", "Street parking", "Wardrobe area"],
-    imageUrls: ["/images/space-photo-studio.png", "/images/space-photo-studio-b.png"],
+    imageUrls: ["/objects/uploads/space-1a6691c3-64dc-4fcc-ad25-ecf6c5acf9a4.webp", "/objects/uploads/space-72ca8bac-1570-422f-a1c5-ce37b7db06ed.webp", "/objects/uploads/space-afb991da-021f-4e61-b36a-a7fcef4afcc3.webp"],
     colorPalette: JSON.stringify({ colors: [{ hex: "#F8F8F8", name: "Studio White" }, { hex: "#1C1C1C", name: "Shadow Black" }, { hex: "#B8A08A", name: "Warm Neutral" }], feel: "Pure studio white and deep shadow black create the dramatic range every photographer needs, while warm neutral bridges the two with natural skin-tone harmony.", explanation: "This is a palette designed for capturing truth — light, shadow, and everything in between. Studio White provides the blank canvas, Shadow Black adds depth and contrast, and Warm Neutral ensures skin tones and natural subjects look their best." }),
     targetProfession: "Photographers & Creatives",
     availableHours: "Mon-Sat 7:00 AM - 10:00 PM, Sun 9:00 AM - 6:00 PM",
@@ -59,6 +59,13 @@ export async function seedSpacesIfEmpty() {
     if (!existing) {
       console.log(`Seeding space: ${space.name}`);
       await db.insert(spaces).values(space);
+    } else {
+      const existingImages = existing.imageUrls || [];
+      const needsUpdate = existingImages.some((url: string) => url.startsWith("/images/"));
+      if (needsUpdate) {
+        console.log(`Updating images for space: ${space.name}`);
+        await db.update(spaces).set({ imageUrls: space.imageUrls }).where(eq(spaces.id, space.id));
+      }
     }
   }
 }

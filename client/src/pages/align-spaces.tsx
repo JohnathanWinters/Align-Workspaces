@@ -219,7 +219,7 @@ export default function AlignSpacesPage() {
     };
   }, [menuOpen]);
 
-  const allSpaces = spaces || [];
+  const allSpaces = (spaces || []).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="bg-[#f5f0e8] min-h-screen" data-testid="page-landing">
