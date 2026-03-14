@@ -1866,11 +1866,11 @@ function PortalContent() {
             </Link>
           </div>
 
-          <div className="flex gap-1 mb-8 border-b border-gray-200 justify-center" data-testid="portal-tabs">
+          <div className="flex gap-1 mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center" data-testid="portal-tabs">
             <button
               onClick={() => setActiveTab("shoots")}
               data-testid="tab-my-shoots"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
                 activeTab === "shoots"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
@@ -1888,7 +1888,7 @@ function PortalContent() {
             <button
               onClick={() => setActiveTab("edits")}
               data-testid="tab-my-edits"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
                 activeTab === "edits"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
@@ -1906,7 +1906,7 @@ function PortalContent() {
             <button
               onClick={() => setActiveTab("messages")}
               data-testid="tab-messages"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
                 activeTab === "messages"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
@@ -1929,7 +1929,7 @@ function PortalContent() {
             <button
               onClick={() => setActiveTab("spaces")}
               data-testid="tab-my-spaces"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
                 activeTab === "spaces"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
@@ -1947,7 +1947,7 @@ function PortalContent() {
             <button
               onClick={() => setActiveTab("settings")}
               data-testid="tab-settings"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
                 activeTab === "settings"
                   ? "text-gray-900"
                   : "text-gray-400 hover:text-gray-600"
