@@ -228,7 +228,7 @@ export default function AlignSpacesPage() {
                 className="text-sm sm:text-base max-w-sm leading-relaxed mt-4 font-normal md:mx-0 mx-auto"
                 style={{ color: "#d4c4a8" }}
               >
-                Design a professional image that aligns your work, character, and the experience you want clients to feel.
+                Create a professional image that reflects your work, your character, and the experience you want clients to feel.
               </motion.p>
 
               <motion.div
@@ -304,7 +304,7 @@ export default function AlignSpacesPage() {
                 className="text-sm sm:text-base max-w-sm leading-relaxed mt-4 font-normal md:ml-auto md:mx-0 mx-auto"
                 style={{ color: "#d4c4a8" }}
               >
-                Discover and book professional workspaces across Miami — therapy offices, studios, meeting rooms, and more.
+                Find professional workspaces across Miami that match the experience you want to create.
               </motion.p>
 
               <motion.div
