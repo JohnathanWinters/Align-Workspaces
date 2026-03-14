@@ -1522,8 +1522,12 @@ export default function SpacesBrowsePage() {
     return { min: Math.min(...prices), max: Math.max(...prices) };
   }, [allSpaces]);
 
+  const categoryHasNoMatches = activeType !== "all" && allSpaces.filter(s => s.type === activeType).length === 0;
+
   const filtered = useMemo(() => {
-    let result = activeType === "all" ? allSpaces : allSpaces.filter(s => s.type === activeType);
+    let result = activeType === "all" || categoryHasNoMatches
+      ? allSpaces
+      : allSpaces.filter(s => s.type === activeType);
 
     const minVal = priceMin ? parseInt(priceMin) : null;
     const maxVal = priceMax ? parseInt(priceMax) : null;
@@ -1547,7 +1551,7 @@ export default function SpacesBrowsePage() {
     }
 
     return result;
-  }, [allSpaces, activeType, priceMin, priceMax, sortBy, zipCoords]);
+  }, [allSpaces, activeType, categoryHasNoMatches, priceMin, priceMax, sortBy, zipCoords]);
 
   const getDistanceForSpace = useCallback((space: Space): number | null => {
     if (!zipCoords || !space.latitude || !space.longitude) return null;
@@ -1950,7 +1954,15 @@ export default function SpacesBrowsePage() {
               </div>
             ) : (
               <>
-                {filtered.length <= 2 && (
+                {categoryHasNoMatches && (
+                  <div className="flex items-center gap-2 bg-[#f5f0e8] border border-[#c4956a]/20 rounded-lg px-4 py-3 mb-2" data-testid="text-category-fallback">
+                    <Sparkles className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+                    <p className="text-xs text-foreground/50">
+                      No {TYPE_LABELS[activeType] || activeType} spaces listed yet. Here are all available spaces in the meantime.
+                    </p>
+                  </div>
+                )}
+                {filtered.length <= 2 && !categoryHasNoMatches && (
                   <div className="flex items-center gap-2 bg-amber-50/60 border border-amber-100 rounded-lg px-4 py-3 mb-2" data-testid="text-early-access">
                     <Sparkles className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
                     <p className="text-xs text-foreground/50">
