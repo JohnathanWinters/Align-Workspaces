@@ -533,7 +533,7 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-testimonials">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 hidden" data-testid="section-testimonials">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
             <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Trusted by Miami Professionals</h2>
