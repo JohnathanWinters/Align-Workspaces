@@ -11,8 +11,10 @@ import {
   Users,
   DollarSign,
   Building2,
-  Dumbbell,
   Briefcase,
+  Sofa,
+  Leaf,
+  UsersRound,
   ChevronRight,
   ChevronLeft,
   Wifi,
@@ -98,15 +100,20 @@ function getZipCoords(zip: string): [number, number] | null {
 }
 
 const SPACE_TYPES = [
-  { key: "all", label: "All Spaces", icon: Building2 },
-  { key: "office", label: "Offices", icon: Briefcase },
-  { key: "gym", label: "Training Studios", icon: Dumbbell },
-  { key: "meeting", label: "Meeting Rooms", icon: Building2 },
-  { key: "art_studio", label: "Art Studios", icon: Palette },
-  { key: "photo_studio", label: "Photo/Video Studios", icon: Camera },
+  { key: "all", label: "Browse All Spaces", icon: Building2, description: "Explore every workspace available in Miami" },
+  { key: "therapy", label: "Therapy & Counseling", icon: Sofa, description: "Private offices for therapy sessions and mental health professionals" },
+  { key: "coaching", label: "Coaching & Consulting", icon: Briefcase, description: "Professional meeting spaces for coaching and client consultations" },
+  { key: "wellness", label: "Wellness & Holistic", icon: Leaf, description: "Calm environments for wellness practices and holistic sessions" },
+  { key: "workshop", label: "Workshops & Classes", icon: UsersRound, description: "Spaces designed for group sessions, classes, and workshops" },
+  { key: "creative", label: "Creative Studios", icon: Camera, description: "Studios for photography, video production, and creative work" },
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = {
+  therapy: "Therapy & Counseling",
+  coaching: "Coaching & Consulting",
+  wellness: "Wellness & Holistic",
+  workshop: "Workshops & Classes",
+  creative: "Creative Studio",
   office: "Office",
   gym: "Training Studio",
   meeting: "Meeting Room",
@@ -115,6 +122,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
+  therapy: "bg-blue-50 text-blue-700",
+  coaching: "bg-amber-50 text-amber-700",
+  wellness: "bg-emerald-50 text-emerald-700",
+  workshop: "bg-purple-50 text-purple-700",
+  creative: "bg-rose-50 text-rose-700",
   office: "bg-blue-50 text-blue-700",
   gym: "bg-emerald-50 text-emerald-700",
   meeting: "bg-amber-50 text-amber-700",
@@ -1282,11 +1294,11 @@ function CancellationPolicy() {
 }
 
 const LIST_SPACE_TYPES = [
-  { value: "office", label: "Office / Therapy Room" },
-  { value: "gym", label: "Training Studio" },
-  { value: "meeting", label: "Meeting Room" },
-  { value: "art_studio", label: "Art Studio" },
-  { value: "photo_studio", label: "Photo/Video Studio" },
+  { value: "therapy", label: "Therapy & Counseling" },
+  { value: "coaching", label: "Coaching & Consulting" },
+  { value: "wellness", label: "Wellness & Holistic" },
+  { value: "workshop", label: "Workshops & Classes" },
+  { value: "creative", label: "Creative Studio" },
 ];
 
 function ListSpaceModal({ onClose }: { onClose: () => void }) {
@@ -1294,7 +1306,7 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
   const [showListMagicLink, setShowListMagicLink] = useState(false);
   const [formData, setFormData] = useState({
-    name: "", type: "office", description: "", shortDescription: "",
+    name: "", type: "therapy", description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     capacity: "", amenities: "", targetProfession: "", availableHours: "", hostName: "",
   });
@@ -1616,36 +1628,49 @@ export default function SpacesBrowsePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 max-w-2xl w-full">
-            {SPACE_TYPES.map((type, i) => (
-              <motion.button
-                key={type.key}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: i * 0.05 }}
-                onClick={() => {
-                  setActiveType(type.key);
-                  setCategoryChosen(true);
-                }}
-                className="group flex flex-col items-center gap-3 p-6 sm:p-8 rounded-2xl bg-white border border-stone-100 hover:border-[#c4956a]/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                data-testid={`category-${type.key}`}
-              >
-                <div className="w-12 h-12 rounded-xl bg-stone-900 group-hover:bg-[#c4956a] transition-colors duration-300 flex items-center justify-center">
-                  <type.icon className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-sm font-semibold text-stone-800 group-hover:text-[#c4956a] transition-colors">{type.label}</span>
-                {type.key !== "all" && (
-                  <span className="text-[10px] text-stone-400">
-                    {allSpaces.filter(s => s.type === type.key).length} available
-                  </span>
-                )}
-                {type.key === "all" && (
-                  <span className="text-[10px] text-stone-400">
-                    {allSpaces.length} available
-                  </span>
-                )}
-              </motion.button>
-            ))}
+          <div className="max-w-2xl w-full space-y-4">
+            <motion.button
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              onClick={() => {
+                setActiveType("all");
+                setCategoryChosen(true);
+              }}
+              className="group w-full flex items-center gap-4 p-5 sm:p-6 rounded-2xl bg-white border border-stone-100 hover:border-[#c4956a]/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
+              data-testid="category-all"
+            >
+              <div className="w-12 h-12 rounded-xl bg-stone-900 group-hover:bg-[#c4956a] transition-colors duration-300 flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <span className="text-sm font-semibold text-stone-800 group-hover:text-[#c4956a] transition-colors">Browse All Spaces</span>
+                <p className="text-[11px] text-stone-400 mt-0.5">Explore every workspace available in Miami &middot; {allSpaces.length} spaces</p>
+              </div>
+            </motion.button>
+
+            <div className="grid grid-cols-2 gap-4 sm:gap-5">
+              {SPACE_TYPES.filter(t => t.key !== "all").map((type, i) => (
+                <motion.button
+                  key={type.key}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: (i + 1) * 0.05 }}
+                  onClick={() => {
+                    setActiveType(type.key);
+                    setCategoryChosen(true);
+                  }}
+                  className="group flex flex-col items-center gap-2.5 p-6 sm:p-8 rounded-2xl bg-white border border-stone-100 hover:border-[#c4956a]/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                  data-testid={`category-${type.key}`}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-stone-900 group-hover:bg-[#c4956a] transition-colors duration-300 flex items-center justify-center">
+                    <type.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-stone-800 group-hover:text-[#c4956a] transition-colors">{type.label}</span>
+                  <p className="text-[10px] text-stone-400 leading-snug text-center px-1">{type.description}</p>
+                </motion.button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

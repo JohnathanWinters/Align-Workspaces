@@ -58,6 +58,11 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
 }
 
 const TYPE_LABELS: Record<string, string> = {
+  therapy: "Therapy & Counseling",
+  coaching: "Coaching & Consulting",
+  wellness: "Wellness & Holistic",
+  workshop: "Workshops & Classes",
+  creative: "Creative Studio",
   office: "Office",
   gym: "Training Studio",
   meeting: "Meeting Room",
@@ -66,6 +71,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
+  therapy: "bg-blue-50 text-blue-700",
+  coaching: "bg-amber-50 text-amber-700",
+  wellness: "bg-emerald-50 text-emerald-700",
+  workshop: "bg-purple-50 text-purple-700",
+  creative: "bg-rose-50 text-rose-700",
   office: "bg-blue-50 text-blue-700",
   gym: "bg-emerald-50 text-emerald-700",
   meeting: "bg-amber-50 text-amber-700",

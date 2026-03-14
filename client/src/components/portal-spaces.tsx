@@ -35,9 +35,11 @@ import type { Space } from "@shared/schema";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
 
 const SPACE_TYPES = [
-  { value: "office", label: "Office" },
-  { value: "gym", label: "Training Studio" },
-  { value: "meeting", label: "Meeting Room" },
+  { value: "therapy", label: "Therapy & Counseling" },
+  { value: "coaching", label: "Coaching & Consulting" },
+  { value: "wellness", label: "Wellness & Holistic" },
+  { value: "workshop", label: "Workshops & Classes" },
+  { value: "creative", label: "Creative Studio" },
 ];
 
 function SpacePhotoManager({ space }: { space: Space }) {
@@ -287,7 +289,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
   });
   const [formData, setFormData] = useState({
     name: space.name || "",
-    type: space.type || "office",
+    type: space.type || "therapy",
     description: space.description || "",
     shortDescription: space.shortDescription || "",
     address: space.address || "",
@@ -446,7 +448,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
   });
   const [formData, setFormData] = useState({
     name: "",
-    type: "office",
+    type: "therapy",
     description: "",
     shortDescription: "",
     address: "",

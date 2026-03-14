@@ -2284,11 +2284,11 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
                           <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white" data-testid="select-edit-type">
-                            <option value="office">Office</option>
-                            <option value="gym">Training Studio</option>
-                            <option value="meeting">Meeting Room</option>
-                            <option value="art_studio">Art Studio</option>
-                            <option value="photo_studio">Photo/Video Studio</option>
+                            <option value="therapy">Therapy & Counseling</option>
+                            <option value="coaching">Coaching & Consulting</option>
+                            <option value="wellness">Wellness & Holistic</option>
+                            <option value="workshop">Workshops & Classes</option>
+                            <option value="creative">Creative Studio</option>
                           </select>
                         </div>
                         <div>
