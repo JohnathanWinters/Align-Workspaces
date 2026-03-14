@@ -1809,6 +1809,12 @@ function PortalContent() {
                         Portrait Builder
                       </button>
                     </Link>
+                    <Link href="/portfolio">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portfolio-portal">
+                        <Images className="w-4 h-4" />
+                        Our Work
+                      </button>
+                    </Link>
                     <Link href="/workspaces">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-spaces-portal">
                         <MapPin className="w-4 h-4" />
@@ -1825,12 +1831,6 @@ function PortalContent() {
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-about-portal">
                         <Info className="w-4 h-4" />
                         Our Vision
-                      </button>
-                    </Link>
-                    <Link href="/portfolio">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portfolio-portal">
-                        <Camera className="w-4 h-4" />
-                        Our Work
                       </button>
                     </Link>
                   </motion.div>

@@ -42,6 +42,7 @@ import {
   Star,
   Camera,
   Info,
+  Images,
 } from "lucide-react";
 import { getClothingRecommendations } from "@/lib/clothing-recommendations";
 import type {
@@ -389,6 +390,10 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                             <Building2 className="w-4 h-4" />
                             Align Spaces
                           </button>
+                          <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-header">
+                            <Images className="w-4 h-4" />
+                            Our Work
+                          </button>
                           <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-header">
                             <User className="w-4 h-4" />
                             Client Portal
@@ -400,10 +405,6 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-header">
                             <Info className="w-4 h-4" />
                             Our Vision
-                          </button>
-                          <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-header">
-                            <Camera className="w-4 h-4" />
-                            Our Work
                           </button>
                         </motion.div>
                       )}

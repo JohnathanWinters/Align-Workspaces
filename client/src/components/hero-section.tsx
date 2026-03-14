@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { User, Menu, X, Building2, Camera, Star, Info } from "lucide-react";
+import { User, Menu, X, Building2, Camera, Star, Info, Images } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "./site-footer";
@@ -105,6 +105,10 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                     <Building2 className="w-4 h-4" />
                     Align Spaces
                   </button>
+                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
+                    <Images className="w-4 h-4" />
+                    Our Work
+                  </button>
                   <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-hero">
                     <User className="w-4 h-4" />
                     Client Portal
@@ -116,10 +120,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                   <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
                     <Info className="w-4 h-4" />
                     Our Vision
-                  </button>
-                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
-                    <Camera className="w-4 h-4" />
-                    Our Work
                   </button>
                 </motion.div>
               )}
