@@ -115,6 +115,11 @@ function SpaceCard({ space }: { space: Space }) {
         )}
       </div>
       <div className="p-4 sm:p-5">
+        {space.targetProfession && (
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="text-xs font-semibold text-[#c4956a] tracking-wide">Ideal for {space.targetProfession}</span>
+          </div>
+        )}
         <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1 group-hover:text-[#c4956a] transition-colors">{space.name}</h3>
         <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-2">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
@@ -189,14 +194,11 @@ function SpaceCard({ space }: { space: Space }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center pt-1">
           <div className="flex items-center gap-1.5 text-stone-700">
             <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
             <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
           </div>
-          {space.targetProfession && (
-            <span className="text-[11px] text-[#c4956a] font-medium">Ideal for {space.targetProfession}</span>
-          )}
         </div>
       </div>
     </div>
@@ -348,6 +350,12 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
+      <div className="text-center px-4 sm:px-6 pb-6 sm:pb-8">
+        <p className="text-stone-400 text-sm italic font-serif" data-testid="text-hero-bridge">
+          Every space is selected for the professionals who work in it.
+        </p>
+      </div>
+
       <section className="px-4 sm:px-6 pb-12 sm:pb-16" data-testid="section-spaces-grid">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -382,6 +390,32 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
+      <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-neighborhoods">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-6 sm:mb-8">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Miami</span>
+            <h2 className="font-serif text-xl sm:text-2xl text-stone-900 tracking-tight">Explore by Neighborhood</h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+            {(() => {
+              const neighborhoods = [...new Set((spaces || []).map(s => s.neighborhood).filter(Boolean))];
+              const allNeighborhoods = neighborhoods.length > 0 ? neighborhoods : ["Wynwood", "Coral Gables", "Brickell", "Coconut Grove"];
+              return allNeighborhoods.map((hood) => (
+                <Link
+                  key={hood}
+                  href="/workspaces"
+                  className="group flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-stone-200/80 hover:border-[#c4956a]/40 hover:shadow-md transition-all duration-300"
+                  data-testid={`neighborhood-${hood?.toLowerCase().replace(/\s+/g, "-")}`}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-[#c4956a]" />
+                  <span className="text-sm font-medium text-stone-700 group-hover:text-stone-900 transition-colors">{hood}</span>
+                </Link>
+              ));
+            })()}
+          </div>
+        </div>
+      </section>
+
       <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-how-it-works">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
@@ -395,19 +429,19 @@ export default function AlignSpacesPage() {
                 step: "01",
                 title: "Discover Workspaces",
                 desc: "Explore flexible workspaces designed for professionals, from therapy offices and studios to meeting rooms and creative spaces.",
-                detail: "Align helps you find environments that support the work you do and the experience you want to create.",
+                detail: "Because the right environment changes how clients experience your work.",
               },
               {
                 step: "02",
                 title: "Find the Right Fit",
                 desc: "Use Align's visual tools to identify the atmosphere, setting, and client experience that matches your work.",
-                detail: "Our photo builder helps you choose spaces that align with the environment you want to create.",
+                detail: "Because the wrong room changes everything.",
               },
               {
                 step: "03",
                 title: "Book & Get Started",
                 desc: "Reserve your space by the hour with transparent pricing, instant confirmation, and calendar integration.",
-                detail: "Show up ready to work in a space that reflects your professionalism.",
+                detail: "Walk in ready. The space already says what you came to say.",
               },
             ].map((item, i) => (
               <div key={i} className="text-center flex flex-col items-center" data-testid={`step-${item.step}`}>
@@ -438,11 +472,14 @@ export default function AlignSpacesPage() {
             </div>
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
               <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Complete Your Presence</span>
-              <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-4">
+              <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-5">
                 Portrait Builder
               </h2>
+              <p className="text-[#f0e6d0]/90 text-base sm:text-[17px] leading-relaxed mb-6 max-w-md font-serif italic">
+                The space you work in and the image you present should tell the same story.
+              </p>
               <p className="text-[#d4c4a8] text-sm leading-relaxed mb-2 max-w-md">
-                The space you work in and the image you present should tell the same story. Our guided builder helps you create a professional portrait that reflects your work, your character, and the experience you want clients to feel.
+                Our guided builder helps you create a professional portrait that reflects your work, your character, and the experience you want clients to feel.
               </p>
               <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
                 Define the look before your session begins, so every detail aligns with the environment you've built.
@@ -517,7 +554,9 @@ export default function AlignSpacesPage() {
                   <div className="p-4 sm:p-5">
                     <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                     <p className="text-sm text-[#c4956a] font-medium mb-2">{pro.profession}</p>
-                    <p className="text-stone-500 text-sm leading-relaxed line-clamp-2">{pro.headline}</p>
+                    {pro.quote && (
+                      <p className="text-stone-500 text-[13px] leading-relaxed italic mb-2 line-clamp-2">"{pro.quote}"</p>
+                    )}
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-1.5 text-stone-400 text-xs">
                         <MapPin className="w-3 h-3" />
@@ -544,13 +583,14 @@ export default function AlignSpacesPage() {
             </div>
 
             <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-stone-100">
-              <p className="text-stone-500 text-sm mb-4">Ready to find the right space for your practice?</p>
+              <p className="text-stone-600 font-serif text-base sm:text-lg mb-2">Your space, your image, your practice.</p>
+              <p className="text-stone-400 text-sm mb-5">All in one place.</p>
               <Link
                 href="/workspaces"
                 data-testid="button-featured-find-space"
                 className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
               >
-                Find your space
+                Start with a space
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
