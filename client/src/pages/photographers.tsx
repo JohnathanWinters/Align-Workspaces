@@ -7,12 +7,32 @@ import { Link } from "wouter";
 import armandoPhoto from "@assets/14764699-b1dd-4fe8-88ff-ed19c87cc1f8_1773349252752.png";
 import { UserIndicator } from "@/components/user-indicator";
 
-const photographers = [
+const founderSections = [
   {
-    name: "Armando Ramirez Romero",
-    role: "Founder",
-    image: armandoPhoto,
-    bio: "With over 9 years behind the lens, Armando founded Align to help professionals share the story behind their business. Through both photography and technology, he's building a platform that makes it easier for professionals to showcase who they are, what they do, and why they do it.",
+    paragraphs: [
+      "Align was founded with a simple belief — the spaces where professionals meet their clients should reflect the care behind their work.",
+      "As more professionals build independent practices, the environment where that work happens becomes part of the experience itself. A thoughtful space can shape trust, comfort, and the way a service is perceived.",
+    ],
+  },
+  {
+    title: "The Problem",
+    paragraphs: [
+      "Yet many professionals struggle to find spaces that support the work they are doing. Offices can feel temporary, overly corporate, or disconnected from the experience they want to create for their clients.",
+      "At the same time, many small businesses are working to present themselves clearly and professionally, but lack the environment and imagery that reflects the quality of their work.",
+    ],
+  },
+  {
+    title: "Why Align Exists",
+    paragraphs: [
+      "Align was created to bring those pieces together.",
+      "We help therapists, coaches, and independent professionals find thoughtful workspaces while also helping them present their work with clarity. The goal is simple — support small businesses in creating environments and imagery that align with the work they do every day.",
+    ],
+  },
+  {
+    title: "Where We're Going",
+    paragraphs: [
+      "Our vision is to make it easier for professionals to build practices that feel intentional from the inside out — from the space they work in to the way their work is seen and understood.",
+    ],
   },
 ];
 
@@ -134,48 +154,62 @@ export default function PhotographersPage() {
             Behind the Vision
           </p>
           <h2 className="font-serif text-2xl sm:text-3xl" data-testid="text-team-heading">
-            Meet the Team
+            Meet the Founder
           </h2>
         </motion.div>
 
-        <div className="flex justify-center">
-          {photographers.map((photographer, index) => (
-            <motion.div
-              key={photographer.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.3 + index * 0.06 }}
-              className="max-w-md w-full"
-            >
-              <Card className="overflow-visible p-0" data-testid={`card-photographer-page-${index}`}>
-                <div className="aspect-square overflow-hidden rounded-t-md">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.3 }}
+          className="max-w-3xl mx-auto"
+        >
+          <Card className="overflow-visible p-0" data-testid="card-photographer-page-0">
+            <div className="md:flex">
+              <div className="md:w-2/5 flex-shrink-0">
+                <div className="aspect-square md:aspect-auto md:h-full overflow-hidden rounded-t-md md:rounded-t-none md:rounded-l-md">
                   <img
-                    src={photographer.image}
-                    alt={photographer.name}
+                    src={armandoPhoto}
+                    alt="Armando Ramirez Romero"
                     className="w-full h-full object-cover"
                     loading="lazy"
                     decoding="async"
-                    data-testid={`img-photographer-page-${index}`}
+                    data-testid="img-photographer-page-0"
                   />
                 </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid={`text-photographer-page-role-${index}`}>
-                      {photographer.role}
-                    </p>
-                  </div>
-                  <h2 className="font-serif text-2xl mb-3" data-testid={`text-photographer-page-name-${index}`}>
-                    {photographer.name}
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed" data-testid={`text-photographer-page-bio-${index}`}>
-                    {photographer.bio}
+              </div>
+              <div className="p-6 sm:p-8 md:w-3/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid="text-photographer-page-role-0">
+                    Founder
                   </p>
                 </div>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                <h2 className="font-serif text-2xl mb-5" data-testid="text-photographer-page-name-0">
+                  Armando Ramirez Romero
+                </h2>
+                <div className="space-y-5" data-testid="text-photographer-page-bio-0">
+                  {founderSections.map((section, i) => (
+                    <div key={i}>
+                      {section.title && (
+                        <h3 className="text-xs uppercase tracking-[0.15em] text-[#c4956a] font-semibold mb-2">
+                          {section.title}
+                        </h3>
+                      )}
+                      <div className="space-y-2.5">
+                        {section.paragraphs.map((p, j) => (
+                          <p key={j} className="text-sm text-muted-foreground leading-relaxed">
+                            {p}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
