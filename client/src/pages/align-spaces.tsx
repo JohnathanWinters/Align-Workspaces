@@ -152,17 +152,18 @@ export default function AlignSpacesPage() {
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.05 }}
-              className="absolute left-1/2 -translate-x-1/2"
+              className="fixed left-1/2 -translate-x-1/2 z-30"
+              style={{ top: "14px" }}
             >
               <Link href="/" className="flex flex-col items-center gap-0.5" data-testid="link-home-logo">
                 <img
                   src="/images/logo-align-cream.png"
                   alt="Align"
-                  className="h-8 w-8 object-contain"
+                  className="h-9 w-9 object-contain"
                 />
                 <span
                   className="uppercase"
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: "9px", letterSpacing: "4px", color: "#f0e6d0" }}
+                  style={{ fontFamily: "'Playfair Display', serif", fontSize: "8px", letterSpacing: "4px", color: "#f0e6d0" }}
                 >
                   Align
                 </span>
