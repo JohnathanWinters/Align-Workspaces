@@ -428,7 +428,7 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
           <button
             onClick={onBack}
             data-testid="button-back-from-gallery"
@@ -445,7 +445,7 @@ function GalleryManager({ shootId, shootTitle, token, onBack }: { shootId: strin
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex items-center gap-2 flex-1">
@@ -1469,7 +1469,7 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
           <button
             onClick={onBack}
             data-testid="button-back-from-tokens"
@@ -1486,7 +1486,7 @@ function TokenManager({ userId, userName, token, onBack }: { userId: string; use
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -2207,7 +2207,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
           <button onClick={onBack} className="text-gray-500 hover:text-gray-900" data-testid="button-back-spaces">
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -2224,7 +2224,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
           )}
         </div>
       </header>
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -2509,7 +2509,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-nominations-back">
               <ChevronLeft className="w-5 h-5" />
@@ -2519,7 +2519,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
         ) : nominations.length === 0 ? (
@@ -3461,7 +3461,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
             <button onClick={() => { setShowForm(false); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -3480,7 +3480,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
           }
           e.target.value = "";
         }} />
-        <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        <main className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6">
           <div className="space-y-4">
             <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Portrait Photo</h3>
             <div className="flex items-start gap-5">
@@ -3924,7 +3924,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-featured-back">
               <ChevronLeft className="w-5 h-5" />
@@ -3944,7 +3944,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         e.target.value = "";
       }} />
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
         ) : professionals.length === 0 ? (
@@ -4934,7 +4934,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
@@ -4963,7 +4963,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -5257,7 +5257,7 @@ function EmployeeManager({ token, onBack }: { token: string; onBack: () => void 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors" data-testid="button-emp-back">
               <ChevronLeft className="w-4 h-4" />
@@ -5278,7 +5278,7 @@ function EmployeeManager({ token, onBack }: { token: string; onBack: () => void 
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-6 space-y-4">
+      <main className="max-w-2xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4">
         <AnimatePresence>
           {showForm && (
             <motion.div
@@ -5729,7 +5729,7 @@ function AdminDashboard({ token }: { token: string }) {
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
+          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
             <button
               onClick={() => { setView("clients"); setEditingShoot(null); setForm(defaultShootForm); }}
               data-testid="button-back-to-clients"
@@ -5745,7 +5745,7 @@ function AdminDashboard({ token }: { token: string }) {
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-6 py-8">
+        <main className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             {!isEdit && selectedUser && (
               <div className="flex items-center gap-3 mb-6 p-3 bg-white rounded-lg border border-gray-100">
@@ -5926,29 +5926,30 @@ function AdminDashboard({ token }: { token: string }) {
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center">
               <Lock className="w-4 h-4 text-white" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mr-3 pr-3 sm:mr-0 sm:pr-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setView("pipeline")}
               data-testid="button-manage-pipeline"
-              className="h-8 text-xs border-stone-300 text-stone-700 font-medium"
+              className="h-8 text-xs border-stone-300 text-stone-700 font-medium flex-shrink-0"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" />
-              Book of Business
+              <span className="hidden sm:inline">Book of Business</span>
+              <span className="sm:hidden">Pipeline</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setView("portfolio")}
               data-testid="button-manage-portfolio"
-              className="h-8 text-xs border-gray-200 text-gray-600"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
             >
               <Images className="w-3.5 h-3.5 mr-1.5" />
               Portfolio
@@ -5958,7 +5959,7 @@ function AdminDashboard({ token }: { token: string }) {
               size="sm"
               onClick={() => setView("featured")}
               data-testid="button-manage-featured"
-              className="h-8 text-xs border-gray-200 text-gray-600"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
             >
               <Star className="w-3.5 h-3.5 mr-1.5" />
               Featured
@@ -5968,17 +5969,18 @@ function AdminDashboard({ token }: { token: string }) {
               size="sm"
               onClick={() => setView("nominations")}
               data-testid="button-manage-nominations"
-              className="h-8 text-xs border-gray-200 text-gray-600"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
             >
               <Heart className="w-3.5 h-3.5 mr-1.5" />
-              Nominations
+              <span className="hidden sm:inline">Nominations</span>
+              <span className="sm:hidden">Noms</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setView("employees")}
               data-testid="button-manage-team"
-              className="h-8 text-xs border-gray-200 text-gray-600"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
             >
               <Users className="w-3.5 h-3.5 mr-1.5" />
               Team
@@ -5988,7 +5990,7 @@ function AdminDashboard({ token }: { token: string }) {
               size="sm"
               onClick={() => setView("spaces")}
               data-testid="button-manage-spaces"
-              className="h-8 text-xs border-gray-200 text-gray-600"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
             >
               <Building2 className="w-3.5 h-3.5 mr-1.5" />
               Spaces
@@ -5998,7 +6000,7 @@ function AdminDashboard({ token }: { token: string }) {
               size="sm"
               onClick={() => setView("analytics")}
               data-testid="button-manage-analytics"
-              className="h-8 text-xs border-gray-200 text-gray-600"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
             >
               <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
               Analytics
@@ -6007,7 +6009,7 @@ function AdminDashboard({ token }: { token: string }) {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {pushStatus === "prompt" && (
           <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6">
             <Bell className="w-5 h-5 text-blue-500 shrink-0" />
