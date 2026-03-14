@@ -103,8 +103,8 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 
 const DOMAIN_REDIRECTS: Record<string, string> = {
-  "alignportraits.com": "https://alignworkspaces.com/portrait-builder",
-  "www.alignportraits.com": "https://alignworkspaces.com/portrait-builder",
+  "alignportraits.com": "https://alignworkspaces.com/portfolio",
+  "www.alignportraits.com": "https://alignworkspaces.com/portfolio",
   "buildmyphoto.com": "https://alignworkspaces.com/portrait-builder",
   "www.buildmyphoto.com": "https://alignworkspaces.com/portrait-builder",
   "alignvisuals.com": "https://alignworkspaces.com/portrait-builder",

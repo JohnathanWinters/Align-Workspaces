@@ -461,13 +461,15 @@ export async function registerRoutes(
 
   app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
     try {
-      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category, cropPosition } = req.body;
+      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category, cropPosition, subjectName, subjectProfession } = req.body;
       const updates: any = {
         environments,
         brandMessages,
         emotionalImpacts,
         colorPalette,
         locationSpaceId: locationSpaceId || null,
+        subjectName: subjectName || null,
+        subjectProfession: subjectProfession || null,
       };
       if (category) updates.category = category;
       if (cropPosition && typeof cropPosition === "object" && typeof cropPosition.x === "number" && typeof cropPosition.y === "number") {
