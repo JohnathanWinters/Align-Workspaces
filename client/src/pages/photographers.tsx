@@ -1,40 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart } from "lucide-react";
 import { Link } from "wouter";
 import armandoPhoto from "@assets/14764699-b1dd-4fe8-88ff-ed19c87cc1f8_1773349252752.png";
 import { UserIndicator } from "@/components/user-indicator";
-
-const founderSections = [
-  {
-    paragraphs: [
-      "Align was founded with a simple belief, the spaces where professionals meet their clients should reflect the care behind their work.",
-      "As more professionals build independent practices, the environment where that work happens becomes part of the experience itself. A thoughtful space can shape trust, comfort, and the way a service is perceived.",
-    ],
-  },
-  {
-    title: "The Challenge",
-    paragraphs: [
-      "Yet finding spaces that support this kind of work is often difficult. Many offices feel temporary, impersonal, or disconnected from the experience professionals want to create for their clients.",
-      "At the same time, many small businesses are working to present themselves clearly and professionally, yet lack the environment and imagery that reflects the quality of their work.",
-    ],
-  },
-  {
-    title: "Why Align",
-    paragraphs: [
-      "Align was created to bring these elements together.",
-      "We help therapists, coaches, creatives, and independent professionals find thoughtful workspaces while also helping them present their work with clarity. The goal is simple, support small businesses in aligning their environment, their work, and the way they are seen.",
-    ],
-  },
-  {
-    title: "Looking Ahead",
-    paragraphs: [
-      "Our vision is to make it easier for professionals to build practices that feel intentional from the inside out, from the space they work in to the way their work is experienced.",
-    ],
-  },
-];
+import { SiteFooter } from "@/components/site-footer";
 
 export default function PhotographersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -145,13 +115,13 @@ export default function PhotographersPage() {
               <div className="absolute -left-4 sm:-left-6 top-1 bottom-1 w-px bg-gradient-to-b from-[#c9a96e]/50 via-[#c9a96e]/20 to-transparent" />
               <div className="space-y-5 pl-2 sm:pl-4">
                 <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
-                  Align was created from a simple idea, the spaces where meaningful work happens should reflect the people doing it.
+                  The spaces where meaningful work happens should reflect the people doing it.
                 </p>
                 <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
-                  Many small business professionals rely on trust, presence, and connection in the room, yet the environments available to them often feel disconnected from the work they offer.
+                  For most independent professionals, that's rarely the case. Therapists seeing clients in rooms that feel clinical. Coaches meeting people in spaces that undercut the trust they've spent years building. Creatives working in environments that have nothing to do with the work they make.
                 </p>
-                <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
-                  Align exists to bring those pieces together, helping professionals align their workspace, their image, and the experience they create for their clients.
+                <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75] font-medium">
+                  The space is part of the experience. It always has been.
                 </p>
               </div>
             </div>
@@ -219,26 +189,16 @@ export default function PhotographersPage() {
                   <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-6" data-testid="text-photographer-page-name-0">
                     Armando Ramirez Romero
                   </h3>
-                  <div className="space-y-5" data-testid="text-photographer-page-bio-0">
-                    {founderSections.map((section, i) => (
-                      <div key={i}>
-                        {section.title && (
-                          <div className="flex items-center gap-2.5 mb-2">
-                            <div className="w-4 h-px bg-[#c9a96e]/50" />
-                            <h4 className="text-[10px] uppercase tracking-[0.18em] text-[#c4956a] font-semibold">
-                              {section.title}
-                            </h4>
-                          </div>
-                        )}
-                        <div className="space-y-2">
-                          {section.paragraphs.map((p, j) => (
-                            <p key={j} className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                              {p}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="space-y-4" data-testid="text-photographer-page-bio-0">
+                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                      I started Align because I kept seeing the same disconnect. Talented, dedicated professionals doing meaningful work in spaces that didn't reflect any of it.
+                    </p>
+                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                      These weren't people cutting corners. They were therapists, coaches, and creatives who cared deeply about the experience they created for their clients. But the environments available to them were impersonal, temporary, or simply wrong for the work.
+                    </p>
+                    <p className="text-[13px] sm:text-sm text-stone-600 leading-[1.7] font-medium">
+                      I built Align to close that gap.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -246,6 +206,143 @@ export default function PhotographersPage() {
           </motion.div>
         </div>
       </section>
+
+      <section className="relative">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <div className="flex items-center gap-4 py-4">
+            <div className="flex-1 h-px bg-stone-200/80" />
+            <Sparkles className="w-3.5 h-3.5 text-[#c9a96e]/50" />
+            <div className="flex-1 h-px bg-stone-200/80" />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-14 sm:py-20" data-testid="section-what-align-brings">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <div className="inline-flex items-center gap-2 mb-4">
+              <div className="w-6 h-px bg-stone-300/60" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-[#c4956a] font-medium">
+                The Platform
+              </p>
+              <div className="w-6 h-px bg-stone-300/60" />
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-[2.25rem] text-[#2a2a2a] mb-3" data-testid="text-what-align-heading">
+              What Align Brings Together
+            </h2>
+            <p className="text-stone-500 text-sm sm:text-base max-w-lg mx-auto">
+              Every independent professional needs three things:
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+            {[
+              {
+                icon: Building2,
+                title: "A space that fits the work.",
+                desc: "Thoughtfully designed workspaces in Miami, available by the hour, matched to the experience you want to create for your clients.",
+              },
+              {
+                icon: Image,
+                title: "An image that reflects the quality.",
+                desc: "A portrait and branding experience so your online presence matches the professional walking into the room.",
+              },
+              {
+                icon: Heart,
+                title: "A community that understands the work.",
+                desc: "A network of professionals sharing resources, spaces, and support.",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="text-center flex flex-col items-center"
+                data-testid={`pillar-${i}`}
+              >
+                <div className="w-12 h-12 rounded-full bg-[#f5f0e8] flex items-center justify-center mb-4">
+                  <item.icon className="w-5 h-5 text-[#c4956a]" />
+                </div>
+                <h3 className="font-serif text-lg text-[#2a2a2a] mb-3 leading-snug">{item.title}</h3>
+                <p className="text-stone-500 text-sm leading-relaxed max-w-[280px]">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.4 }}
+            className="text-center"
+          >
+            <div className="inline-block bg-[#f5f0e8] rounded-xl px-6 sm:px-8 py-4 sm:py-5 border border-[#e8dfd2]">
+              <p className="text-[#2a2a2a] text-sm sm:text-base font-medium font-serif">
+                Not three separate things. <span className="italic text-[#c4956a]">One aligned practice.</span>
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="relative">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <div className="flex items-center gap-4 py-4">
+            <div className="flex-1 h-px bg-stone-200/80" />
+            <Sparkles className="w-3.5 h-3.5 text-[#c9a96e]/50" />
+            <div className="flex-1 h-px bg-stone-200/80" />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-14 sm:py-20" data-testid="section-looking-ahead">
+        <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-2 mb-4">
+              <div className="w-6 h-px bg-stone-300/60" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-[#c4956a] font-medium">
+                Looking Ahead
+              </p>
+              <div className="w-6 h-px bg-stone-300/60" />
+            </div>
+            <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.8] mb-6">
+              We're building a Miami where independent professionals can build practices that feel intentional from the inside out. Where the space, the image, and the experience all tell the same story.
+            </p>
+            <p className="text-[#2a2a2a] font-serif text-lg sm:text-xl italic mb-10">
+              One professional at a time.
+            </p>
+
+            <div className="space-y-3">
+              <p className="text-stone-400 text-xs tracking-[0.2em] uppercase font-medium">
+                Your space is waiting
+              </p>
+              <Link
+                href="/workspaces"
+                data-testid="button-browse-workspaces-vision"
+                className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+              >
+                Browse Workspaces
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <SiteFooter />
     </div>
   );
 }
