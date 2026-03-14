@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
+import type { PortfolioPhoto, ColorSwatch, Space } from "@shared/schema";
 import { UserIndicator } from "@/components/user-indicator";
 import { environments, brandMessages, emotionalImpacts } from "@/lib/configurator-data";
 import {
@@ -15,27 +15,6 @@ import {
 
 function getLabel(value: string, list: { value: string; label: string }[]) {
   return list.find((item) => item.value === value)?.label || value;
-}
-
-function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
-  const tags: string[] = [];
-  if (photo.environments?.length) tags.push(...photo.environments.map((v: string) => getLabel(v, environments)));
-  if (photo.brandMessages?.length) tags.push(...photo.brandMessages.map((v: string) => getLabel(v, brandMessages)));
-  if (photo.emotionalImpacts?.length) tags.push(...photo.emotionalImpacts.map((v: string) => getLabel(v, emotionalImpacts)));
-  if (!tags.length) return null;
-  return (
-    <div className="mb-2">
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <Tag className="w-3 h-3 text-white/70" />
-        <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Emotion</p>
-      </div>
-      <div className="flex flex-wrap gap-1">
-        {tags.map((tag, i) => (
-          <span key={i} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm font-medium">{tag}</span>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 function BeforeAfterSlider({ photo }: { photo: PortfolioPhoto }) {
@@ -110,7 +89,7 @@ function BeforeAfterSlider({ photo }: { photo: PortfolioPhoto }) {
   );
 }
 
-function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void }) {
+function PortfolioCard({ photo, index, onPhotoClick, linkedSpace }: { photo: PortfolioPhoto; index: number; onPhotoClick: (photo: PortfolioPhoto) => void; linkedSpace?: Space | null }) {
   const palette = (photo.colorPalette as ColorSwatch[] | null) || [];
   const crop = (photo.cropPosition as { x: number; y: number; zoom: number } | null) || { x: 50, y: 50, zoom: 1 };
   const isSpaces = photo.category === "spaces";
@@ -140,14 +119,14 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         data-testid={`portfolio-full-photo-${index}`}
       />
 
-      {subjectName && (
+      {(subjectName || (isSpaces && linkedSpace)) && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 md:hidden" data-testid={`name-mobile-${index}`}>
-          <p className="text-white/90 text-[13px] font-medium leading-tight">{subjectName}</p>
-          {subjectProfession && <p className="text-white/50 text-[11px] mt-0.5">{subjectProfession}</p>}
+          <p className="text-white/90 text-[13px] font-medium leading-tight">{isSpaces && linkedSpace ? linkedSpace.name : subjectName}</p>
+          <p className="text-white/50 text-[11px] mt-0.5">{isSpaces && linkedSpace ? linkedSpace.neighborhood : subjectProfession}</p>
         </div>
       )}
 
-      {!subjectName && palette.length > 0 && (
+      {!subjectName && !linkedSpace && palette.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 md:hidden" data-testid={`palette-mobile-full-${index}`}>
           <div className="flex items-center gap-1.5">
             {palette.map((swatch, i) => (
@@ -165,10 +144,10 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 pb-2.5 pt-10 transition-opacity duration-300 hidden md:block opacity-0 group-hover:opacity-100"
         data-testid={`portfolio-full-overlay-${index}`}
       >
-        {subjectName ? (
+        {(subjectName || (isSpaces && linkedSpace)) ? (
           <div>
-            <p className="text-white/90 text-[13px] font-medium leading-tight">{subjectName}</p>
-            {subjectProfession && <p className="text-white/50 text-[11px] mt-0.5">{subjectProfession}</p>}
+            <p className="text-white/90 text-[13px] font-medium leading-tight">{isSpaces && linkedSpace ? linkedSpace.name : subjectName}</p>
+            <p className="text-white/50 text-[11px] mt-0.5">{isSpaces && linkedSpace ? linkedSpace.neighborhood : subjectProfession}</p>
           </div>
         ) : palette.length > 0 ? (
           <div className="flex items-center gap-1.5">
@@ -186,8 +165,10 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
   );
 }
 
-function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClose: () => void }) {
+function PhotoLightbox({ photo, onClose, spaceMap }: { photo: PortfolioPhoto | null; onClose: () => void; spaceMap: Record<string, Space> }) {
   const palette = photo ? (photo.colorPalette as ColorSwatch[] | null) || [] : [];
+  const isSpaces = photo?.category === "spaces";
+  const linkedSpace = photo?.locationSpaceId ? spaceMap[photo.locationSpaceId] : null;
   const subjectName = photo ? (photo as any).subjectName as string | null : null;
   const subjectProfession = photo ? (photo as any).subjectProfession as string | null : null;
   const subjectBio = photo ? (photo as any).subjectBio as string | null : null;
@@ -209,7 +190,21 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
           </div>
 
           <div className="w-full md:w-72 bg-card p-5 flex flex-col gap-4 overflow-y-auto" data-testid="lightbox-palette-panel-full">
-            {subjectName && (
+            {isSpaces && linkedSpace && (
+              <div className="pb-3 border-b border-border">
+                <h3 className="font-serif text-lg font-semibold" data-testid="lightbox-space-name">{linkedSpace.name}</h3>
+                {linkedSpace.neighborhood && (
+                  <p className="text-sm text-muted-foreground">{linkedSpace.neighborhood}</p>
+                )}
+                {linkedSpace.shortDescription || linkedSpace.description ? (
+                  <p className="text-[13px] text-muted-foreground/80 italic mt-2 leading-relaxed" data-testid="lightbox-space-desc">
+                    {linkedSpace.shortDescription || (linkedSpace.description && linkedSpace.description.length > 120 ? linkedSpace.description.slice(0, 120).trim() + "\u2026" : linkedSpace.description)}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
+            {!isSpaces && subjectName && (
               <div className="pb-3 border-b border-border">
                 <h3 className="font-serif text-lg font-semibold" data-testid="lightbox-subject-name">{subjectName}</h3>
                 {subjectProfession && (
@@ -227,7 +222,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
                 <h3 className="text-sm font-semibold">Color Palette</h3>
               </div>
               <p className="text-xs text-muted-foreground">
-                {photo?.category === "spaces" ? "Colors defining this space" : "Colors featured in this portrait"}
+                {isSpaces ? "Colors defining this space" : "Colors featured in this portrait"}
               </p>
             </div>
 
@@ -250,23 +245,49 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
               <p className="text-sm text-muted-foreground">No palette data available for this photo.</p>
             )}
 
-            {photo && (
-              <div className="mt-auto pt-4 border-t border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  <Tag className="w-4 h-4 text-muted-foreground" />
-                  <h3 className="text-sm font-semibold">Emotion</h3>
+            {photo && (() => {
+              const feelingTags = [
+                ...(photo.brandMessages || []).map((v: string) => getLabel(v, brandMessages)),
+                ...(photo.emotionalImpacts || []).map((v: string) => getLabel(v, emotionalImpacts)),
+              ];
+              const envTags = (photo.environments || []).map((v: string) => {
+                if (isSpaces) {
+                  const spaceTypeLabels: Record<string, string> = { therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative", office: "Office", nature: "Nature", urban: "Urban" };
+                  return spaceTypeLabels[v] || v.charAt(0).toUpperCase() + v.slice(1);
+                }
+                return getLabel(v, environments);
+              });
+              return (
+                <div className="mt-auto pt-4 border-t border-border">
+                  {isSpaces && envTags.length > 0 && (
+                    <div className="mb-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Building2 className="w-4 h-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold">Space Type</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {envTags.map((tag, i) => (
+                          <span key={i} className="text-xs bg-muted text-foreground px-2 py-1 rounded-sm font-medium">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(!isSpaces ? [...envTags, ...feelingTags] : feelingTags).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Tag className="w-4 h-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold">Feeling</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(!isSpaces ? [...envTags, ...feelingTags] : feelingTags).map((tag, i) => (
+                          <span key={i} className="text-xs bg-muted text-foreground px-2 py-1 rounded-sm font-medium">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    ...(photo.environments || []).map((v: string) => getLabel(v, environments)),
-                    ...(photo.brandMessages || []).map((v: string) => getLabel(v, brandMessages)),
-                    ...(photo.emotionalImpacts || []).map((v: string) => getLabel(v, emotionalImpacts)),
-                  ].map((tag, i) => (
-                    <span key={i} className="text-xs bg-muted text-foreground px-2 py-1 rounded-sm font-medium">{tag}</span>
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </DialogContent>
@@ -286,6 +307,12 @@ export default function PortfolioPage() {
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({
     queryKey: ["/api/portfolio-photos"],
   });
+
+  const { data: spaces } = useQuery<Space[]>({
+    queryKey: ["/api/spaces"],
+  });
+
+  const spaceMap = (spaces || []).reduce<Record<string, Space>>((acc, s) => { acc[s.id] = s; return acc; }, {});
 
   const filteredPhotos = photos?.filter(p => (p.category || "people") === activeCategory) || [];
 
@@ -451,10 +478,10 @@ export default function PortfolioPage() {
 
         {isLoading && (
           <div className={activeCategory === "spaces"
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            ? "grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto"
             : "columns-2 sm:columns-3 gap-4"
           }>
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg bg-foreground/5 animate-pulse ${activeCategory === "people" ? "mb-4 break-inside-avoid" : ""}`} />
             ))}
           </div>
@@ -469,13 +496,17 @@ export default function PortfolioPage() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
               className={activeCategory === "spaces"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                ? `grid gap-4 max-w-4xl mx-auto ${
+                    filteredPhotos.length === 1 ? "grid-cols-1 max-w-2xl" :
+                    filteredPhotos.length === 2 ? "grid-cols-1 sm:grid-cols-2" :
+                    "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  }`
                 : "columns-2 sm:columns-3 gap-4"
               }
               data-testid="portfolio-full-grid"
             >
               {filteredPhotos.map((photo, index) => (
-                <PortfolioCard key={photo.id} photo={photo} index={index} onPhotoClick={setSelectedPhoto} />
+                <PortfolioCard key={photo.id} photo={photo} index={index} onPhotoClick={setSelectedPhoto} linkedSpace={photo.locationSpaceId ? spaceMap[photo.locationSpaceId] : null} />
               ))}
             </motion.div>
           )}
@@ -543,7 +574,7 @@ export default function PortfolioPage() {
         </motion.div>
       </div>
 
-      <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      <PhotoLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} spaceMap={spaceMap} />
     </div>
   );
 }
