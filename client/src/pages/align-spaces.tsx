@@ -303,7 +303,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5 }}
             className="font-serif text-3xl sm:text-4xl md:text-5xl text-stone-900 tracking-tight leading-tight"
           >
-            Find Your Workspace <span className="italic font-normal">in Miami</span>
+            Where Your Work <span className="italic font-normal">and Space</span> Align
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 8 }}
@@ -311,7 +311,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
           >
-            Professional spaces for therapists, coaches, creatives, and small business owners — ready to book by the hour.
+            Discover professional workspaces across Miami — from therapy offices to studios and meeting rooms.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -325,7 +325,7 @@ export default function AlignSpacesPage() {
               className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
             >
               <Search className="w-4 h-4" />
-              Browse All Spaces
+              Browse Workspaces
             </Link>
           </motion.div>
         </div>
