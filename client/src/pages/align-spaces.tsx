@@ -88,7 +88,7 @@ export default function AlignSpacesPage() {
   return (
     <div className="bg-[#f5f0e8]" data-testid="section-split-hero">
       <div className="relative min-h-[100dvh] flex flex-col bg-stone-900">
-        <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-5 sm:py-6">
+        <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-5 sm:py-6" style={{ backgroundColor: "rgba(13,10,6,0.6)" }}>
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <motion.div
               initial={{ opacity: 0 }}
@@ -222,8 +222,8 @@ export default function AlignSpacesPage() {
                   href="/portraits/builder"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-begin-session"
-                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 font-medium border"
-                  style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
+                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border bg-transparent"
+                  style={{ color: "#c9a96e", borderColor: "#c9a96e", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
@@ -233,8 +233,8 @@ export default function AlignSpacesPage() {
                   href="/portfolio"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-portfolio-portraits"
-                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 border border-transparent"
-                  style={{ color: "#d4c4a8" }}
+                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border border-transparent bg-transparent"
+                  style={{ color: "#d4c4a8", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
                 >
@@ -253,20 +253,22 @@ export default function AlignSpacesPage() {
             </div>
           </motion.div>
 
-          <div className="hidden md:flex absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 flex-col items-center pointer-events-none">
-            <div className="flex-1 w-px" style={{ backgroundColor: "#c9a96e", opacity: 0.4 }} />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="py-6"
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none" style={{ width: "2px", backgroundColor: "#c9a96e" }} />
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="hidden md:block absolute z-20 pointer-events-none"
+            style={{ top: "18%", left: "50%", transform: "translateX(-50%)" }}
+          >
+            <span
+              className="whitespace-nowrap uppercase"
+              style={{ color: "#c9a96e", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "4px" }}
             >
-              <span className="text-[9px] tracking-[0.35em] uppercase font-medium whitespace-nowrap" style={{ color: "#c9a96e" }}>
-                Your Presence · Your Space
-              </span>
-            </motion.div>
-            <div className="flex-1 w-px" style={{ backgroundColor: "#c9a96e", opacity: 0.4 }} />
-          </div>
+              Your Presence · Your Space
+            </span>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -322,8 +324,8 @@ export default function AlignSpacesPage() {
                   href="/browse"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-explore-spaces"
-                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 font-medium border"
-                  style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
+                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border bg-transparent"
+                  style={{ color: "#c9a96e", borderColor: "#c9a96e", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
@@ -333,8 +335,8 @@ export default function AlignSpacesPage() {
                   href="/featured"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-featured-spaces"
-                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 border border-transparent"
-                  style={{ color: "#d4c4a8" }}
+                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border border-transparent bg-transparent"
+                  style={{ color: "#d4c4a8", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
                 >
