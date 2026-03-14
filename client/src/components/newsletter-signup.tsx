@@ -112,7 +112,7 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
               </div>
               <div className="text-left">
                 <p className={`text-sm font-medium ${textHeading}`}>Join the Align community</p>
-                <p className={`text-[11px] ${textMuted}`}>New spaces, guides, and community stories</p>
+                <p className={`text-[11px] ${textMuted}`}>New spaces, professional guides, and community stories, straight to your inbox.</p>
               </div>
             </div>
             <ChevronRight className={`w-4 h-4 ${textMuted} group-hover:translate-x-0.5 transition-transform`} />

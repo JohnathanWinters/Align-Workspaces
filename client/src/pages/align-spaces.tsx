@@ -328,7 +328,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
           >
-            Discover professional workspaces across Miami, from therapy offices to studios and meeting rooms.
+            Thoughtfully designed spaces for therapists, coaches, and creatives — booked by the hour, built for the work you do.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -350,9 +350,9 @@ export default function AlignSpacesPage() {
 
       <section className="px-4 sm:px-6 pb-12 sm:pb-16" data-testid="section-spaces-grid">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             {spacesLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
+              Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
                   <div className="aspect-[4/3] bg-stone-200" />
                   <div className="p-5 space-y-3">
@@ -424,6 +424,9 @@ export default function AlignSpacesPage() {
 
       <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-portraits-feature">
         <div className="max-w-5xl mx-auto">
+          <p className="text-center font-serif text-lg sm:text-xl text-stone-500 italic mb-8 sm:mb-10" data-testid="text-portrait-bridge">
+            Your space is only half the picture.
+          </p>
           <div className="bg-stone-900 rounded-2xl overflow-hidden flex flex-col md:flex-row">
             <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden">
               <img
@@ -536,6 +539,18 @@ export default function AlignSpacesPage() {
                 data-testid="link-featured-all-mobile"
               >
                 View all professionals
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-stone-100">
+              <p className="text-stone-500 text-sm mb-4">Ready to find the right space for your practice?</p>
+              <Link
+                href="/workspaces"
+                data-testid="button-featured-find-space"
+                className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+              >
+                Find your space
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
