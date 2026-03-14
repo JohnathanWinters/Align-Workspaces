@@ -113,7 +113,7 @@ export default function PhotographersPage() {
           >
             <div className="relative">
               <div className="absolute -left-4 sm:-left-6 top-1 bottom-1 w-px bg-gradient-to-b from-[#c9a96e]/50 via-[#c9a96e]/20 to-transparent" />
-              <div className="space-y-5 pl-2 sm:pl-4">
+              <div className="space-y-8 pl-2 sm:pl-4">
                 <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
                   The spaces where meaningful work happens should reflect the people doing it.
                 </p>
