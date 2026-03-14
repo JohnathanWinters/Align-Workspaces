@@ -3005,8 +3005,9 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
 
           <Dialog open={!!editingPhoto} onOpenChange={(open) => { if (!open) setEditingPhoto(null); }}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+              {editingPhoto && (<>
               <DialogTitle className="text-base flex items-center gap-3">
-                {editingPhoto && <img src={editingPhoto.imageUrl} alt="" className="w-12 h-12 rounded object-cover" />}
+                <img src={editingPhoto.imageUrl} alt="" className="w-12 h-12 rounded object-cover" />
                 Edit Tags & Keywords
               </DialogTitle>
               <div className="space-y-6">
@@ -3326,6 +3327,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                   </Button>
                 </div>
               </div>
+              </>)}
             </DialogContent>
           </Dialog>
         </div>
