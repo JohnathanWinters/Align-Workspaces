@@ -553,7 +553,7 @@ export default function AlignSpacesPage() {
               >
                 <div className="bg-white rounded-2xl border border-stone-100 p-6 sm:p-7">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="font-serif text-2xl text-stone-300 leading-none">&ldquo;&ldquo;</span>
+                    <span className="font-serif text-3xl text-stone-300 leading-none select-none">&ldquo;</span>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, s) => (
                         <Star key={s} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
