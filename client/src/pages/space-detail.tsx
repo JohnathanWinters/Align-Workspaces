@@ -759,9 +759,6 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
           </button>
-          <Link href="/">
-            <img src="/images/logo-align-mark.png" alt="Align" className="h-7 rounded" />
-          </Link>
           <UserIndicator />
         </div>
       </div>
