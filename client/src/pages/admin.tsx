@@ -5895,7 +5895,6 @@ function AdminDashboard({ token }: { token: string }) {
             <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center">
               <Lock className="w-4 h-4 text-white" />
             </div>
-            <p className="font-serif text-lg text-gray-900" data-testid="text-admin-title">Admin Panel</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
