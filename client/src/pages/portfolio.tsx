@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info } from "lucide-react";
+import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
@@ -42,19 +42,21 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
   const palette = (photo.colorPalette as ColorSwatch[] | null) || [];
   const crop = (photo.cropPosition as { x: number; y: number; zoom: number } | null) || { x: 50, y: 50, zoom: 1 };
   const isSpaces = photo.category === "spaces";
+  const subjectName = (photo as any).subjectName as string | null;
+  const subjectProfession = (photo as any).subjectProfession as string | null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
-      className={`${isSpaces ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-md overflow-hidden relative cursor-pointer group`}
+      className={`${isSpaces ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg overflow-hidden relative cursor-pointer group break-inside-avoid mb-4`}
       onClick={() => onPhotoClick(photo)}
       data-testid={`portfolio-full-card-${index}`}
     >
       <img
         src={photo.imageUrl}
-        alt={isSpaces ? "Creative workspace by Align Miami" : "Personal branding portrait by Align Miami"}
+        alt={subjectName ? `${subjectName} — portrait by Align Miami` : isSpaces ? "Creative workspace by Align Miami" : "Personal branding portrait by Align Miami"}
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         style={{
           objectPosition: `${crop.x}% ${crop.y}%`,
@@ -66,8 +68,14 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         data-testid={`portfolio-full-photo-${index}`}
       />
 
-      {palette.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2.5 pt-6 md:hidden" data-testid={`palette-mobile-full-${index}`}>
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-8 md:hidden" data-testid={`palette-mobile-full-${index}`}>
+        {subjectName && (
+          <div className="mb-1.5">
+            <p className="text-white text-sm font-semibold leading-tight">{subjectName}</p>
+            {subjectProfession && <p className="text-white/60 text-[11px]">{subjectProfession}</p>}
+          </div>
+        )}
+        {palette.length > 0 && (
           <div className="flex items-center gap-1.5">
             {palette.map((swatch, i) => (
               <div
@@ -77,13 +85,20 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
               />
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div
         className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex-col justify-end p-3 transition-opacity duration-300 hidden md:flex opacity-0 group-hover:opacity-100"
         data-testid={`portfolio-full-overlay-${index}`}
       >
+        {subjectName && (
+          <div className="mb-2">
+            <p className="text-white text-sm font-semibold leading-tight">{subjectName}</p>
+            {subjectProfession && <p className="text-white/60 text-[11px]">{subjectProfession}</p>}
+          </div>
+        )}
+
         <PhotoTags photo={photo} />
 
         {palette.length > 0 && (
@@ -117,31 +132,42 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
 
 function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClose: () => void }) {
   const palette = photo ? (photo.colorPalette as ColorSwatch[] | null) || [] : [];
+  const subjectName = photo ? (photo as any).subjectName as string | null : null;
+  const subjectProfession = photo ? (photo as any).subjectProfession as string | null : null;
 
   return (
     <Dialog open={!!photo} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-4xl w-[95vw] p-0 gap-0 overflow-hidden border-none bg-black/95" data-testid="photo-lightbox-full" aria-describedby={undefined}>
+      <DialogContent className="max-w-4xl w-[95vw] p-0 gap-0 overflow-hidden border-none bg-black/95 max-h-[90vh]" data-testid="photo-lightbox-full" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Photo Details</DialogTitle>
-        <div className="flex flex-col md:flex-row">
+        <div className="flex flex-col md:flex-row max-h-[90vh]">
           <div className="relative flex-1 min-h-[300px] md:min-h-[500px]">
             {photo && (
               <img
                 src={photo.imageUrl}
-                alt="Professional branding portrait detail - Align Miami"
+                alt={subjectName ? `${subjectName} portrait detail` : "Professional branding portrait detail - Align Miami"}
                 className="w-full h-full object-cover"
                 data-testid="lightbox-image-full"
               />
             )}
           </div>
 
-          <div className="w-full md:w-72 bg-card p-5 flex flex-col gap-5" data-testid="lightbox-palette-panel-full">
+          <div className="w-full md:w-72 bg-card p-5 flex flex-col gap-4 overflow-y-auto" data-testid="lightbox-palette-panel-full">
+            {subjectName && (
+              <div className="pb-3 border-b border-border">
+                <h3 className="font-serif text-lg font-semibold" data-testid="lightbox-subject-name">{subjectName}</h3>
+                {subjectProfession && (
+                  <p className="text-sm text-muted-foreground">{subjectProfession}</p>
+                )}
+              </div>
+            )}
+
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Palette className="w-4 h-4 text-muted-foreground" />
                 <h3 className="text-sm font-semibold">Color Palette</h3>
               </div>
               <p className="text-xs text-muted-foreground">
-                Colors featured in this portrait
+                {photo?.category === "spaces" ? "Colors defining this space" : "Colors featured in this portrait"}
               </p>
             </div>
 
@@ -284,8 +310,8 @@ export default function PortfolioPage() {
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-portfolio-desc">
             {activeCategory === "people"
-              ? "Each of these sessions was designed around one question: How should clients feel before the first conversation begins?"
-              : "Creative spaces where vision meets atmosphere. Browse locations featured in our work."}
+              ? "Every portrait here was built around one question \u2014 how should your clients feel before you say a word?"
+              : "Spaces designed for the work you do. Click any photo to see its color palette and atmosphere."}
           </p>
         </motion.div>
 
@@ -319,9 +345,12 @@ export default function PortfolioPage() {
         </div>
 
         {isLoading && (
-          <div className={`grid gap-4 ${activeCategory === "spaces" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
+          <div className={activeCategory === "spaces"
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            : "columns-2 sm:columns-3 lg:columns-4 gap-4"
+          }>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-md bg-foreground/5 animate-pulse`} />
+              <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg bg-foreground/5 animate-pulse ${activeCategory === "people" ? "mb-4 break-inside-avoid" : ""}`} />
             ))}
           </div>
         )}
@@ -334,7 +363,10 @@ export default function PortfolioPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className={`grid gap-4 ${activeCategory === "spaces" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}
+              className={activeCategory === "spaces"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                : "columns-2 sm:columns-3 lg:columns-4 gap-4"
+              }
               data-testid="portfolio-full-grid"
             >
               {filteredPhotos.map((photo, index) => (
@@ -360,26 +392,26 @@ export default function PortfolioPage() {
           className="mt-16 mb-4"
         >
           {activeCategory === "people" ? (
-            <div className="text-center bg-stone-50 rounded-2xl px-6 py-12 sm:py-16" data-testid="cta-people-portfolio">
-              <h2 className="font-serif text-2xl sm:text-3xl mb-3">Ready to Create Your Own?</h2>
+            <div className="text-center bg-gradient-to-br from-[#faf6f1] to-[#f5ede3] rounded-2xl px-6 py-12 sm:py-16 border border-[#e8ddd0]/60" data-testid="cta-people-portfolio">
+              <h2 className="font-serif text-2xl sm:text-3xl mb-3">Ready to build yours?</h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
-                Design a portrait session tailored to your brand. Our builder walks you through every detail, from setting to style.
+                Tell us how you want clients to feel. We'll build the session around it, from color palette to setting to emotion.
               </p>
               <Link href="/portrait-builder">
                 <button
                   data-testid="button-cta-builder"
                   className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-8 py-3.5 rounded-full hover:bg-stone-800 transition-all duration-300 font-medium"
                 >
-                  <Camera className="w-4 h-4" />
-                  Start Your Session
+                  Build your session around your brand
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
             </div>
           ) : (
-            <div className="text-center bg-stone-50 rounded-2xl px-6 py-12 sm:py-16" data-testid="cta-spaces-portfolio">
+            <div className="text-center bg-gradient-to-br from-[#faf6f1] to-[#f5ede3] rounded-2xl px-6 py-12 sm:py-16 border border-[#e8ddd0]/60" data-testid="cta-spaces-portfolio">
               <h2 className="font-serif text-2xl sm:text-3xl mb-3">Find or List a Space</h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
-                Discover creative workspaces for your next session, or share your own space with the Align community.
+                Match a space's palette to your portrait. Or share your own space with the Align community.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href="/workspaces">
