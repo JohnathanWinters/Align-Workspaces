@@ -44,14 +44,14 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
         className="flex items-center"
         aria-label="Account menu"
       >
-        <Avatar className="w-7 h-7 ring-1 ring-offset-1 ring-stone-200/40 ring-offset-transparent">
+        <Avatar className={isLight ? "w-7 h-7 ring-1 ring-[#c9a96e]/30 ring-offset-0" : "w-7 h-7 ring-1 ring-stone-200/40 ring-offset-1 ring-offset-transparent"}>
           {user.profileImageUrl && (
             <AvatarImage src={user.profileImageUrl} alt={user.firstName || "User"} />
           )}
           <AvatarFallback
             className={
               isLight
-                ? "bg-white/20 text-white text-xs font-medium"
+                ? "bg-transparent border border-[#c9a96e]/40 text-[#f0e6d0] text-[10px] tracking-wider font-medium"
                 : "bg-stone-100 text-stone-500 text-xs font-medium"
             }
           >
