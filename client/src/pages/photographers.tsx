@@ -15,23 +15,23 @@ const founderSections = [
     ],
   },
   {
-    title: "The Problem",
+    title: "The Challenge",
     paragraphs: [
-      "Yet many professionals struggle to find spaces that support the work they are doing. Offices can feel temporary, overly corporate, or disconnected from the experience they want to create for their clients.",
-      "At the same time, many small businesses are working to present themselves clearly and professionally, but lack the environment and imagery that reflects the quality of their work.",
+      "Yet finding spaces that support this kind of work is often difficult. Many offices feel temporary, impersonal, or disconnected from the experience professionals want to create for their clients.",
+      "At the same time, many small businesses are working to present themselves clearly and professionally, yet lack the environment and imagery that reflects the quality of their work.",
     ],
   },
   {
-    title: "Why Align Exists",
+    title: "Why Align",
     paragraphs: [
-      "Align was created to bring those pieces together.",
-      "We help therapists, coaches, and independent professionals find thoughtful workspaces while also helping them present their work with clarity. The goal is simple — support small businesses in creating environments and imagery that align with the work they do every day.",
+      "Align was created to bring these elements together.",
+      "We help therapists, coaches, creatives, and independent professionals find thoughtful workspaces while also helping them present their work with clarity. The goal is simple — support small businesses in aligning their environment, their work, and the way they are seen.",
     ],
   },
   {
-    title: "Where We're Going",
+    title: "Looking Ahead",
     paragraphs: [
-      "Our vision is to make it easier for professionals to build practices that feel intentional from the inside out — from the space they work in to the way their work is seen and understood.",
+      "Our vision is to make it easier for professionals to build practices that feel intentional from the inside out — from the space they work in to the way their work is experienced.",
     ],
   },
 ];
