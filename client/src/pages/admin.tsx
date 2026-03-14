@@ -2133,6 +2133,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     setEditForm({
       name: space.name || "",
       type: space.type || "",
+      tags: space.tags || [space.type].filter(Boolean),
       description: space.description || "",
       shortDescription: space.shortDescription || "",
       address: space.address || "",
@@ -2281,15 +2282,34 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
                           <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-name" />
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Space Category</label>
-                          <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white" data-testid="select-edit-type">
-                            <option value="therapy">Therapy & Counseling</option>
-                            <option value="coaching">Coaching & Consulting</option>
-                            <option value="wellness">Wellness & Holistic</option>
-                            <option value="workshop">Workshops & Classes</option>
-                            <option value="creative">Creative Studio</option>
-                          </select>
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5">Space Categories</label>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { key: "therapy", label: "Therapy & Counseling" },
+                              { key: "coaching", label: "Coaching & Consulting" },
+                              { key: "wellness", label: "Wellness & Holistic" },
+                              { key: "workshop", label: "Workshops & Classes" },
+                              { key: "creative", label: "Creative Studio" },
+                            ].map(cat => {
+                              const selected = (editForm.tags || []).includes(cat.key);
+                              return (
+                                <button
+                                  key={cat.key}
+                                  type="button"
+                                  data-testid={`tag-edit-${cat.key}`}
+                                  onClick={() => {
+                                    const current: string[] = editForm.tags || [];
+                                    const next = selected ? current.filter((t: string) => t !== cat.key) : [...current, cat.key];
+                                    setEditForm({ ...editForm, tags: next, type: next[0] || editForm.type });
+                                  }}
+                                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selected ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"}`}
+                                >
+                                  {cat.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
@@ -2372,7 +2392,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             <span className="truncate">{space.address}</span>
                           </p>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-400">
-                            <span>{{ therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative", office: "Office", studio: "Creative Studio", gym: "Gym", meeting: "Meeting", art_studio: "Art Studio", photo_studio: "Photo Studio" }[space.type] || space.type}</span>
+                            <span>{(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map((t: string) => ({ therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative", office: "Office", studio: "Creative Studio", gym: "Gym", meeting: "Meeting", art_studio: "Art Studio", photo_studio: "Photo Studio" }[t] || t)).join(", ")}</span>
                             <span>${space.pricePerHour}/hr</span>
                             {space.pricePerDay > 0 && <span>${space.pricePerDay}/day</span>}
                             <span>Cap: {space.capacity || "N/A"}</span>

@@ -811,8 +811,12 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 ))}
               </div>
             )}
-            <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${TYPE_COLORS[space.type] || "bg-stone-100 text-stone-700"}`}>
-              {TYPE_LABELS[space.type] || space.type}
+            <div className="absolute top-4 left-4 flex flex-wrap gap-1">
+              {(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map((tag: string) => (
+                <span key={tag} className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${TYPE_COLORS[tag] || "bg-stone-100 text-stone-700"}`}>
+                  {TYPE_LABELS[tag] || tag}
+                </span>
+              ))}
             </div>
             {!space.isSample && (
               <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/90 backdrop-blur-sm text-xs font-semibold text-emerald-700 px-2.5 py-1 rounded-full shadow-sm" data-testid="badge-verified">

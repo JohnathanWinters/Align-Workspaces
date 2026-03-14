@@ -657,8 +657,12 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             </div>
           </div>
         )}
-        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${TYPE_COLORS[space.type] || "bg-stone-100 text-stone-700"}`}>
-          {TYPE_LABELS[space.type] || space.type}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+          {(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map(tag => (
+            <span key={tag} className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${TYPE_COLORS[tag] || "bg-stone-100 text-stone-700"}`}>
+              {TYPE_LABELS[tag] || tag}
+            </span>
+          ))}
         </div>
         {space.isSample ? (
           <div className="absolute top-3 right-3 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
@@ -1308,14 +1312,14 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
   const [showListMagicLink, setShowListMagicLink] = useState(false);
   const [formData, setFormData] = useState({
-    name: "", type: "therapy", description: "", shortDescription: "",
+    name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     capacity: "", amenities: "", targetProfession: "", availableHours: "", hostName: "",
   });
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...formData, amenities: formData.amenities.split(",").map(a => a.trim()).filter(Boolean) };
+      const payload = { ...formData, type: formData.tags[0] || formData.type, amenities: formData.amenities.split(",").map(a => a.trim()).filter(Boolean) };
       await apiRequest("POST", "/api/spaces", payload);
     },
     onSuccess: () => {
@@ -1391,11 +1395,27 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 <label className="text-xs text-foreground/50 mb-1 block">Space Name *</label>
                 <Input value={formData.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-list-name" />
               </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Type *</label>
-                <select value={formData.type} onChange={e => update("type", e.target.value)} className="w-full border border-stone-200 rounded-md px-3 py-2 text-sm bg-white" data-testid="select-list-type">
-                  {LIST_SPACE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
+              <div className="sm:col-span-2">
+                <label className="text-xs text-foreground/50 mb-1.5 block">Categories *</label>
+                <div className="flex flex-wrap gap-2">
+                  {LIST_SPACE_TYPES.map(t => {
+                    const selected = formData.tags.includes(t.value);
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        data-testid={`tag-list-${t.value}`}
+                        onClick={() => {
+                          const next = selected ? formData.tags.filter(x => x !== t.value) : [...formData.tags, t.value];
+                          setFormData(prev => ({ ...prev, tags: next, type: next[0] || prev.type }));
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selected ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"}`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
               <div>
                 <label className="text-xs text-foreground/50 mb-1 block">Your Name / Business *</label>
@@ -1522,12 +1542,10 @@ export default function SpacesBrowsePage() {
     return { min: Math.min(...prices), max: Math.max(...prices) };
   }, [allSpaces]);
 
-  const categoryHasNoMatches = activeType !== "all" && allSpaces.filter(s => s.type === activeType).length === 0;
-
   const filtered = useMemo(() => {
-    let result = activeType === "all" || categoryHasNoMatches
+    let result = activeType === "all"
       ? allSpaces
-      : allSpaces.filter(s => s.type === activeType);
+      : allSpaces.filter(s => s.type === activeType || (s.tags && s.tags.includes(activeType)));
 
     const minVal = priceMin ? parseInt(priceMin) : null;
     const maxVal = priceMax ? parseInt(priceMax) : null;
@@ -1551,7 +1569,7 @@ export default function SpacesBrowsePage() {
     }
 
     return result;
-  }, [allSpaces, activeType, categoryHasNoMatches, priceMin, priceMax, sortBy, zipCoords]);
+  }, [allSpaces, activeType, priceMin, priceMax, sortBy, zipCoords]);
 
   const getDistanceForSpace = useCallback((space: Space): number | null => {
     if (!zipCoords || !space.latitude || !space.longitude) return null;
@@ -1560,7 +1578,7 @@ export default function SpacesBrowsePage() {
 
   const typeCounts = SPACE_TYPES.map(t => ({
     ...t,
-    count: t.key === "all" ? allSpaces.length : allSpaces.filter(s => s.type === t.key).length,
+    count: t.key === "all" ? allSpaces.length : allSpaces.filter(s => s.type === t.key || (s.tags && s.tags.includes(t.key))).length,
   }));
 
   const activeFilterCount = useMemo(() => {
@@ -1954,15 +1972,7 @@ export default function SpacesBrowsePage() {
               </div>
             ) : (
               <>
-                {categoryHasNoMatches && (
-                  <div className="flex items-center gap-2 bg-[#f5f0e8] border border-[#c4956a]/20 rounded-lg px-4 py-3 mb-2" data-testid="text-category-fallback">
-                    <Sparkles className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
-                    <p className="text-xs text-foreground/50">
-                      No {TYPE_LABELS[activeType] || activeType} spaces listed yet. Here are all available spaces in the meantime.
-                    </p>
-                  </div>
-                )}
-                {filtered.length <= 2 && !categoryHasNoMatches && (
+                {filtered.length <= 2 && (
                   <div className="flex items-center gap-2 bg-amber-50/60 border border-amber-100 rounded-lg px-4 py-3 mb-2" data-testid="text-early-access">
                     <Sparkles className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
                     <p className="text-xs text-foreground/50">

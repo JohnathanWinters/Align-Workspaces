@@ -58,7 +58,8 @@ The application uses a monorepo structure, separating the React frontend (`clien
 - **Schema Sharing**: Drizzle table definitions and Zod schemas are shared between frontend and backend for consistent validation.
 
 ### Align Spaces Specifics
-- **Browse Page**: Split-view layout with scrollable space cards and an interactive Leaflet map. Supports filtering, mobile toggles between list/map, and displays "Verified by Align" badges and amenities. Cards link to dedicated detail pages.
+- **Browse Page**: Split-view layout with scrollable space cards and an interactive Leaflet map. Supports filtering by category tags (multi-select), mobile toggles between list/map, and displays "Verified by Align" badges and amenities. Cards link to dedicated detail pages.
+- **Multi-Category Tags**: Spaces have a `tags` text array column allowing multiple category assignments (therapy, coaching, wellness, workshop, creative). Browse filtering checks both `type` and `tags`. Admin and client "List Your Space" forms use toggle-pill multi-select for categories.
 - **Space Detail Page**: `/spaces/:slug` — dedicated page for each space showing full description, all amenities, color palette, booking widget, and "Photos taken at this space" section with portfolio photos linked to the space. Component: `client/src/pages/space-detail.tsx`.
 - **Booking System**: `space_bookings` table tracks bookings with payment details, Google Calendar integration, and unread tracking. `space_messages` table enables chat between guest and host.
 - **Client Space Management**: Authenticated clients can submit and edit space listings via the Client Portal. Submitted spaces require admin approval.
