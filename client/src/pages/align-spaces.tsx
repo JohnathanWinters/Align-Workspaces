@@ -401,10 +401,10 @@ export default function AlignSpacesPage() {
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold">{item.step}</span>
-                <h3 className="font-serif text-xl text-stone-900 mt-1.5 mb-3">{item.title}</h3>
-                <p className="text-stone-600 text-sm leading-relaxed max-w-[260px]">{item.desc}</p>
+                <h3 className="font-serif text-xl text-stone-900 mt-1.5 mb-3 min-h-[56px] flex items-center justify-center">{item.title}</h3>
+                <p className="text-stone-600 text-sm leading-relaxed max-w-[260px] min-h-[60px]">{item.desc}</p>
                 <div className="w-8 h-px bg-stone-300 my-4" />
-                <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic">{item.detail}</p>
+                <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic min-h-[60px]">{item.detail}</p>
               </div>
             ))}
           </div>
