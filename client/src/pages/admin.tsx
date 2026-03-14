@@ -2814,9 +2814,11 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   };
 
   const envOptions = ["restaurant", "office", "nature", "workvan", "urban", "suburban", "gym", "kitchen"];
+  const spaceEnvOptions = ["therapy", "coaching", "wellness", "workshop", "creative"];
   const brandOptions = ["assured", "empathy", "confidence", "motivation"];
   const moodOptions = ["cozy", "bright", "powerful"];
   const envLabels: Record<string, string> = { restaurant: "Restaurant", office: "Office", nature: "Nature", workvan: "Work Van", urban: "Urban", suburban: "Suburban", gym: "Gym", kitchen: "Kitchen" };
+  const spaceEnvLabels: Record<string, string> = { therapy: "Therapy & Counseling", coaching: "Coaching & Consulting", wellness: "Wellness & Holistic", workshop: "Workshops & Classes", creative: "Creative Studio" };
   const brandLabels: Record<string, string> = { assured: "Welcoming", empathy: "Warm", confidence: "Confident", motivation: "Motivated" };
   const moodLabels: Record<string, string> = { cozy: "Comfortable", bright: "Inspired", powerful: "Reassured" };
 
@@ -2997,68 +2999,95 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                   </div>
                 </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Environment</Label>
-                  <p className="text-xs text-gray-400 mb-2">Where was this shot taken?</p>
-                  <div className="flex flex-wrap gap-2">
-                    {envOptions.map(env => (
-                      <button
-                        key={env}
-                        onClick={() => toggleTag("environments", env)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          tagForm.environments.includes(env)
-                            ? "bg-stone-900 text-white"
-                            : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                        }`}
-                        data-testid={`tag-env-${env}`}
-                      >
-                        {envLabels[env] || env}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {tagForm.category === "people" && (
+                  <>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Environment</Label>
+                      <p className="text-xs text-gray-400 mb-2">Where was this shot taken?</p>
+                      <div className="flex flex-wrap gap-2">
+                        {envOptions.map(env => (
+                          <button
+                            key={env}
+                            onClick={() => toggleTag("environments", env)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              tagForm.environments.includes(env)
+                                ? "bg-stone-900 text-white"
+                                : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                            }`}
+                            data-testid={`tag-env-${env}`}
+                          >
+                            {envLabels[env] || env}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Brand Message</Label>
-                  <p className="text-xs text-gray-400 mb-2">What feeling does this photo communicate?</p>
-                  <div className="flex flex-wrap gap-2">
-                    {brandOptions.map(b => (
-                      <button
-                        key={b}
-                        onClick={() => toggleTag("brandMessages", b)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          tagForm.brandMessages.includes(b)
-                            ? "bg-amber-700 text-white"
-                            : "bg-amber-50 text-amber-800 hover:bg-amber-100"
-                        }`}
-                        data-testid={`tag-brand-${b}`}
-                      >
-                        {brandLabels[b] || b}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Brand Message</Label>
+                      <p className="text-xs text-gray-400 mb-2">What feeling does this photo communicate?</p>
+                      <div className="flex flex-wrap gap-2">
+                        {brandOptions.map(b => (
+                          <button
+                            key={b}
+                            onClick={() => toggleTag("brandMessages", b)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              tagForm.brandMessages.includes(b)
+                                ? "bg-amber-700 text-white"
+                                : "bg-amber-50 text-amber-800 hover:bg-amber-100"
+                            }`}
+                            data-testid={`tag-brand-${b}`}
+                          >
+                            {brandLabels[b] || b}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Emotional Impact</Label>
-                  <p className="text-xs text-gray-400 mb-2">What mood does this photo evoke?</p>
-                  <div className="flex flex-wrap gap-2">
-                    {moodOptions.map(m => (
-                      <button
-                        key={m}
-                        onClick={() => toggleTag("emotionalImpacts", m)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                          tagForm.emotionalImpacts.includes(m)
-                            ? "bg-blue-700 text-white"
-                            : "bg-blue-50 text-blue-800 hover:bg-blue-100"
-                        }`}
-                        data-testid={`tag-mood-${m}`}
-                      >
-                        {moodLabels[m] || m}
-                      </button>
-                    ))}
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Emotional Impact</Label>
+                      <p className="text-xs text-gray-400 mb-2">What mood does this photo evoke?</p>
+                      <div className="flex flex-wrap gap-2">
+                        {moodOptions.map(m => (
+                          <button
+                            key={m}
+                            onClick={() => toggleTag("emotionalImpacts", m)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              tagForm.emotionalImpacts.includes(m)
+                                ? "bg-blue-700 text-white"
+                                : "bg-blue-50 text-blue-800 hover:bg-blue-100"
+                            }`}
+                            data-testid={`tag-mood-${m}`}
+                          >
+                            {moodLabels[m] || m}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {tagForm.category === "spaces" && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Space Category</Label>
+                    <p className="text-xs text-gray-400 mb-2">What type of space is this?</p>
+                    <div className="flex flex-wrap gap-2">
+                      {spaceEnvOptions.map(env => (
+                        <button
+                          key={env}
+                          onClick={() => toggleTag("environments", env)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            tagForm.environments.includes(env)
+                              ? "bg-stone-900 text-white"
+                              : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                          }`}
+                          data-testid={`tag-env-${env}`}
+                        >
+                          {spaceEnvLabels[env] || env}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Location (Space)</Label>
