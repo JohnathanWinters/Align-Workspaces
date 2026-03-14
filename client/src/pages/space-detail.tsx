@@ -23,6 +23,7 @@ import {
   CreditCard,
   Palette,
   Heart,
+  Share2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -730,6 +731,19 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     },
   });
 
+  const { toast } = useToast();
+  const handleShare = async () => {
+    if (!space) return;
+    const url = `${window.location.origin}/spaces/${space.slug}`;
+    const shareData = { title: space.name, text: `Check out ${space.name} on Align Spaces`, url };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied", description: "Space link copied to clipboard" });
+    }
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
@@ -834,21 +848,31 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900" data-testid="text-space-name">
                   {space.name}
                 </h1>
-                {user && (
+                <div className="flex items-center gap-1 flex-shrink-0 mt-1">
+                  {user && (
+                    <button
+                      onClick={() => toggleFavorite.mutate()}
+                      className="p-2 rounded-full hover:bg-stone-100 transition-colors"
+                      data-testid="button-toggle-favorite"
+                    >
+                      <Heart
+                        className={`w-5 h-5 transition-colors ${
+                          favStatus?.favorited
+                            ? "text-red-500 fill-red-500"
+                            : "text-stone-400"
+                        }`}
+                      />
+                    </button>
+                  )}
                   <button
-                    onClick={() => toggleFavorite.mutate()}
-                    className="p-2 rounded-full hover:bg-stone-100 transition-colors flex-shrink-0 mt-1"
-                    data-testid="button-toggle-favorite"
+                    onClick={handleShare}
+                    className="p-2 rounded-full hover:bg-stone-100 transition-colors"
+                    data-testid="button-share-space"
+                    title="Share this space"
                   >
-                    <Heart
-                      className={`w-5 h-5 transition-colors ${
-                        favStatus?.favorited
-                          ? "text-red-500 fill-red-500"
-                          : "text-stone-400"
-                      }`}
-                    />
+                    <Share2 className="w-5 h-5 text-stone-400" />
                   </button>
-                )}
+                </div>
               </div>
 
               <div className="flex items-center gap-2 text-stone-500 text-sm mb-4">

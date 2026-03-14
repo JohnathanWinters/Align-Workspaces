@@ -42,6 +42,7 @@ import {
   CreditCard,
   Mail,
   Heart,
+  Share2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -585,6 +586,20 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [paletteExpanded, setPaletteExpanded] = useState(false);
   const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/spaces/${space.slug}`;
+    const shareData = { title: space.name, text: `Check out ${space.name} on Align Spaces`, url };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied", description: "Space link copied to clipboard" });
+    }
+  };
 
   const { data: favStatus } = useQuery<{ favorited: boolean }>({
     queryKey: ["/api/space-favorites/check", space.id],
@@ -697,19 +712,32 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             {portfolioPhotoCount} photo{portfolioPhotoCount !== 1 ? "s" : ""} here
           </div>
         )}
-        {user && (
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10">
+          {user && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite.mutate(); }}
+              className="group/fav flex items-center gap-1.5 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all px-2"
+              data-testid={`button-favorite-${space.id}`}
+              title={favStatus?.favorited ? "Saved to favorites" : "Save to favorites"}
+            >
+              <Heart className={`w-4 h-4 transition-colors ${favStatus?.favorited ? "text-red-500 fill-red-500" : "text-stone-400"}`} />
+              <span className="text-[10px] font-medium text-stone-500 hidden group-hover/fav:inline transition-all">
+                {favStatus?.favorited ? "Saved" : "Save"}
+              </span>
+            </button>
+          )}
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite.mutate(); }}
-            className="group/fav absolute bottom-3 left-3 flex items-center gap-1.5 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all z-10 px-2"
-            data-testid={`button-favorite-${space.id}`}
-            title={favStatus?.favorited ? "Saved to favorites" : "Save to favorites"}
+            onClick={handleShare}
+            className="group/share flex items-center gap-1.5 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all px-2"
+            data-testid={`button-share-${space.id}`}
+            title="Share this space"
           >
-            <Heart className={`w-4 h-4 transition-colors ${favStatus?.favorited ? "text-red-500 fill-red-500" : "text-stone-400"}`} />
-            <span className="text-[10px] font-medium text-stone-500 hidden group-hover/fav:inline transition-all">
-              {favStatus?.favorited ? "Saved" : "Save"}
+            <Share2 className="w-4 h-4 text-stone-400" />
+            <span className="text-[10px] font-medium text-stone-500 hidden group-hover/share:inline transition-all">
+              Share
             </span>
           </button>
-        )}
+        </div>
       </div>
 
       <AnimatePresence>
