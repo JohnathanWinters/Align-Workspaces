@@ -653,6 +653,10 @@ function FeaturedListingPage() {
   const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "success" | "already">("idle");
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const { data: professionals = [], isLoading } = useQuery<FeaturedProfessional[]>({
     queryKey: ["/api/featured"],
     queryFn: async () => {
