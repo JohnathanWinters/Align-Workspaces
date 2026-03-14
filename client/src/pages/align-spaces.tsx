@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, CalendarDays, Sparkles, MapPin, DollarSign, ArrowRight, Quote } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, CalendarDays, Sparkles, MapPin, DollarSign, ArrowRight, Quote, Palette, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -371,28 +371,30 @@ export default function AlignSpacesPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
-            <p className="text-stone-500 text-sm sm:text-base mt-3 max-w-md mx-auto">Book professional spaces in three simple steps</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-14">
             {[
               {
-                icon: Search,
+                icon: Palette,
                 step: "01",
-                title: "Find Your Space",
-                desc: "Browse therapy offices, studios, and meeting spaces across Miami — filtered by neighborhood, price, and profession.",
+                title: "Define Your Experience",
+                desc: "Use Align's visual tools to explore the kind of environment you want to create for your clients.",
+                detail: "Our photo builder helps you identify the setting, emotional tone, and client experience you want your workspace to express.",
               },
               {
-                icon: CalendarDays,
+                icon: Compass,
                 step: "02",
-                title: "Book Instantly",
-                desc: "Choose the date and time that works for you — hourly, daily, or longer. Secure it with one click.",
+                title: "Discover Spaces That Fit",
+                desc: "Browse flexible workspaces curated to match different professional needs and atmospheres.",
+                detail: "Align helps you find spaces that support the work you do and the experience you want to create.",
               },
               {
-                icon: Sparkles,
+                icon: Camera,
                 step: "03",
-                title: "Show Up Ready",
-                desc: "Walk into a professional environment designed for your work. Everything you need is already there.",
+                title: "Present Your Work Professionally",
+                desc: "Show your work and environment clearly with professional headshots and space photography.",
+                detail: "Align helps professionals and space owners present their brand and workspace with clarity.",
               },
             ].map((item, i) => (
               <div key={i} className="text-center" data-testid={`step-${item.step}`}>
@@ -401,7 +403,8 @@ export default function AlignSpacesPage() {
                 </div>
                 <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold">{item.step}</span>
                 <h3 className="font-serif text-xl text-stone-900 mt-1 mb-2">{item.title}</h3>
-                <p className="text-stone-500 text-sm leading-relaxed max-w-[260px] mx-auto">{item.desc}</p>
+                <p className="text-stone-500 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
+                <p className="text-stone-400 text-xs leading-relaxed max-w-[260px] mx-auto mt-2">{item.detail}</p>
               </div>
             ))}
           </div>
