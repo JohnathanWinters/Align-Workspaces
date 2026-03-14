@@ -328,7 +328,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
           >
-            Thoughtfully designed spaces for therapists, coaches, and creatives — booked by the hour, built for the work you do.
+            Thoughtfully designed spaces for therapists, coaches, and creatives, booked by the hour, built for the work you do.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
