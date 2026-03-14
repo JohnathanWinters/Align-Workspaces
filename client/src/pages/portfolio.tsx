@@ -68,14 +68,15 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
         data-testid={`portfolio-full-photo-${index}`}
       />
 
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-8 md:hidden" data-testid={`palette-mobile-full-${index}`}>
-        {subjectName && (
-          <div className="mb-1.5">
-            <p className="text-white text-sm font-semibold leading-tight">{subjectName}</p>
-            {subjectProfession && <p className="text-white/60 text-[11px]">{subjectProfession}</p>}
-          </div>
-        )}
-        {palette.length > 0 && (
+      {subjectName && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 md:hidden" data-testid={`name-mobile-${index}`}>
+          <p className="text-white/90 text-[13px] font-medium leading-tight">{subjectName}</p>
+          {subjectProfession && <p className="text-white/50 text-[11px] mt-0.5">{subjectProfession}</p>}
+        </div>
+      )}
+
+      {!subjectName && palette.length > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 md:hidden" data-testid={`palette-mobile-full-${index}`}>
           <div className="flex items-center gap-1.5">
             {palette.map((swatch, i) => (
               <div
@@ -85,46 +86,29 @@ function PortfolioCard({ photo, index, onPhotoClick }: { photo: PortfolioPhoto; 
               />
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div
-        className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex-col justify-end p-3 transition-opacity duration-300 hidden md:flex opacity-0 group-hover:opacity-100"
+        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 pb-2.5 pt-10 transition-opacity duration-300 hidden md:block opacity-0 group-hover:opacity-100"
         data-testid={`portfolio-full-overlay-${index}`}
       >
-        {subjectName && (
-          <div className="mb-2">
-            <p className="text-white text-sm font-semibold leading-tight">{subjectName}</p>
-            {subjectProfession && <p className="text-white/60 text-[11px]">{subjectProfession}</p>}
-          </div>
-        )}
-
-        <PhotoTags photo={photo} />
-
-        {palette.length > 0 && (
+        {subjectName ? (
           <div>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Palette className="w-3 h-3 text-white/70" />
-              <p className="text-white/70 text-[10px] uppercase tracking-wider font-medium">Color Palette</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              {palette.map((swatch, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div
-                    className="w-5 h-5 rounded-sm border border-white/20 shrink-0"
-                    style={{ backgroundColor: swatch.hex }}
-                  />
-                  <span className="text-white/90 text-[11px] font-medium truncate">{swatch.keyword}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-white/90 text-[13px] font-medium leading-tight">{subjectName}</p>
+            {subjectProfession && <p className="text-white/50 text-[11px] mt-0.5">{subjectProfession}</p>}
           </div>
-        )}
-
-        <div className="absolute top-3 right-3 flex items-center gap-1 text-white/70">
-          <Eye className="w-3.5 h-3.5" />
-          <span className="text-[10px] uppercase tracking-wider font-medium">View</span>
-        </div>
+        ) : palette.length > 0 ? (
+          <div className="flex items-center gap-1.5">
+            {palette.map((swatch, i) => (
+              <div
+                key={i}
+                className="w-4 h-4 rounded-sm border border-white/20"
+                style={{ backgroundColor: swatch.hex }}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     </motion.div>
   );
