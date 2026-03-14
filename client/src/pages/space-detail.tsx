@@ -364,12 +364,12 @@ function BookingSection({ space }: { space: Space }) {
   return (
     <>
       <button
-        onClick={handleBookClick}
-        className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 active:bg-stone-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
+        disabled
+        className="w-full py-3 rounded-xl bg-stone-300 text-stone-500 text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
         data-testid="button-book-space"
       >
         <Send className="w-4 h-4" />
-        Book This Space
+        Coming Soon
       </button>
 
       <AnimatePresence>
