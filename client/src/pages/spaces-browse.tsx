@@ -1411,6 +1411,7 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
 export default function SpacesBrowsePage() {
   const [, setLocation] = useLocation();
+  const [categoryChosen, setCategoryChosen] = useState(false);
   const [activeType, setActiveType] = useState<string>("all");
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
@@ -1561,11 +1562,78 @@ export default function SpacesBrowsePage() {
     document.title = "Browse Spaces | Align Spaces — Miami Workspaces for Professionals";
   }, []);
 
+  if (!categoryChosen) {
+    return (
+      <div className="min-h-screen bg-[#f5f0e8] flex flex-col" data-testid="category-picker">
+        <nav className="px-4 sm:px-6 py-4 flex items-center justify-between">
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition-colors"
+            data-testid="link-back-home"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+          <div className="w-16" />
+        </nav>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-10"
+          >
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-stone-900 tracking-tight leading-tight mb-3">
+              What kind of space <span className="italic font-normal">are you looking for?</span>
+            </h1>
+            <p className="text-stone-500 text-sm sm:text-base max-w-md mx-auto">
+              Select a category to browse available workspaces in Miami.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 max-w-2xl w-full">
+            {SPACE_TYPES.map((type, i) => (
+              <motion.button
+                key={type.key}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: i * 0.05 }}
+                onClick={() => {
+                  setActiveType(type.key);
+                  setCategoryChosen(true);
+                }}
+                className="group flex flex-col items-center gap-3 p-6 sm:p-8 rounded-2xl bg-white border border-stone-100 hover:border-[#c4956a]/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                data-testid={`category-${type.key}`}
+              >
+                <div className="w-12 h-12 rounded-xl bg-stone-900 group-hover:bg-[#c4956a] transition-colors duration-300 flex items-center justify-center">
+                  <type.icon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-sm font-semibold text-stone-800 group-hover:text-[#c4956a] transition-colors">{type.label}</span>
+                {type.key !== "all" && (
+                  <span className="text-[10px] text-stone-400">
+                    {allSpaces.filter(s => s.type === type.key).length} available
+                  </span>
+                )}
+                {type.key === "all" && (
+                  <span className="text-[10px] text-stone-400">
+                    {allSpaces.length} available
+                  </span>
+                )}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       <nav className="sticky top-0 z-[9001] bg-background/95 backdrop-blur-sm border-b border-stone-200/60 dark:border-stone-700/60 flex-shrink-0">
         <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
-          <button onClick={() => { if (mobileView === "map") { setMobileView("list"); } else { setLocation("/"); } }} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
+          <button onClick={() => { if (mobileView === "map") { setMobileView("list"); } else { setCategoryChosen(false); } }} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-spaces">
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">{mobileView === "map" ? "List" : "Back"}</span>
           </button>
