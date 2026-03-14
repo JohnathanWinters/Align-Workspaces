@@ -250,12 +250,12 @@ export default function AlignSpacesPage() {
               aria-expanded={menuOpen}
               aria-haspopup="true"
               data-testid="button-main-menu"
-              className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-2 py-1.5 rounded-lg"
+              className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-3 py-2 rounded-lg cursor-pointer relative z-10"
               style={{ color: "#d4c4a8" }}
               onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
             >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {menuOpen ? <X className="w-5 h-5 pointer-events-none" /> : <Menu className="w-5 h-5 pointer-events-none" />}
               Menu
             </button>
             <AnimatePresence>
