@@ -350,9 +350,9 @@ export default function AlignSpacesPage() {
 
       <section className="px-4 sm:px-6 pb-12 sm:pb-16" data-testid="section-spaces-grid">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {spacesLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
+              Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
                   <div className="aspect-[4/3] bg-stone-200" />
                   <div className="p-5 space-y-3">
