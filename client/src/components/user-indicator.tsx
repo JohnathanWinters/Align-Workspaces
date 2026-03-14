@@ -44,20 +44,26 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
         className="flex items-center"
         aria-label="Account menu"
       >
-        <Avatar className={isLight ? "w-7 h-7 ring-1 ring-[#c9a96e]/30 ring-offset-0" : "w-7 h-7 ring-1 ring-stone-200/40 ring-offset-1 ring-offset-transparent"}>
-          {user.profileImageUrl && (
-            <AvatarImage src={user.profileImageUrl} alt={user.firstName || "User"} />
-          )}
-          <AvatarFallback
-            className={
-              isLight
-                ? "bg-transparent border border-[#c9a96e]/40 text-[#f0e6d0] text-[10px] tracking-wider font-medium"
-                : "bg-stone-100 text-stone-500 text-xs font-medium"
-            }
+        {isLight ? (
+          <span
+            className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-3 py-2"
+            style={{ color: "#d4c4a8" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
           >
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+            <User className="w-4 h-4" />
+            {user.firstName || "Account"}
+          </span>
+        ) : (
+          <Avatar className="w-7 h-7 ring-1 ring-stone-200/40 ring-offset-1 ring-offset-transparent">
+            {user.profileImageUrl && (
+              <AvatarImage src={user.profileImageUrl} alt={user.firstName || "User"} />
+            )}
+            <AvatarFallback className="bg-stone-100 text-stone-500 text-xs font-medium">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        )}
       </button>
       <AnimatePresence>
         {open && (
