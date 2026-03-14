@@ -86,7 +86,7 @@ export default function AlignSpacesPage() {
   const featuredSpaces = (spaces || []).slice(0, 3);
 
   return (
-    <div className="bg-[#faf6f1]" data-testid="section-split-hero">
+    <div className="bg-[#f5f0e8]" data-testid="section-split-hero">
       <div className="relative min-h-[100dvh] flex flex-col bg-stone-900">
         <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-5 sm:py-6">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -102,7 +102,10 @@ export default function AlignSpacesPage() {
                 aria-expanded={menuOpen}
                 aria-haspopup="true"
                 data-testid="button-split-menu"
-                className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase text-white/70 hover:text-white font-semibold transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-white/10"
+                className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-3 py-2 rounded-lg"
+                style={{ color: "#d4c4a8" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
               >
                 {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 Menu
@@ -153,7 +156,7 @@ export default function AlignSpacesPage() {
             >
               <Link href="/" className="flex items-center gap-2.5" data-testid="link-home-logo">
                 <img src="/images/logo-align-mark.png" alt="Align" className="w-8 h-8 rounded" />
-                <span className="text-white font-serif text-xl tracking-wide hidden sm:inline">Align</span>
+                <span className="font-serif text-xl tracking-wide hidden sm:inline" style={{ color: "#f0e6d0" }}>Align</span>
               </Link>
             </motion.div>
 
@@ -162,7 +165,7 @@ export default function AlignSpacesPage() {
         </nav>
 
         <h1 className="sr-only">Align — Professional Workspaces & Visual Branding in Miami</h1>
-        <div className="flex-1 flex flex-col md:flex-row min-h-[100dvh]">
+        <div className="flex-1 flex flex-col md:flex-row min-h-[100dvh] relative">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -170,7 +173,7 @@ export default function AlignSpacesPage() {
             role="link"
             tabIndex={0}
             onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLocation("/portraits/builder"); } }}
-            className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-center justify-center overflow-hidden group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
+            className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-end md:items-center overflow-hidden group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]/50 focus-visible:ring-inset"
             onClick={() => setLocation("/portraits/builder")}
             aria-label="Portraits — Begin Your Session"
             data-testid="panel-portraits"
@@ -180,17 +183,17 @@ export default function AlignSpacesPage() {
               style={{
                 backgroundImage: "url(/images/hero-bg-bright.webp)",
                 backgroundPosition: "43% 25%",
-                filter: "brightness(0.8) contrast(1.05)",
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/40" />
+            <div className="absolute inset-0" style={{ backgroundColor: "#1a1208", opacity: 0.65 }} />
 
-            <div className="relative z-10 text-center px-6 max-w-md mx-auto">
+            <div className="relative z-10 px-8 sm:px-10 md:px-12 lg:px-16 pb-20 md:pb-0 w-full max-w-lg md:text-left text-center md:mx-0 mx-auto">
               <motion.h2
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.25 }}
-                className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight"
+                className="font-serif text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.1] tracking-tight"
+                style={{ color: "#f0e6d0" }}
               >
                 Your Presence Is
                 <br />
@@ -203,7 +206,8 @@ export default function AlignSpacesPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal"
+                className="text-sm sm:text-base max-w-sm leading-relaxed mt-4 font-normal md:mx-0 mx-auto"
+                style={{ color: "#d4c4a8" }}
               >
                 Design a professional image that aligns your work, character, and the experience you want clients to feel.
               </motion.p>
@@ -212,13 +216,16 @@ export default function AlignSpacesPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.55 }}
-                className="mt-6 flex flex-col items-center gap-3"
+                className="mt-7 flex flex-col sm:flex-row items-center md:items-start gap-3"
               >
                 <Link
                   href="/portraits/builder"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-begin-session"
-                  className="inline-flex items-center gap-2 text-xs sm:text-sm tracking-widest uppercase bg-white text-black px-6 sm:px-8 py-3 sm:py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
+                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 font-medium border"
+                  style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
                   Begin Your Session
                 </Link>
@@ -226,15 +233,14 @@ export default function AlignSpacesPage() {
                   href="/portfolio"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-portfolio-portraits"
-                  className="inline-flex items-center gap-2 text-[10px] sm:text-xs tracking-widest uppercase text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/40 hover:border-white/80 hover:bg-white/10 transition-all duration-300"
+                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 border border-transparent"
+                  style={{ color: "#d4c4a8" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
                 >
                   View Portfolio
                 </Link>
               </motion.div>
-            </div>
-
-            <div className="hidden md:block absolute bottom-6 left-0 right-0 text-center">
-              <span className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Portraits</span>
             </div>
 
             <div className="md:hidden absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
@@ -242,12 +248,25 @@ export default function AlignSpacesPage() {
                 animate={{ y: [0, 6, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                <ChevronDown className="w-5 h-5 text-white/40" />
+                <ChevronDown className="w-5 h-5" style={{ color: "#c9a96e", opacity: 0.5 }} />
               </motion.div>
             </div>
           </motion.div>
 
-          <div className="hidden md:block w-px bg-white/20 relative z-20" />
+          <div className="hidden md:flex absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 flex-col items-center pointer-events-none">
+            <div className="flex-1 w-px" style={{ backgroundColor: "#c9a96e", opacity: 0.4 }} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="py-6"
+            >
+              <span className="text-[9px] tracking-[0.35em] uppercase font-medium whitespace-nowrap" style={{ color: "#c9a96e" }}>
+                Your Presence · Your Space
+              </span>
+            </motion.div>
+            <div className="flex-1 w-px" style={{ backgroundColor: "#c9a96e", opacity: 0.4 }} />
+          </div>
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -256,7 +275,7 @@ export default function AlignSpacesPage() {
             role="link"
             tabIndex={0}
             onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLocation("/browse"); } }}
-            className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-center justify-center overflow-hidden group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
+            className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-start md:items-center justify-end overflow-hidden group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]/50 focus-visible:ring-inset"
             onClick={() => setLocation("/browse")}
             aria-label="Spaces — Explore Workspaces"
             data-testid="panel-spaces"
@@ -266,17 +285,17 @@ export default function AlignSpacesPage() {
               style={{
                 backgroundImage: "url(/images/spaces-hero.png)",
                 backgroundPosition: "center 40%",
-                filter: "brightness(0.8) contrast(1.05)",
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/35" />
+            <div className="absolute inset-0" style={{ backgroundColor: "#1a1208", opacity: 0.65 }} />
 
-            <div className="relative z-10 text-center px-6 max-w-md mx-auto">
+            <div className="relative z-10 px-8 sm:px-10 md:px-12 lg:px-16 pt-20 md:pt-0 w-full max-w-lg md:text-right text-center md:ml-auto md:mx-0 mx-auto">
               <motion.h2
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="font-serif text-3xl sm:text-4xl md:text-5xl text-white leading-[1.1] tracking-tight"
+                className="font-serif text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.1] tracking-tight"
+                style={{ color: "#f0e6d0" }}
               >
                 Where Your Work
                 <br />
@@ -287,7 +306,8 @@ export default function AlignSpacesPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.55 }}
-                className="text-white/80 text-sm sm:text-base max-w-xs mx-auto leading-relaxed mt-4 font-normal"
+                className="text-sm sm:text-base max-w-sm leading-relaxed mt-4 font-normal md:ml-auto md:mx-0 mx-auto"
+                style={{ color: "#d4c4a8" }}
               >
                 Discover and book professional workspaces across Miami — therapy offices, studios, meeting rooms, and more.
               </motion.p>
@@ -296,13 +316,16 @@ export default function AlignSpacesPage() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
-                className="mt-6 flex flex-col items-center gap-3"
+                className="mt-7 flex flex-col sm:flex-row items-center md:justify-end gap-3"
               >
                 <Link
                   href="/browse"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-explore-spaces"
-                  className="inline-flex items-center gap-2 text-xs sm:text-sm tracking-widest uppercase bg-white text-black px-6 sm:px-8 py-3 sm:py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
+                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 font-medium border"
+                  style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
                   Explore Spaces
                 </Link>
@@ -310,17 +333,25 @@ export default function AlignSpacesPage() {
                   href="/featured"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   data-testid="button-featured-spaces"
-                  className="inline-flex items-center gap-2 text-[10px] sm:text-xs tracking-widest uppercase text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/40 hover:border-white/80 hover:bg-white/10 transition-all duration-300"
+                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.2em] uppercase px-6 sm:px-7 py-3 transition-all duration-300 border border-transparent"
+                  style={{ color: "#d4c4a8" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
                 >
-                  Meet Our Featured Professionals
+                  Featured Professionals
                 </Link>
               </motion.div>
             </div>
-
-            <div className="hidden md:block absolute bottom-6 left-0 right-0 text-center">
-              <span className="text-[10px] tracking-[0.3em] uppercase text-white/40 font-medium">Spaces</span>
-            </div>
           </motion.div>
+
+          <div className="hidden md:flex absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+            <div className="flex-1 px-12 py-5 flex justify-start">
+              <span className="text-[10px] tracking-[0.3em] uppercase font-medium" style={{ color: "#c9a96e", opacity: 0.5 }}>Portraits</span>
+            </div>
+            <div className="flex-1 px-12 py-5 flex justify-end">
+              <span className="text-[10px] tracking-[0.3em] uppercase font-medium" style={{ color: "#c9a96e", opacity: 0.5 }}>Spaces</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -366,7 +397,7 @@ export default function AlignSpacesPage() {
       </section>
 
       {(spacesLoading || featuredSpaces.length > 0) && (
-        <section className="py-16 sm:py-24 px-6 bg-white" data-testid="section-featured-spaces">
+        <section className="py-16 sm:py-24 px-6 bg-white/70" data-testid="section-featured-spaces">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-end justify-between mb-10 sm:mb-12">
               <div>
