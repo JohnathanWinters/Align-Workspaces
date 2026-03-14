@@ -7,37 +7,37 @@ const environmentClothing: Record<string, { types: string[]; avoidFabrics: strin
   restaurant: {
     types: ["Blazer with open collar", "Tailored vest", "Dark dress shirt"],
     avoidFabrics: ["Denim", "Athletic fabrics", "Heavy canvas"],
-    avoid: "Avoid overly casual pieces — the setting calls for polished attire",
+    avoid: "Avoid overly casual pieces, the setting calls for polished attire",
   },
   office: {
     types: ["Tailored suit", "Structured blazer", "Button-down with slacks"],
     avoidFabrics: ["Jersey knit", "Distressed denim", "Sheer fabrics"],
-    avoid: "Avoid loud patterns — solids and subtle textures photograph best",
+    avoid: "Avoid loud patterns, solids and subtle textures photograph best",
   },
   nature: {
     types: ["Linen shirt", "Light jacket", "Henley or relaxed button-down"],
     avoidFabrics: ["Heavy wool", "Stiff synthetics", "Formal silks"],
-    avoid: "Avoid stiff formal wear — aim for relaxed but put-together",
+    avoid: "Avoid stiff formal wear, aim for relaxed but put-together",
   },
   workvan: {
     types: ["Work jacket", "Branded polo", "Utility vest over tee"],
     avoidFabrics: ["Silk", "Formal wool", "Delicate fabrics"],
-    avoid: "Avoid anything too dressy — authentic workwear reads best",
+    avoid: "Avoid anything too dressy, authentic workwear reads best",
   },
   urban: {
     types: ["Leather jacket", "Fitted overcoat", "Modern blazer with crew neck"],
     avoidFabrics: ["Baggy fleece", "Cargo fabrics", "Athletic mesh"],
-    avoid: "Avoid overly relaxed fits — clean lines match the city backdrop",
+    avoid: "Avoid overly relaxed fits, clean lines match the city backdrop",
   },
   suburban: {
     types: ["Casual blazer", "Light sweater", "Polo or relaxed button-down"],
     avoidFabrics: ["Heavy dark fabrics", "Stiff formal suiting", "Shiny synthetics"],
-    avoid: "Avoid heavy dark suits — keep it approachable and warm",
+    avoid: "Avoid heavy dark suits, keep it approachable and warm",
   },
   gym: {
     types: ["Fitted athletic top", "Branded tank or compression shirt", "Clean performance jacket"],
     avoidFabrics: ["Formal wool", "Denim", "Loose cotton tees"],
-    avoid: "Avoid oversized or worn-out gym clothes — go for clean, fitted performance wear",
+    avoid: "Avoid oversized or worn-out gym clothes, go for clean, fitted performance wear",
   },
 };
 
@@ -61,20 +61,20 @@ const brandMessageFit: Record<string, { fit: string[]; preference: string }> = {
 };
 
 const moodFabricNotes: Record<string, string> = {
-  cozy: "Choose fabrics with visible texture — knits, linens, and soft weaves catch warm light beautifully.",
-  bright: "Go with clean, smooth fabrics — crisp cottons and light colors reflect natural light well.",
+  cozy: "Choose fabrics with visible texture, knits, linens, and soft weaves catch warm light beautifully.",
+  bright: "Go with clean, smooth fabrics, crisp cottons and light colors reflect natural light well.",
   powerful: "Structured, matte fabrics like wool and gabardine absorb dramatic light and hold strong silhouettes.",
 };
 
 const genericClothing = {
   types: ["Tailored blazer", "Clean button-down", "Simple structured jacket"],
   avoidFabrics: ["Shiny synthetics", "Loud patterns", "Distressed denim"],
-  avoid: "Avoid overly busy patterns or logos — solid colors and subtle textures photograph best",
+  avoid: "Avoid overly busy patterns or logos, solid colors and subtle textures photograph best",
 };
 
 const genericFit = {
   fit: ["Well-fitted top, clean bottom", "Structured yet comfortable"],
-  preference: "Choose pieces that feel like you — comfort translates to confidence on camera",
+  preference: "Choose pieces that feel like you, comfort translates to confidence on camera",
 };
 
 export function getClothingRecommendations(
