@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock,
@@ -3002,20 +3003,13 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
             ))}
           </div>
 
-          {editingPhoto && (
-            <Card className="border-stone-200">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-3">
-                    <img src={editingPhoto.imageUrl} alt="" className="w-12 h-12 rounded object-cover" />
-                    Edit Tags & Keywords
-                  </CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingPhoto(null)} data-testid="button-close-tag-editor">
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
+          <Dialog open={!!editingPhoto} onOpenChange={(open) => { if (!open) setEditingPhoto(null); }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+              <DialogTitle className="text-base flex items-center gap-3">
+                {editingPhoto && <img src={editingPhoto.imageUrl} alt="" className="w-12 h-12 rounded object-cover" />}
+                Edit Tags & Keywords
+              </DialogTitle>
+              <div className="space-y-6">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Category</Label>
                   <div className="flex gap-2">
@@ -3331,9 +3325,9 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                     <Save className="w-4 h-4 mr-2" /> Save Tags
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>
