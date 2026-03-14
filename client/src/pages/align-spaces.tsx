@@ -376,43 +376,41 @@ export default function AlignSpacesPage() {
           </div>
 
           {!spacesLoading && allSpaces.length > 0 && (
-            <div className="text-center mt-8">
-              <Link
-                href="/workspaces"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
-                data-testid="link-browse-all-bottom"
-              >
-                Browse all spaces with map
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+            <div className="mt-8 space-y-5">
+              <div className="text-center">
+                <Link
+                  href="/workspaces"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
+                  data-testid="link-browse-all-bottom"
+                >
+                  Browse all spaces with map
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-3 justify-center" data-testid="section-neighborhoods">
+                <span className="text-[11px] text-stone-400 uppercase tracking-wider font-medium whitespace-nowrap">Explore Miami</span>
+                <div className="w-px h-4 bg-stone-300/60" />
+                <div className="flex flex-wrap justify-center gap-2">
+                  {(() => {
+                    const neighborhoods = [...new Set((spaces || []).map(s => s.neighborhood).filter(Boolean))];
+                    const allNeighborhoods = neighborhoods.length > 0 ? neighborhoods : ["Wynwood", "Coral Gables", "Brickell", "Coconut Grove"];
+                    return allNeighborhoods.map((hood) => (
+                      <Link
+                        key={hood}
+                        href="/workspaces"
+                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-stone-200/80 hover:border-[#c4956a]/40 hover:bg-white transition-all duration-300"
+                        data-testid={`neighborhood-${hood?.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        <MapPin className="w-3 h-3 text-[#c4956a]" />
+                        <span className="text-xs font-medium text-stone-600 group-hover:text-stone-900 transition-colors">{hood}</span>
+                      </Link>
+                    ));
+                  })()}
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-neighborhoods">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-6 sm:mb-8">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Miami</span>
-            <h2 className="font-serif text-xl sm:text-2xl text-stone-900 tracking-tight">Explore by Neighborhood</h2>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
-            {(() => {
-              const neighborhoods = [...new Set((spaces || []).map(s => s.neighborhood).filter(Boolean))];
-              const allNeighborhoods = neighborhoods.length > 0 ? neighborhoods : ["Wynwood", "Coral Gables", "Brickell", "Coconut Grove"];
-              return allNeighborhoods.map((hood) => (
-                <Link
-                  key={hood}
-                  href="/workspaces"
-                  className="group flex items-center gap-2 px-5 py-3 rounded-xl bg-white border border-stone-200/80 hover:border-[#c4956a]/40 hover:shadow-md transition-all duration-300"
-                  data-testid={`neighborhood-${hood?.toLowerCase().replace(/\s+/g, "-")}`}
-                >
-                  <MapPin className="w-3.5 h-3.5 text-[#c4956a]" />
-                  <span className="text-sm font-medium text-stone-700 group-hover:text-stone-900 transition-colors">{hood}</span>
-                </Link>
-              ));
-            })()}
-          </div>
         </div>
       </section>
 
