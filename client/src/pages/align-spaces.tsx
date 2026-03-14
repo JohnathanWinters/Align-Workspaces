@@ -154,9 +154,17 @@ export default function AlignSpacesPage() {
               transition={{ duration: 0.7, delay: 0.05 }}
               className="absolute left-1/2 -translate-x-1/2"
             >
-              <Link href="/" className="flex items-center gap-2.5" data-testid="link-home-logo">
-                <img src="/images/logo-align-mark.png" alt="Align" className="w-8 h-8 rounded" />
-                <span className="font-serif text-xl tracking-wide hidden sm:inline" style={{ color: "#f0e6d0" }}>Align</span>
+              <Link href="/" className="flex items-center" data-testid="link-home-logo">
+                <svg width="80" height="28" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Align">
+                  <text
+                    x="40"
+                    y="21"
+                    textAnchor="middle"
+                    style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", letterSpacing: "3px", fill: "#c9a96e" }}
+                  >
+                    Align
+                  </text>
+                </svg>
               </Link>
             </motion.div>
 
