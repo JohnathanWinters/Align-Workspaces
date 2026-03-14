@@ -154,15 +154,15 @@ export default function AlignSpacesPage() {
               transition={{ duration: 0.7, delay: 0.05 }}
               className="absolute left-1/2 -translate-x-1/2"
             >
-              <Link href="/" className="flex items-center gap-2" data-testid="link-home-logo">
+              <Link href="/" className="flex flex-col items-center gap-0.5" data-testid="link-home-logo">
                 <img
-                  src="/images/logo-align-gold.png"
+                  src="/images/logo-align-cream.png"
                   alt="Align"
                   className="h-8 w-8 object-contain"
                 />
                 <span
-                  className="hidden sm:inline uppercase"
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", letterSpacing: "4px", color: "#c9a96e" }}
+                  className="uppercase"
+                  style={{ fontFamily: "'Playfair Display', serif", fontSize: "9px", letterSpacing: "4px", color: "#f0e6d0" }}
                 >
                   Align
                 </span>
