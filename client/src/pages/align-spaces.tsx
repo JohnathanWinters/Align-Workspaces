@@ -248,17 +248,6 @@ export default function AlignSpacesPage() {
                 >
                   Begin Your Session
                 </Link>
-                <Link
-                  href="/portfolio"
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  data-testid="button-portfolio-portraits"
-                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border border-transparent bg-transparent"
-                  style={{ color: "#d4c4a8", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
-                >
-                  View Portfolio
-                </Link>
               </motion.div>
             </div>
 
@@ -273,21 +262,6 @@ export default function AlignSpacesPage() {
           </motion.div>
 
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none" style={{ width: "2px", backgroundColor: "#c9a96e" }} />
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="hidden md:block absolute z-20 pointer-events-none"
-            style={{ top: "18%", left: "50%", transform: "translateX(-50%)" }}
-          >
-            <span
-              className="whitespace-nowrap uppercase"
-              style={{ color: "#c9a96e", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "4px" }}
-            >
-              Your Presence · Your Space
-            </span>
-          </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -349,17 +323,6 @@ export default function AlignSpacesPage() {
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
                   Explore Spaces
-                </Link>
-                <Link
-                  href="/featured"
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  data-testid="button-featured-spaces"
-                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border border-transparent bg-transparent"
-                  style={{ color: "#d4c4a8", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
-                >
-                  Featured Professionals
                 </Link>
               </motion.div>
             </div>
