@@ -55,6 +55,7 @@ export const portfolioPhotos = pgTable("portfolio_photos", {
   locationSpaceId: varchar("location_space_id"),
   subjectName: text("subject_name"),
   subjectProfession: text("subject_profession"),
+  subjectBio: text("subject_bio"),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });

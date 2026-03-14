@@ -118,6 +118,7 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
   const palette = photo ? (photo.colorPalette as ColorSwatch[] | null) || [] : [];
   const subjectName = photo ? (photo as any).subjectName as string | null : null;
   const subjectProfession = photo ? (photo as any).subjectProfession as string | null : null;
+  const subjectBio = photo ? (photo as any).subjectBio as string | null : null;
 
   return (
     <Dialog open={!!photo} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -141,6 +142,9 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
                 <h3 className="font-serif text-lg font-semibold" data-testid="lightbox-subject-name">{subjectName}</h3>
                 {subjectProfession && (
                   <p className="text-sm text-muted-foreground">{subjectProfession}</p>
+                )}
+                {subjectBio && (
+                  <p className="text-[13px] text-muted-foreground/80 italic mt-2 leading-relaxed" data-testid="lightbox-subject-bio">{subjectBio}</p>
                 )}
               </div>
             )}

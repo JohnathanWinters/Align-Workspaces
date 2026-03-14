@@ -2659,9 +2659,10 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     locationSpaceId: string | null;
     subjectName: string;
     subjectProfession: string;
+    subjectBio: string;
     category: string;
     cropPosition: { x: number; y: number; zoom: number };
-  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, subjectName: "", subjectProfession: "", category: "people", cropPosition: { x: 50, y: 50, zoom: 1 } });
+  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, subjectName: "", subjectProfession: "", subjectBio: "", category: "people", cropPosition: { x: 50, y: 50, zoom: 1 } });
   const [newColorHex, setNewColorHex] = useState("#8B7355");
   const [newColorKeyword, setNewColorKeyword] = useState("");
   const [eyedropperOpen, setEyedropperOpen] = useState(false);
@@ -2735,6 +2736,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       locationSpaceId: photo.locationSpaceId || null,
       subjectName: (photo as any).subjectName || "",
       subjectProfession: (photo as any).subjectProfession || "",
+      subjectBio: (photo as any).subjectBio || "",
       category: photo.category || "people",
       cropPosition: { x: crop.x, y: crop.y, zoom: crop.zoom ?? 1 },
     });
@@ -3150,6 +3152,18 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                         data-testid="input-subject-profession"
                       />
                     </div>
+                  </div>
+                )}
+                {tagForm.category === "people" && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-1 block">Subject Bio</Label>
+                    <input
+                      value={tagForm.subjectBio}
+                      onChange={e => setTagForm(prev => ({ ...prev, subjectBio: e.target.value }))}
+                      placeholder="e.g. A therapist whose clients need to feel at ease the moment they walk in."
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-400"
+                      data-testid="input-subject-bio"
+                    />
                   </div>
                 )}
 
