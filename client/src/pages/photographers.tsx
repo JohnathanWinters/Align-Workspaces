@@ -96,17 +96,46 @@ export default function PhotographersPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="text-center mb-12"
+          className="text-center mb-10 sm:mb-14"
+        >
+          <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
+            Our Vision
+          </p>
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-photographers-title">
+            Where Your Work and Space Align
+          </h1>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="max-w-2xl mx-auto mb-16 sm:mb-20 space-y-6"
+          data-testid="text-vision-statement"
+        >
+          <p className="text-foreground/80 text-base sm:text-lg leading-relaxed">
+            Align was created from a simple idea — the spaces where meaningful work happens should reflect the people doing it.
+          </p>
+          <p className="text-foreground/80 text-base sm:text-lg leading-relaxed">
+            Many small business professionals rely on trust, presence, and connection in the room, yet the environments available to them often feel disconnected from the work they offer.
+          </p>
+          <p className="text-foreground/80 text-base sm:text-lg leading-relaxed">
+            Align exists to bring those pieces together — helping professionals align their workspace, their image, and the experience they create for their clients.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="text-center mb-10"
         >
           <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
             Behind the Vision
           </p>
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-photographers-title">
+          <h2 className="font-serif text-2xl sm:text-3xl" data-testid="text-team-heading">
             Meet the Team
-          </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto leading-relaxed" data-testid="text-photographers-page-desc">
-            Helping professionals align their presence with how clients experience them.
-          </p>
+          </h2>
         </motion.div>
 
         <div className="flex justify-center">
@@ -115,7 +144,7 @@ export default function PhotographersPage() {
               key={photographer.name}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: index * 0.06 }}
+              transition={{ duration: 0.35, delay: 0.3 + index * 0.06 }}
               className="max-w-md w-full"
             >
               <Card className="overflow-visible p-0" data-testid={`card-photographer-page-${index}`}>
