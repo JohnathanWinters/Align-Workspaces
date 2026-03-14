@@ -136,9 +136,23 @@ const TYPE_COLORS: Record<string, string> = {
   photo_studio: "bg-rose-50 text-rose-700",
 };
 
-function createPriceIcon(price: number, _type: string, isActive: boolean) {
+const PIN_COLORS: Record<string, { bg: string; text: string; border: string; activeBg: string; activeBorder: string }> = {
+  therapy: { bg: "#eff6ff", text: "#1d4ed8", border: "#93c5fd", activeBg: "#2563eb", activeBorder: "#1d4ed8" },
+  coaching: { bg: "#fffbeb", text: "#b45309", border: "#fcd34d", activeBg: "#d97706", activeBorder: "#b45309" },
+  wellness: { bg: "#ecfdf5", text: "#047857", border: "#6ee7b7", activeBg: "#059669", activeBorder: "#047857" },
+  workshop: { bg: "#faf5ff", text: "#7c3aed", border: "#c4b5fd", activeBg: "#7c3aed", activeBorder: "#6d28d9" },
+  creative: { bg: "#fff1f2", text: "#be123c", border: "#fda4af", activeBg: "#e11d48", activeBorder: "#be123c" },
+};
+
+function getPinColor(type: string, tags?: string[] | null) {
+  const primaryType = tags && tags.length > 0 ? tags[0] : type;
+  return PIN_COLORS[primaryType] || { bg: "#faf6f1", text: "#c4956a", border: "#d4b896", activeBg: "#c4956a", activeBorder: "#b3845d" };
+}
+
+function createPriceIcon(price: number, type: string, isActive: boolean, tags?: string[] | null) {
   const priceStr = `$${price}`;
   const width = priceStr.length * 9 + 20;
+  const colors = getPinColor(type, tags);
   return L.divIcon({
     className: "price-marker",
     html: `<div style="
@@ -147,9 +161,9 @@ function createPriceIcon(price: number, _type: string, isActive: boolean) {
       justify-content: center;
       width: ${width}px;
       height: 28px;
-      background: ${isActive ? "#c4956a" : "#faf6f1"};
-      color: ${isActive ? "#fff" : "#c4956a"};
-      border: 1.5px solid ${isActive ? "#b3845d" : "#d4b896"};
+      background: ${isActive ? colors.activeBg : colors.bg};
+      color: ${isActive ? "#fff" : colors.text};
+      border: 1.5px solid ${isActive ? colors.activeBorder : colors.border};
       border-radius: 9999px;
       font-size: 12px;
       font-weight: 700;
@@ -238,7 +252,7 @@ function SpacesMap({ spaces, hoveredId, onMarkerClick, visible = true }: { space
         <Marker
           key={space.id}
           position={[parseFloat(space.latitude!), parseFloat(space.longitude!)]}
-          icon={createPriceIcon(space.pricePerHour, space.type, space.id === hoveredId)}
+          icon={createPriceIcon(space.pricePerHour, space.type, space.id === hoveredId, space.tags)}
           zIndexOffset={space.id === hoveredId ? 1000 : 0}
           eventHandlers={{
             click: () => onMarkerClick(space.id),
@@ -686,10 +700,14 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
         {user && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite.mutate(); }}
-            className="absolute bottom-3 left-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-colors z-10"
+            className="group/fav absolute bottom-3 left-3 flex items-center gap-1.5 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all z-10 px-2"
             data-testid={`button-favorite-${space.id}`}
+            title={favStatus?.favorited ? "Saved to favorites" : "Save to favorites"}
           >
             <Heart className={`w-4 h-4 transition-colors ${favStatus?.favorited ? "text-red-500 fill-red-500" : "text-stone-400"}`} />
+            <span className="text-[10px] font-medium text-stone-500 hidden group-hover/fav:inline transition-all">
+              {favStatus?.favorited ? "Saved" : "Save"}
+            </span>
           </button>
         )}
       </div>
@@ -723,7 +741,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           )}
         </div>
 
-        <p className="text-stone-500 text-sm leading-relaxed mb-4 line-clamp-2 whitespace-pre-line">
+        <p className="text-stone-500 text-sm leading-relaxed mb-4 line-clamp-3 whitespace-pre-line">
           {space.shortDescription || space.description}
         </p>
 
@@ -1492,6 +1510,7 @@ export default function SpacesBrowsePage() {
   const [priceMax, setPriceMax] = useState<string>("");
   const [zipCode, setZipCode] = useState<string>("");
   const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
+  const [availableToday, setAvailableToday] = useState(false);
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -1552,6 +1571,22 @@ export default function SpacesBrowsePage() {
     if (minVal !== null) result = result.filter(s => s.pricePerHour >= minVal);
     if (maxVal !== null) result = result.filter(s => s.pricePerHour <= maxVal);
 
+    if (availableToday) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      result = result.filter(s => {
+        if (!s.availabilitySchedule) return true;
+        try {
+          const sched = typeof s.availabilitySchedule === "string" ? JSON.parse(s.availabilitySchedule) : s.availabilitySchedule;
+          const dayKey = getDayOfWeek(dateStr);
+          return dayKey ? sched[dayKey] !== null && sched[dayKey] !== undefined : true;
+        } catch { return true; }
+      });
+    }
+
     if (sortBy === "price-low") {
       result = [...result].sort((a, b) => a.pricePerHour - b.pricePerHour);
     } else if (sortBy === "price-high") {
@@ -1569,7 +1604,7 @@ export default function SpacesBrowsePage() {
     }
 
     return result;
-  }, [allSpaces, activeType, priceMin, priceMax, sortBy, zipCoords]);
+  }, [allSpaces, activeType, priceMin, priceMax, sortBy, zipCoords, availableToday]);
 
   const getDistanceForSpace = useCallback((space: Space): number | null => {
     if (!zipCoords || !space.latitude || !space.longitude) return null;
@@ -1586,8 +1621,9 @@ export default function SpacesBrowsePage() {
     if (priceMin) count++;
     if (priceMax) count++;
     if (zipCode.length === 5) count++;
+    if (availableToday) count++;
     return count;
-  }, [priceMin, priceMax, zipCode]);
+  }, [priceMin, priceMax, zipCode, availableToday]);
 
   const handleMarkerClick = useCallback((id: string) => {
     setHoveredCardId(id);
@@ -1615,6 +1651,7 @@ export default function SpacesBrowsePage() {
     setPriceMax("");
     setZipCode("");
     setSortBy("default");
+    setAvailableToday(false);
     setZipError("");
   }, []);
 
@@ -1771,9 +1808,46 @@ export default function SpacesBrowsePage() {
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 dark:border-stone-800 bg-background">
         <p className="text-xs text-foreground/40 mb-2" data-testid="text-spaces-intro">
-          Discover and book workspaces across Miami, offices, studios, and meeting rooms for professionals.
+          Find spaces built for the work you do. Thoughtfully selected for therapists, coaches, and creatives across Miami.
         </p>
+        <div className="flex flex-wrap items-center gap-1.5 mb-2" data-testid="quick-category-pills">
+          {[
+            { key: "all", label: "All" },
+            { key: "therapy", label: "Therapy & Counseling" },
+            { key: "creative", label: "Creative Studio" },
+            { key: "wellness", label: "Wellness" },
+            { key: "coaching", label: "Coaching" },
+            { key: "workshop", label: "Workshops" },
+          ].map(cat => (
+            <button
+              key={cat.key}
+              onClick={() => setActiveType(cat.key)}
+              data-testid={`quick-filter-${cat.key}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+                activeType === cat.key
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAvailableToday(!availableToday)}
+            data-testid="toggle-available-today"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
+              availableToday
+                ? "bg-emerald-600 text-white border-emerald-600"
+                : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Available today</span>
+            <span className="sm:hidden">Today</span>
+          </button>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
@@ -2002,16 +2076,19 @@ export default function SpacesBrowsePage() {
             )}
 
             <div className="pb-24 lg:pb-8 pt-4">
-              <div className="bg-stone-50 rounded-2xl p-6 sm:p-8 text-center">
+              <div className="bg-gradient-to-br from-[#faf6f1] to-[#f5ede3] rounded-2xl p-6 sm:p-8 text-center border border-[#e8ddd0]/60">
+                <div className="w-12 h-12 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="w-5 h-5 text-[#c4956a]" />
+                </div>
                 <h2 className="font-serif text-lg sm:text-xl font-semibold mb-2" data-testid="text-list-space-heading">
                   Have a space to share?
                 </h2>
-                <p className="text-foreground/50 text-sm mb-4 max-w-md mx-auto">
-                  List your workspace in Miami for professionals to discover.
+                <p className="text-foreground/50 text-sm mb-5 max-w-md mx-auto">
+                  Join a growing network of Miami spaces built for therapists, coaches, and creatives. List yours and start earning.
                 </p>
                 <button
                   onClick={() => setShowListModal(true)}
-                  className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-foreground text-background px-6 py-3 rounded-full hover:opacity-90 transition-opacity font-medium"
+                  className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-6 py-3 rounded-full hover:bg-stone-800 transition-colors font-medium"
                   data-testid="button-list-space"
                 >
                   List Your Space
