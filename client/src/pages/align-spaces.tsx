@@ -379,7 +379,8 @@ export default function AlignSpacesPage() {
       <section className="py-16 sm:py-24 px-6" data-testid="section-how-it-works">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
+            <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How It Works</h2>
+            <p className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed">Align helps you define the experience you want to create, find the right space, and present your work professionally.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
