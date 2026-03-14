@@ -175,6 +175,16 @@ export default function AlignSpacesPage() {
 
         <h1 className="sr-only">Align — Professional Workspaces & Visual Branding in Miami</h1>
         <div className="flex-1 flex flex-col md:flex-row min-h-[100dvh] relative">
+          <div
+            className="hidden md:block absolute top-0 bottom-0 pointer-events-none"
+            style={{ left: "50%", transform: "translateX(-50%)", width: "2px", backgroundColor: "#c9a96e", zIndex: 10 }}
+          />
+          <div
+            className="hidden md:block absolute pointer-events-none whitespace-nowrap"
+            style={{ left: "50%", top: "20%", transform: "translateX(-50%)", zIndex: 11, fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "4px", color: "#c9a96e", textTransform: "uppercase" }}
+          >
+            Your Presence &middot; Your Space
+          </div>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
