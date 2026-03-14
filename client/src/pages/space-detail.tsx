@@ -681,12 +681,13 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     },
   });
 
-  const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string }>>({
+  const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category?: string }>>({
     queryKey: ["/api/portfolio-photos/by-space", space?.id],
     queryFn: async () => {
       const res = await fetch(`/api/portfolio-photos/by-space/${space!.id}`);
       if (!res.ok) return [];
-      return res.json();
+      const photos = await res.json();
+      return photos.filter((p: any) => p.category === "people");
     },
     enabled: !!space?.id,
   });
