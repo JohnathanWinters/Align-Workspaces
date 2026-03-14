@@ -354,20 +354,19 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
         <div ref={configuratorRef} id="configurator" className="min-h-screen">
           <header className="sticky top-0 z-[9000] bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center relative">
                 <button
                   onClick={() => autoStart ? setLocation("/") : setCurrentStep(0)}
-                  className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10"
                   data-testid="link-home-logo"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Back</span>
                 </button>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
                   Align Portraits
                 </span>
-                <div className="flex items-center gap-3">
-                  <UserIndicator />
+                <div className="flex items-center gap-3 ml-auto z-10">
                   <div className="relative">
                     <button
                       onClick={() => setMenuOpen(!menuOpen)}
