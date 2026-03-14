@@ -2372,7 +2372,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             <span className="truncate">{space.address}</span>
                           </p>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-400">
-                            <span>{space.type}</span>
+                            <span>{{ therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative", office: "Office", studio: "Creative Studio", gym: "Gym", meeting: "Meeting", art_studio: "Art Studio", photo_studio: "Photo Studio" }[space.type] || space.type}</span>
                             <span>${space.pricePerHour}/hr</span>
                             {space.pricePerDay > 0 && <span>${space.pricePerDay}/day</span>}
                             <span>Cap: {space.capacity || "N/A"}</span>

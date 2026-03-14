@@ -2049,7 +2049,7 @@ export async function registerRoutes(
         {
           name: "Serenity Therapy Suite",
           slug: "serenity-therapy-suite",
-          type: "office",
+          type: "therapy",
           description: "A warm, calming therapy office designed for counselors and therapists. Features soft lighting, comfortable seating, and complete sound insulation for private sessions. Located in the heart of Coral Gables with easy parking.",
           shortDescription: "Private therapy office with calming atmosphere in Coral Gables",
           address: "245 Miracle Mile, Coral Gables, FL 33134",
@@ -2068,7 +2068,7 @@ export async function registerRoutes(
         {
           name: "Mindful Space Therapy Room",
           slug: "mindful-space-therapy-room",
-          type: "office",
+          type: "therapy",
           description: "A modern, minimalist therapy room in Brickell perfect for licensed therapists and counselors. The space features natural light, plants, and a neutral palette designed to put clients at ease. Includes a small waiting area and private entrance.",
           shortDescription: "Modern minimalist therapy room in Brickell with natural light",
           address: "1200 Brickell Ave, Suite 310, Miami, FL 33131",
@@ -2087,7 +2087,7 @@ export async function registerRoutes(
         {
           name: "Iron District Training Studio",
           slug: "iron-district-training-studio",
-          type: "gym",
+          type: "wellness",
           description: "A fully equipped private training studio in Wynwood for personal trainers and fitness coaches. Includes free weights, resistance bands, TRX system, battle ropes, and a turf area. Perfect for 1-on-1 or small group sessions up to 6 people. Industrial aesthetic with natural light.",
           shortDescription: "Private training studio in Wynwood with full equipment",
           address: "2520 NW 2nd Ave, Miami, FL 33127",
@@ -2106,7 +2106,7 @@ export async function registerRoutes(
         {
           name: "Elevate Meeting Room",
           slug: "elevate-meeting-room",
-          type: "meeting",
+          type: "coaching",
           description: "A professional meeting room in Downtown Miami ideal for client consultations, team meetings, and presentations. Features a large conference table seating 8, whiteboard, projector, and floor-to-ceiling windows with skyline views. Perfect for lawyers, realtors, and consultants.",
           shortDescription: "Professional meeting room in Downtown Miami with skyline views",
           address: "100 SE 2nd St, Suite 2400, Miami, FL 33131",
@@ -2125,7 +2125,7 @@ export async function registerRoutes(
         {
           name: "The Coconut Grove Boardroom",
           slug: "coconut-grove-boardroom",
-          type: "meeting",
+          type: "coaching",
           description: "An intimate, design-forward meeting space in Coconut Grove. Seats up to 6 people around a handcrafted wood table. Features a calming garden courtyard view, espresso machine, and dedicated Wi-Fi. Ideal for small team meetings, strategy sessions, and professional consultations.",
           shortDescription: "Intimate design-forward boardroom in Coconut Grove",
           address: "3390 Mary St, Suite 200, Coconut Grove, FL 33133",
