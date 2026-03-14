@@ -421,7 +421,7 @@ export default function AlignSpacesPage() {
                 Align Portraits
               </h2>
               <p className="text-[#d4c4a8] text-sm leading-relaxed mb-6 max-w-md">
-                Strengthen your professional presence with a personalized portrait session. Our guided builder helps you define your look, setting, and style — then we bring it to life.
+                Create a professional image that reflects your work, your character, and the experience you want clients to feel. Our guided builder helps you define the look before your session begins.
               </p>
               <Link
                 href="/portraits/builder"
