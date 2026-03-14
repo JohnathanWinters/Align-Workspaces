@@ -1669,7 +1669,7 @@ export default function SpacesBrowsePage() {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 top-full mt-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg py-2 min-w-[200px] z-[9000]"
                 >
-                  <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
+                  <button onClick={() => { setLocation("/portraits/builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
                     <Camera className="w-4 h-4" />
                     Align Portraits
                   </button>

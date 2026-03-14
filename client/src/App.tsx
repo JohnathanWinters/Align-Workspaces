@@ -28,7 +28,6 @@ function Router() {
       <Route path="/browse" component={SpacesBrowsePage} />
       <Route path="/spaces/:slug" component={SpaceDetailPage} />
       <Route path="/portraits/builder" component={BuildMyPhoto} />
-      <Route path="/portraits" component={HomePage} />
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/portal" component={PortalPage} />

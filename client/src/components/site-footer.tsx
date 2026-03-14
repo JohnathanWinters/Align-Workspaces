@@ -13,7 +13,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
   const dividerColor = isDark ? "border-white/10" : "border-stone-200 dark:border-white/10";
 
   const navLinks = [
-    { label: "Portraits", href: "/portraits" },
+    { label: "Portraits", href: "/portraits/builder" },
     { label: "Spaces", href: "/browse" },
     { label: "Featured Pros", href: "/featured" },
     { label: "About Us", href: "/about" },

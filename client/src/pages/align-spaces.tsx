@@ -252,7 +252,7 @@ export default function AlignSpacesPage() {
                     <Building2 className="w-4 h-4" />
                     Browse Spaces
                   </button>
-                  <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
+                  <button onClick={() => { setLocation("/portraits/builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
                     <Camera className="w-4 h-4" />
                     Align Portraits
                   </button>

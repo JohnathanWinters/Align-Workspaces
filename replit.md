@@ -7,11 +7,10 @@ Align is a premium, mobile-first interactive website designed to help profession
 Preferred communication style: Simple, everyday language.
 
 ### Terminology
-- **Home / Split Landing Page**: The unified split-hero page at `/` with side-by-side Portraits + Spaces panels (horizontal on desktop, vertical on mobile). Component: `client/src/pages/align-spaces.tsx`.
-- **Portraits Landing Page**: The hero page at `/portraits` with the "Your Portrait Is Your First Impression" heading. Component: `client/src/components/hero-section.tsx`.
+- **Home / Landing Page**: The workspaces-focused landing page at `/`. Component: `client/src/pages/align-spaces.tsx`.
+- **Portraits Builder**: The 6-step configurator at `/portraits/builder`. Component: `client/src/pages/home.tsx` (with `autoStart`). No standalone `/portraits` landing page — all portraits links go directly to the builder.
 - **Browse Spaces**: The spaces marketplace at `/browse`. Component: `client/src/pages/spaces-browse.tsx`.
 - **Space Detail**: Individual space page at `/spaces/:slug`. Component: `client/src/pages/space-detail.tsx`.
-- **Portraits Builder**: The 6-step configurator at `/portraits/builder`. Component: `client/src/pages/home.tsx` (with `autoStart`).
 
 ## System Architecture
 

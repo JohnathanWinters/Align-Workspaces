@@ -3289,7 +3289,6 @@ Sitemap: ${SITE_URL}/sitemap.xml
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
       { loc: "/browse", priority: "0.9", changefreq: "daily" },
-      { loc: "/portraits", priority: "0.9", changefreq: "weekly" },
       { loc: "/portraits/builder", priority: "0.8", changefreq: "monthly" },
       { loc: "/portfolio", priority: "0.8", changefreq: "weekly" },
       { loc: "/featured", priority: "0.9", changefreq: "daily" },
