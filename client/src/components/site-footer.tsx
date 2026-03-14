@@ -24,7 +24,13 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
   return (
     <footer className={`relative z-10 w-full px-6 py-8 sm:py-10 pb-16 sm:pb-10`} data-testid="site-footer">
       <div className={`max-w-4xl mx-auto border-t ${dividerColor} pt-8`}>
-        <div className="mb-8 px-2">
+        <div className="mb-10 px-2">
+          <div className="text-center mb-4">
+            <span className={`text-[10px] tracking-[0.3em] uppercase font-semibold block mb-1.5 ${isDark ? "text-[#c9a96e]/70" : "text-[#c4956a]"}`}>Stay Connected</span>
+            <p className={`text-sm ${isDark ? "text-white/50" : "text-stone-500"} max-w-sm mx-auto leading-relaxed`}>
+              New spaces, community guides, and stories from professionals across Miami.
+            </p>
+          </div>
           <NewsletterSignup variant={variant} />
         </div>
 

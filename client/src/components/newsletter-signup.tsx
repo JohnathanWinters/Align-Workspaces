@@ -111,8 +111,8 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
                 <Sparkles className={`w-4 h-4 ${isDark ? "text-white/60" : "text-stone-500"}`} />
               </div>
               <div className="text-left">
-                <p className={`text-sm font-medium ${textHeading}`}>Stay in the loop</p>
-                <p className={`text-[11px] ${textMuted}`}>New spaces, stories & more</p>
+                <p className={`text-sm font-medium ${textHeading}`}>Join the Align community</p>
+                <p className={`text-[11px] ${textMuted}`}>New spaces, guides, and community stories</p>
               </div>
             </div>
             <ChevronRight className={`w-4 h-4 ${textMuted} group-hover:translate-x-0.5 transition-transform`} />
@@ -281,7 +281,7 @@ export function NewsletterSignup({ variant = "light" }: NewsletterSignupProps) {
               {step === "already" ? "You're already subscribed!" : "You're in!"}
             </p>
             <p className={`text-xs ${textMuted} mt-1`}>
-              {step === "already" ? "We've got you \u2014 stay tuned." : "We'll keep you posted on what's new."}
+              {step === "already" ? "We've got you, stay tuned." : "We'll keep you posted on what's new."}
             </p>
           </motion.div>
         )}

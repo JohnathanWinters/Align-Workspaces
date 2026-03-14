@@ -385,7 +385,8 @@ export default function AlignSpacesPage() {
       <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-how-it-works">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
-            <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">How Align Works</h2>
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">The Process</span>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
@@ -433,12 +434,15 @@ export default function AlignSpacesPage() {
               />
             </div>
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
-              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Feature</span>
+              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Complete Your Presence</span>
               <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-4">
                 Portrait Builder
               </h2>
-              <p className="text-[#d4c4a8] text-sm leading-relaxed mb-6 max-w-md">
-                Create a professional image that reflects your work, your character, and the experience you want clients to feel. Our guided builder helps you define the look before your session begins.
+              <p className="text-[#d4c4a8] text-sm leading-relaxed mb-2 max-w-md">
+                The space you work in and the image you present should tell the same story. Our guided builder helps you create a professional portrait that reflects your work, your character, and the experience you want clients to feel.
+              </p>
+              <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
+                Define the look before your session begins, so every detail aligns with the environment you've built.
               </p>
               <Link
                 href="/portrait-builder"
@@ -461,8 +465,9 @@ export default function AlignSpacesPage() {
           <div className="max-w-5xl mx-auto">
             <div className="flex items-end justify-between mb-8 sm:mb-10">
               <div>
-                <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Featured Professionals</h2>
-                <p className="text-stone-500 text-sm mt-2">Meet the Miami professionals who trust Align</p>
+                <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
+                <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Professionals Who Align Here</h2>
+                <p className="text-stone-500 text-sm mt-2 max-w-md">Real professionals building their practice in Miami. See how they use Align to find the right space for their work.</p>
               </div>
               <Link
                 href="/featured"
@@ -510,9 +515,14 @@ export default function AlignSpacesPage() {
                     <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                     <p className="text-sm text-[#c4956a] font-medium mb-2">{pro.profession}</p>
                     <p className="text-stone-500 text-sm leading-relaxed line-clamp-2">{pro.headline}</p>
-                    <div className="flex items-center gap-1.5 text-stone-400 text-xs mt-3">
-                      <MapPin className="w-3 h-3" />
-                      <span>{pro.location}</span>
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-1.5 text-stone-400 text-xs">
+                        <MapPin className="w-3 h-3" />
+                        <span>{pro.location}</span>
+                      </div>
+                      <span className="text-[11px] font-medium text-[#c4956a] group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                        Read more <ArrowRight className="w-3 h-3" />
+                      </span>
                     </div>
                   </div>
                 </Link>
