@@ -53,6 +53,16 @@ const defaultSpaces = [
   },
 ];
 
+const peacemakerPalette = JSON.stringify({
+  colors: [
+    { hex: "#E8DDD0", name: "Warm Cream" },
+    { hex: "#A8B0A0", name: "Sage Green" },
+    { hex: "#3E3A3A", name: "Espresso" },
+  ],
+  feel: "Calming earth tones — ideal for wellness, yoga, and healing practices",
+  explanation: "Warm Cream creates a welcoming, gentle foundation that puts clients at ease. Sage Green introduces a natural, grounding element that promotes calm and restoration. Espresso anchors the space with depth and sophistication, giving the environment a sense of structure without feeling heavy. Together, these three colors create a nurturing atmosphere where clients feel safe, relaxed, and held — perfect for wellness work, therapy, and mindful practices.",
+});
+
 export async function seedSpacesIfEmpty() {
   for (const space of defaultSpaces) {
     const [existing] = await db.select().from(spaces).where(eq(spaces.id, space.id));
@@ -60,12 +70,26 @@ export async function seedSpacesIfEmpty() {
       console.log(`Seeding space: ${space.name}`);
       await db.insert(spaces).values(space);
     } else {
+      const updates: Record<string, any> = {};
       const existingImages = existing.imageUrls || [];
-      const needsUpdate = existingImages.some((url: string) => url.startsWith("/images/"));
-      if (needsUpdate) {
-        console.log(`Updating images for space: ${space.name}`);
-        await db.update(spaces).set({ imageUrls: space.imageUrls }).where(eq(spaces.id, space.id));
+      if (existingImages.some((url: string) => url.startsWith("/images/"))) {
+        updates.imageUrls = space.imageUrls;
       }
+      if (!existing.colorPalette && space.colorPalette) {
+        updates.colorPalette = space.colorPalette;
+      }
+      if (Object.keys(updates).length > 0) {
+        console.log(`Updating space: ${space.name} (${Object.keys(updates).join(", ")})`);
+        await db.update(spaces).set(updates).where(eq(spaces.id, space.id));
+      }
+    }
+  }
+
+  const allSpaces = await db.select().from(spaces);
+  for (const space of allSpaces) {
+    if (!space.colorPalette && space.name === "The Peacemaker Studio") {
+      console.log(`Adding color palette to: ${space.name}`);
+      await db.update(spaces).set({ colorPalette: peacemakerPalette }).where(eq(spaces.id, space.id));
     }
   }
 }
