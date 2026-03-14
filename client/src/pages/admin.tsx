@@ -2282,7 +2282,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-name" />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Space Category</label>
                           <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white" data-testid="select-edit-type">
                             <option value="therapy">Therapy & Counseling</option>
                             <option value="coaching">Coaching & Consulting</option>

@@ -345,7 +345,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
           <Input value={formData.name} onChange={(e) => update("name", e.target.value)} data-testid={`edit-input-name-${space.id}`} />
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Type</label>
+          <label className="text-xs text-gray-500 mb-1 block">Space Category</label>
           <select
             value={formData.type}
             onChange={(e) => update("type", e.target.value)}
@@ -503,7 +503,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
             <Input value={formData.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-space-name" />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Type *</label>
+            <label className="text-xs text-gray-500 mb-1 block">Space Category *</label>
             <select
               value={formData.type}
               onChange={(e) => update("type", e.target.value)}
