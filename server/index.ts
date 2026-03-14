@@ -103,12 +103,12 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 
 const DOMAIN_REDIRECTS: Record<string, string> = {
-  "alignportraits.com": "https://alignworkspaces.com/portraits/builder",
-  "www.alignportraits.com": "https://alignworkspaces.com/portraits/builder",
-  "buildmyphoto.com": "https://alignworkspaces.com/portraits/builder",
-  "www.buildmyphoto.com": "https://alignworkspaces.com/portraits/builder",
-  "alignvisuals.com": "https://alignworkspaces.com/portraits/builder",
-  "www.alignvisuals.com": "https://alignworkspaces.com/portraits/builder",
+  "alignportraits.com": "https://alignworkspaces.com/portrait-builder",
+  "www.alignportraits.com": "https://alignworkspaces.com/portrait-builder",
+  "buildmyphoto.com": "https://alignworkspaces.com/portrait-builder",
+  "www.buildmyphoto.com": "https://alignworkspaces.com/portrait-builder",
+  "alignvisuals.com": "https://alignworkspaces.com/portrait-builder",
+  "www.alignvisuals.com": "https://alignworkspaces.com/portrait-builder",
 };
 
 app.use((req, res, next) => {
@@ -116,6 +116,22 @@ app.use((req, res, next) => {
   const target = DOMAIN_REDIRECTS[host];
   if (target) {
     return res.redirect(301, target);
+  }
+  next();
+});
+
+const PATH_REDIRECTS: Record<string, string> = {
+  "/browse": "/workspaces",
+  "/portraits/builder": "/portrait-builder",
+  "/portraits": "/portrait-builder",
+  "/about": "/our-vision",
+};
+
+app.use((req, res, next) => {
+  const newPath = PATH_REDIRECTS[req.path];
+  if (newPath) {
+    const qs = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";
+    return res.redirect(301, newPath + qs);
   }
   next();
 });

@@ -371,7 +371,7 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
     setMagicLoading(true);
     setMagicError("");
     try {
-      const returnTo = customReturnTo || `/browse?book=${encodeURIComponent(spaceId)}`;
+      const returnTo = customReturnTo || `/workspaces?book=${encodeURIComponent(spaceId)}`;
 
       if (firstName) {
         await fetch("/api/auth/magic-signup", {
@@ -1361,7 +1361,7 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
             ) : (
               <MagicLinkModal
                 spaceId="list-space"
-                returnTo="/browse"
+                returnTo="/workspaces"
                 onClose={() => setShowListMagicLink(false)}
                 onSuccess={() => {
                   setShowListMagicLink(false);
@@ -1583,7 +1583,7 @@ export default function SpacesBrowsePage() {
   }, []);
 
   useEffect(() => {
-    document.title = "Browse Spaces | Align Spaces — Miami Workspaces for Professionals";
+    document.title = "Workspaces | Align Spaces — Miami Workspaces for Professionals";
   }, []);
 
   if (!categoryChosen) {
@@ -1692,9 +1692,9 @@ export default function SpacesBrowsePage() {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 top-full mt-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg py-2 min-w-[200px] z-[9000]"
                 >
-                  <button onClick={() => { setLocation("/portraits/builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
+                  <button onClick={() => { setLocation("/portrait-builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
                     <Camera className="w-4 h-4" />
-                    Align Portraits
+                    Portrait Builder
                   </button>
                   <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
                     <User className="w-4 h-4" />
@@ -1708,9 +1708,9 @@ export default function SpacesBrowsePage() {
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
-                  <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-about-browse">
+                  <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-about-browse">
                     <Info className="w-4 h-4" />
-                    About Us
+                    Our Vision
                   </button>
                 </motion.div>
               )}

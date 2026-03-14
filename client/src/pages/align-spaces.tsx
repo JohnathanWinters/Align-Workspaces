@@ -265,13 +265,13 @@ export default function AlignSpacesPage() {
                   transition={{ duration: 0.2 }}
                   className="absolute left-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                 >
-                  <button onClick={() => { setLocation("/browse"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-browse-menu">
+                  <button onClick={() => { setLocation("/workspaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-browse-menu">
                     <Building2 className="w-4 h-4" />
-                    Browse Spaces
+                    Workspaces
                   </button>
-                  <button onClick={() => { setLocation("/portraits/builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
+                  <button onClick={() => { setLocation("/portrait-builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
                     <Camera className="w-4 h-4" />
-                    Align Portraits
+                    Portrait Builder
                   </button>
                   <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-menu">
                     <User className="w-4 h-4" />
@@ -281,9 +281,9 @@ export default function AlignSpacesPage() {
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
-                  <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-menu">
+                  <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-menu">
                     <Info className="w-4 h-4" />
-                    About Us
+                    Our Vision
                   </button>
                   <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
                     <Camera className="w-4 h-4" />
@@ -337,7 +337,7 @@ export default function AlignSpacesPage() {
             className="mt-5"
           >
             <Link
-              href="/browse"
+              href="/workspaces"
               data-testid="button-browse-all"
               className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
             >
@@ -370,7 +370,7 @@ export default function AlignSpacesPage() {
           {!spacesLoading && allSpaces.length > 0 && (
             <div className="text-center mt-8">
               <Link
-                href="/browse"
+                href="/workspaces"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
                 data-testid="link-browse-all-bottom"
               >
@@ -435,13 +435,13 @@ export default function AlignSpacesPage() {
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
               <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Feature</span>
               <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-4">
-                Align Portraits
+                Portrait Builder
               </h2>
               <p className="text-[#d4c4a8] text-sm leading-relaxed mb-6 max-w-md">
                 Create a professional image that reflects your work, your character, and the experience you want clients to feel. Our guided builder helps you define the look before your session begins.
               </p>
               <Link
-                href="/portraits/builder"
+                href="/portrait-builder"
                 data-testid="button-portraits-cta"
                 className="inline-flex items-center gap-2 self-start uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
                 style={{ color: "#c9a96e", borderColor: "#c9a96e" }}

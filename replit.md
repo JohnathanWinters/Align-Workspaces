@@ -8,9 +8,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Terminology
 - **Home / Landing Page**: The workspaces-focused landing page at `/`. Component: `client/src/pages/align-spaces.tsx`.
-- **Portraits Builder**: The 6-step configurator at `/portraits/builder`. Component: `client/src/pages/home.tsx` (with `autoStart`). No standalone `/portraits` landing page — all portraits links go directly to the builder.
-- **Browse Spaces**: The spaces marketplace at `/browse`. Component: `client/src/pages/spaces-browse.tsx`.
+- **Portrait Builder**: The 6-step configurator at `/portrait-builder`. Component: `client/src/pages/home.tsx` (with `autoStart`). No standalone `/portraits` page — all portraits links go to the builder.
+- **Workspaces**: The spaces marketplace at `/workspaces`. Component: `client/src/pages/spaces-browse.tsx`.
 - **Space Detail**: Individual space page at `/spaces/:slug`. Component: `client/src/pages/space-detail.tsx`.
+- **Our Vision**: About/team page at `/our-vision`. Component: `client/src/pages/photographers.tsx`.
 
 ## System Architecture
 
@@ -45,7 +46,8 @@ The application uses a monorepo structure, separating the React frontend (`clien
 ### Domain Redirects
 - **Primary domain**: `alignworkspaces.com`
 - **Contact email**: `hello@alignworkspaces.com` (display), `armando@alignworkspaces.com` (notifications)
-- Server-side 301 redirects in `server/index.ts`: `alignportraits.com`, `buildmyphoto.com`, `alignvisuals.com` (+ www variants) all redirect to `https://alignworkspaces.com/portraits`.
+- Server-side 301 domain redirects in `server/index.ts`: `alignportraits.com`, `buildmyphoto.com`, `alignvisuals.com` (+ www variants) all redirect to `https://alignworkspaces.com/portrait-builder`.
+- Server-side 301 path redirects: `/browse` → `/workspaces`, `/portraits/builder` → `/portrait-builder`, `/portraits` → `/portrait-builder`, `/about` → `/our-vision`.
 
 ### Build System
 - **Development**: `tsx server/index.ts` with Vite middleware for HMR.

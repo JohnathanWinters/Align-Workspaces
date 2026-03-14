@@ -25,11 +25,11 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={AlignSpacesPage} />
-      <Route path="/browse" component={SpacesBrowsePage} />
+      <Route path="/workspaces" component={SpacesBrowsePage} />
       <Route path="/spaces/:slug" component={SpaceDetailPage} />
-      <Route path="/portraits/builder" component={BuildMyPhoto} />
+      <Route path="/portrait-builder" component={BuildMyPhoto} />
       <Route path="/portfolio" component={PortfolioPage} />
-      <Route path="/about" component={AboutPage} />
+      <Route path="/our-vision" component={AboutPage} />
       <Route path="/portal" component={PortalPage} />
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />

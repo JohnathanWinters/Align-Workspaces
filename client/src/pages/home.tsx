@@ -364,7 +364,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                   <span className="hidden sm:inline">Back</span>
                 </button>
                 <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
-                  Align Portraits
+                  Portrait Builder
                 </span>
                 <div className="flex items-center gap-3 ml-auto z-10">
                   <div className="relative">
@@ -397,9 +397,9 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                             <Star className="w-4 h-4" />
                             Featured Pros
                           </button>
-                          <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-header">
+                          <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-header">
                             <Info className="w-4 h-4" />
-                            About Us
+                            Our Vision
                           </button>
                           <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-header">
                             <Camera className="w-4 h-4" />

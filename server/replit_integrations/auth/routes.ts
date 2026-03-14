@@ -113,7 +113,7 @@ export function registerAuthRoutes(app: Express): void {
 
       req.session.save((err) => {
         if (err) console.error("Session save error:", err);
-        const destination = (typeof returnTo === "string" && returnTo.startsWith("/")) ? returnTo : "/browse";
+        const destination = (typeof returnTo === "string" && returnTo.startsWith("/")) ? returnTo : "/";
         res.redirect(destination);
       });
     } catch (error: any) {

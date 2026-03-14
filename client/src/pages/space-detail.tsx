@@ -736,7 +736,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
         <Building2 className="w-12 h-12 text-stone-300" />
         <h1 className="font-serif text-xl font-semibold text-stone-700">Space not found</h1>
         <p className="text-sm text-stone-500 text-center">This space may no longer be available.</p>
-        <Link href="/browse" className="text-sm text-[#c4956a] font-medium hover:underline" data-testid="link-back-browse">
+        <Link href="/workspaces" className="text-sm text-[#c4956a] font-medium hover:underline" data-testid="link-back-browse">
           Back to Browse
         </Link>
       </div>
@@ -752,7 +752,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/60">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
-            onClick={() => { if (window.history.length > 1) window.history.back(); else navigate("/browse"); }}
+            onClick={() => { if (window.history.length > 1) window.history.back(); else navigate("/workspaces"); }}
             className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
             data-testid="button-back"
           >

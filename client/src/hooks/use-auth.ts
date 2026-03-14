@@ -23,7 +23,7 @@ async function logout(): Promise<void> {
   try {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
   } catch {}
-  window.location.href = "/browse";
+  window.location.href = "/";
 }
 
 export function useAuth() {

@@ -4889,12 +4889,12 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
     const labels: Record<string, string> = {
       "/": "Home",
       "/portraits": "Portraits Landing",
-      "/portraits/builder": "Build My Photo",
+      "/portrait-builder": "Portrait Builder",
       "/portfolio": "Portfolio",
-      "/about": "Photographers",
+      "/our-vision": "Our Vision",
       "/portal": "Client Portal",
       "/featured": "Featured",
-      "/browse": "Browse Spaces",
+      "/workspaces": "Workspaces",
     };
     return labels[path] || path;
   };

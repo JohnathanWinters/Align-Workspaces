@@ -233,13 +233,13 @@ export default function PortfolioPage() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                   >
-                    <Link href="/portraits/builder">
+                    <Link href="/portrait-builder">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-portfolio">
                         <Camera className="w-4 h-4" />
-                        Align Portraits
+                        Portrait Builder
                       </button>
                     </Link>
-                    <Link href="/browse">
+                    <Link href="/workspaces">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-portfolio">
                         <MapPin className="w-4 h-4" />
                         Align Spaces
@@ -251,10 +251,10 @@ export default function PortfolioPage() {
                         Featured Pros
                       </button>
                     </Link>
-                    <Link href="/about">
+                    <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-portfolio">
                         <Info className="w-4 h-4" />
-                        About Us
+                        Our Vision
                       </button>
                     </Link>
                     <Link href="/portal">
@@ -365,7 +365,7 @@ export default function PortfolioPage() {
               <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
                 Design a portrait session tailored to your brand. Our builder walks you through every detail — from setting to style.
               </p>
-              <Link href="/portraits/builder">
+              <Link href="/portrait-builder">
                 <button
                   data-testid="button-cta-builder"
                   className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-8 py-3.5 rounded-full hover:bg-stone-800 transition-all duration-300 font-medium"
@@ -382,7 +382,7 @@ export default function PortfolioPage() {
                 Discover creative workspaces for your next session, or share your own space with the Align community.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link href="/browse">
+                <Link href="/workspaces">
                   <button
                     data-testid="button-cta-browse-spaces"
                     className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-8 py-3.5 rounded-full hover:bg-stone-800 transition-all duration-300 font-medium"

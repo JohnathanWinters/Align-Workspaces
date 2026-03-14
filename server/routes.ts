@@ -2768,7 +2768,7 @@ export async function registerRoutes(
         ],
         mode: "payment",
         success_url: `${baseUrl}/portal?space_payment=success`,
-        cancel_url: `${baseUrl}/browse?space_payment=cancelled`,
+        cancel_url: `${baseUrl}/workspaces?space_payment=cancelled`,
         customer_email: user.claims?.email || booking.userEmail,
         metadata: {
           type: "space_booking",
@@ -3327,11 +3327,11 @@ Sitemap: ${SITE_URL}/sitemap.xml
 
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
-      { loc: "/browse", priority: "0.9", changefreq: "daily" },
-      { loc: "/portraits/builder", priority: "0.8", changefreq: "monthly" },
+      { loc: "/workspaces", priority: "0.9", changefreq: "daily" },
+      { loc: "/portrait-builder", priority: "0.8", changefreq: "monthly" },
       { loc: "/portfolio", priority: "0.8", changefreq: "weekly" },
       { loc: "/featured", priority: "0.9", changefreq: "daily" },
-      { loc: "/about", priority: "0.6", changefreq: "monthly" },
+      { loc: "/our-vision", priority: "0.6", changefreq: "monthly" },
     ];
 
     const today = new Date().toISOString().split("T")[0];
@@ -3414,12 +3414,11 @@ Miami Beach, Coral Gables, Coconut Grove, Wynwood, Brickell, Doral, Hialeah, Ken
 
 ## Key Pages
 - Home: ${SITE_URL}/
-- Browse Workspaces: ${SITE_URL}/browse
-- Portraits: ${SITE_URL}/portraits
-- Visual Planning Tool: ${SITE_URL}/portraits/builder
+- Workspaces: ${SITE_URL}/workspaces
+- Portrait Builder: ${SITE_URL}/portrait-builder
 - Portfolio: ${SITE_URL}/portfolio
 - Featured Professionals: ${SITE_URL}/featured
-- About: ${SITE_URL}/about
+- Our Vision: ${SITE_URL}/our-vision
 `);
   });
 
@@ -3534,12 +3533,11 @@ ${featuredSection}
 
 ## Key Pages
 - Home: ${SITE_URL}/
-- Browse Workspaces: ${SITE_URL}/browse
-- Portraits: ${SITE_URL}/portraits
-- Visual Planning Tool: ${SITE_URL}/portraits/builder
+- Workspaces: ${SITE_URL}/workspaces
+- Portrait Builder: ${SITE_URL}/portrait-builder
 - Portfolio: ${SITE_URL}/portfolio
 - Featured Professionals: ${SITE_URL}/featured
-- About: ${SITE_URL}/about
+- Our Vision: ${SITE_URL}/our-vision
 `);
   });
 

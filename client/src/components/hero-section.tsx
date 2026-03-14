@@ -113,9 +113,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
-                  <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
+                  <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
                     <Info className="w-4 h-4" />
-                    About Us
+                    Our Vision
                   </button>
                   <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
                     <Camera className="w-4 h-4" />
@@ -161,7 +161,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             transition={{ duration: 0.5, delay: 0.55 }}
             className="mt-5 sm:mt-10 flex flex-col items-center gap-3"
           >
-            <Link href="/portraits/builder">
+            <Link href="/portrait-builder">
               <button
                 data-testid="button-start-configurator"
                 className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-white text-black px-8 py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
