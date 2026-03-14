@@ -89,7 +89,28 @@ export default function AlignSpacesPage() {
     <div className="bg-[#f5f0e8]" data-testid="section-split-hero">
       <div className="relative min-h-[100dvh] flex flex-col bg-stone-900">
         <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-5 sm:py-6" style={{ backgroundColor: "rgba(13,10,6,0.6)" }}>
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.05 }}
+            className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 flex items-center z-10"
+          >
+            <Link href="/" className="flex flex-col items-center gap-0.5" data-testid="link-home-logo">
+              <img
+                src="/images/logo-align-cream.png"
+                alt="Align"
+                className="h-9 w-9 object-contain"
+              />
+              <span
+                className="uppercase"
+                style={{ fontFamily: "'Playfair Display', serif", fontSize: "8px", letterSpacing: "4px", color: "#f0e6d0" }}
+              >
+                Align
+              </span>
+            </Link>
+          </motion.div>
+
+          <div className="max-w-6xl mx-auto flex items-center justify-between relative">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -146,28 +167,6 @@ export default function AlignSpacesPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.05 }}
-              className="fixed left-1/2 -translate-x-1/2 z-30"
-              style={{ top: "14px" }}
-            >
-              <Link href="/" className="flex flex-col items-center gap-0.5" data-testid="link-home-logo">
-                <img
-                  src="/images/logo-align-cream.png"
-                  alt="Align"
-                  className="h-9 w-9 object-contain"
-                />
-                <span
-                  className="uppercase"
-                  style={{ fontFamily: "'Playfair Display', serif", fontSize: "8px", letterSpacing: "4px", color: "#f0e6d0" }}
-                >
-                  Align
-                </span>
-              </Link>
             </motion.div>
 
             <UserIndicator variant="light" />
