@@ -93,9 +93,9 @@ export default function AlignSpacesPage() {
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.05 }}
-            className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 flex items-center z-10"
+            className="absolute left-0 right-0 top-0 bottom-0 flex items-center justify-center z-10 pointer-events-none"
           >
-            <Link href="/" className="flex flex-col items-center gap-0.5" data-testid="link-home-logo">
+            <Link href="/" className="flex flex-col items-center gap-0.5 pointer-events-auto" data-testid="link-home-logo">
               <img
                 src="/images/logo-align-cream.png"
                 alt="Align"
