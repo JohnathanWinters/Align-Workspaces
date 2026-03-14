@@ -72,6 +72,120 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
   } catch { return null; }
 }
 
+function SpaceCard({ space }: { space: Space }) {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [, setLocation] = useLocation();
+  const paletteData = parseColorPalette(space.colorPalette);
+
+  return (
+    <div
+      className="group rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300 cursor-pointer"
+      data-testid={`space-card-${space.id}`}
+      onClick={() => setLocation(`/spaces/${space.slug}`)}
+    >
+      <div className="aspect-[4/3] overflow-hidden relative">
+        <img
+          src={space.imageUrls?.[0] || "/images/spaces-hero.png"}
+          alt={space.name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+        {space.verified && (
+          <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center gap-1">
+            <Check className="w-3 h-3 text-[#c4956a]" />
+            <span className="text-[10px] font-semibold text-stone-700">Verified</span>
+          </div>
+        )}
+      </div>
+      <div className="p-4 sm:p-5">
+        <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1 group-hover:text-[#c4956a] transition-colors">{space.name}</h3>
+        <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-2">
+          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>{space.neighborhood || space.address}</span>
+        </div>
+
+        {space.amenities && space.amenities.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {space.amenities.slice(0, 3).map((amenity, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded-full">
+                <Check className="w-2.5 h-2.5 text-[#c4956a]" />
+                {amenity}
+              </span>
+            ))}
+            {space.amenities.length > 3 && (
+              <span className="text-[10px] text-stone-400 px-1 py-0.5">+{space.amenities.length - 3} more</span>
+            )}
+          </div>
+        )}
+
+        {paletteData && (
+          <div
+            className={`mb-3 p-2.5 rounded-lg border transition-all duration-300 ${paletteOpen ? "bg-stone-50 border-stone-200 shadow-sm" : "bg-stone-50/80 border-stone-100 hover:border-stone-200 hover:shadow-sm"}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setPaletteOpen(!paletteOpen);
+            }}
+            data-testid={`palette-toggle-${space.id}`}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Palette className="w-3 h-3 text-[#c4956a]" />
+              <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Color Palette</span>
+              <ChevronDown className={`w-3 h-3 text-stone-400 ml-auto transition-transform duration-200 ${paletteOpen ? "rotate-180" : ""}`} />
+            </div>
+            <div className="flex items-center gap-2.5">
+              {paletteData.colors.slice(0, 4).map((c, i) => (
+                <div key={i} className="flex flex-col items-center gap-0.5">
+                  <div className={`rounded-full border-2 border-white shadow-sm transition-all duration-200 ${paletteOpen ? "w-8 h-8" : "w-6 h-6"}`} style={{ backgroundColor: c.hex }} />
+                  <span className="text-[7px] text-stone-400 font-medium max-w-[40px] truncate text-center">{c.name}</span>
+                </div>
+              ))}
+            </div>
+            {!paletteOpen && paletteData.feel && (
+              <p className="text-[10px] text-stone-400 italic mt-1.5 line-clamp-1">{paletteData.feel}</p>
+            )}
+            <AnimatePresence>
+              {paletteOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-2.5 pt-2.5 border-t border-stone-200/60 space-y-2">
+                    {paletteData.feel && (
+                      <p className="text-[11px] text-stone-600 italic leading-relaxed">"{paletteData.feel}"</p>
+                    )}
+                    {paletteData.explanation && (
+                      <>
+                        <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">How These Colors Shape the Experience</p>
+                        <p className="text-xs text-stone-500 leading-relaxed">{paletteData.explanation}</p>
+                      </>
+                    )}
+                    {!paletteData.explanation && !paletteData.feel && (
+                      <p className="text-xs text-stone-400 italic">Color details coming soon.</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-1.5 text-stone-700">
+            <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
+            <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
+          </div>
+          {space.targetProfession && (
+            <span className="text-[11px] text-[#c4956a] font-medium">Ideal for {space.targetProfession}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -231,83 +345,9 @@ export default function AlignSpacesPage() {
                   </div>
                 </div>
               ))
-            ) : allSpaces.map((space) => {
-              const paletteData = parseColorPalette(space.colorPalette);
-              return (
-                <Link
-                  key={space.id}
-                  href={`/spaces/${space.slug}`}
-                  className="group block rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300"
-                  data-testid={`space-card-${space.id}`}
-                >
-                  <div className="aspect-[4/3] overflow-hidden relative">
-                    <img
-                      src={space.imageUrls?.[0] || "/images/spaces-hero.png"}
-                      alt={space.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    {space.verified && (
-                      <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center gap-1">
-                        <Check className="w-3 h-3 text-[#c4956a]" />
-                        <span className="text-[10px] font-semibold text-stone-700">Verified</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1 group-hover:text-[#c4956a] transition-colors">{space.name}</h3>
-                    <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-2">
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>{space.neighborhood || space.address}</span>
-                    </div>
-
-                    {space.amenities && space.amenities.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {space.amenities.slice(0, 3).map((amenity, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded-full">
-                            <Check className="w-2.5 h-2.5 text-[#c4956a]" />
-                            {amenity}
-                          </span>
-                        ))}
-                        {space.amenities.length > 3 && (
-                          <span className="text-[10px] text-stone-400 px-1 py-0.5">+{space.amenities.length - 3} more</span>
-                        )}
-                      </div>
-                    )}
-
-                    {paletteData && (
-                      <div className="mb-3 p-2.5 rounded-lg bg-stone-50/80 border border-stone-100">
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <Palette className="w-3 h-3 text-[#c4956a]" />
-                          <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Color Palette</span>
-                        </div>
-                        <div className="flex items-center gap-2.5">
-                          {paletteData.colors.slice(0, 4).map((c, i) => (
-                            <div key={i} className="flex flex-col items-center gap-0.5">
-                              <div className="w-6 h-6 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: c.hex }} />
-                              <span className="text-[7px] text-stone-400 font-medium max-w-[40px] truncate text-center">{c.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                        {paletteData.feel && (
-                          <p className="text-[10px] text-stone-400 italic mt-1.5 line-clamp-1">{paletteData.feel}</p>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="flex items-center gap-1.5 text-stone-700">
-                        <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
-                        <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
-                      </div>
-                      {space.targetProfession && (
-                        <span className="text-[11px] text-[#c4956a] font-medium">Ideal for {space.targetProfession}</span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+            ) : allSpaces.map((space) => (
+              <SpaceCard key={space.id} space={space} />
+            ))}
           </div>
 
           {!spacesLoading && allSpaces.length > 0 && (
