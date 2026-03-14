@@ -342,8 +342,7 @@ export default function AlignSpacesPage() {
       <section className="py-16 sm:py-24 px-6" data-testid="section-how-it-works">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How It Works</h2>
-            <p className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed">Align helps you define the experience you want to create, find the right space, and present your work professionally.</p>
+            <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
@@ -351,23 +350,23 @@ export default function AlignSpacesPage() {
               {
                 icon: Palette,
                 step: "01",
-                title: "Define\nYour Experience",
-                desc: "Use Align's visual tools to explore the kind of environment you want to create for your clients.",
-                detail: "Our photo builder helps you identify the setting, emotional tone, and client experience you want your workspace to express.",
+                title: "Discover\nWorkspaces",
+                desc: "Explore flexible workspaces designed for professionals — from therapy offices and studios to meeting rooms and creative spaces.",
+                detail: "Align helps you find environments that support the work you do and the experience you want to create.",
               },
               {
                 icon: Compass,
                 step: "02",
-                title: "Discover\nYour Space",
-                desc: "Browse flexible workspaces curated to match different professional needs and atmospheres.",
-                detail: "Align helps you find spaces that support the work you do and the experience you want to create.",
+                title: "Find\nthe Right Fit",
+                desc: "Use Align's visual tools to identify the atmosphere, setting, and client experience that matches your work.",
+                detail: "Our photo builder helps you choose spaces that align with the environment you want to create.",
               },
               {
                 icon: Camera,
                 step: "03",
                 title: "Present\nYour Work",
-                desc: "Show your work and environment clearly with professional headshots and space photography.",
-                detail: "Align helps professionals and space owners present their brand and workspace with clarity.",
+                desc: "Strengthen your professional presence with high-quality headshots and workspace photography.",
+                detail: "Align helps professionals and space owners present themselves and their environments with clarity.",
               },
             ].map((item, i) => (
               <div key={i} className="text-center flex flex-col items-center" data-testid={`step-${item.step}`}>
