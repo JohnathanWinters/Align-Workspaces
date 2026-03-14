@@ -23,24 +23,28 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
-  return session({
-    secret: process.env.SESSION_SECRET!,
-    store: sessionStore,
+  const sessionOpts: session.SessionOptions = {
+    secret: process.env.SESSION_SECRET || "local-dev-secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: !!process.env.REPL_ID,
       maxAge: sessionTtl,
     },
-  });
+  };
+
+  if (process.env.DATABASE_URL) {
+    const pgStore = connectPg(session);
+    sessionOpts.store = new pgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
+      ttl: sessionTtl,
+      tableName: "sessions",
+    });
+  }
+
+  return session(sessionOpts);
 }
 
 function updateUserSession(
@@ -68,6 +72,13 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+
+  if (!process.env.REPL_ID) {
+    console.log("REPL_ID not set — skipping Replit OIDC auth (local dev mode)");
+    passport.serializeUser((user: Express.User, cb) => cb(null, user));
+    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+    return;
+  }
 
   const config = await getOidcConfig();
 

@@ -349,4 +349,41 @@ export function registerAuthRoutes(app: Express): void {
       res.json({ ok: true });
     });
   });
+
+  // Local dev: quick login without OIDC or email
+  if (!process.env.REPL_ID) {
+    app.get("/api/login", async (req: any, res: Response) => {
+      const returnTo = (req.query.returnTo as string) || "/portal";
+      try {
+        const allUsers = await db.select().from(users);
+        res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dev Login</title>
+        <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#1a1a1a;color:#fff}
+        .card{background:#2a2a2a;border-radius:12px;padding:40px;max-width:400px;width:100%}
+        h1{font-size:20px;font-weight:600;margin:0 0 8px;font-family:Georgia,serif}
+        p{font-size:13px;color:#999;margin:0 0 24px}
+        .user{display:flex;align-items:center;gap:12px;padding:14px;border-radius:8px;border:1px solid #333;cursor:pointer;margin-bottom:8px;transition:all .15s}
+        .user:hover{background:#333;border-color:#555}
+        .name{font-weight:500;font-size:15px}.email{font-size:12px;color:#888}
+        .badge{font-size:10px;background:#444;padding:2px 8px;border-radius:4px;color:#ccc}</style></head>
+        <body><div class="card"><h1>Dev Login</h1><p>Select a user to sign in as (local dev only)</p>
+        ${allUsers.map(u => `<div class="user" onclick="login('${u.id}')"><div><div class="name">${u.firstName || 'Unknown'} ${u.lastName || ''}</div><div class="email">${u.email || 'no email'}</div></div></div>`).join('')}
+        <script>function login(id){fetch('/api/auth/dev-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id}),credentials:'include'}).then(r=>r.json()).then(()=>{window.location.href='${returnTo}'})}</script>
+        </div></body></html>`);
+      } catch (err: any) {
+        res.status(500).send("Failed to load users: " + err.message);
+      }
+    });
+
+    app.post("/api/auth/dev-login", async (req: any, res: Response) => {
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ message: "userId required" });
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      if (!user) return res.status(404).json({ message: "User not found" });
+      req.session.magicUserId = user.id;
+      req.session.save((err: any) => {
+        if (err) console.error("Session save error:", err);
+        res.json({ ok: true });
+      });
+    });
+  }
 }

@@ -1259,8 +1259,27 @@ export async function registerRoutes(
     }
   });
 
-  // Serve files from Object Storage
+  // Serve files from Object Storage (proxy to production when running locally)
   app.get(/^\/objects\/(.+)$/, async (req, res) => {
+    // In local dev without Replit sidecar, proxy to production
+    if (!process.env.REPL_ID) {
+      try {
+        const prodUrl = `https://alignworkspaces.com${req.path}`;
+        const response = await fetch(prodUrl);
+        if (!response.ok) {
+          return res.status(response.status).json({ error: "Object not found" });
+        }
+        const contentType = response.headers.get("content-type") || "application/octet-stream";
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        const buffer = Buffer.from(await response.arrayBuffer());
+        return res.send(buffer);
+      } catch (error) {
+        console.error("Error proxying object:", error);
+        return res.status(500).json({ error: "Failed to proxy object" });
+      }
+    }
+
     try {
       const objectPath = req.path;
       const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
