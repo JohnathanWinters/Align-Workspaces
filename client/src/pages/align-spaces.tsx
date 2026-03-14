@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, CalendarDays, Sparkles, MapPin, DollarSign, ArrowRight, Quote, Palette, Compass } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Quote, Palette, Check, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -19,6 +19,8 @@ interface Space {
   imageUrls: string[];
   targetProfession: string | null;
   amenities: string[];
+  colorPalette?: string | null;
+  verified?: boolean;
 }
 
 interface FeaturedPro {
@@ -28,6 +30,7 @@ interface FeaturedPro {
   location: string;
   slug: string;
   portraitImageUrl: string | null;
+  portraitCropPosition?: any;
   headline: string;
   quote: string;
 }
@@ -50,6 +53,25 @@ const testimonials = [
   },
 ];
 
+function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string; explanation?: string } | null {
+  if (!raw) return null;
+  try {
+    let parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) parsed = { colors: parsed };
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.colors)) return null;
+    const colors = parsed.colors
+      .filter((c: unknown): c is { hex: string; name: string } =>
+        c != null && typeof c === "object" && typeof (c as any).hex === "string" && typeof (c as any).name === "string"
+      );
+    if (colors.length === 0) return null;
+    return {
+      colors,
+      feel: typeof parsed.feel === "string" ? parsed.feel : undefined,
+      explanation: typeof parsed.explanation === "string" ? parsed.explanation : undefined,
+    };
+  } catch { return null; }
+}
+
 export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -63,7 +85,7 @@ export default function AlignSpacesPage() {
   });
 
   useEffect(() => {
-    document.title = "Align | Flexible Workspaces & Visual Branding for Professionals in Miami";
+    document.title = "Align | Professional Workspaces for Miami Professionals";
   }, []);
 
   useEffect(() => {
@@ -83,393 +105,307 @@ export default function AlignSpacesPage() {
     };
   }, [menuOpen]);
 
-  const featuredSpaces = (spaces || []).slice(0, 3);
+  const allSpaces = spaces || [];
 
   return (
-    <div className="bg-[#f5f0e8]" data-testid="section-split-hero">
-      <div className="relative min-h-[100dvh] flex flex-col bg-stone-900">
-        <nav className="absolute top-0 left-0 right-0 z-30 px-6 py-5 sm:py-6" style={{ backgroundColor: "rgba(13,10,6,0.6)" }}>
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
+    <div className="bg-[#f5f0e8] min-h-screen" data-testid="page-landing">
+      <nav className="sticky top-0 z-50 bg-stone-900/95 backdrop-blur-sm border-b border-stone-800/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="relative" data-menu-container>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-expanded={menuOpen}
+              aria-haspopup="true"
+              data-testid="button-main-menu"
+              className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-2 py-1.5 rounded-lg"
+              style={{ color: "#d4c4a8" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              Menu
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
+                >
+                  <button onClick={() => { setLocation("/browse"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-browse-menu">
+                    <Building2 className="w-4 h-4" />
+                    Browse Spaces
+                  </button>
+                  <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
+                    <Camera className="w-4 h-4" />
+                    Align Portraits
+                  </button>
+                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-menu">
+                    <User className="w-4 h-4" />
+                    Client Portal
+                  </button>
+                  <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-menu">
+                    <Star className="w-4 h-4" />
+                    Featured Pros
+                  </button>
+                  <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-menu">
+                    <Info className="w-4 h-4" />
+                    About Us
+                  </button>
+                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
+                    <Camera className="w-4 h-4" />
+                    Our Work
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <Link href="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5" data-testid="link-home-logo">
+            <img
+              src="/images/logo-align-cream.png"
+              alt="Align"
+              className="h-8 w-8 object-contain"
+            />
+            <span
+              className="uppercase hidden sm:block"
+              style={{ fontFamily: "'Playfair Display', serif", fontSize: "7px", letterSpacing: "3.5px", color: "#f0e6d0" }}
+            >
+              Align
+            </span>
+          </Link>
+
+          <UserIndicator variant="light" />
+        </div>
+      </nav>
+
+      <section className="px-4 sm:px-6 pt-8 sm:pt-12 pb-6" data-testid="section-hero-header">
+        <div className="max-w-6xl mx-auto text-center">
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.05 }}
-            className="absolute left-0 right-0 top-0 bottom-0 flex items-center justify-center z-10 pointer-events-none"
+            transition={{ duration: 0.5 }}
+            className="font-serif text-3xl sm:text-4xl md:text-5xl text-stone-900 tracking-tight leading-tight"
           >
-            <Link href="/" className="flex flex-col items-center gap-0.5 pointer-events-auto" data-testid="link-home-logo">
-              <img
-                src="/images/logo-align-cream.png"
-                alt="Align"
-                className="h-9 w-9 object-contain"
-              />
-              <span
-                className="uppercase"
-                style={{ fontFamily: "'Playfair Display', serif", fontSize: "8px", letterSpacing: "4px", color: "#f0e6d0" }}
-              >
-                Align
-              </span>
+            Find Your Workspace <span className="italic font-normal">in Miami</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
+          >
+            Professional spaces for therapists, coaches, creatives, and small business owners — ready to book by the hour.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mt-5"
+          >
+            <Link
+              href="/browse"
+              data-testid="button-browse-all"
+              className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+            >
+              <Search className="w-4 h-4" />
+              Browse All Spaces
             </Link>
           </motion.div>
-
-          <div className="max-w-6xl mx-auto flex items-center justify-between relative">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="relative"
-              data-menu-container
-            >
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-expanded={menuOpen}
-                aria-haspopup="true"
-                data-testid="button-split-menu"
-                className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-3 py-2 rounded-lg"
-                style={{ color: "#d4c4a8" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
-              >
-                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                Menu
-              </button>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute left-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
-                  >
-                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-split">
-                      <Camera className="w-4 h-4" />
-                      Align Portraits
-                    </button>
-                    <button onClick={() => { setLocation("/browse"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-split">
-                      <Building2 className="w-4 h-4" />
-                      Browse Spaces
-                    </button>
-                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-split">
-                      <User className="w-4 h-4" />
-                      Client Portal
-                    </button>
-                    <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-split">
-                      <Star className="w-4 h-4" />
-                      Featured Pros
-                    </button>
-                    <button onClick={() => { setLocation("/about"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-split">
-                      <Info className="w-4 h-4" />
-                      About Us
-                    </button>
-                    <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-split">
-                      <Camera className="w-4 h-4" />
-                      Our Work
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <UserIndicator variant="light" />
-          </div>
-        </nav>
-
-        <h1 className="sr-only">Align — Professional Workspaces & Visual Branding in Miami</h1>
-        <div className="flex-1 flex flex-col md:flex-row min-h-[100dvh] relative">
-          <div
-            className="hidden md:block absolute top-0 bottom-0 pointer-events-none"
-            style={{ left: "50%", transform: "translateX(-50%)", width: "2px", backgroundColor: "#c9a96e", zIndex: 10 }}
-          />
-          <div
-            className="hidden md:block absolute pointer-events-none whitespace-nowrap"
-            style={{ left: "50%", top: "20%", transform: "translateX(-50%)", zIndex: 11, fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "4px", color: "#c9a96e", textTransform: "uppercase" }}
-          >
-            Your Presence &middot; Your Space
-          </div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            role="link"
-            tabIndex={0}
-            onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLocation("/portraits/builder"); } }}
-            className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-end md:items-center overflow-hidden group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]/50 focus-visible:ring-inset"
-            onClick={() => setLocation("/portraits/builder")}
-            aria-label="Portraits — Begin Your Session"
-            data-testid="panel-portraits"
-          >
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-[1.03]"
-              style={{
-                backgroundImage: "url(/images/hero-bg-bright.webp)",
-                backgroundPosition: "43% 25%",
-              }}
-            />
-            <div className="absolute inset-0" style={{ backgroundColor: "#1a1208", opacity: 0.65 }} />
-
-            <div className="relative z-10 px-8 sm:px-10 md:px-12 lg:px-16 pb-20 md:pb-0 w-full max-w-lg md:text-left text-center md:mx-0 mx-auto">
-              <motion.h2
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.25 }}
-                className="font-serif text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.1] tracking-tight"
-                style={{ color: "#f0e6d0" }}
-              >
-                Your Presence Is
-                <br />
-                <span className="italic font-normal">Your First</span>
-                <br />
-                Impression
-              </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="text-sm sm:text-base max-w-sm leading-relaxed mt-4 font-normal md:mx-0 mx-auto"
-                style={{ color: "#d4c4a8" }}
-              >
-                Create a professional image that reflects your work, your character, and the experience you want clients to feel.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.55 }}
-                className="mt-7 flex flex-col sm:flex-row items-center md:items-start gap-3"
-              >
-                <Link
-                  href="/portraits/builder"
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  data-testid="button-begin-session"
-                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border bg-transparent"
-                  style={{ color: "#c9a96e", borderColor: "#c9a96e", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-                >
-                  Begin Your Session
-                </Link>
-              </motion.div>
-            </div>
-
-            <div className="md:hidden absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
-              <motion.div
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <ChevronDown className="w-5 h-5" style={{ color: "#c9a96e", opacity: 0.5 }} />
-              </motion.div>
-            </div>
-          </motion.div>
-
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 pointer-events-none" style={{ width: "2px", backgroundColor: "#c9a96e" }} />
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.25 }}
-            role="link"
-            tabIndex={0}
-            onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLocation("/browse"); } }}
-            className="relative flex-1 min-h-[50dvh] md:min-h-[100dvh] flex items-start md:items-center justify-end overflow-hidden group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a96e]/50 focus-visible:ring-inset"
-            onClick={() => setLocation("/browse")}
-            aria-label="Spaces — Explore Workspaces"
-            data-testid="panel-spaces"
-          >
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-[1.03]"
-              style={{
-                backgroundImage: "url(/images/spaces-hero.png)",
-                backgroundPosition: "center 40%",
-              }}
-            />
-            <div className="absolute inset-0" style={{ backgroundColor: "#1a1208", opacity: 0.65 }} />
-
-            <div className="relative z-10 px-8 sm:px-10 md:px-12 lg:px-16 pt-20 md:pt-0 w-full max-w-lg md:text-right text-center md:ml-auto md:mx-0 mx-auto">
-              <motion.h2
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="font-serif text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl leading-[1.1] tracking-tight"
-                style={{ color: "#f0e6d0" }}
-              >
-                Where Your Work
-                <br />
-                <span className="italic font-normal">and Space</span> Align
-              </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.55 }}
-                className="text-sm sm:text-base max-w-sm leading-relaxed mt-4 font-normal md:ml-auto md:mx-0 mx-auto"
-                style={{ color: "#d4c4a8" }}
-              >
-                Find professional workspaces across Miami that match the experience you want to create.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                className="mt-7 flex flex-col sm:flex-row items-center md:justify-end gap-3"
-              >
-                <Link
-                  href="/browse"
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  data-testid="button-explore-spaces"
-                  className="inline-flex items-center gap-2 uppercase px-7 py-3 transition-all duration-300 border bg-transparent"
-                  style={{ color: "#c9a96e", borderColor: "#c9a96e", fontFamily: "'Playfair Display', serif", fontSize: "11px", letterSpacing: "2px" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-                >
-                  Explore Spaces
-                </Link>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          <div className="hidden md:flex absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
-            <div className="flex-1 px-12 py-5 flex justify-start">
-              <span className="text-[10px] tracking-[0.3em] uppercase font-medium" style={{ color: "#c9a96e", opacity: 0.5 }}>Portraits</span>
-            </div>
-            <div className="flex-1 px-12 py-5 flex justify-end">
-              <span className="text-[10px] tracking-[0.3em] uppercase font-medium" style={{ color: "#c9a96e", opacity: 0.5 }}>Spaces</span>
-            </div>
-          </div>
         </div>
-      </div>
+      </section>
 
-      <section className="py-16 sm:py-24 px-6" data-testid="section-how-it-works">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
+      <section className="px-4 sm:px-6 pb-12 sm:pb-16" data-testid="section-spaces-grid">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {spacesLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
+                  <div className="aspect-[4/3] bg-stone-200" />
+                  <div className="p-5 space-y-3">
+                    <div className="h-5 bg-stone-200 rounded w-3/4" />
+                    <div className="h-4 bg-stone-200 rounded w-1/2" />
+                    <div className="h-4 bg-stone-200 rounded w-1/3" />
+                  </div>
+                </div>
+              ))
+            ) : allSpaces.map((space) => {
+              const paletteData = parseColorPalette(space.colorPalette);
+              return (
+                <Link
+                  key={space.id}
+                  href={`/spaces/${space.slug}`}
+                  className="group block rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300"
+                  data-testid={`space-card-${space.id}`}
+                >
+                  <div className="aspect-[4/3] overflow-hidden relative">
+                    <img
+                      src={space.imageUrls?.[0] || "/images/spaces-hero.png"}
+                      alt={space.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    {space.verified && (
+                      <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 flex items-center gap-1">
+                        <Check className="w-3 h-3 text-[#c4956a]" />
+                        <span className="text-[10px] font-semibold text-stone-700">Verified</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 sm:p-5">
+                    <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1 group-hover:text-[#c4956a] transition-colors">{space.name}</h3>
+                    <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-2">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{space.neighborhood || space.address}</span>
+                    </div>
+
+                    {space.amenities && space.amenities.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {space.amenities.slice(0, 3).map((amenity, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-[10px] bg-stone-50 text-stone-500 px-1.5 py-0.5 rounded-full">
+                            <Check className="w-2.5 h-2.5 text-[#c4956a]" />
+                            {amenity}
+                          </span>
+                        ))}
+                        {space.amenities.length > 3 && (
+                          <span className="text-[10px] text-stone-400 px-1 py-0.5">+{space.amenities.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
+
+                    {paletteData && (
+                      <div className="mb-3 p-2.5 rounded-lg bg-stone-50/80 border border-stone-100">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Palette className="w-3 h-3 text-[#c4956a]" />
+                          <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Color Palette</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          {paletteData.colors.slice(0, 4).map((c, i) => (
+                            <div key={i} className="flex flex-col items-center gap-0.5">
+                              <div className="w-6 h-6 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: c.hex }} />
+                              <span className="text-[7px] text-stone-400 font-medium max-w-[40px] truncate text-center">{c.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {paletteData.feel && (
+                          <p className="text-[10px] text-stone-400 italic mt-1.5 line-clamp-1">{paletteData.feel}</p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-1.5 text-stone-700">
+                        <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
+                        <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
+                      </div>
+                      {space.targetProfession && (
+                        <span className="text-[11px] text-[#c4956a] font-medium">Ideal for {space.targetProfession}</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
+          {!spacesLoading && allSpaces.length > 0 && (
+            <div className="text-center mt-8">
+              <Link
+                href="/browse"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
+                data-testid="link-browse-all-bottom"
+              >
+                Browse all spaces with map
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-how-it-works">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">How Align Works</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
             {[
               {
-                icon: Palette,
                 step: "01",
-                title: "Discover\nWorkspaces",
+                title: "Discover Workspaces",
                 desc: "Explore flexible workspaces designed for professionals — from therapy offices and studios to meeting rooms and creative spaces.",
                 detail: "Align helps you find environments that support the work you do and the experience you want to create.",
               },
               {
-                icon: Compass,
                 step: "02",
-                title: "Find\nthe Right Fit",
+                title: "Find the Right Fit",
                 desc: "Use Align's visual tools to identify the atmosphere, setting, and client experience that matches your work.",
                 detail: "Our photo builder helps you choose spaces that align with the environment you want to create.",
               },
               {
-                icon: Camera,
                 step: "03",
-                title: "Present\nYour Work",
-                desc: "Strengthen your professional presence with high-quality headshots and workspace photography.",
-                detail: "Align helps professionals and space owners present themselves and their environments with clarity.",
+                title: "Book & Get Started",
+                desc: "Reserve your space by the hour with transparent pricing, instant confirmation, and calendar integration.",
+                detail: "Show up ready to work in a space that reflects your professionalism.",
               },
             ].map((item, i) => (
               <div key={i} className="text-center flex flex-col items-center" data-testid={`step-${item.step}`}>
-                <div className="w-14 h-14 rounded-2xl bg-stone-900 flex items-center justify-center mb-5">
-                  <item.icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold">{item.step}</span>
-                <h3 className="font-serif text-xl text-stone-900 mt-1.5 mb-3 min-h-[56px] flex items-center justify-center whitespace-pre-line">{item.title}</h3>
-                <p className="text-stone-600 text-sm leading-relaxed max-w-[260px] min-h-[60px]">{item.desc}</p>
-                <div className="w-8 h-px bg-stone-300 my-4" />
-                <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic min-h-[60px]">{item.detail}</p>
+                <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-2">{item.step}</span>
+                <h3 className="font-serif text-lg text-stone-900 mb-3">{item.title}</h3>
+                <p className="text-stone-600 text-sm leading-relaxed max-w-[260px]">{item.desc}</p>
+                <div className="w-8 h-px bg-stone-300 my-3" />
+                <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic">{item.detail}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {(spacesLoading || featuredSpaces.length > 0) && (
-        <section className="py-16 sm:py-24 px-6 bg-white/70" data-testid="section-featured-spaces">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-end justify-between mb-10 sm:mb-12">
-              <div>
-                <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">Featured Spaces</h2>
-                <p className="text-stone-500 text-sm sm:text-base mt-2">Professional environments ready for your next session</p>
-              </div>
-              <Link
-                href="/browse"
-                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
-                data-testid="link-browse-all"
-              >
-                View all spaces
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-portraits-feature">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-stone-900 rounded-2xl overflow-hidden flex flex-col md:flex-row">
+            <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden">
+              <img
+                src="/images/hero-bg-bright.webp"
+                alt="Professional portrait session"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "43% 25%" }}
+              />
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {spacesLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="rounded-xl overflow-hidden bg-[#faf6f1] border border-stone-100 animate-pulse">
-                    <div className="aspect-[4/3] bg-stone-200" />
-                    <div className="p-5 space-y-3">
-                      <div className="h-5 bg-stone-200 rounded w-3/4" />
-                      <div className="h-4 bg-stone-200 rounded w-1/2" />
-                      <div className="h-4 bg-stone-200 rounded w-1/3" />
-                    </div>
-                  </div>
-                ))
-              ) : featuredSpaces.map((space) => (
-                <Link
-                  key={space.id}
-                  href={`/spaces/${space.slug}`}
-                  className="group block rounded-xl overflow-hidden bg-[#faf6f1] border border-stone-100 hover:shadow-lg transition-all duration-300"
-                  data-testid={`featured-space-${space.id}`}
-                >
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={space.imageUrls?.[0] || "/images/spaces-hero.png"}
-                      alt={space.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1">{space.name}</h3>
-                    <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-3">
-                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>{space.neighborhood || space.address}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-stone-700">
-                        <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
-                        <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
-                      </div>
-                      {space.targetProfession && (
-                        <span className="text-xs text-[#c4956a] font-medium">Ideal for {space.targetProfession}</span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-
-            <div className="sm:hidden text-center mt-8">
+            <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
+              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Feature</span>
+              <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-4">
+                Align Portraits
+              </h2>
+              <p className="text-[#d4c4a8] text-sm leading-relaxed mb-6 max-w-md">
+                Strengthen your professional presence with a personalized portrait session. Our guided builder helps you define your look, setting, and style — then we bring it to life.
+              </p>
               <Link
-                href="/browse"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
-                data-testid="link-browse-all-mobile"
+                href="/portraits/builder"
+                data-testid="button-portraits-cta"
+                className="inline-flex items-center gap-2 self-start uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
+                style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
-                View all spaces
+                Begin Your Session
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {(featuredPros || []).length > 0 && (
-        <section className="py-16 sm:py-24 px-6" data-testid="section-featured-pros">
+        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-featured-pros">
           <div className="max-w-5xl mx-auto">
-            <div className="flex items-end justify-between mb-10 sm:mb-12">
+            <div className="flex items-end justify-between mb-8 sm:mb-10">
               <div>
-                <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">Featured Professionals</h2>
-                <p className="text-stone-500 text-sm sm:text-base mt-2">Meet the Miami professionals who trust Align</p>
+                <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Featured Professionals</h2>
+                <p className="text-stone-500 text-sm mt-2">Meet the Miami professionals who trust Align</p>
               </div>
               <Link
                 href="/featured"
@@ -481,7 +417,7 @@ export default function AlignSpacesPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {(featuredPros || []).slice(0, 3).map((pro) => (
                 <Link
                   key={pro.id}
@@ -526,7 +462,7 @@ export default function AlignSpacesPage() {
               ))}
             </div>
 
-            <div className="sm:hidden text-center mt-8">
+            <div className="sm:hidden text-center mt-6">
               <Link
                 href="/featured"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
@@ -540,65 +476,37 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      <section className="py-16 sm:py-24 px-6" data-testid="section-testimonials">
+      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-testimonials">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">Trusted by Miami Professionals</h2>
-            <p className="text-stone-500 text-sm sm:text-base mt-3 max-w-md mx-auto">Join therapists, coaches, and creators who use Align every day</p>
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Trusted by Miami Professionals</h2>
+            <p className="text-stone-500 text-sm mt-2 max-w-md mx-auto">Join therapists, coaches, and creators who use Align every day</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
             {testimonials.map((t, i) => (
-              <div
+              <motion.div
                 key={i}
-                className="bg-white rounded-xl p-6 sm:p-7 border border-stone-100 shadow-sm"
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="bg-white rounded-xl border border-stone-100 p-6"
                 data-testid={`testimonial-${i}`}
               >
-                <Quote className="w-6 h-6 text-[#c4956a]/40 mb-4" />
-                <p className="text-stone-600 text-sm leading-relaxed mb-5 italic">"{t.quote}"</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
-                    <User className="w-4 h-4 text-stone-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-stone-700">{t.name}</p>
-                    <p className="text-[10px] text-stone-400">{t.location}</p>
-                  </div>
+                <Quote className="w-5 h-5 text-[#c4956a] mb-3" />
+                <p className="text-stone-600 text-sm leading-relaxed mb-4 italic">"{t.quote}"</p>
+                <div>
+                  <p className="text-stone-900 text-sm font-semibold">{t.name}</p>
+                  <p className="text-stone-400 text-xs mt-0.5">{t.location}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 sm:py-20 px-6 bg-stone-900" data-testid="section-cta-bottom">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-serif text-3xl sm:text-4xl text-white tracking-tight leading-tight">
-            Ready to find <span className="italic font-normal">your</span> space?
-          </h2>
-          <p className="text-white/70 text-sm sm:text-base mt-4 max-w-md mx-auto leading-relaxed">
-            Whether you need a space for your practice or a portrait that makes the right impression — Align has you covered.
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/browse"
-              data-testid="button-cta-spaces"
-              className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-white text-black px-8 py-3.5 rounded-full hover:bg-white/90 transition-all duration-300 font-medium"
-            >
-              Explore Spaces
-            </Link>
-            <Link
-              href="/portraits/builder"
-              data-testid="button-cta-portraits"
-              className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white px-6 py-2.5 rounded-full border border-white/40 hover:border-white/80 hover:bg-white/10 transition-all duration-300"
-            >
-              Design Your Photoshoot
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <SiteFooter variant="light" />
+      <SiteFooter />
     </div>
   );
 }
