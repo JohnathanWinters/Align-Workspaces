@@ -39,12 +39,12 @@ const founderSections = [
 export default function PhotographersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
-    document.title = "About Armando Ramirez | Miami Portrait Photographer | Align";
+    document.title = "Our Vision | Align Workspaces";
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
+    <div className="min-h-screen bg-[#faf8f5]">
+      <header className="sticky top-0 z-50 bg-[#faf8f5]/95 backdrop-blur-sm border-b border-stone-200/60">
         <div className="px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="button-back-home-photographers">
@@ -111,106 +111,141 @@ export default function PhotographersPage() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-12 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center mb-10 sm:mb-14"
-        >
-          <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
-            Our Vision
-          </p>
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl mb-4" data-testid="text-photographers-title">
-            Where Your Work and Space Align
-          </h1>
-        </motion.div>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f0ebe4] via-[#faf8f5] to-[#faf8f5]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-16 bg-gradient-to-b from-transparent to-[#c9a96e]/30" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="max-w-2xl mx-auto mb-16 sm:mb-20 space-y-6"
-          data-testid="text-vision-statement"
-        >
-          <p className="text-foreground/80 text-base sm:text-lg leading-relaxed">
-            Align was created from a simple idea — the spaces where meaningful work happens should reflect the people doing it.
-          </p>
-          <p className="text-foreground/80 text-base sm:text-lg leading-relaxed">
-            Many small business professionals rely on trust, presence, and connection in the room, yet the environments available to them often feel disconnected from the work they offer.
-          </p>
-          <p className="text-foreground/80 text-base sm:text-lg leading-relaxed">
-            Align exists to bring those pieces together — helping professionals align their workspace, their image, and the experience they create for their clients.
-          </p>
-        </motion.div>
+        <div className="relative max-w-4xl mx-auto px-5 sm:px-8 pt-16 sm:pt-24 pb-12 sm:pb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <div className="inline-flex items-center gap-2 mb-5">
+              <div className="w-8 h-px bg-[#c9a96e]/40" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-[#c4956a] font-semibold">
+                Our Vision
+              </p>
+              <div className="w-8 h-px bg-[#c9a96e]/40" />
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-[2.75rem] leading-tight text-[#2a2a2a]" data-testid="text-photographers-title">
+              Where Your Work<br className="hidden sm:block" /> and Space Align
+            </h1>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-          className="text-center mb-10"
-        >
-          <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
-            Behind the Vision
-          </p>
-          <h2 className="font-serif text-2xl sm:text-3xl" data-testid="text-team-heading">
-            Meet the Founder
-          </h2>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.3 }}
-          className="max-w-3xl mx-auto"
-        >
-          <Card className="overflow-visible p-0" data-testid="card-photographer-page-0">
-            <div className="md:flex">
-              <div className="md:w-2/5 flex-shrink-0">
-                <div className="aspect-square md:aspect-auto md:h-full overflow-hidden rounded-t-md md:rounded-t-none md:rounded-l-md">
-                  <img
-                    src={armandoPhoto}
-                    alt="Armando Ramirez Romero"
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                    data-testid="img-photographer-page-0"
-                  />
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12 }}
+            className="max-w-2xl mx-auto"
+            data-testid="text-vision-statement"
+          >
+            <div className="relative">
+              <div className="absolute -left-4 sm:-left-6 top-1 bottom-1 w-px bg-gradient-to-b from-[#c9a96e]/50 via-[#c9a96e]/20 to-transparent" />
+              <div className="space-y-5 pl-2 sm:pl-4">
+                <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
+                  Align was created from a simple idea — the spaces where meaningful work happens should reflect the people doing it.
+                </p>
+                <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
+                  Many small business professionals rely on trust, presence, and connection in the room, yet the environments available to them often feel disconnected from the work they offer.
+                </p>
+                <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.75]">
+                  Align exists to bring those pieces together — helping professionals align their workspace, their image, and the experience they create for their clients.
+                </p>
               </div>
-              <div className="p-6 sm:p-8 md:w-3/5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground tracking-[0.1em] uppercase font-medium" data-testid="text-photographer-page-role-0">
-                    Founder
-                  </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="relative">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <div className="flex items-center gap-4 py-4">
+            <div className="flex-1 h-px bg-stone-200/80" />
+            <Sparkles className="w-3.5 h-3.5 text-[#c9a96e]/50" />
+            <div className="flex-1 h-px bg-stone-200/80" />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="text-center mb-10 sm:mb-12"
+          >
+            <div className="inline-flex items-center gap-2 mb-4">
+              <div className="w-6 h-px bg-stone-300/60" />
+              <p className="text-[11px] tracking-[0.2em] uppercase text-stone-400 font-medium">
+                Behind the Vision
+              </p>
+              <div className="w-6 h-px bg-stone-300/60" />
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]" data-testid="text-team-heading">
+              Meet the Founder
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="max-w-3xl mx-auto"
+          >
+            <div className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid="card-photographer-page-0">
+              <div className="md:flex">
+                <div className="md:w-[38%] flex-shrink-0">
+                  <div className="aspect-[3/4] sm:aspect-square md:aspect-auto md:h-full overflow-hidden">
+                    <img
+                      src={armandoPhoto}
+                      alt="Armando Ramirez Romero"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      data-testid="img-photographer-page-0"
+                    />
+                  </div>
                 </div>
-                <h2 className="font-serif text-2xl mb-5" data-testid="text-photographer-page-name-0">
-                  Armando Ramirez Romero
-                </h2>
-                <div className="space-y-5" data-testid="text-photographer-page-bio-0">
-                  {founderSections.map((section, i) => (
-                    <div key={i}>
-                      {section.title && (
-                        <h3 className="text-xs uppercase tracking-[0.15em] text-[#c4956a] font-semibold mb-2">
-                          {section.title}
-                        </h3>
-                      )}
-                      <div className="space-y-2.5">
-                        {section.paragraphs.map((p, j) => (
-                          <p key={j} className="text-sm text-muted-foreground leading-relaxed">
-                            {p}
-                          </p>
-                        ))}
+                <div className="p-6 sm:p-8 md:p-8 lg:p-10 md:w-[62%] md:flex md:flex-col md:justify-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#c9a96e]" />
+                    <p className="text-[11px] text-stone-400 tracking-[0.15em] uppercase font-medium" data-testid="text-photographer-page-role-0">
+                      Founder
+                    </p>
+                  </div>
+                  <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-6" data-testid="text-photographer-page-name-0">
+                    Armando Ramirez Romero
+                  </h3>
+                  <div className="space-y-5" data-testid="text-photographer-page-bio-0">
+                    {founderSections.map((section, i) => (
+                      <div key={i}>
+                        {section.title && (
+                          <div className="flex items-center gap-2.5 mb-2">
+                            <div className="w-4 h-px bg-[#c9a96e]/50" />
+                            <h4 className="text-[10px] uppercase tracking-[0.18em] text-[#c4956a] font-semibold">
+                              {section.title}
+                            </h4>
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          {section.paragraphs.map((p, j) => (
+                            <p key={j} className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                              {p}
+                            </p>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </Card>
-        </motion.div>
-      </div>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 }
