@@ -2950,9 +2950,9 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                       return sp ? <span className="bg-blue-100/90 text-blue-700 text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{sp.name}</span> : null;
                     })()}
                     {photo.environments?.slice(0, 2).map(e => (
-                      <span key={e} className="bg-white/90 text-[10px] px-1.5 py-0.5 rounded font-medium">{envLabels[e] || e}</span>
+                      <span key={e} className="bg-white/90 text-[10px] px-1.5 py-0.5 rounded font-medium">{spaceEnvLabels[e] || envLabels[e] || e}</span>
                     ))}
-                    {photo.brandMessages?.slice(0, 1).map(b => (
+                    {(photo.category || "people") === "people" && photo.brandMessages?.slice(0, 1).map(b => (
                       <span key={b} className="bg-amber-100/90 text-[10px] px-1.5 py-0.5 rounded font-medium">{brandLabels[b] || b}</span>
                     ))}
                   </div>
