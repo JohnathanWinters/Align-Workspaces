@@ -315,6 +315,26 @@ export default function PortfolioPage() {
           </p>
         </motion.div>
 
+        {activeCategory === "people" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="max-w-xl mx-auto text-center mb-10 px-4"
+            data-testid="portfolio-testimonial"
+          >
+            <blockquote className="relative">
+              <span className="absolute -top-4 -left-2 text-[#c9a96e]/30 text-5xl font-serif leading-none select-none" aria-hidden="true">"</span>
+              <p className="text-[15px] sm:text-base text-stone-600 italic leading-relaxed pl-4">
+                I was nervous about getting professional photos done, but the whole process felt like a conversation, not a photoshoot. When I saw the final images I thought, that's actually how I want people to see me.
+              </p>
+              <footer className="mt-3 text-xs text-stone-400 tracking-wide uppercase">
+                Edith C. · Therapist, Miami
+              </footer>
+            </blockquote>
+          </motion.div>
+        )}
+
         <div className="flex justify-center mb-10">
           <div className="inline-flex bg-stone-100 rounded-full p-1 gap-1" data-testid="toggle-portfolio-category">
             <button
