@@ -56,11 +56,17 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
           </a>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <img src="/images/logo-align-mark.png" alt="Align" className="w-7 h-7 rounded" />
+        <div className="flex flex-col items-center gap-1 mb-2">
+          <img src="/images/logo-align-dark.png" alt="Align" className="w-10 h-10 object-contain" />
+          <span
+            className="uppercase"
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: "8px", letterSpacing: "4px", color: "#78716c" }}
+          >
+            Align
+          </span>
         </div>
-        <p className={`text-center text-xs ${textColor}`} data-testid="text-footer-copyright">
-          &copy; 2026 Align
+        <p className={`text-center text-[10px] ${textColor}`} data-testid="text-footer-copyright">
+          &copy; 2026 Align Workspaces
         </p>
       </div>
     </footer>
