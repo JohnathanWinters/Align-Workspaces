@@ -1731,7 +1731,6 @@ function PortalContent() {
             <span className="hidden sm:inline">Back</span>
           </button>
           <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">
-            <img src="/images/logo-align-mark.png" alt="Align" className="w-6 h-6 rounded" />
             <span className="hidden sm:inline">Client Portal</span>
           </span>
           <div className="flex items-center gap-2">
