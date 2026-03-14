@@ -446,6 +446,44 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/portfolio/:id/before-image", isAdmin, upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const existing = await storage.getPortfolioPhoto(req.params.id);
+      if (existing && (existing as any).beforeImageUrl && (existing as any).beforeImageUrl.startsWith("/objects/uploads/")) {
+        try {
+          const oldKey = (existing as any).beforeImageUrl.replace("/objects/", "");
+          const oldPrivateDir = objectStorageService.getPrivateObjectDir();
+          const oldFullPath = `${oldPrivateDir}/${oldKey}`;
+          const oldParts = oldFullPath.startsWith("/") ? oldFullPath.slice(1).split("/") : oldFullPath.split("/");
+          const oldBucket = objectStorageClient.bucket(oldParts[0]);
+          await oldBucket.file(oldParts.slice(1).join("/")).delete();
+        } catch {}
+      }
+      const objectKey = `uploads/before-${randomUUID()}.webp`;
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const fullPath = `${privateDir}/${objectKey}`;
+      const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
+      const bucketName = parts[0];
+      const objectName = parts.slice(1).join("/");
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      const rawBuffer = fs.readFileSync(req.file.path);
+      const processedBuffer = await sharp(rawBuffer)
+        .rotate()
+        .resize({ width: 1200, height: 1600, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 85, effort: 4 })
+        .toBuffer();
+      await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
+      fs.unlinkSync(req.file.path);
+      const beforeImageUrl = `/objects/${objectKey}`;
+      const photo = await storage.updatePortfolioPhoto(req.params.id, { beforeImageUrl } as any);
+      res.json(photo);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/admin/portfolio/reorder", isAdmin, async (req, res) => {
     try {
       const { orderedIds } = req.body;
@@ -461,7 +499,7 @@ export async function registerRoutes(
 
   app.patch("/api/admin/portfolio/:id", isAdmin, async (req, res) => {
     try {
-      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category, cropPosition, subjectName, subjectProfession, subjectBio } = req.body;
+      const { environments, brandMessages, emotionalImpacts, colorPalette, locationSpaceId, category, cropPosition, subjectName, subjectProfession, subjectBio, beforeImageUrl } = req.body;
       const updates: any = {
         environments,
         brandMessages,
@@ -471,6 +509,7 @@ export async function registerRoutes(
         subjectName: subjectName || null,
         subjectProfession: subjectProfession || null,
         subjectBio: subjectBio || null,
+        beforeImageUrl: beforeImageUrl || null,
       };
       if (category) updates.category = category;
       if (cropPosition && typeof cropPosition === "object" && typeof cropPosition.x === "number" && typeof cropPosition.y === "number") {

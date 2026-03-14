@@ -56,6 +56,7 @@ export const portfolioPhotos = pgTable("portfolio_photos", {
   subjectName: text("subject_name"),
   subjectProfession: text("subject_profession"),
   subjectBio: text("subject_bio"),
+  beforeImageUrl: text("before_image_url"),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });

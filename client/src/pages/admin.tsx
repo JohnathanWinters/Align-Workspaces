@@ -2661,9 +2661,10 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     subjectName: string;
     subjectProfession: string;
     subjectBio: string;
+    beforeImageUrl: string | null;
     category: string;
     cropPosition: { x: number; y: number; zoom: number };
-  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, subjectName: "", subjectProfession: "", subjectBio: "", category: "people", cropPosition: { x: 50, y: 50, zoom: 1 } });
+  }>({ environments: [], brandMessages: [], emotionalImpacts: [], colorPalette: [], locationSpaceId: null, subjectName: "", subjectProfession: "", subjectBio: "", beforeImageUrl: null, category: "people", cropPosition: { x: 50, y: 50, zoom: 1 } });
   const [newColorHex, setNewColorHex] = useState("#8B7355");
   const [newColorKeyword, setNewColorKeyword] = useState("");
   const [eyedropperOpen, setEyedropperOpen] = useState(false);
@@ -2738,6 +2739,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       subjectName: (photo as any).subjectName || "",
       subjectProfession: (photo as any).subjectProfession || "",
       subjectBio: (photo as any).subjectBio || "",
+      beforeImageUrl: (photo as any).beforeImageUrl || null,
       category: photo.category || "people",
       cropPosition: { x: crop.x, y: crop.y, zoom: crop.zoom ?? 1 },
     });
@@ -3158,6 +3160,44 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                       placeholder="e.g. A therapist whose clients need to feel at ease the moment they walk in."
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-400"
                       data-testid="input-subject-bio"
+                    />
+                  </div>
+                )}
+                {tagForm.category === "people" && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-1 block">Before Photo</Label>
+                    <p className="text-xs text-gray-400 mb-2">Upload their old headshot or selfie for the before/after comparison</p>
+                    {tagForm.beforeImageUrl && (
+                      <div className="flex items-center gap-3 mb-2">
+                        <img src={tagForm.beforeImageUrl} alt="Before" className="w-16 h-16 rounded object-cover border border-gray-200" />
+                        <Button variant="ghost" size="sm" onClick={() => setTagForm(prev => ({ ...prev, beforeImageUrl: null }))} data-testid="button-remove-before-image">
+                          <X className="w-4 h-4 mr-1" /> Remove
+                        </Button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="text-sm"
+                      data-testid="input-before-image"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !editingPhoto) return;
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        try {
+                          const res = await adminFetch(`/api/admin/portfolio/${editingPhoto.id}/before-image`, { method: "POST", body: formData });
+                          if (res.ok) {
+                            const updated = await res.json();
+                            setTagForm(prev => ({ ...prev, beforeImageUrl: updated.beforeImageUrl }));
+                            setPhotos(prev => prev.map(p => p.id === updated.id ? updated : p));
+                            toast({ title: "Before photo uploaded" });
+                          }
+                        } catch {
+                          toast({ title: "Upload failed", variant: "destructive" });
+                        }
+                        e.target.value = "";
+                      }}
                     />
                   </div>
                 )}

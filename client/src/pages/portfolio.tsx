@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight } from "lucide-react";
+import { ArrowLeft, Palette, Eye, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { PortfolioPhoto, ColorSwatch } from "@shared/schema";
 import { UserIndicator } from "@/components/user-indicator";
 import { environments, brandMessages, emotionalImpacts } from "@/lib/configurator-data";
@@ -34,6 +34,78 @@ function PhotoTags({ photo }: { photo: PortfolioPhoto }) {
           <span key={i} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm font-medium">{tag}</span>
         ))}
       </div>
+    </div>
+  );
+}
+
+function BeforeAfterSlider({ photo }: { photo: PortfolioPhoto }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [sliderPos, setSliderPos] = useState(50);
+  const isDragging = useRef(false);
+  const beforeUrl = (photo as any).beforeImageUrl as string;
+  const afterUrl = photo.imageUrl;
+  const subjectName = (photo as any).subjectName as string | null;
+  const subjectProfession = (photo as any).subjectProfession as string | null;
+
+  const updatePosition = useCallback((clientX: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    setSliderPos((x / rect.width) * 100);
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    isDragging.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    updatePosition(e.clientX);
+  }, [updatePosition]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging.current) return;
+    updatePosition(e.clientX);
+  }, [updatePosition]);
+
+  const handlePointerUp = useCallback(() => {
+    isDragging.current = false;
+  }, []);
+
+  return (
+    <div className="flex-shrink-0 w-[280px] sm:w-[320px]">
+      <div
+        ref={containerRef}
+        className="relative aspect-[3/4] rounded-xl overflow-hidden cursor-col-resize select-none touch-none shadow-md"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        data-testid={`before-after-slider-${photo.id}`}
+      >
+        <img src={afterUrl} alt="After" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+        <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPos}%` }}>
+          <img
+            src={beforeUrl}
+            alt="Before"
+            className="absolute inset-0 h-full object-cover"
+            style={{ width: `${containerRef.current?.offsetWidth || 320}px` }}
+            draggable={false}
+          />
+        </div>
+        <div className="absolute top-0 bottom-0" style={{ left: `${sliderPos}%`, transform: "translateX(-50%)" }}>
+          <div className="w-0.5 h-full bg-white/90 shadow-sm" />
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
+            <ChevronLeft className="w-3 h-3 text-stone-600 -mr-0.5" />
+            <ChevronRight className="w-3 h-3 text-stone-600 -ml-0.5" />
+          </div>
+        </div>
+        <div className="absolute top-3 left-3 bg-black/50 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-medium">Before</div>
+        <div className="absolute top-3 right-3 bg-black/50 text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-medium">After</div>
+      </div>
+      {subjectName && (
+        <div className="mt-2.5 text-center">
+          <p className="text-sm font-medium text-stone-800">{subjectName}</p>
+          {subjectProfession && <p className="text-xs text-stone-500">{subjectProfession}</p>}
+        </div>
+      )}
     </div>
   );
 }
@@ -322,6 +394,32 @@ export default function PortfolioPage() {
           </motion.div>
         )}
 
+        {activeCategory === "people" && (() => {
+          const beforeAfterPhotos = (photos || []).filter(p => (p.category || "people") === "people" && (p as any).beforeImageUrl);
+          if (beforeAfterPhotos.length === 0) return null;
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              className="mb-14"
+              data-testid="before-after-section"
+            >
+              <div className="text-center mb-6">
+                <h2 className="font-serif text-xl sm:text-2xl text-stone-800 mb-1">Before & After</h2>
+                <p className="text-sm text-stone-500">Drag the slider to see the transformation</p>
+              </div>
+              <div className="flex gap-5 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap sm:flex-nowrap">
+                {beforeAfterPhotos.map((photo) => (
+                  <div key={photo.id} className="snap-center">
+                    <BeforeAfterSlider photo={photo} />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          );
+        })()}
+
         <div className="flex justify-center mb-10">
           <div className="inline-flex bg-stone-100 rounded-full p-1 gap-1" data-testid="toggle-portfolio-category">
             <button
@@ -354,7 +452,7 @@ export default function PortfolioPage() {
         {isLoading && (
           <div className={activeCategory === "spaces"
             ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            : "columns-2 sm:columns-3 lg:columns-4 gap-4"
+            : "columns-2 sm:columns-3 gap-4"
           }>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg bg-foreground/5 animate-pulse ${activeCategory === "people" ? "mb-4 break-inside-avoid" : ""}`} />
@@ -372,7 +470,7 @@ export default function PortfolioPage() {
               transition={{ duration: 0.2 }}
               className={activeCategory === "spaces"
                 ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                : "columns-2 sm:columns-3 lg:columns-4 gap-4"
+                : "columns-2 sm:columns-3 gap-4"
               }
               data-testid="portfolio-full-grid"
             >
