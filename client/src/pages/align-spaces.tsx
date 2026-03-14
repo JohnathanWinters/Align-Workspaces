@@ -372,7 +372,7 @@ export default function AlignSpacesPage() {
             <h2 className="font-serif text-3xl sm:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-14">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
             {[
               {
                 icon: Palette,
@@ -396,14 +396,15 @@ export default function AlignSpacesPage() {
                 detail: "Align helps professionals and space owners present their brand and workspace with clarity.",
               },
             ].map((item, i) => (
-              <div key={i} className="text-center" data-testid={`step-${item.step}`}>
-                <div className="w-14 h-14 rounded-2xl bg-stone-900 flex items-center justify-center mx-auto mb-5">
+              <div key={i} className="text-center flex flex-col items-center" data-testid={`step-${item.step}`}>
+                <div className="w-14 h-14 rounded-2xl bg-stone-900 flex items-center justify-center mb-5">
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold">{item.step}</span>
-                <h3 className="font-serif text-xl text-stone-900 mt-1 mb-2">{item.title}</h3>
-                <p className="text-stone-500 text-sm leading-relaxed max-w-[280px] mx-auto">{item.desc}</p>
-                <p className="text-stone-400 text-xs leading-relaxed max-w-[260px] mx-auto mt-2">{item.detail}</p>
+                <h3 className="font-serif text-xl text-stone-900 mt-1.5 mb-3">{item.title}</h3>
+                <p className="text-stone-600 text-sm leading-relaxed max-w-[260px]">{item.desc}</p>
+                <div className="w-8 h-px bg-stone-300 my-4" />
+                <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic">{item.detail}</p>
               </div>
             ))}
           </div>
