@@ -1453,8 +1453,7 @@ export default function SpacesBrowsePage() {
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [showFilters, setShowFilters] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const typeDropdownRef = useRef<HTMLDivElement>(null);
+  
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [zipCode, setZipCode] = useState<string>("");
@@ -1462,16 +1461,6 @@ export default function SpacesBrowsePage() {
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  useEffect(() => {
-    if (!showTypeDropdown) return;
-    const handler = (e: MouseEvent) => {
-      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target as Node)) {
-        setShowTypeDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showTypeDropdown]);
 
   const zipCoords = useMemo(() => {
     if (zipCode.length === 5) {
@@ -1737,89 +1726,34 @@ export default function SpacesBrowsePage() {
           Discover and book workspaces across Miami — offices, studios, and meeting rooms for professionals.
         </p>
         <div className="flex items-center gap-2">
-          <div ref={typeDropdownRef} className="relative flex-shrink-0" data-testid="dropdown-space-type">
-            <button
-              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm font-medium text-foreground hover:border-stone-300 transition-colors"
-              data-testid="button-space-type-dropdown"
-            >
-              {(() => {
-                const active = typeCounts.find(t => t.key === activeType);
-                if (!active) return null;
-                const Icon = active.icon;
-                return (
-                  <>
-                    <Icon className="w-4 h-4 text-[#c4956a]" />
-                    <span>{active.label}</span>
-                    <span className="text-xs text-foreground/40 bg-stone-100 px-1.5 py-0.5 rounded-full">{active.count}</span>
-                  </>
-                );
-              })()}
-              <ChevronRight className={`w-4 h-4 text-foreground/40 transition-transform duration-200 ${showTypeDropdown ? "rotate-90" : ""}`} />
-            </button>
-            <AnimatePresence>
-              {showTypeDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 mt-1 bg-white dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700 shadow-lg z-50 min-w-[200px] py-1 overflow-hidden"
-                >
-                  {typeCounts.map(({ key, label, icon: Icon, count }) => (
-                    <button
-                      key={key}
-                      onClick={() => { setActiveType(key); setShowTypeDropdown(false); }}
-                      data-testid={`button-filter-${key}`}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
-                        activeType === key
-                          ? "bg-stone-50 dark:bg-stone-700 text-foreground font-medium"
-                          : "text-foreground/60 hover:bg-stone-50 dark:hover:bg-stone-700 hover:text-foreground"
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 ${activeType === key ? "text-[#c4956a]" : ""}`} />
-                      <span className="flex-1 text-left">{label}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeType === key ? "bg-[#c4956a]/10 text-[#c4956a]" : "bg-stone-100 text-foreground/30"}`}>
-                        {count}
-                      </span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          {allSpaces.length >= 3 && (
-            <>
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value as typeof sortBy)}
-                className="px-3 py-2 rounded-full text-sm border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-800 text-foreground/70 focus:outline-none focus:border-[#c4956a] transition-colors cursor-pointer flex-shrink-0"
-                data-testid="select-sort"
-              >
-                <option value="default">Sort: Default</option>
-                <option value="price-low">Price: Low → High</option>
-                <option value="price-high">Price: High → Low</option>
-                <option value="distance" disabled={!zipCoords}>Distance (nearest)</option>
-              </select>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                data-testid="button-toggle-filters"
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
-                  showFilters || activeFilterCount > 0
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-white dark:bg-stone-800 text-foreground/60 border-stone-200 dark:border-stone-600 hover:border-stone-300"
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-[#c4956a] text-white text-[10px] font-bold flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-            </>
-          )}
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="px-3 py-2 rounded-full text-sm border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-800 text-foreground/70 focus:outline-none focus:border-[#c4956a] transition-colors cursor-pointer flex-shrink-0"
+            data-testid="select-sort"
+          >
+            <option value="default">Sort: Default</option>
+            <option value="price-low">Price: Low → High</option>
+            <option value="price-high">Price: High → Low</option>
+            <option value="distance" disabled={!zipCoords}>Distance (nearest)</option>
+          </select>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            data-testid="button-toggle-filters"
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
+              showFilters || activeFilterCount > 0 || activeType !== "all"
+                ? "bg-foreground text-background border-foreground"
+                : "bg-white dark:bg-stone-800 text-foreground/60 border-stone-200 dark:border-stone-600 hover:border-stone-300"
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Filters</span>
+            {(activeFilterCount > 0 || activeType !== "all") && (
+              <span className="w-5 h-5 rounded-full bg-[#c4956a] text-white text-[10px] font-bold flex items-center justify-center">
+                {activeFilterCount + (activeType !== "all" ? 1 : 0)}
+              </span>
+            )}
+          </button>
         </div>
 
         <AnimatePresence>
@@ -1832,6 +1766,29 @@ export default function SpacesBrowsePage() {
               className="overflow-hidden"
             >
               <div className="pt-3 pb-1 flex flex-wrap items-end gap-x-6 gap-y-3" data-testid="filter-panel">
+                <div className="w-full sm:w-auto" data-testid="filter-space-type">
+                  <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Space type</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {typeCounts.map(({ key, label, icon: Icon, count }) => (
+                      <button
+                        key={key}
+                        onClick={() => setActiveType(key)}
+                        data-testid={`button-filter-${key}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors border ${
+                          activeType === key
+                            ? "bg-foreground text-background border-foreground font-medium"
+                            : "bg-white dark:bg-stone-800 text-foreground/60 border-stone-200 dark:border-stone-600 hover:border-stone-300"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${activeType === key ? "" : ""}`} />
+                        <span>{label}</span>
+                        <span className={`text-[10px] px-1 py-0.5 rounded-full ${activeType === key ? "bg-background/20 text-background" : "bg-stone-100 text-foreground/30"}`}>
+                          {count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="w-full sm:w-auto">
                   <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Price per hour</label>
                   <div className="flex items-center gap-2 mb-2">
