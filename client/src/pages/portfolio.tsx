@@ -307,10 +307,9 @@ export default function PortfolioPage() {
             className="max-w-xl mx-auto text-center mb-10 px-4"
             data-testid="portfolio-testimonial"
           >
-            <blockquote className="relative">
-              <span className="absolute -top-4 -left-2 text-[#c9a96e]/30 text-5xl font-serif leading-none select-none" aria-hidden="true">"</span>
-              <p className="text-[15px] sm:text-base text-stone-600 italic leading-relaxed pl-4">
-                I was nervous about getting professional photos done, but the whole process felt like a conversation, not a photoshoot. When I saw the final images I thought, that's actually how I want people to see me.
+            <blockquote>
+              <p className="text-[15px] sm:text-base text-stone-600 italic leading-relaxed">
+                <span className="text-[#c9a96e]/50 font-serif not-italic">&ldquo;</span>I was nervous about getting professional photos done, but the whole process felt like a conversation, not a photoshoot. When I saw the final images I thought, that&rsquo;s actually how I want people to see me.<span className="text-[#c9a96e]/50 font-serif not-italic">&rdquo;</span>
               </p>
               <footer className="mt-3 text-xs text-stone-400 tracking-wide uppercase">
                 Edith C. · Therapist, Miami
