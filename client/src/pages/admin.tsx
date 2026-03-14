@@ -2008,6 +2008,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedSpaceId, setExpandedSpaceId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -2372,28 +2373,39 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                     </div>
                   ) : (
                     <>
-                      <div className="flex gap-4 mb-3">
+                      <button
+                        onClick={() => setExpandedSpaceId(expandedSpaceId === space.id ? null : space.id)}
+                        className="w-full text-left flex items-center gap-3"
+                        data-testid={`toggle-space-${space.id}`}
+                      >
                         {space.imageUrls?.[0] ? (
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                             <img src={space.imageUrls[0]} alt="" className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                            <Camera className="w-6 h-6 text-gray-300" />
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <Camera className="w-4 h-4 text-gray-300" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-medium text-gray-900">{space.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-gray-900 truncate">{space.name}</h3>
                             {statusBadge(space.approvalStatus)}
                           </div>
-                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                          <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-xs text-gray-400">
+                            <span>{(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map((t: string) => ({ therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative", office: "Office", studio: "Creative Studio", gym: "Gym", meeting: "Meeting", art_studio: "Art Studio", photo_studio: "Photo Studio" }[t] || t)).join(", ")}</span>
+                            <span>${space.pricePerHour}/hr</span>
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 text-gray-300 flex-shrink-0 transition-transform ${expandedSpaceId === space.id ? "rotate-90" : ""}`} />
+                      </button>
+                      {expandedSpaceId === space.id && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-sm text-gray-500 flex items-center gap-1 mb-1">
                             <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                             <span className="truncate">{space.address}</span>
                           </p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-gray-400">
-                            <span>{(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map((t: string) => ({ therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative", office: "Office", studio: "Creative Studio", gym: "Gym", meeting: "Meeting", art_studio: "Art Studio", photo_studio: "Photo Studio" }[t] || t)).join(", ")}</span>
-                            <span>${space.pricePerHour}/hr</span>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2 text-xs text-gray-400">
                             {space.pricePerDay > 0 && <span>${space.pricePerDay}/day</span>}
                             <span>Cap: {space.capacity || "N/A"}</span>
                             {space.isSample === 1 && <span className="text-amber-500">Sample</span>}
@@ -2405,7 +2417,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             {space.imageUrls?.length > 0 && <span>{space.imageUrls.length} photo{space.imageUrls.length > 1 ? "s" : ""}</span>}
                           </div>
                           {space.ownerInfo ? (
-                            <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex items-center gap-1.5 mb-2">
                               <User className="w-3 h-3 text-blue-400 flex-shrink-0" />
                               <span className="text-xs text-blue-600">
                                 {[space.ownerInfo.firstName, space.ownerInfo.lastName].filter(Boolean).join(" ") || "Unknown"}
@@ -2413,61 +2425,61 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                               </span>
                             </div>
                           ) : space.userId ? (
-                            <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex items-center gap-1.5 mb-2">
                               <User className="w-3 h-3 text-gray-300 flex-shrink-0" />
                               <span className="text-xs text-gray-400">User ID: {space.userId}</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1.5 mt-1">
+                            <div className="flex items-center gap-1.5 mb-2">
                               <User className="w-3 h-3 text-gray-300 flex-shrink-0" />
                               <span className="text-xs text-gray-400">No owner</span>
                             </div>
                           )}
-                        </div>
-                      </div>
-                      {space.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{space.description}</p>
-                      )}
-                      {space.amenities?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {space.amenities.slice(0, 6).map((a: string, i: number) => (
-                            <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{a}</span>
-                          ))}
-                          {space.amenities.length > 6 && (
-                            <span className="text-[10px] text-gray-400">+{space.amenities.length - 6} more</span>
+                          {space.description && (
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{space.description}</p>
                           )}
+                          {space.amenities?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {space.amenities.slice(0, 6).map((a: string, i: number) => (
+                                <span key={i} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{a}</span>
+                              ))}
+                              {space.amenities.length > 6 && (
+                                <span className="text-[10px] text-gray-400">+{space.amenities.length - 6} more</span>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex gap-2 flex-wrap">
+                            <Button size="sm" variant="outline" onClick={() => startEdit(space)} className="border-gray-200 text-gray-700 hover:bg-gray-50" data-testid={`button-edit-space-${space.id}`}>
+                              <Pencil className="w-3.5 h-3.5 mr-1" />
+                              Edit
+                            </Button>
+                            {space.approvalStatus !== "approved" && (
+                              <Button size="sm" onClick={() => handleAction(space.id, "approve")} className="bg-emerald-600 text-white hover:bg-emerald-700" data-testid={`button-approve-space-${space.id}`}>
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                            )}
+                            {space.approvalStatus !== "rejected" && (
+                              <Button size="sm" variant="outline" onClick={() => handleAction(space.id, "reject")} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-reject-space-${space.id}`}>
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            )}
+                            {(!space.latitude || !space.longitude) && (
+                              <Button size="sm" variant="outline" onClick={() => handleGeocodeSpace(space.id, space.name)} className="border-blue-200 text-blue-600 hover:bg-blue-50" data-testid={`button-geocode-space-${space.id}`}>
+                                <MapPin className="w-3.5 h-3.5 mr-1" />
+                                Geocode
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" onClick={() => handleDeleteSpace(space.id, space.name)} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-delete-space-${space.id}`}>
+                              <Trash2 className="w-3.5 h-3.5 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                          <AdminSpacePhotos space={space} token={token} onUpdate={loadSpaces} />
+                          <AdminTransferOwnership space={space} token={token} onUpdate={loadSpaces} />
                         </div>
                       )}
-                      <div className="flex gap-2 flex-wrap">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(space)} className="border-gray-200 text-gray-700 hover:bg-gray-50" data-testid={`button-edit-space-${space.id}`}>
-                          <Pencil className="w-3.5 h-3.5 mr-1" />
-                          Edit
-                        </Button>
-                        {space.approvalStatus !== "approved" && (
-                          <Button size="sm" onClick={() => handleAction(space.id, "approve")} className="bg-emerald-600 text-white hover:bg-emerald-700" data-testid={`button-approve-space-${space.id}`}>
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                        )}
-                        {space.approvalStatus !== "rejected" && (
-                          <Button size="sm" variant="outline" onClick={() => handleAction(space.id, "reject")} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-reject-space-${space.id}`}>
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Reject
-                          </Button>
-                        )}
-                        {(!space.latitude || !space.longitude) && (
-                          <Button size="sm" variant="outline" onClick={() => handleGeocodeSpace(space.id, space.name)} className="border-blue-200 text-blue-600 hover:bg-blue-50" data-testid={`button-geocode-space-${space.id}`}>
-                            <MapPin className="w-3.5 h-3.5 mr-1" />
-                            Geocode
-                          </Button>
-                        )}
-                        <Button size="sm" variant="outline" onClick={() => handleDeleteSpace(space.id, space.name)} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-delete-space-${space.id}`}>
-                          <Trash2 className="w-3.5 h-3.5 mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                      <AdminSpacePhotos space={space} token={token} onUpdate={loadSpaces} />
-                      <AdminTransferOwnership space={space} token={token} onUpdate={loadSpaces} />
                     </>
                   )}
                 </CardContent>
