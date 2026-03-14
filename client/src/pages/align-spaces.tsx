@@ -387,21 +387,21 @@ export default function AlignSpacesPage() {
               {
                 icon: Palette,
                 step: "01",
-                title: "Define Your Experience",
+                title: "Define\nYour Experience",
                 desc: "Use Align's visual tools to explore the kind of environment you want to create for your clients.",
                 detail: "Our photo builder helps you identify the setting, emotional tone, and client experience you want your workspace to express.",
               },
               {
                 icon: Compass,
                 step: "02",
-                title: "Discover Spaces That Fit",
+                title: "Discover\nYour Space",
                 desc: "Browse flexible workspaces curated to match different professional needs and atmospheres.",
                 detail: "Align helps you find spaces that support the work you do and the experience you want to create.",
               },
               {
                 icon: Camera,
                 step: "03",
-                title: "Present Your Work Professionally",
+                title: "Present\nYour Work",
                 desc: "Show your work and environment clearly with professional headshots and space photography.",
                 detail: "Align helps professionals and space owners present their brand and workspace with clarity.",
               },
@@ -411,7 +411,7 @@ export default function AlignSpacesPage() {
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold">{item.step}</span>
-                <h3 className="font-serif text-xl text-stone-900 mt-1.5 mb-3 min-h-[56px] flex items-center justify-center">{item.title}</h3>
+                <h3 className="font-serif text-xl text-stone-900 mt-1.5 mb-3 min-h-[56px] flex items-center justify-center whitespace-pre-line">{item.title}</h3>
                 <p className="text-stone-600 text-sm leading-relaxed max-w-[260px] min-h-[60px]">{item.desc}</p>
                 <div className="w-8 h-px bg-stone-300 my-4" />
                 <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic min-h-[60px]">{item.detail}</p>
