@@ -1589,17 +1589,16 @@ export default function SpacesBrowsePage() {
   if (!categoryChosen) {
     return (
       <div className="min-h-screen bg-[#f5f0e8] flex flex-col" data-testid="category-picker">
-        <nav className="px-4 sm:px-6 py-4 flex items-center justify-between">
+        <nav className="px-4 sm:px-6 py-4 flex items-center relative">
           <button
             onClick={() => setLocation("/")}
-            className="flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition-colors z-10"
             data-testid="link-back-home"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
           </button>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
-          <div className="w-16" />
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Align Spaces</span>
         </nav>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16">
