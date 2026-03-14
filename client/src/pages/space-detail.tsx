@@ -911,7 +911,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                     <Palette className="w-4 h-4 text-[#c4956a]" />
                     <h2 className="text-sm font-semibold text-stone-800">Space Color Palette</h2>
                   </div>
-                  <p className="text-[11px] text-stone-400 mb-4">Colors shape how clients feel in your space — they influence mood, trust, and comfort</p>
+                  <p className="text-[11px] text-stone-400 mb-4">Colors shape how clients feel in your space, they influence mood, trust, and comfort</p>
                   <div className="flex items-center gap-5 mb-3">
                     {paletteData.colors.slice(0, 3).map((c, i) => (
                       <div key={i} className="flex flex-col items-center gap-1.5">
@@ -1003,7 +1003,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
         {portfolioCarouselOpen && portfolioPhotos.length > 0 && (
           <PhotoCarousel
             images={portfolioPhotos.map(p => p.imageUrl)}
-            spaceName={`${space.name} — Portfolio`}
+            spaceName={`${space.name}, Portfolio`}
             onClose={() => setPortfolioCarouselOpen(false)}
             initialIndex={portfolioCarouselIndex}
           />

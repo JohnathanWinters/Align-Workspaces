@@ -3103,7 +3103,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                   >
                     <option value="">No space linked</option>
                     {availableSpaces.map((s: any) => (
-                      <option key={s.id} value={s.id}>{s.name}{s.neighborhood ? ` — ${s.neighborhood}` : ""}</option>
+                      <option key={s.id} value={s.id}>{s.name}{s.neighborhood ? `, ${s.neighborhood}` : ""}</option>
                     ))}
                   </select>
                 </div>
@@ -4645,7 +4645,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                           <p className="text-[11px] text-red-500 font-medium">Follow-up overdue</p>
                         )}
                         {c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000 && (
-                          <p className="text-[11px] text-amber-600 font-medium">New — no action yet</p>
+                          <p className="text-[11px] text-amber-600 font-medium">New, no action yet</p>
                         )}
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
@@ -5330,8 +5330,8 @@ function EmployeeManager({ token, onBack }: { token: string; onBack: () => void 
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="editor">Editor — View & edit photos, chat</SelectItem>
-                          <SelectItem value="manager">Manager — Full access except admin settings</SelectItem>
+                          <SelectItem value="editor">Editor, View & edit photos, chat</SelectItem>
+                          <SelectItem value="manager">Manager, Full access except admin settings</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

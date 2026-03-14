@@ -1597,7 +1597,7 @@ export default function SpacesBrowsePage() {
   }, []);
 
   useEffect(() => {
-    document.title = "Workspaces | Align Spaces — Miami Workspaces for Professionals";
+    document.title = "Workspaces | Align Spaces, Miami Workspaces for Professionals";
   }, []);
 
   if (!categoryChosen) {
@@ -1749,7 +1749,7 @@ export default function SpacesBrowsePage() {
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 dark:border-stone-800 bg-background">
         <p className="text-xs text-foreground/40 mb-2" data-testid="text-spaces-intro">
-          Discover and book workspaces across Miami — offices, studios, and meeting rooms for professionals.
+          Discover and book workspaces across Miami, offices, studios, and meeting rooms for professionals.
         </p>
         <div className="flex items-center gap-2">
           <select

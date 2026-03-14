@@ -490,7 +490,7 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                               <FormLabel>Your Vision</FormLabel>
                               <FormControl>
                                 <Textarea
-                                  placeholder="Tell us about the portrait you're envisioning — goals, style, questions, anything."
+                                  placeholder="Tell us about the portrait you're envisioning, goals, style, questions, anything."
                                   className="resize-none min-h-[100px]"
                                   {...field}
                                   data-testid="input-collaborate-message"

@@ -363,7 +363,7 @@ export default function PortfolioPage() {
             <div className="text-center bg-stone-50 rounded-2xl px-6 py-12 sm:py-16" data-testid="cta-people-portfolio">
               <h2 className="font-serif text-2xl sm:text-3xl mb-3">Ready to Create Your Own?</h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
-                Design a portrait session tailored to your brand. Our builder walks you through every detail — from setting to style.
+                Design a portrait session tailored to your brand. Our builder walks you through every detail, from setting to style.
               </p>
               <Link href="/portrait-builder">
                 <button

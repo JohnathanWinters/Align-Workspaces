@@ -481,7 +481,7 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
               Share Their Story
             </Button>
             <p className="text-[11px] text-stone-400 text-center mt-4 italic">
-              Brought to you by Portrait Builder — telling the stories behind your work.
+              Brought to you by Portrait Builder, telling the stories behind your work.
             </p>
           </form>
         )}
@@ -634,7 +634,7 @@ function ShareYourStoryModal({ open, onClose }: { open: boolean; onClose: () => 
                 Share Your Story
               </Button>
               <p className="text-[11px] text-stone-400 text-center mt-3 italic">
-                Brought to you by Portrait Builder — telling the stories behind your work.
+                Brought to you by Portrait Builder, telling the stories behind your work.
               </p>
             </form>
           </>
@@ -740,7 +740,7 @@ function FeaturedListingPage() {
                   Featured Professionals
                 </h1>
                 <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-8">
-                  The stories behind Miami's most passionate professionals — and the portraits that tell them.
+                  The stories behind Miami's most passionate professionals, and the portraits that tell them.
                 </p>
               </>
             )}
@@ -818,7 +818,7 @@ function FeaturedListingPage() {
                 ) : newsletterStatus === "already" ? (
                   <div className="flex items-center justify-center gap-2 text-amber-400 text-sm" data-testid="text-newsletter-already">
                     <Mail className="w-4 h-4" />
-                    You're already subscribed — stay tuned!
+                    You're already subscribed, stay tuned!
                   </div>
                 ) : newsletterStatus === "idle" && !newsletterSubmitting && newsletterEmail === "" && newsletterName === "" ? (
                   <button
@@ -947,7 +947,7 @@ function ProfilePage({ slug }: { slug: string }) {
   }, [pro]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = pro ? `Meet ${pro.name}, ${pro.profession} — ${pro.headline}` : "";
+  const shareText = pro ? `Meet ${pro.name}, ${pro.profession}, ${pro.headline}` : "";
 
   if (isLoading) {
     return (
@@ -1193,7 +1193,7 @@ function ProfilePage({ slug }: { slug: string }) {
               ) : newsletterStatus === "already" ? (
                 <div className="flex items-center justify-center gap-2 text-amber-400 text-sm">
                   <Mail className="w-4 h-4" />
-                  You're already subscribed — stay tuned!
+                  You're already subscribed, stay tuned!
                 </div>
               ) : newsletterStatus === "idle" && !newsletterSubmitting && newsletterEmail === "" && newsletterName === "" ? (
                 <button

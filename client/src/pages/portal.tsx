@@ -1093,7 +1093,7 @@ function EditTokenSection() {
             </div>
             <h3 className="font-serif text-lg text-gray-900 mb-1.5">No retouching requests yet</h3>
             <p className="text-gray-500 text-sm max-w-sm mb-5">
-              Submit your first photos for professional retouching — we'll handle the rest so your images look their absolute best.
+              Submit your first photos for professional retouching, we'll handle the rest so your images look their absolute best.
             </p>
             <Button
               onClick={() => setShowSubmitDialog(true)}
@@ -1128,7 +1128,7 @@ function EditTokenSection() {
                 {!editInstructions.trim() && (
                   <p className="text-xs text-amber-600 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    No instructions provided — you can add them after by chatting with your photographer.
+                    No instructions provided, you can add them after by chatting with your photographer.
                   </p>
                 )}
               </div>
@@ -1170,7 +1170,7 @@ function EditTokenSection() {
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                <span className="text-sm text-gray-700">Custom requests — describe what you need in the editing instructions</span>
+                <span className="text-sm text-gray-700">Custom requests, describe what you need in the editing instructions</span>
               </div>
             </div>
 
