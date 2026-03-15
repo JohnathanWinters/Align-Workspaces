@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images } from "lucide-react";
 import { Link } from "wouter";
-import armandoPhoto from "@assets/14764699-b1dd-4fe8-88ff-ed19c87cc1f8_1773349252752.png";
+const armandoPhoto = "/images/photographer-armando.webp";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
 
