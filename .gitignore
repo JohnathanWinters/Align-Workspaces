@@ -7,3 +7,4 @@ vite.config.ts.*
 tmp_uploads
 backups/
 .env
+.local/
