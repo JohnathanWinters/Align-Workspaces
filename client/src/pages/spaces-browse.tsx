@@ -27,12 +27,10 @@ import {
   User,
   Star,
   Camera,
-  Palette,
   Map as MapIcon,
   List,
   SlidersHorizontal,
   Navigation,
-  ArrowUpDown,
   BadgeCheck,
   Sparkles,
   ChevronDown,
@@ -584,7 +582,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
   const [showCarousel, setShowCarousel] = useState(false);
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [paletteExpanded, setPaletteExpanded] = useState(false);
-  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -625,6 +622,9 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
     },
   });
 
+  const primaryTag = space.tags && space.tags.length > 0 ? space.tags[0] : space.type;
+  const MAX_AMENITIES = 3;
+
   return (
     <motion.div
       layout
@@ -648,7 +648,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
               loading="lazy"
               onClick={() => setShowCarousel(true)}
             />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
             {space.imageUrls.length > 1 && (
               <>
                 <button
@@ -665,7 +665,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                 >
                   <ChevronRight className="w-4 h-4 text-stone-700" />
                 </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
                   {space.imageUrls.map((_, i) => (
                     <button
                       key={i}
@@ -686,56 +686,54 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             </div>
           </div>
         )}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-          {(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map(tag => (
-            <span key={tag} className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${TYPE_COLORS[tag] || "bg-stone-100 text-stone-700"}`}>
-              {TYPE_LABELS[tag] || tag}
-            </span>
-          ))}
-        </div>
+        {/* Single primary category tag — frosted glass, top-left */}
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-white/20 backdrop-blur-[8px] text-white border border-white/20 z-10">
+          {TYPE_LABELS[primaryTag] || primaryTag}
+        </span>
+        {/* Verified / Sample badge — frosted glass, top-right */}
         {space.isSample ? (
-          <div className="absolute top-3 right-3 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
+          <div className="absolute top-3 right-3 bg-amber-500/80 backdrop-blur-[8px] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-amber-400/30 z-10">
             Sample
           </div>
         ) : (
-          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm text-[10px] font-semibold text-emerald-700 px-2 py-1 rounded-full shadow-sm" data-testid={`badge-verified-${space.id}`}>
+          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/20 backdrop-blur-[8px] text-white text-[10px] font-semibold px-2.5 py-1 rounded-full border border-white/20 z-10" data-testid={`badge-verified-${space.id}`}>
             <BadgeCheck className="w-3 h-3" />
             Verified
           </div>
         )}
-        {(portfolioPhotoCount ?? 0) > 0 && (
-          <div
-            className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full z-10"
-            data-testid={`badge-photos-${space.id}`}
-          >
-            <Camera className="w-3 h-3" />
-            {portfolioPhotoCount} photo{portfolioPhotoCount !== 1 ? "s" : ""} here
-          </div>
-        )}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 z-10">
+        {/* Price overlay — bottom-left of image */}
+        <div className="absolute bottom-3 left-3 z-10">
+          <span className="text-white text-xl font-medium leading-none">${space.pricePerHour}</span>
+          <span className="text-white/70 text-xs font-medium ml-0.5">/hr</span>
+        </div>
+        {/* Action buttons + photo count — bottom-right */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5 z-10">
+          {(portfolioPhotoCount ?? 0) > 0 && (
+            <div
+              className="flex items-center gap-1 bg-black/40 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-1 rounded-full"
+              data-testid={`badge-photos-${space.id}`}
+            >
+              <Camera className="w-3 h-3" />
+              {portfolioPhotoCount}
+            </div>
+          )}
           {user && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite.mutate(); }}
-              className="group/fav flex items-center gap-1.5 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all px-2"
+              className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
               data-testid={`button-favorite-${space.id}`}
               title={favStatus?.favorited ? "Saved to favorites" : "Save to favorites"}
             >
-              <Heart className={`w-4 h-4 transition-colors ${favStatus?.favorited ? "text-red-500 fill-red-500" : "text-stone-400"}`} />
-              <span className="text-[10px] font-medium text-stone-500 hidden group-hover/fav:inline transition-all">
-                {favStatus?.favorited ? "Saved" : "Save"}
-              </span>
+              <Heart className={`w-3.5 h-3.5 ${favStatus?.favorited ? "text-red-400 fill-red-400" : "text-white/80"}`} />
             </button>
           )}
           <button
             onClick={handleShare}
-            className="group/share flex items-center gap-1.5 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all px-2"
+            className="w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
             data-testid={`button-share-${space.id}`}
             title="Share this space"
           >
-            <Share2 className="w-4 h-4 text-stone-400" />
-            <span className="text-[10px] font-medium text-stone-500 hidden group-hover/share:inline transition-all">
-              Share
-            </span>
+            <Share2 className="w-3.5 h-3.5 text-white/80" />
           </button>
         </div>
       </div>
@@ -752,77 +750,72 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
 
       <Link
         href={`/spaces/${space.slug}`}
-        className="block p-5 flex flex-col flex-1"
+        className="block p-4 flex flex-col flex-1"
         data-testid={`link-space-${space.id}`}
       >
-        <h3 className="font-serif text-lg font-semibold text-stone-900 mb-1" data-testid={`text-space-name-${space.id}`}>
+        <h3 className="font-serif text-[17px] font-semibold text-stone-900 mb-1 leading-snug" data-testid={`text-space-name-${space.id}`}>
           {space.name}
         </h3>
 
-        <div className="flex items-center gap-1.5 text-stone-500 text-sm mb-3">
-          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+        <div className="flex items-center gap-1 text-stone-400 text-xs mb-2.5">
+          <MapPin className="w-3 h-3 flex-shrink-0" />
           <span className="truncate">{space.neighborhood || space.address}</span>
           {distance != null && (
-            <span className="ml-auto text-xs text-[#c4956a] font-medium whitespace-nowrap flex-shrink-0" data-testid={`text-distance-${space.id}`}>
+            <span className="ml-auto text-[11px] text-[#c4956a] font-medium whitespace-nowrap flex-shrink-0" data-testid={`text-distance-${space.id}`}>
               {distance < 0.1 ? "< 0.1" : distance.toFixed(1)} mi
             </span>
           )}
         </div>
 
-        <p className="text-stone-500 text-sm leading-relaxed mb-4 line-clamp-3 whitespace-pre-line">
-          {space.shortDescription || space.description}
-        </p>
-
-        <div className="flex items-center gap-4 text-sm mb-4">
-          <div className="flex items-center gap-1.5 text-stone-700">
-            <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
-            <span className="font-semibold">${space.pricePerHour}/hr</span>
-          </div>
-          {space.pricePerDay && (
-            <div className="flex items-center gap-1.5 text-stone-500">
-              <span>${space.pricePerDay}/day</span>
-            </div>
-          )}
+        {/* Secondary metadata line: capacity + daily rate */}
+        <div className="flex items-center gap-3 text-xs text-stone-500 mb-2.5">
           {space.capacity && (
-            <div className="flex items-center gap-1.5 text-stone-500">
-              <Users className="w-3.5 h-3.5" />
-              <span>Up to {space.capacity}</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <Users className="w-3 h-3 text-stone-400" />
+              Up to {space.capacity}
+            </span>
+          )}
+          {space.pricePerDay && (
+            <span className="flex items-center gap-1">
+              <DollarSign className="w-3 h-3 text-stone-400" />
+              ${space.pricePerDay}/day
+            </span>
           )}
         </div>
 
+        {/* "Ideal for" pill */}
         {space.targetProfession && (
-          <p className="text-xs text-[#c4956a] font-medium mb-3">
-            Ideal for: {space.targetProfession}
-          </p>
+          <div className="mb-2.5">
+            <span className="inline-block text-[11px] font-medium text-[#b3845d] bg-[#c4956a]/10 px-2.5 py-0.5 rounded-full">
+              Ideal for {space.targetProfession}
+            </span>
+          </div>
         )}
 
+        {/* Amenity pills — max 3 visible + overflow */}
         {space.amenities && space.amenities.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {(amenitiesExpanded ? space.amenities : space.amenities.slice(0, 4)).map((amenity, i) => (
-              <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 text-stone-500 px-2 py-0.5 rounded-full">
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {space.amenities.slice(0, MAX_AMENITIES).map((amenity, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-[11px] bg-stone-50 text-stone-500 px-2 py-0.5 rounded-full border border-stone-100">
                 <Check className="w-2.5 h-2.5 text-[#c4956a]" />
                 {amenity}
               </span>
             ))}
-            {space.amenities.length > 4 && (
-              <span
-                className="text-[11px] text-[#c4956a] hover:text-[#b3845d] px-1 py-0.5 cursor-pointer transition-colors"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAmenitiesExpanded(!amenitiesExpanded); }}
-                data-testid={`toggle-amenities-${space.id}`}
-              >
-                {amenitiesExpanded ? "Show less" : `+${space.amenities.length - 4} more`}
+            {space.amenities.length > MAX_AMENITIES && (
+              <span className="text-[11px] text-stone-400 px-1.5 py-0.5">
+                +{space.amenities.length - MAX_AMENITIES} more
               </span>
             )}
           </div>
         )}
 
+        {/* Compact color palette — horizontal swatch row */}
         {(() => {
           const paletteData = parseColorPalette(space.colorPalette);
           if (!paletteData) return null;
           return (
             <div
-              className={`mb-4 p-3 rounded-lg border transition-all duration-300 ${paletteExpanded ? "bg-stone-50 border-stone-200 shadow-sm" : "bg-stone-50/80 border-stone-100 cursor-pointer hover:border-stone-200 hover:shadow-sm"}`}
+              className="mb-3 pt-3 border-t border-stone-100"
               data-testid={`palette-preview-${space.id}`}
               onClick={(e) => {
                 if (paletteData.explanation) {
@@ -832,24 +825,24 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                 }
               }}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <Palette className="w-3.5 h-3.5 text-[#c4956a]" />
-                <span className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider">Space Color Palette</span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {paletteData.colors.slice(0, 5).map((c, i) => (
+                    <div
+                      key={i}
+                      className="w-[18px] h-[18px] rounded-full border-2 border-white shadow-sm"
+                      style={{ backgroundColor: c.hex }}
+                      title={c.name}
+                    />
+                  ))}
+                </div>
+                {paletteData.feel && (
+                  <span className="text-[11px] text-stone-400 italic truncate">{paletteData.feel}</span>
+                )}
                 {paletteData.explanation && (
-                  <ChevronDown className={`w-3 h-3 text-stone-400 ml-auto transition-transform duration-200 ${paletteExpanded ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`w-3 h-3 text-stone-300 ml-auto flex-shrink-0 transition-transform duration-200 ${paletteExpanded ? "rotate-180" : ""}`} />
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                {paletteData.colors.slice(0, 3).map((c, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <div className={`rounded-full border-2 border-white shadow-sm transition-all duration-200 ${paletteExpanded ? "w-9 h-9" : "w-7 h-7"}`} style={{ backgroundColor: c.hex }} />
-                    <span className="text-[8px] text-stone-400 font-medium leading-tight text-center max-w-[48px] truncate">{c.name}</span>
-                  </div>
-                ))}
-              </div>
-              {!paletteExpanded && paletteData.feel && (
-                <p className="text-[11px] text-stone-400 italic mt-2 line-clamp-1">{paletteData.feel}</p>
-              )}
               <AnimatePresence>
                 {paletteExpanded && paletteData.explanation && (
                   <motion.div
@@ -859,10 +852,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
                     transition={{ duration: 0.25 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-3 pt-3 border-t border-stone-200/60">
-                      <p className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2">How These Colors Work Together</p>
-                      <p className="text-xs text-stone-500 leading-relaxed">{paletteData.explanation}</p>
-                    </div>
+                    <p className="text-xs text-stone-500 leading-relaxed mt-2">{paletteData.explanation}</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1835,75 +1825,64 @@ export default function SpacesBrowsePage() {
       </nav>
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 dark:border-stone-800 bg-background">
-        <p className="text-xs text-foreground/40 mb-2" data-testid="text-spaces-intro">
-          Find spaces built for the work you do. Thoughtfully selected for therapists, coaches, and creatives across Miami.
-        </p>
-        <div className="flex flex-wrap items-center gap-1.5 mb-2" data-testid="quick-category-pills">
-          {[
-            { key: "all", label: "All" },
-            { key: "therapy", label: "Therapy & Counseling" },
-            { key: "creative", label: "Creative Studio" },
-            { key: "wellness", label: "Wellness" },
-            { key: "coaching", label: "Coaching" },
-            { key: "workshop", label: "Workshops" },
-          ].map(cat => (
+        <div className="flex items-center gap-2 mb-2" data-testid="quick-category-pills">
+          {/* Category chips — left side */}
+          <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+            {[
+              { key: "all", label: "All" },
+              { key: "therapy", label: "Therapy & Counseling" },
+              { key: "creative", label: "Creative Studio" },
+              { key: "wellness", label: "Wellness" },
+              { key: "coaching", label: "Coaching" },
+              { key: "workshop", label: "Workshops" },
+            ].map(cat => (
+              <button
+                key={cat.key}
+                onClick={() => setActiveType(cat.key)}
+                data-testid={`quick-filter-${cat.key}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap ${
+                  activeType === cat.key
+                    ? "bg-stone-900 text-white border-stone-900"
+                    : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+          {/* Utility controls — right side, visually separated */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
-              key={cat.key}
-              onClick={() => setActiveType(cat.key)}
-              data-testid={`quick-filter-${cat.key}`}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
-                activeType === cat.key
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
+              onClick={() => setAvailableToday(!availableToday)}
+              data-testid="toggle-available-today"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all duration-200 border ${
+                availableToday
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white text-foreground/50 border-dashed border-stone-300 hover:border-stone-400"
               }`}
             >
-              {cat.label}
+              <CalendarDays className="w-3 h-3" />
+              <span className="hidden sm:inline">Available today</span>
+              <span className="sm:hidden">Today</span>
             </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setAvailableToday(!availableToday)}
-            data-testid="toggle-available-today"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
-              availableToday
-                ? "bg-emerald-600 text-white border-emerald-600"
-                : "bg-white text-foreground/60 border-stone-200 hover:border-stone-300"
-            }`}
-          >
-            <CalendarDays className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Available today</span>
-            <span className="sm:hidden">Today</span>
-          </button>
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value as typeof sortBy)}
-            className="px-3 py-2 rounded-full text-sm border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-800 text-foreground/70 focus:outline-none focus:border-[#c4956a] transition-colors cursor-pointer flex-shrink-0"
-            data-testid="select-sort"
-          >
-            <option value="default">Sort: Default</option>
-            <option value="price-low">Price: Low → High</option>
-            <option value="price-high">Price: High → Low</option>
-            <option value="distance" disabled={!zipCoords}>Distance (nearest)</option>
-          </select>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            data-testid="button-toggle-filters"
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-all duration-200 border flex-shrink-0 ${
-              showFilters || activeFilterCount > 0 || activeType !== "all"
-                ? "bg-foreground text-background border-foreground"
-                : "bg-white dark:bg-stone-800 text-foreground/60 border-stone-200 dark:border-stone-600 hover:border-stone-300"
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Filters</span>
-            {(activeFilterCount > 0 || activeType !== "all") && (
-              <span className="w-5 h-5 rounded-full bg-[#c4956a] text-white text-[10px] font-bold flex items-center justify-center">
-                {activeFilterCount + (activeType !== "all" ? 1 : 0)}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              data-testid="button-toggle-filters"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all duration-200 border ${
+                showFilters || activeFilterCount > 0
+                  ? "bg-stone-900 text-white border-stone-900"
+                  : "bg-white text-foreground/50 border-dashed border-stone-300 hover:border-stone-400"
+              }`}
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-[#c4956a] text-white text-[9px] font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <AnimatePresence>
@@ -1916,28 +1895,19 @@ export default function SpacesBrowsePage() {
               className="overflow-hidden"
             >
               <div className="pt-3 pb-1 flex flex-wrap items-end gap-x-6 gap-y-3" data-testid="filter-panel">
-                <div className="w-full sm:w-auto" data-testid="filter-space-type">
-                  <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Space type</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {typeCounts.map(({ key, label, icon: Icon, count }) => (
-                      <button
-                        key={key}
-                        onClick={() => setActiveType(key)}
-                        data-testid={`button-filter-${key}`}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors border ${
-                          activeType === key
-                            ? "bg-foreground text-background border-foreground font-medium"
-                            : "bg-white dark:bg-stone-800 text-foreground/60 border-stone-200 dark:border-stone-600 hover:border-stone-300"
-                        }`}
-                      >
-                        <Icon className={`w-3.5 h-3.5 ${activeType === key ? "" : ""}`} />
-                        <span>{label}</span>
-                        <span className={`text-[10px] px-1 py-0.5 rounded-full ${activeType === key ? "bg-background/20 text-background" : "bg-stone-100 text-foreground/30"}`}>
-                          {count}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                <div className="w-full sm:w-auto">
+                  <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Sort by</label>
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    className="px-3 py-1.5 rounded-lg text-sm border border-stone-200 bg-white text-foreground/70 focus:outline-none focus:border-[#c4956a] transition-colors cursor-pointer"
+                    data-testid="select-sort"
+                  >
+                    <option value="default">Default</option>
+                    <option value="price-low">Price: Low → High</option>
+                    <option value="price-high">Price: High → Low</option>
+                    <option value="distance" disabled={!zipCoords}>Distance (nearest)</option>
+                  </select>
                 </div>
                 <div className="w-full sm:w-auto">
                   <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Price per hour</label>
@@ -2104,22 +2074,17 @@ export default function SpacesBrowsePage() {
             )}
 
             <div className="pb-24 lg:pb-8 pt-4">
-              <div className="bg-gradient-to-br from-[#faf6f1] to-[#f5ede3] rounded-2xl p-6 sm:p-8 text-center border border-[#e8ddd0]/60">
-                <div className="w-12 h-12 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-4">
-                  <Building2 className="w-5 h-5 text-[#c4956a]" />
-                </div>
-                <h2 className="font-serif text-lg sm:text-xl font-semibold mb-2" data-testid="text-list-space-heading">
-                  Have a space to share?
-                </h2>
-                <p className="text-foreground/50 text-sm mb-5 max-w-md mx-auto">
-                  Join a growing network of Miami spaces built for therapists, coaches, and creatives. List yours and start earning.
+              <div className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="text-list-space-heading">
+                <p className="text-sm text-foreground/60">
+                  <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
+                  <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
                 </p>
                 <button
                   onClick={() => setShowListModal(true)}
-                  className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-6 py-3 rounded-full hover:bg-stone-800 transition-colors font-medium"
+                  className="flex-shrink-0 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors font-medium"
                   data-testid="button-list-space"
                 >
-                  List Your Space
+                  List your space
                 </button>
               </div>
             </div>
