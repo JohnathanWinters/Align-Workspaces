@@ -48,6 +48,7 @@ function SpacePhotoManager({ space }: { space: Space }) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const dragCounter = useRef(0);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
@@ -135,7 +136,18 @@ function SpacePhotoManager({ space }: { space: Space }) {
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+  }, []);
+
+  const onDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current++;
     setDragOver(true);
+  }, []);
+
+  const onDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setDragOver(false);
   }, []);
 
   return (
@@ -143,8 +155,9 @@ function SpacePhotoManager({ space }: { space: Space }) {
       className="mt-3 pt-3 border-t border-gray-100"
       data-testid={`space-photos-${space.id}`}
       onDragOver={onDragOver}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={onDrop}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => { dragCounter.current = 0; onDrop(e); }}
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
