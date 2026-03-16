@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   ArrowDown,
   Camera,
+  Mail,
   Calendar,
   LogOut,
   Image,
@@ -1881,7 +1882,7 @@ function PortalContent() {
                         <p className="text-[10px] text-stone-400 dark:text-stone-500 truncate">{user?.email || ""}</p>
                       </div>
                       <button
-                        onClick={() => { setAccountMenuOpen(false); window.location.href = "/api/login?switch=1&returnTo=/portal"; }}
+                        onClick={async () => { setAccountMenuOpen(false); await fetch("/api/auth/logout", { method: "POST" }); window.location.href = "/portal"; }}
                         data-testid="button-switch-account"
                         className="w-full text-left px-3 py-2 text-xs text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-white transition-colors flex items-center gap-2"
                       >
@@ -2281,6 +2282,124 @@ function PortalContent() {
   );
 }
 
+function PortalLogin() {
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [step, setStep] = useState<"email" | "name" | "sent">("email");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const sendMagicLink = async (e?: string, name?: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      if (name) {
+        await fetch("/api/auth/magic-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: e || email, firstName: name }),
+        });
+      }
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: e || email, firstName: name, returnTo: "/portal" }),
+      });
+      const data = await res.json();
+      if (data.needsName) {
+        setStep("name");
+      } else if (data.sent) {
+        setStep("sent");
+      } else {
+        setError(data.message || "Something went wrong");
+      }
+    } catch {
+      setError("Failed to send sign-in link. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center px-6 max-w-md w-full"
+      >
+        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6">
+          <Camera className="w-8 h-8 text-white/80" />
+        </div>
+        <h1 className="font-serif text-3xl text-white mb-3">Client Portal</h1>
+        <p className="text-white/60 text-sm mb-8 leading-relaxed">
+          Sign in to view your photoshoot galleries, track your sessions, and download your photos.
+        </p>
+
+        {step === "email" && (
+          <form onSubmit={(e) => { e.preventDefault(); if (email.trim()) sendMagicLink(email.trim()); }} className="space-y-3">
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
+              autoFocus
+              required
+            />
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <Button type="submit" disabled={loading || !email.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : <><Mail className="w-4 h-4 mr-2" /> Send Sign-In Link</>}
+            </Button>
+          </form>
+        )}
+
+        {step === "name" && (
+          <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim()) sendMagicLink(email.trim(), firstName.trim()); }} className="space-y-3">
+            <p className="text-white/60 text-sm mb-2">Welcome! What's your first name?</p>
+            <input
+              type="text"
+              placeholder="First name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
+              autoFocus
+              required
+            />
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <Button type="submit" disabled={loading || !firstName.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : "Continue"}
+            </Button>
+          </form>
+        )}
+
+        {step === "sent" && (
+          <div className="space-y-3">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="w-7 h-7 text-emerald-400" />
+            </div>
+            <p className="text-white/80 text-sm">Check your email for a sign-in link.</p>
+            <p className="text-white/40 text-xs">{email}</p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 mt-6">
+          <Link href="/">
+            <Button variant="outline" size="lg" className="w-full text-white border-white/20 bg-white/5 hover:bg-white/10 text-base">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home
+            </Button>
+          </Link>
+          <Link href="/workspaces">
+            <Button variant="outline" size="lg" className="w-full text-white border-white/20 bg-white/5 hover:bg-white/10 text-base">
+              <Building2 className="w-4 h-4 mr-2" /> Back to Spaces
+            </Button>
+          </Link>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function PortalPage() {
   const { user, isLoading } = useAuth();
 
@@ -2293,57 +2412,7 @@ export default function PortalPage() {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center px-6 max-w-md"
-        >
-          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6">
-            <Camera className="w-8 h-8 text-white/80" />
-          </div>
-          <h1 className="font-serif text-3xl text-white mb-3">Client Portal</h1>
-          <p className="text-white/60 text-sm mb-8 leading-relaxed">
-            Sign in to view your photoshoot galleries, track your sessions, and download your photos.
-          </p>
-          <div className="flex flex-col gap-3">
-            <a href="/api/login?returnTo=/portal" data-testid="button-login">
-              <Button
-                size="lg"
-                className="w-full bg-white text-black hover:bg-white/90 text-base"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Sign In
-              </Button>
-            </a>
-            <Link href="/">
-              <Button
-                variant="outline"
-                size="lg"
-                data-testid="button-back-home-login"
-                className="w-full text-white border-white/20 bg-white/5 hover:bg-white/10 text-base"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-            <Link href="/workspaces">
-              <Button
-                variant="outline"
-                size="lg"
-                data-testid="button-back-spaces-login"
-                className="w-full text-white border-white/20 bg-white/5 hover:bg-white/10 text-base"
-              >
-                <Building2 className="w-4 h-4 mr-2" />
-                Back to Spaces
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
-      </div>
-    );
+    return <PortalLogin />;
   }
 
   return <PortalContent />;

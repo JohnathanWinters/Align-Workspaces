@@ -263,7 +263,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
   }
 
   function handleCreateAccount() {
-    window.location.href = "/api/login?returnTo=/portal";
+    window.location.href = "/portal";
   }
 
   if (isBooked) {
