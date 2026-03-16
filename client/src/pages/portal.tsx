@@ -163,7 +163,7 @@ function buildGoogleCalendarUrl(shoot: Shoot) {
     [
       shoot.environment ? `Environment: ${shoot.environment}` : "",
       shoot.emotionalImpact ? `Mood: ${shoot.emotionalImpact}` : "",
-      "Align Portrait Designer - AlignPhotoDesign.com",
+      "Align Workspaces - AlignPhotoDesign.com",
     ].filter(Boolean).join("\n")
   );
 
@@ -190,7 +190,7 @@ function downloadIcsFile(shoot: Shoot) {
   const description = [
     shoot.environment ? `Environment: ${shoot.environment}` : "",
     shoot.emotionalImpact ? `Mood: ${shoot.emotionalImpact}` : "",
-    "Align Portrait Designer - AlignPhotoDesign.com",
+    "Align Workspaces - AlignPhotoDesign.com",
   ].filter(Boolean).join("\\n");
 
   const dateRaw = shoot.shootDate || "";
@@ -212,7 +212,7 @@ function downloadIcsFile(shoot: Shoot) {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Align Portrait Designer//EN",
+    "PRODID:-//Align Workspaces//EN",
     "BEGIN:VEVENT",
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
