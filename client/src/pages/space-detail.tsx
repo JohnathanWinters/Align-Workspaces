@@ -13,6 +13,7 @@ import {
   Building2,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Check,
   Send,
   Loader2,
@@ -24,10 +25,21 @@ import {
   Palette,
   Heart,
   Share2,
+  Wifi,
+  Sun,
+  Car,
+  Volume2,
+  Coffee,
+  Wind,
+  Droplets,
+  Sparkles,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import type { Space } from "@shared/schema";
 import {
@@ -85,6 +97,35 @@ const TYPE_COLORS: Record<string, string> = {
   art_studio: "bg-purple-50 text-purple-700",
   photo_studio: "bg-rose-50 text-rose-700",
 };
+
+function getAmenityIcon(amenity: string) {
+  const l = amenity.toLowerCase();
+  if (l.includes("wifi") || l.includes("wi-fi") || l.includes("internet")) return Wifi;
+  if (l.includes("natural light") || l.includes("sunlight") || l.includes("window")) return Sun;
+  if (l.includes("parking") || l.includes("car")) return Car;
+  if (l.includes("restroom") || l.includes("bathroom") || l.includes("toilet")) return Droplets;
+  if (l.includes("dressing") || l.includes("changing") || l.includes("locker")) return Sparkles;
+  if (l.includes("sound") || l.includes("speaker") || l.includes("audio") || l.includes("music")) return Volume2;
+  if (l.includes("kitchen") || l.includes("coffee") || l.includes("tea") || l.includes("refreshment")) return Coffee;
+  if (l.includes("air") || l.includes("hvac") || l.includes("heating") || l.includes("cooling")) return Wind;
+  return Check;
+}
+
+function getSpaceHighlights(space: Space) {
+  const items: { icon: typeof Check; text: string }[] = [];
+  const a = (space.amenities || []).map((x) => x.toLowerCase());
+
+  if (space.capacity) items.push({ icon: Users, text: `Up to ${space.capacity} people` });
+  if (a.some((x) => x.includes("parking"))) items.push({ icon: Car, text: "Free parking" });
+  if (a.some((x) => x.includes("natural light") || x.includes("window"))) items.push({ icon: Sun, text: "Abundant natural light" });
+  if (a.some((x) => x.includes("sound") || x.includes("speaker") || x.includes("audio"))) items.push({ icon: Volume2, text: "Sound system available" });
+  if (a.some((x) => x.includes("dressing") || x.includes("changing"))) items.push({ icon: Sparkles, text: "Private dressing room" });
+  if (a.some((x) => x.includes("wifi") || x.includes("internet"))) items.push({ icon: Wifi, text: "High-speed WiFi" });
+  if (space.capacity && space.capacity >= 8) items.push({ icon: Building2, text: "Large private space" });
+  if (a.some((x) => x.includes("kitchen") || x.includes("coffee"))) items.push({ icon: Coffee, text: "Kitchen & refreshments" });
+
+  return items.slice(0, 6);
+}
 
 function PhotoCarousel({ images, spaceName, onClose, initialIndex = 0 }: { images: string[]; spaceName: string; onClose: () => void; initialIndex?: number }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -195,7 +236,7 @@ function PhotoCarousel({ images, spaceName, onClose, initialIndex = 0 }: { image
   );
 }
 
-function MagicLinkModal({ spaceSlug, onClose, onSuccess }: { spaceSlug: string; onClose: () => void; onSuccess: () => void }) {
+function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { spaceSlug: string; onClose: () => void; onSuccess: () => void; intent?: "book" | "contact" }) {
   const [magicEmail, setMagicEmail] = useState("");
   const [magicName, setMagicName] = useState("");
   const [magicStep, setMagicStep] = useState<"email" | "name" | "sent">("email");
@@ -206,7 +247,7 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess }: { spaceSlug: string; 
     setMagicLoading(true);
     setMagicError("");
     try {
-      const returnTo = `/spaces/${encodeURIComponent(spaceSlug)}?book=1`;
+      const returnTo = `/spaces/${encodeURIComponent(spaceSlug)}?${intent === "contact" ? "contact" : "book"}=1`;
       if (firstName) {
         await fetch("/api/auth/magic-signup", {
           method: "POST",
@@ -252,7 +293,7 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess }: { spaceSlug: string; 
           {magicStep === "email" && (
             <div className="space-y-4">
               <div className="text-center mb-2">
-                <h3 className="font-serif text-lg font-semibold">Sign in to book</h3>
+                <h3 className="font-serif text-lg font-semibold">{intent === "contact" ? "Sign in to message" : "Sign in to book"}</h3>
                 <p className="text-sm text-stone-500 mt-1">Enter your email and we'll send you a sign-in link</p>
               </div>
               {magicError && <p className="text-xs text-red-500 text-center">{magicError}</p>}
@@ -328,90 +369,6 @@ function AnimatedPrice({ value, prefix = "$" }: { value: number; prefix?: string
     return () => clearInterval(timer);
   }, [value]);
   return <span>{prefix}{(display / 100).toFixed(2)}</span>;
-}
-
-function BookingSection({ space }: { space: Space }) {
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const [showAuth, setShowAuth] = useState(false);
-  const [showBooking, setShowBooking] = useState(false);
-
-  const schedule: WeekSchedule | null = (() => {
-    try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
-  })();
-  const bufferMinutes = space.bufferMinutes ?? 15;
-
-  const bookMutation = useMutation({
-    mutationFn: async (params: { bookingDate: string; bookingStartTime: string; bookingHours: number }) => {
-      const res = await apiRequest("POST", `/api/spaces/${space.id}/book`, params);
-      return res.json();
-    },
-    onSuccess: (data: any) => {
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        toast({ title: "Booking created", description: "Check your portal for updates." });
-        setShowBooking(false);
-      }
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("book") === "1" && isAuthenticated) {
-      setShowBooking(true);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, [isAuthenticated]);
-
-  const handleBookClick = () => {
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
-    }
-    setShowBooking(true);
-  };
-
-  return (
-    <>
-      <button
-        disabled
-        className="w-full py-3 rounded-xl bg-stone-300 text-stone-500 text-sm font-semibold cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
-        data-testid="button-book-space"
-      >
-        <Send className="w-4 h-4" />
-        Coming Soon
-      </button>
-
-      <AnimatePresence>
-        {showAuth && !isAuthenticated && (
-          <MagicLinkModal
-            spaceSlug={space.slug}
-            onClose={() => setShowAuth(false)}
-            onSuccess={() => {
-              setShowAuth(false);
-              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showBooking && isAuthenticated && (
-          <BookingPopup
-            space={space}
-            onClose={() => setShowBooking(false)}
-            schedule={schedule}
-            bufferMinutes={bufferMinutes}
-            bookMutation={bookMutation}
-          />
-        )}
-      </AnimatePresence>
-    </>
-  );
 }
 
 function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }: {
@@ -505,7 +462,7 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
             <h3 className="text-white font-serif text-lg font-semibold truncate">{space.name}</h3>
             <p className="text-white/70 text-xs flex items-center gap-1.5">
               <MapPin className="w-3 h-3" /> {space.neighborhood || space.address}
-              <span className="mx-1">·</span>
+              <span className="mx-1">&middot;</span>
               <span className="text-white font-medium">${space.pricePerHour}/hr</span>
             </p>
           </div>
@@ -639,14 +596,14 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                   <div className="flex justify-between text-sm items-center">
                     <span className="text-stone-500">Duration</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setBookingHours(Math.max(1, bookingHours - 1))} className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-100 text-sm font-bold" data-testid="button-hours-minus">−</button>
+                      <button onClick={() => setBookingHours(Math.max(1, bookingHours - 1))} className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-100 text-sm font-bold" data-testid="button-hours-minus">&minus;</button>
                       <span className="font-medium text-stone-800 w-12 text-center">{bookingHours} hr{bookingHours > 1 ? "s" : ""}</span>
                       <button onClick={() => setBookingHours(Math.min(maxHours, bookingHours + 1))} className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-100 text-sm font-bold" data-testid="button-hours-plus">+</button>
                     </div>
                   </div>
                   <div className="border-t border-stone-200 pt-3 space-y-1.5">
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-500">${space.pricePerHour}/hr × {bookingHours} hr{bookingHours > 1 ? "s" : ""}</span>
+                      <span className="text-stone-500">${space.pricePerHour}/hr &times; {bookingHours} hr{bookingHours > 1 ? "s" : ""}</span>
                       <span className="text-stone-700"><AnimatedPrice value={basePriceCents} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -678,14 +635,205 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
   );
 }
 
+/* ─── Contact Host Modal ─── */
+function ContactHostModal({ space, onClose }: { space: Space; onClose: () => void }) {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { toast } = useToast();
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      const res = await apiRequest("POST", `/api/spaces/${space.id}/inquire`, { message: message.trim() });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to send");
+      }
+      setSent(true);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center" onClick={onClose}>
+        <motion.div className="absolute inset-0 bg-black/50 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+        <motion.div
+          className="relative bg-white w-full sm:w-[440px] sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: "spring", damping: 28, stiffness: 350 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-stone-100 transition-colors">
+            <X className="w-4 h-4 text-stone-400" />
+          </button>
+
+          {sent ? (
+            <div className="space-y-4 text-center py-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                <Check className="w-7 h-7 text-emerald-500" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold">Message sent!</h3>
+              <p className="text-sm text-stone-500 max-w-xs mx-auto">
+                {space.userId ? (
+                  <>{space.hostName || "The host"} will be notified. Check your{" "}
+                  <a href="/portal?tab=messages" className="text-[#c4956a] font-medium hover:underline">portal messages</a>{" "}
+                  for replies.</>
+                ) : (
+                  <>Your inquiry about {space.name} has been sent. We'll get back to you soon.</>
+                )}
+              </p>
+              <button
+                onClick={onClose}
+                className="mt-2 px-6 py-2 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-serif text-lg font-semibold">Contact {space.hostName || "the host"}</h3>
+                <p className="text-sm text-stone-500 mt-1">
+                  Ask about {space.name} — availability, amenities, or anything else
+                </p>
+              </div>
+              <Textarea
+                placeholder="Hi! I'm interested in your space for..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                className="resize-none"
+                autoFocus
+                data-testid="input-contact-message"
+              />
+              <button
+                onClick={handleSend}
+                disabled={sending || !message.trim()}
+                className="w-full py-2.5 rounded-lg bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                data-testid="button-send-inquiry"
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Send message
+              </button>
+              <p className="text-[10px] text-stone-400 text-center">
+                You'll be able to continue the conversation in your portal
+              </p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}
+
+/* ─── Booking card content (shared between desktop sidebar & mobile inline) ─── */
+function BookingCard({
+  space,
+  onBookClick,
+  user,
+  favStatus,
+  onToggleFavorite,
+  onShare,
+}: {
+  space: Space;
+  onBookClick: () => void;
+  user: any;
+  favStatus: { favorited: boolean } | undefined;
+  onToggleFavorite: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-sm">
+      {/* Price */}
+      <div className="flex items-baseline gap-1 mb-1">
+        <span className="text-3xl font-bold text-stone-900">${space.pricePerHour}</span>
+        <span className="text-base text-stone-500">/hr</span>
+      </div>
+      {space.pricePerDay && (
+        <p className="text-sm text-stone-400 mb-5">${space.pricePerDay}/day also available</p>
+      )}
+      {!space.pricePerDay && <div className="mb-5" />}
+
+      {/* Hours & capacity */}
+      <div className="space-y-3 mb-5 pb-5 border-b border-stone-100">
+        {space.availableHours && (
+          <div className="flex items-center gap-2.5 text-sm text-stone-600">
+            <Clock className="w-4 h-4 text-stone-400" />
+            <span>{space.availableHours}</span>
+          </div>
+        )}
+        {space.capacity && (
+          <div className="flex items-center gap-2.5 text-sm text-stone-600">
+            <Users className="w-4 h-4 text-stone-400" />
+            <span>Up to {space.capacity} people</span>
+          </div>
+        )}
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={onBookClick}
+        className="w-full py-3 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] flex items-center justify-center gap-2 shadow-sm transition-colors"
+        data-testid="button-book-space"
+      >
+        <Send className="w-4 h-4" />
+        Request to book
+      </button>
+
+      {/* Save & Share */}
+      <div className="flex items-center justify-center gap-4 mt-4">
+        {user && (
+          <button
+            onClick={onToggleFavorite}
+            className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 transition-colors"
+            data-testid="button-toggle-favorite"
+          >
+            <Heart className={`w-4 h-4 ${favStatus?.favorited ? "text-red-500 fill-red-500" : ""}`} />
+            Save
+          </button>
+        )}
+        <button
+          onClick={onShare}
+          className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 transition-colors"
+          data-testid="button-share-space"
+        >
+          <Share2 className="w-4 h-4" />
+          Share
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════  MAIN PAGE  ═══════════════════════════════ */
+
 export default function SpaceDetailPage({ params }: { params: { slug: string } }) {
   const slug = params.slug;
   const [, navigate] = useLocation();
+
+  /* ── state ── */
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [portfolioCarouselOpen, setPortfolioCarouselOpen] = useState(false);
   const [portfolioCarouselIndex, setPortfolioCarouselIndex] = useState(0);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const [authIntent, setAuthIntent] = useState<"book" | "contact">("book");
 
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  /* ── queries ── */
   const { data: space, isLoading, error } = useQuery<Space>({
     queryKey: ["/api/spaces", slug],
     queryFn: async () => {
@@ -695,7 +843,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     },
   });
 
-  const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category?: string }>>({
+  const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category?: string; title?: string; cropPosition?: { x: number; y: number; zoom: number } }>>({
     queryKey: ["/api/portfolio-photos/by-space", space?.id],
     queryFn: async () => {
       const res = await fetch(`/api/portfolio-photos/by-space/${space!.id}`);
@@ -706,7 +854,6 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     enabled: !!space?.id,
   });
 
-  const { user } = useAuth();
   const { data: favStatus } = useQuery<{ favorited: boolean }>({
     queryKey: ["/api/space-favorites/check", space?.id],
     queryFn: async () => {
@@ -731,7 +878,48 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     },
   });
 
-  const { toast } = useToast();
+  /* ── booking ── */
+  const bookMutation = useMutation({
+    mutationFn: async (params: { bookingDate: string; bookingStartTime: string; bookingHours: number }) => {
+      const res = await apiRequest("POST", `/api/spaces/${space!.id}/book`, params);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast({ title: "Booking created", description: "Check your portal for updates." });
+        setShowBooking(false);
+      }
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("book") === "1" && isAuthenticated) {
+      setShowBooking(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    if (p.get("contact") === "1" && isAuthenticated) {
+      setShowContact(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [isAuthenticated]);
+
+  const handleBookClick = () => {
+    if (!isAuthenticated) { setAuthIntent("book"); setShowAuth(true); return; }
+    setShowBooking(true);
+  };
+
+  const handleContactClick = () => {
+    if (!isAuthenticated) { setAuthIntent("contact"); setShowAuth(true); return; }
+    setShowContact(true);
+  };
+
+  /* ── share ── */
   const handleShare = async () => {
     if (!space) return;
     const url = `${window.location.origin}/spaces/${space.slug}`;
@@ -744,10 +932,9 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     }
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [slug]);
+  useEffect(() => { window.scrollTo(0, 0); }, [slug]);
 
+  /* ── loading / error ── */
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#faf6f1] flex items-center justify-center">
@@ -769,16 +956,26 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     );
   }
 
+  /* ── derived data ── */
   const paletteData = parseColorPalette(space.colorPalette);
-
   const images = space.imageUrls || [];
+  const highlights = getSpaceHighlights(space);
+  const descriptionParagraphs = space.description.split(/\n\n+/);
+  const hasMoreDescription = descriptionParagraphs.length > 1;
+  const primaryTag = space.tags && space.tags.length > 0 ? space.tags[space.tags.length - 1] : space.type;
+
+  const schedule: WeekSchedule | null = (() => {
+    try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
+  })();
+  const bufferMinutes = space.bufferMinutes ?? 15;
 
   return (
-    <div className="min-h-screen bg-[#faf6f1]" data-testid="space-detail-page">
+    <div className="min-h-screen bg-[#faf6f1] pb-20 lg:pb-0" data-testid="space-detail-page">
+      {/* ─── Sticky header ─── */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/60">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
-            onClick={() => { if (window.history.length > 1) window.history.back(); else navigate("/workspaces"); }}
+            onClick={() => { if (window.history.length > 1) window.history.back(); else navigate("/workspaces?type=all"); }}
             className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
             data-testid="button-back"
           >
@@ -789,7 +986,8 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
+        {/* ─── Hero image ─── */}
         {images.length > 0 && (
           <div className="relative">
             <div className="aspect-[16/10] sm:aspect-[16/9] overflow-hidden">
@@ -801,6 +999,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 data-testid="img-space-hero"
               />
             </div>
+            {/* Thumbnail strip */}
             {images.length > 1 && (
               <div className="grid grid-cols-3 gap-1 mt-1">
                 {images.slice(1, 4).map((url, i) => (
@@ -825,70 +1024,49 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 ))}
               </div>
             )}
-            <div className="absolute top-4 left-4 flex flex-wrap gap-1">
-              {(space.tags && space.tags.length > 0 ? space.tags : [space.type]).map((tag: string) => (
-                <span key={tag} className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${TYPE_COLORS[tag] || "bg-stone-100 text-stone-700"}`}>
-                  {TYPE_LABELS[tag] || tag}
-                </span>
-              ))}
+            {/* Single primary category tag — frosted glass (top-left) */}
+            <div className="absolute top-4 left-4">
+              <span className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/20 backdrop-blur-[8px] text-white shadow-sm">
+                {TYPE_LABELS[primaryTag] || primaryTag}
+              </span>
             </div>
+            {/* Verified badge — frosted glass (top-right) */}
             {!space.isSample && (
-              <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/90 backdrop-blur-sm text-xs font-semibold text-emerald-700 px-2.5 py-1 rounded-full shadow-sm" data-testid="badge-verified">
+              <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/20 backdrop-blur-[8px] text-xs font-semibold text-white px-2.5 py-1.5 rounded-full shadow-sm" data-testid="badge-verified">
                 <BadgeCheck className="w-3.5 h-3.5" />
-                Verified by Align
+                Verified
               </div>
             )}
           </div>
         )}
 
+        {/* ─── Two-column content ─── */}
         <div className="px-4 py-6 sm:px-6">
-          <div className="sm:flex sm:gap-8">
-            <div className="sm:flex-1">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900" data-testid="text-space-name">
-                  {space.name}
-                </h1>
-                <div className="flex items-center gap-1 flex-shrink-0 mt-1">
-                  {user && (
-                    <button
-                      onClick={() => toggleFavorite.mutate()}
-                      className="p-2 rounded-full hover:bg-stone-100 transition-colors"
-                      data-testid="button-toggle-favorite"
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-colors ${
-                          favStatus?.favorited
-                            ? "text-red-500 fill-red-500"
-                            : "text-stone-400"
-                        }`}
-                      />
-                    </button>
-                  )}
-                  <button
-                    onClick={handleShare}
-                    className="p-2 rounded-full hover:bg-stone-100 transition-colors"
-                    data-testid="button-share-space"
-                    title="Share this space"
-                  >
-                    <Share2 className="w-5 h-5 text-stone-400" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-stone-500 text-sm mb-4">
+          <div className="lg:flex lg:gap-10">
+            {/* ── Left column ── */}
+            <div className="lg:flex-1 min-w-0">
+              {/* Title + location */}
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 mb-2" data-testid="text-space-name">
+                {space.name}
+              </h1>
+              <div className="flex items-center gap-2 text-stone-500 text-sm mb-2">
                 <MapPin className="w-4 h-4 flex-shrink-0" />
                 <span>{space.address}</span>
               </div>
+              {space.targetProfession && (
+                <p className="text-sm text-[#c4956a] font-medium mb-4">
+                  Ideal for: {space.targetProfession}
+                </p>
+              )}
 
-              <div className="flex items-center gap-5 text-sm mb-6 pb-6 border-b border-stone-200/60">
+              {/* Mobile-only price/meta row */}
+              <div className="flex items-center gap-5 text-sm mb-6 pb-6 border-b border-stone-200/60 lg:hidden">
                 <div className="flex items-center gap-1.5 text-stone-800">
                   <DollarSign className="w-4 h-4 text-[#c4956a]" />
                   <span className="font-semibold">${space.pricePerHour}/hr</span>
                 </div>
                 {space.pricePerDay && (
-                  <div className="text-stone-500">
-                    ${space.pricePerDay}/day
-                  </div>
+                  <div className="text-stone-500">${space.pricePerDay}/day</div>
                 )}
                 {space.capacity && (
                   <div className="flex items-center gap-1.5 text-stone-500">
@@ -904,110 +1082,198 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 )}
               </div>
 
-              {space.targetProfession && (
-                <p className="text-sm text-[#c4956a] font-medium mb-4">
-                  Ideal for: {space.targetProfession}
-                </p>
+              {/* ── Amenities (moved up, with icons) ── */}
+              {space.amenities && space.amenities.length > 0 && (
+                <div className="mb-6 pb-6 border-b border-stone-200/60">
+                  <h2 className="text-sm font-semibold text-stone-800 mb-3">Amenities</h2>
+                  <div className="flex flex-wrap gap-x-5 gap-y-2.5">
+                    {space.amenities.map((amenity, i) => {
+                      const Icon = getAmenityIcon(amenity);
+                      return (
+                        <div key={i} className="flex items-center gap-2 text-sm text-stone-600">
+                          <Icon className="w-4 h-4 text-[#c4956a]" />
+                          <span>{amenity}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
 
-              <div className="mb-6">
-                <h2 className="text-sm font-semibold text-stone-800 mb-3">About this space</h2>
+              {/* ── About this space ── */}
+              <div className="mb-6 pb-6 border-b border-stone-200/60">
+                <h2 className="text-sm font-semibold text-stone-800 mb-4">About this space</h2>
+
+                {/* Highlights grid */}
+                {highlights.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {highlights.map((h, i) => (
+                      <div key={i} className="flex items-center gap-2.5 text-sm text-stone-700">
+                        <div className="w-8 h-8 rounded-lg bg-[#c4956a]/10 flex items-center justify-center flex-shrink-0">
+                          <h.icon className="w-4 h-4 text-[#c4956a]" />
+                        </div>
+                        <span>{h.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Description with Read more */}
                 <div className="text-sm text-stone-600 leading-relaxed">
-                  {space.description.split(/\n\n+/).map((paragraph, i) => (
-                    <p key={i} className={i > 0 ? "mt-3" : ""}>{paragraph}</p>
-                  ))}
+                  <p>{descriptionParagraphs[0]}</p>
+                  {hasMoreDescription && (
+                    <>
+                      <AnimatePresence>
+                        {showFullDescription && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-3 space-y-3">
+                              {descriptionParagraphs.slice(1).map((p, i) => (
+                                <p key={i}>{p}</p>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                      <button
+                        onClick={() => setShowFullDescription(!showFullDescription)}
+                        className="mt-2 text-[#c4956a] font-medium text-sm inline-flex items-center gap-1 hover:underline"
+                      >
+                        {showFullDescription ? "Show less" : "Read more"}
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showFullDescription ? "rotate-180" : ""}`} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {space.amenities && space.amenities.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-sm font-semibold text-stone-800 mb-3">Amenities</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {space.amenities.map((amenity, i) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 text-xs bg-white border border-stone-200 text-stone-600 px-3 py-1.5 rounded-full">
-                        <Check className="w-3 h-3 text-[#c4956a]" />
-                        {amenity}
-                      </span>
-                    ))}
+              {/* ── Host card ── */}
+              {space.hostName && (
+                <div className="mb-6 pb-6 border-b border-stone-200/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-[#c4956a]/15 flex items-center justify-center text-[#c4956a] font-semibold text-sm">
+                      {space.hostName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-stone-800">Hosted by {space.hostName}</p>
+                      <p className="text-xs text-stone-400">Verified host</p>
+                    </div>
                   </div>
                 </div>
               )}
 
+              {/* ── Mobile inline booking card ── */}
+              <div className="lg:hidden mb-6">
+                <BookingCard
+                  space={space}
+                  onBookClick={handleBookClick}
+                  user={user}
+                  favStatus={favStatus}
+                  onToggleFavorite={() => toggleFavorite.mutate()}
+                  onShare={handleShare}
+                />
+              </div>
+
+              {/* ── Sessions at this space (portfolio photos) ── */}
+              {portfolioPhotos.length > 0 && (
+                <div className="mb-6 pb-6 border-b border-stone-200/60">
+                  <h2 className="text-sm font-semibold text-stone-800 mb-1 flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-[#c4956a]" />
+                    Sessions at this space
+                  </h2>
+                  <p className="text-xs text-stone-400 mb-3">
+                    {portfolioPhotos.length} photo{portfolioPhotos.length !== 1 ? "s" : ""} from real sessions held here
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {portfolioPhotos.map((photo, i) => {
+                      const crop = photo.cropPosition;
+                      const cx = crop?.x ?? 50;
+                      const cy = crop?.y ?? 50;
+                      const zoom = crop?.zoom ?? 1;
+                      const inset = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
+                      return (
+                        <div key={photo.id} className="group cursor-pointer" onClick={() => { setPortfolioCarouselIndex(i); setPortfolioCarouselOpen(true); }}>
+                          <div className="aspect-[3/4] overflow-hidden rounded-xl relative" data-testid={`img-portfolio-${photo.id}`}>
+                            <img
+                              src={photo.imageUrl}
+                              alt={photo.title || `Photo ${i + 1} taken at ${space.name}`}
+                              className="absolute object-cover group-hover:scale-105 transition-transform duration-300"
+                              style={{
+                                objectPosition: `${cx}% ${cy}%`,
+                                top: `-${inset}%`,
+                                left: `-${inset}%`,
+                                width: `${100 + inset * 2}%`,
+                                height: `${100 + inset * 2}%`,
+                              }}
+                              loading="lazy"
+                            />
+                          </div>
+                          {photo.title && (
+                            <p className="text-xs text-stone-500 mt-1.5 truncate">{photo.title}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Color palette (trimmed — no explanation paragraph) ── */}
               {paletteData && paletteData.colors?.length > 0 && (
                 <div className="mb-6 p-4 bg-stone-50/80 rounded-xl border border-stone-100" data-testid="space-color-palette">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-3">
                     <Palette className="w-4 h-4 text-[#c4956a]" />
                     <h2 className="text-sm font-semibold text-stone-800">Space Color Palette</h2>
                   </div>
-                  <p className="text-[11px] text-stone-400 mb-4">Colors shape how clients feel in your space, they influence mood, trust, and comfort</p>
-                  <div className="flex items-center gap-5 mb-3">
+                  <div className="flex items-center gap-5 mb-2">
                     {paletteData.colors.slice(0, 3).map((c, i) => (
                       <div key={i} className="flex flex-col items-center gap-1.5">
-                        <div className="w-12 h-12 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: c.hex }} />
+                        <div className="w-10 h-10 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: c.hex }} />
                         <span className="text-[10px] text-stone-500 font-medium">{c.name}</span>
                       </div>
                     ))}
                   </div>
                   {paletteData.feel && (
-                    <p className="text-sm text-stone-500 leading-relaxed italic">{paletteData.feel}</p>
-                  )}
-                  {paletteData.explanation && (
-                    <div className="mt-3 pt-3 border-t border-stone-200/60">
-                      <p className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2">How These Colors Work Together</p>
-                      <p className="text-xs text-stone-500 leading-relaxed">{paletteData.explanation}</p>
-                    </div>
+                    <p className="text-xs text-stone-500 italic leading-relaxed">{paletteData.feel}</p>
                   )}
                 </div>
               )}
 
-              {space.hostName && (
-                <div className="mb-6 pb-6 border-b border-stone-200/60">
-                  <p className="text-sm text-stone-500">Hosted by <span className="font-medium text-stone-700">{space.hostName}</span></p>
-                </div>
-              )}
-
-              {portfolioPhotos.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-sm font-semibold text-stone-800 mb-1 flex items-center gap-2">
-                    <Camera className="w-4 h-4 text-[#c4956a]" />
-                    Photos taken at this space
-                  </h2>
-                  <p className="text-xs text-stone-400 mb-3">
-                    {portfolioPhotos.length} professional photo{portfolioPhotos.length !== 1 ? "s" : ""} from sessions held here
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {portfolioPhotos.map((photo, i) => (
-                      <div
-                        key={photo.id}
-                        className="aspect-[3/4] overflow-hidden rounded-lg cursor-pointer group"
-                        onClick={() => { setPortfolioCarouselIndex(i); setPortfolioCarouselOpen(true); }}
-                        data-testid={`img-portfolio-${photo.id}`}
-                      >
-                        <img
-                          src={photo.imageUrl}
-                          alt={`Photo ${i + 1} taken at ${space.name}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))}
+              {/* ── Contact CTA (replaces newsletter) ── */}
+              {(!user || space.userId !== user.id) && (
+                <div className="mb-6 p-5 bg-white rounded-xl border border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-stone-800">Questions about this space?</p>
+                    <p className="text-xs text-stone-500 mt-0.5">Send a message to the host</p>
                   </div>
+                  <button
+                    onClick={handleContactClick}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#c4956a] text-white text-sm font-medium hover:bg-[#b8845c] transition-colors flex-shrink-0"
+                    data-testid="button-contact-host"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Contact host
+                  </button>
                 </div>
               )}
             </div>
 
-            <div className="sm:w-[280px] sm:flex-shrink-0">
-              <div className="sm:sticky sm:top-20">
-                <div className="bg-white rounded-xl border border-stone-200/80 p-5 shadow-sm mb-4">
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className="text-2xl font-bold text-stone-900">${space.pricePerHour}</span>
-                    <span className="text-sm text-stone-500">/hr</span>
-                  </div>
-                  {space.pricePerDay && (
-                    <p className="text-xs text-stone-400 mb-4">${space.pricePerDay}/day also available</p>
-                  )}
-                  <BookingSection space={space} />
-                </div>
+            {/* ── Right column (desktop only) — sticky booking card ── */}
+            <div className="hidden lg:block lg:w-[380px] lg:flex-shrink-0">
+              <div className="sticky top-[80px]">
+                <BookingCard
+                  space={space}
+                  onBookClick={handleBookClick}
+                  user={user}
+                  favStatus={favStatus}
+                  onToggleFavorite={() => toggleFavorite.mutate()}
+                  onShare={handleShare}
+                />
               </div>
             </div>
           </div>
@@ -1016,6 +1282,62 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
 
       <SiteFooter />
 
+      {/* ─── Mobile fixed bottom bar ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200 px-4 py-3 lg:hidden">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          <div>
+            <span className="text-lg font-bold text-stone-900">${space.pricePerHour}</span>
+            <span className="text-sm text-stone-500">/hr</span>
+            {space.pricePerDay && (
+              <span className="text-xs text-stone-400 ml-2">${space.pricePerDay}/day</span>
+            )}
+          </div>
+          <button
+            onClick={handleBookClick}
+            className="px-6 py-2.5 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] transition-colors shadow-sm"
+          >
+            Request to book
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Modals ─── */}
+      <AnimatePresence>
+        {showAuth && !isAuthenticated && (
+          <MagicLinkModal
+            spaceSlug={space.slug}
+            intent={authIntent}
+            onClose={() => setShowAuth(false)}
+            onSuccess={() => {
+              setShowAuth(false);
+              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showBooking && isAuthenticated && (
+          <BookingPopup
+            space={space}
+            onClose={() => setShowBooking(false)}
+            schedule={schedule}
+            bufferMinutes={bufferMinutes}
+            bookMutation={bookMutation}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showContact && isAuthenticated && (
+          <ContactHostModal
+            space={space}
+            onClose={() => setShowContact(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ─── Photo carousels ─── */}
       <AnimatePresence>
         {carouselOpen && images.length > 0 && (
           <PhotoCarousel
@@ -1031,7 +1353,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
         {portfolioCarouselOpen && portfolioPhotos.length > 0 && (
           <PhotoCarousel
             images={portfolioPhotos.map(p => p.imageUrl)}
-            spaceName={`${space.name}, Portfolio`}
+            spaceName={`${space.name} — Sessions`}
             onClose={() => setPortfolioCarouselOpen(false)}
             initialIndex={portfolioCarouselIndex}
           />

@@ -8,4 +8,6 @@ tmp_uploads
 backups/
 .env
 .local/
+.private/
+uploads/
 attached_assets/

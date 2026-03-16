@@ -3,10 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { runMigrations } from 'stripe-replit-sync';
-import { getStripeSync } from './stripeClient';
-import { WebhookHandlers } from './webhookHandlers';
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes } from "./auth";
 import { seedPortfolioIfEmpty } from "./seed-portfolio";
 import { fixPortfolioImageExtensions } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
@@ -30,68 +27,6 @@ export function log(message: string, source = "express") {
 
   console.log(`${formattedTime} [${source}] ${message}`);
 }
-
-async function initStripe() {
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    console.warn('DATABASE_URL not set — skipping Stripe initialization.');
-    return;
-  }
-
-  try {
-    console.log('Initializing Stripe schema...');
-    await runMigrations({ databaseUrl } as any);
-    console.log('Stripe schema ready');
-
-    const stripeSync = await getStripeSync();
-
-    try {
-      console.log('Setting up managed webhook...');
-      const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
-      const result = await stripeSync.findOrCreateManagedWebhook(
-        `${webhookBaseUrl}/api/stripe/webhook`
-      );
-      if (result?.webhook?.url) {
-        console.log(`Webhook configured: ${result.webhook.url}`);
-      } else {
-        console.log('Webhook setup returned no URL — Stripe webhooks may need manual configuration.');
-      }
-    } catch (webhookErr: any) {
-      console.warn('Webhook setup failed (non-fatal):', webhookErr.message);
-    }
-
-    stripeSync.syncBackfill()
-      .then(() => console.log('Stripe data synced'))
-      .catch((err: any) => console.error('Error syncing Stripe data:', err));
-  } catch (error) {
-    console.error('Failed to initialize Stripe (non-fatal):', error);
-  }
-}
-
-app.post(
-  '/api/stripe/webhook',
-  express.raw({ type: 'application/json' }),
-  async (req, res) => {
-    const signature = req.headers['stripe-signature'];
-    if (!signature) {
-      return res.status(400).json({ error: 'Missing stripe-signature' });
-    }
-
-    try {
-      const sig = Array.isArray(signature) ? signature[0] : signature;
-      if (!Buffer.isBuffer(req.body)) {
-        console.error('STRIPE WEBHOOK ERROR: req.body is not a Buffer.');
-        return res.status(500).json({ error: 'Webhook processing error' });
-      }
-
-      await WebhookHandlers.processWebhook(req.body as Buffer, sig);
-      res.status(200).json({ received: true });
-    } catch (error: any) {
-      console.error('Webhook error:', error.message);
-      res.status(400).json({ error: 'Webhook processing error' });
-    }
-  }
-);
 
 app.use(
   express.json({
@@ -201,7 +136,6 @@ app.use((req, res, next) => {
         seedPortfolioIfEmpty().catch(err => console.warn('Portfolio seed error (non-fatal):', err.message)),
         seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
         fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
-        initStripe().catch(err => console.warn('Stripe init error (non-fatal):', err.message)),
       ]).then(() => {
         log('Background initialization complete');
       });

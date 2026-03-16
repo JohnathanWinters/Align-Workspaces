@@ -1,6 +1,6 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages } from "@shared/schema";
 import { db } from "./db";
-import { sql, eq, desc, asc, and, isNull, ne, ilike } from "drizzle-orm";
+import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
 export interface IStorage {
   createLead(lead: InsertLead): Promise<Lead>;
@@ -114,6 +114,13 @@ export interface IStorage {
   addSpaceFavorite(userId: string, spaceId: string): Promise<SpaceFavorite>;
   removeSpaceFavorite(userId: string, spaceId: string): Promise<void>;
   isSpaceFavorited(userId: string, spaceId: string): Promise<boolean>;
+  getOrCreateDirectConversation(spaceId: string, guestId: string, hostId: string): Promise<DirectConversation>;
+  getDirectConversationById(id: string): Promise<DirectConversation | undefined>;
+  getDirectConversationsByUser(userId: string): Promise<DirectConversation[]>;
+  getDirectMessages(conversationId: string): Promise<DirectMessage[]>;
+  createDirectMessage(msg: InsertDirectMessage): Promise<DirectMessage>;
+  getLatestDirectMessage(conversationId: string): Promise<DirectMessage | undefined>;
+  markDirectConversationRead(conversationId: string, role: "guest" | "host"): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -826,6 +833,49 @@ export class DatabaseStorage implements IStorage {
   async isSpaceFavorited(userId: string, spaceId: string): Promise<boolean> {
     const result = await db.select().from(spaceFavorites).where(and(eq(spaceFavorites.userId, userId), eq(spaceFavorites.spaceId, spaceId)));
     return result.length > 0;
+  }
+
+  async getOrCreateDirectConversation(spaceId: string, guestId: string, hostId: string): Promise<DirectConversation> {
+    const [existing] = await db.select().from(directConversations).where(
+      and(eq(directConversations.spaceId, spaceId), eq(directConversations.guestId, guestId))
+    );
+    if (existing) return existing;
+    const [created] = await db.insert(directConversations).values({ spaceId, guestId, hostId }).returning();
+    return created;
+  }
+
+  async getDirectConversationById(id: string): Promise<DirectConversation | undefined> {
+    const [result] = await db.select().from(directConversations).where(eq(directConversations.id, id));
+    return result;
+  }
+
+  async getDirectConversationsByUser(userId: string): Promise<DirectConversation[]> {
+    return db.select().from(directConversations).where(
+      or(eq(directConversations.guestId, userId), eq(directConversations.hostId, userId))
+    ).orderBy(desc(directConversations.createdAt));
+  }
+
+  async getDirectMessages(conversationId: string): Promise<DirectMessage[]> {
+    return db.select().from(directMessages).where(eq(directMessages.conversationId, conversationId)).orderBy(directMessages.createdAt);
+  }
+
+  async createDirectMessage(msg: InsertDirectMessage): Promise<DirectMessage> {
+    const [result] = await db.insert(directMessages).values(msg).returning();
+    return result;
+  }
+
+  async getLatestDirectMessage(conversationId: string): Promise<DirectMessage | undefined> {
+    const [result] = await db.select().from(directMessages).where(eq(directMessages.conversationId, conversationId)).orderBy(desc(directMessages.createdAt)).limit(1);
+    return result;
+  }
+
+  async markDirectConversationRead(conversationId: string, role: "guest" | "host"): Promise<void> {
+    const now = new Date();
+    if (role === "guest") {
+      await db.update(directConversations).set({ lastReadGuest: now }).where(eq(directConversations.id, conversationId));
+    } else {
+      await db.update(directConversations).set({ lastReadHost: now }).where(eq(directConversations.id, conversationId));
+    }
   }
 }
 

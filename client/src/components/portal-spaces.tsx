@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -963,8 +963,64 @@ function MySpacesTab() {
   );
 }
 
-export default function PortalSpacesSection({ userId }: { userId: string }) {
-  const [spacesTab, setSpacesTab] = useState<"favorites" | "my-spaces" | "past">("favorites");
+export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: "favorites" | "my-spaces" | "past" }) {
+  const [spacesTab, setSpacesTab] = useState<"favorites" | "my-spaces" | "past">(initialTab || "favorites");
+  const [tabResolved, setTabResolved] = useState(!!initialTab);
+
+  // Fetch counts to auto-detect best sub-tab
+  const { data: favorites = [], isLoading: favoritesLoading } = useQuery<Space[]>({
+    queryKey: ["/api/space-favorites"],
+    queryFn: async () => {
+      const res = await fetch("/api/space-favorites", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const { data: mySpaces = [], isLoading: mySpacesLoading } = useQuery<Space[]>({
+    queryKey: ["/api/my-spaces"],
+    queryFn: async () => {
+      const res = await fetch("/api/my-spaces", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const { data: bookingsData, isLoading: bookingsLoading } = useQuery<{ guest: any[]; host: any[] }>({
+    queryKey: ["/api/space-bookings"],
+    queryFn: async () => {
+      const res = await fetch("/api/space-bookings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (tabResolved) return;
+    // Wait until all queries have finished loading before resolving
+    if (favoritesLoading || mySpacesLoading || bookingsLoading) return;
+
+    const hasFavorites = favorites.length > 0;
+    const hasMySpaces = mySpaces.length > 0;
+    const pastBookings = [...(bookingsData?.guest || []), ...(bookingsData?.host || [])];
+    const hasPast = pastBookings.length > 0;
+
+    const tabs = [
+      hasFavorites && { key: "favorites" as const, time: 0 },
+      hasMySpaces && { key: "my-spaces" as const, time: Math.max(...mySpaces.map(s => new Date(s.createdAt || 0).getTime())) },
+      hasPast && { key: "past" as const, time: Math.max(...pastBookings.map((b: any) => new Date(b.createdAt || 0).getTime())) },
+    ].filter(Boolean) as { key: "favorites" | "my-spaces" | "past"; time: number }[];
+
+    if (tabs.length === 1) {
+      setSpacesTab(tabs[0].key);
+    } else if (tabs.length > 1) {
+      // Pick most recently active
+      tabs.sort((a, b) => b.time - a.time);
+      setSpacesTab(tabs[0].key);
+    }
+
+    setTabResolved(true);
+  }, [favorites, mySpaces, bookingsData, tabResolved, favoritesLoading, mySpacesLoading, bookingsLoading]);
 
   const tabs = [
     { key: "favorites" as const, label: "Favorites", icon: Heart },

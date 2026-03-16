@@ -25,7 +25,10 @@ import {
   CalendarDays,
   RefreshCw,
   CalendarPlus,
+  Bell,
+  BellRing,
 } from "lucide-react";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useToast } from "@/hooks/use-toast";
 import {
   type WeekSchedule,
@@ -34,7 +37,7 @@ import {
   getMaxHoursFromSlot,
   formatTime,
 } from "./availability-schedule-editor";
-import type { SpaceBooking, SpaceMessage } from "@shared/schema";
+import type { SpaceBooking, SpaceMessage, DirectMessage } from "@shared/schema";
 
 interface EnrichedBooking extends SpaceBooking {
   spaceName: string;
@@ -46,6 +49,25 @@ interface EnrichedBooking extends SpaceBooking {
   spaceSchedule?: string;
   spaceBufferMinutes?: number;
 }
+
+interface EnrichedDirectConversation {
+  id: string;
+  spaceId: string;
+  spaceName: string;
+  spaceSlug: string;
+  guestId: string;
+  hostId: string;
+  otherPartyName: string;
+  latestMessage: { message: string; createdAt: string; senderRole: string } | null;
+  unreadCount: number;
+  role: "guest" | "host";
+  createdAt: string;
+  type: "direct";
+}
+
+type UnifiedConversation =
+  | (EnrichedBooking & { type: "booking" })
+  | EnrichedDirectConversation;
 
 const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
   awaiting_payment: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Awaiting Payment" },
@@ -72,7 +94,7 @@ function formatRelativeTime(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function getMessagePreview(msg: { message: string; messageType: string; senderRole: string } | null): string {
+function getMessagePreview(msg: { message: string; messageType?: string; senderRole: string } | null): string {
   if (!msg) return "No messages yet";
   if (msg.messageType === "system") return msg.message;
   if (msg.messageType === "payment_request") {
@@ -90,9 +112,9 @@ function ConversationList({
   onSelect,
   isLoading,
 }: {
-  conversations: EnrichedBooking[];
+  conversations: UnifiedConversation[];
   activeId: string | null;
-  onSelect: (b: EnrichedBooking) => void;
+  onSelect: (c: UnifiedConversation) => void;
   isLoading: boolean;
 }) {
   if (isLoading) {
@@ -111,7 +133,7 @@ function ConversationList({
         </div>
         <h3 className="font-serif text-lg text-gray-900 mb-1">No conversations yet</h3>
         <p className="text-gray-500 text-sm max-w-xs">
-          When you book a space or receive a booking request, conversations will appear here.
+          When you book a space or message a host, conversations will appear here.
         </p>
       </div>
     );
@@ -120,8 +142,9 @@ function ConversationList({
   return (
     <div className="divide-y divide-gray-100" data-testid="conversation-list">
       {conversations.map((c) => {
-        const status = statusConfig[c.status || "pending"];
-        const StatusIcon = status.icon;
+        const isDirect = c.type === "direct";
+        const status = isDirect ? null : statusConfig[(c as EnrichedBooking).status || "pending"];
+        const StatusIcon = status?.icon;
         return (
           <button
             key={c.id}
@@ -132,8 +155,8 @@ function ConversationList({
             data-testid={`conversation-item-${c.id}`}
           >
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Building2 className="w-5 h-5 text-gray-500" />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isDirect ? "bg-amber-50" : "bg-gray-100"}`}>
+                {isDirect ? <MessageCircle className="w-5 h-5 text-amber-600" /> : <Building2 className="w-5 h-5 text-gray-500" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
@@ -146,11 +169,13 @@ function ConversationList({
                 </div>
                 <p className="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1.5">
                     <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0 rounded-full border ${
-                      c.role === "host"
-                        ? "bg-violet-50 text-violet-600 border-violet-200"
-                        : "bg-sky-50 text-sky-600 border-sky-200"
+                      isDirect
+                        ? "bg-amber-50 text-amber-600 border-amber-200"
+                        : c.role === "host"
+                          ? "bg-violet-50 text-violet-600 border-violet-200"
+                          : "bg-sky-50 text-sky-600 border-sky-200"
                     }`}>
-                      {c.role === "host" ? "Hosting" : "Renting"}
+                      {isDirect ? "Inquiry" : c.role === "host" ? "Hosting" : "Renting"}
                     </span>
                     <span className="truncate">{c.spaceName}</span>
                   </p>
@@ -164,10 +189,17 @@ function ConversationList({
                         {c.unreadCount > 9 ? "9+" : c.unreadCount}
                       </span>
                     )}
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${status.color}`}>
-                      <StatusIcon className="w-3 h-3 mr-0.5" />
-                      {status.label}
-                    </Badge>
+                    {isDirect ? (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-amber-50 text-amber-700 border-amber-200">
+                        <MessageCircle className="w-3 h-3 mr-0.5" />
+                        Inquiry
+                      </Badge>
+                    ) : status && StatusIcon ? (
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${status.color}`}>
+                        <StatusIcon className="w-3 h-3 mr-0.5" />
+                        {status.label}
+                      </Badge>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -858,10 +890,143 @@ function ConversationView({
   );
 }
 
-export default function PortalMessagesSection({ userId }: { userId: string }) {
-  const [activeBooking, setActiveBooking] = useState<EnrichedBooking | null>(null);
+function DirectConversationView({
+  conversation,
+  userId,
+  onBack,
+}: {
+  conversation: EnrichedDirectConversation;
+  userId: string;
+  onBack: () => void;
+}) {
+  const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { data: bookingsData, isLoading } = useQuery<{ guestBookings: EnrichedBooking[]; hostBookings: EnrichedBooking[] }>({
+  const { data: messages = [], isLoading } = useQuery<DirectMessage[]>({
+    queryKey: ["/api/direct-conversations", conversation.id, "messages"],
+    queryFn: async () => {
+      const res = await fetch(`/api/direct-conversations/${conversation.id}/messages`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    fetch(`/api/direct-conversations/${conversation.id}/read`, { method: "POST", credentials: "include" }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+  }, [conversation.id, messages.length]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  const sendMutation = useMutation({
+    mutationFn: async (text: string) => {
+      await apiRequest("POST", `/api/direct-conversations/${conversation.id}/messages`, { message: text });
+    },
+    onSuccess: () => {
+      setNewMessage("");
+      queryClient.invalidateQueries({ queryKey: ["/api/direct-conversations", conversation.id, "messages"] });
+    },
+  });
+
+  const handleSend = () => {
+    const text = newMessage.trim();
+    if (!text) return;
+    sendMutation.mutate(text);
+  };
+
+  return (
+    <div className="flex flex-col h-full" data-testid={`dm-view-${conversation.id}`}>
+      <div className="border-b border-gray-100 px-4 py-3 bg-white flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="lg:hidden text-gray-500 hover:text-gray-700" data-testid="button-back-to-inbox">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+            <MessageCircle className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-gray-900 truncate">{conversation.otherPartyName}</h3>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-amber-50 text-amber-700 border-amber-200">
+                Inquiry
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-500 truncate">
+              {conversation.spaceName} &middot; {conversation.role === "host" ? "You're the host" : "You're inquiring"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#faf9f7]">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No messages yet</div>
+        ) : (
+          messages.map((msg) => {
+            const isOwn = msg.senderId === userId;
+            return (
+              <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
+                <div className={`max-w-[75%] ${isOwn
+                  ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
+                  : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
+                } px-4 py-2.5 shadow-sm`}>
+                  {!isOwn && (
+                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
+                  )}
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                  <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
+                    {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Type a message..."
+            className="flex-1 bg-gray-50 border-gray-200 text-sm"
+            data-testid="input-dm-message"
+          />
+          <Button
+            onClick={handleSend}
+            disabled={!newMessage.trim() || sendMutation.isPending}
+            size="sm"
+            className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
+            data-testid="button-send-dm"
+          >
+            {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PortalMessagesSection({ userId }: { userId: string }) {
+  const [activeConversation, setActiveConversation] = useState<UnifiedConversation | null>(null);
+  const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("client");
+
+  const { data: bookingsData, isLoading } = useQuery<{
+    guestBookings: EnrichedBooking[];
+    hostBookings: EnrichedBooking[];
+    directConversations?: EnrichedDirectConversation[];
+  }>({
     queryKey: ["/api/space-bookings"],
     queryFn: async () => {
       const res = await fetch("/api/space-bookings", { credentials: "include" });
@@ -871,9 +1036,10 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
     refetchInterval: 10000,
   });
 
-  const allConversations = [
-    ...(bookingsData?.guestBookings || []),
-    ...(bookingsData?.hostBookings || []),
+  const allConversations: UnifiedConversation[] = [
+    ...(bookingsData?.guestBookings || []).map((b) => ({ ...b, type: "booking" as const })),
+    ...(bookingsData?.hostBookings || []).map((b) => ({ ...b, type: "booking" as const })),
+    ...(bookingsData?.directConversations || []),
   ].sort((a, b) => {
     const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : new Date(a.createdAt!).getTime();
     const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : new Date(b.createdAt!).getTime();
@@ -882,15 +1048,34 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
 
   const totalUnread = allConversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
-  const currentBooking = activeBooking
-    ? allConversations.find((c) => c.id === activeBooking.id) || activeBooking
+  const currentConversation = activeConversation
+    ? allConversations.find((c) => c.id === activeConversation.id) || activeConversation
     : null;
 
   return (
-    <div className="h-[calc(100vh-180px)] min-h-[500px]" data-testid="messages-section">
+    <div className="space-y-3" data-testid="messages-section">
+      {pushStatus === "prompt" && (
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <Bell className="w-5 h-5 text-blue-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-blue-900">Get notified when you receive a message</p>
+            <p className="text-xs text-blue-600">Receive push notifications on this device</p>
+          </div>
+          <Button
+            size="sm"
+            onClick={subscribePush}
+            data-testid="button-enable-notifications"
+            className="bg-blue-600 text-white hover:bg-blue-700 shrink-0"
+          >
+            <BellRing className="w-3.5 h-3.5 mr-1.5" />
+            Enable
+          </Button>
+        </div>
+      )}
+    <div className="h-[calc(100vh-180px)] min-h-[500px]">
       <div className="h-full bg-white rounded-xl border border-gray-200 overflow-hidden flex">
         <div className={`w-full lg:w-[340px] lg:border-r border-gray-100 flex-shrink-0 overflow-y-auto ${
-          activeBooking ? "hidden lg:block" : ""
+          activeConversation ? "hidden lg:block" : ""
         }`}>
           <div className="px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
             <div className="flex items-center justify-between">
@@ -904,19 +1089,27 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
           </div>
           <ConversationList
             conversations={allConversations}
-            activeId={activeBooking?.id || null}
-            onSelect={setActiveBooking}
+            activeId={activeConversation?.id || null}
+            onSelect={setActiveConversation}
             isLoading={isLoading}
           />
         </div>
 
-        <div className={`flex-1 flex flex-col ${!activeBooking ? "hidden lg:flex" : ""}`}>
-          {currentBooking ? (
-            <ConversationView
-              booking={currentBooking}
-              userId={userId}
-              onBack={() => setActiveBooking(null)}
-            />
+        <div className={`flex-1 flex flex-col ${!activeConversation ? "hidden lg:flex" : ""}`}>
+          {currentConversation ? (
+            currentConversation.type === "direct" ? (
+              <DirectConversationView
+                conversation={currentConversation}
+                userId={userId}
+                onBack={() => setActiveConversation(null)}
+              />
+            ) : (
+              <ConversationView
+                booking={currentConversation}
+                userId={userId}
+                onBack={() => setActiveConversation(null)}
+              />
+            )
           ) : (
             <div className="flex-1 flex items-center justify-center text-center px-6">
               <div>
@@ -930,11 +1123,16 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
         </div>
       </div>
     </div>
+    </div>
   );
 }
 
 export function useUnreadCount() {
-  const { data } = useQuery<{ guestBookings: EnrichedBooking[]; hostBookings: EnrichedBooking[] }>({
+  const { data } = useQuery<{
+    guestBookings: EnrichedBooking[];
+    hostBookings: EnrichedBooking[];
+    directConversations?: EnrichedDirectConversation[];
+  }>({
     queryKey: ["/api/space-bookings"],
     queryFn: async () => {
       const res = await fetch("/api/space-bookings", { credentials: "include" });
@@ -944,6 +1142,10 @@ export function useUnreadCount() {
     refetchInterval: 15000,
   });
 
-  const all = [...(data?.guestBookings || []), ...(data?.hostBookings || [])];
+  const all = [
+    ...(data?.guestBookings || []),
+    ...(data?.hostBookings || []),
+    ...(data?.directConversations || []),
+  ];
   return all.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 }

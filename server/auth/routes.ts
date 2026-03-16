@@ -1,21 +1,18 @@
 import type { Express, Request, Response } from "express";
 import { authStorage } from "./storage";
-import { isAuthenticated } from "./replitAuth";
-import { db } from "../../db";
+import { isAuthenticated } from "./auth";
+import { db } from "../db";
 import { users, magicTokens, type User } from "@shared/models/auth";
 import { eq, and, gt } from "drizzle-orm";
 import { randomBytes } from "crypto";
-import { sendMagicLinkEmail, sendEmailChangeConfirmation } from "../../gmail";
-import bcrypt from "bcryptjs";
-
+import { sendMagicLinkEmail, sendEmailChangeConfirmation } from "../gmail";
 function sanitizeUser(user: User) {
   const { password, pendingEmail, pendingEmailToken, pendingEmailExpiresAt, ...safe } = user;
-  return { ...safe, hasPassword: !!password };
+  return safe;
 }
 
 async function getAuthUserId(req: any): Promise<string | null> {
   if (req.session?.magicUserId) return req.session.magicUserId;
-  if (req.isAuthenticated?.() && req.user?.claims?.sub) return req.user.claims.sub;
   return null;
 }
 
@@ -24,13 +21,6 @@ export function registerAuthRoutes(app: Express): void {
     if (req.session?.magicUserId) {
       try {
         const [user] = await db.select().from(users).where(eq(users.id, req.session.magicUserId));
-        if (user) return res.json(sanitizeUser(user));
-      } catch {}
-    }
-
-    if (req.isAuthenticated?.() && req.user?.claims?.sub) {
-      try {
-        const user = await authStorage.getUser(req.user.claims.sub);
         if (user) return res.json(sanitizeUser(user));
       } catch {}
     }
@@ -174,57 +164,6 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/auth/set-password", async (req: any, res: Response) => {
-    try {
-      const userId = await getAuthUserId(req);
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-      const { newPassword } = req.body;
-      if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
-        return res.status(400).json({ message: "Password must be at least 8 characters" });
-      }
-
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      if (!user) return res.status(404).json({ message: "User not found" });
-      if (user.password) return res.status(400).json({ message: "Password already set. Use change-password instead." });
-
-      const hashed = await bcrypt.hash(newPassword, 12);
-      const [updated] = await db.update(users).set({ password: hashed, updatedAt: new Date() }).where(eq(users.id, userId)).returning();
-
-      res.json(sanitizeUser(updated!));
-    } catch (error: any) {
-      console.error("Set password error:", error);
-      res.status(500).json({ message: "Failed to set password" });
-    }
-  });
-
-  app.post("/api/auth/change-password", async (req: any, res: Response) => {
-    try {
-      const userId = await getAuthUserId(req);
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-      const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) return res.status(400).json({ message: "Both passwords are required" });
-      if (typeof newPassword !== "string" || newPassword.length < 8) {
-        return res.status(400).json({ message: "New password must be at least 8 characters" });
-      }
-
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      if (!user || !user.password) return res.status(400).json({ message: "No password set" });
-
-      const valid = await bcrypt.compare(currentPassword, user.password);
-      if (!valid) return res.status(400).json({ message: "Current password is incorrect" });
-
-      const hashed = await bcrypt.hash(newPassword, 12);
-      const [updated] = await db.update(users).set({ password: hashed, updatedAt: new Date() }).where(eq(users.id, userId)).returning();
-
-      res.json(sanitizeUser(updated!));
-    } catch (error: any) {
-      console.error("Change password error:", error);
-      res.status(500).json({ message: "Failed to change password" });
-    }
-  });
-
   app.post("/api/auth/request-email-change", async (req: any, res: Response) => {
     try {
       const userId = await getAuthUserId(req);
@@ -343,47 +282,34 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
+  app.patch("/api/auth/default-tab", async (req: any, res: Response) => {
+    try {
+      const userId = await getAuthUserId(req);
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const { tab } = req.body;
+      const validTabs = ["shoots", "edits", "messages", "spaces", "my-spaces", "past-spaces", null];
+      if (!validTabs.includes(tab)) {
+        return res.status(400).json({ message: "Invalid tab" });
+      }
+
+      const [updated] = await db.update(users).set({
+        defaultPortalTab: tab || null,
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId)).returning();
+
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json(sanitizeUser(updated));
+    } catch (error: any) {
+      console.error("Update default tab error:", error);
+      res.status(500).json({ message: "Failed to update default tab" });
+    }
+  });
+
   app.post("/api/auth/logout", (req: any, res) => {
     req.session?.destroy?.((err: any) => {
       if (err) console.error("Logout error:", err);
       res.json({ ok: true });
     });
   });
-
-  // Local dev: quick login without OIDC or email
-  if (!process.env.REPL_ID) {
-    app.get("/api/login", async (req: any, res: Response) => {
-      const returnTo = (req.query.returnTo as string) || "/portal";
-      try {
-        const allUsers = await db.select().from(users);
-        res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dev Login</title>
-        <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#1a1a1a;color:#fff}
-        .card{background:#2a2a2a;border-radius:12px;padding:40px;max-width:400px;width:100%}
-        h1{font-size:20px;font-weight:600;margin:0 0 8px;font-family:Georgia,serif}
-        p{font-size:13px;color:#999;margin:0 0 24px}
-        .user{display:flex;align-items:center;gap:12px;padding:14px;border-radius:8px;border:1px solid #333;cursor:pointer;margin-bottom:8px;transition:all .15s}
-        .user:hover{background:#333;border-color:#555}
-        .name{font-weight:500;font-size:15px}.email{font-size:12px;color:#888}
-        .badge{font-size:10px;background:#444;padding:2px 8px;border-radius:4px;color:#ccc}</style></head>
-        <body><div class="card"><h1>Dev Login</h1><p>Select a user to sign in as (local dev only)</p>
-        ${allUsers.map(u => `<div class="user" onclick="login('${u.id}')"><div><div class="name">${u.firstName || 'Unknown'} ${u.lastName || ''}</div><div class="email">${u.email || 'no email'}</div></div></div>`).join('')}
-        <script>function login(id){fetch('/api/auth/dev-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:id}),credentials:'include'}).then(r=>r.json()).then(()=>{window.location.href='${returnTo}'})}</script>
-        </div></body></html>`);
-      } catch (err: any) {
-        res.status(500).send("Failed to load users: " + err.message);
-      }
-    });
-
-    app.post("/api/auth/dev-login", async (req: any, res: Response) => {
-      const { userId } = req.body;
-      if (!userId) return res.status(400).json({ message: "userId required" });
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      if (!user) return res.status(404).json({ message: "User not found" });
-      req.session.magicUserId = user.id;
-      req.session.save((err: any) => {
-        if (err) console.error("Session save error:", err);
-        res.json({ ok: true });
-      });
-    });
-  }
 }

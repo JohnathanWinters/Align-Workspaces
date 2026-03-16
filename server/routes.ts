@@ -5,24 +5,22 @@ import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insert
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail } from "./gmail";
+import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail, getGmailAuthUrl, exchangeGmailCode } from "./gmail";
 import { sendPushToUser, sendPushToRole } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees } from "@shared/pricing";
 import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
-import { isAuthenticated } from "./replit_integrations/auth";
+import { isAuthenticated } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import archiver from "archiver";
 import sharp from "sharp";
 import { randomUUID, createHash, scryptSync, randomBytes } from "crypto";
-import { objectStorageClient, ObjectStorageService, ObjectNotFoundError } from "./replit_integrations/object_storage";
-import { authStorage } from "./replit_integrations/auth";
+import { uploadBuffer, uploadFile, deleteObject, getObjectStream, serveObject, ObjectNotFoundError } from "./fileStorage";
+import { authStorage } from "./auth";
 import { users } from "@shared/models/auth";
 import { eq } from "drizzle-orm";
-
-const objectStorageService = new ObjectStorageService();
 
 function cleanAddressForGeocoding(address: string): string {
   let cleaned = address
@@ -74,67 +72,22 @@ const upload = multer({
   },
 });
 
-function parseObjectPath(objectPath: string): { bucketName: string; objectName: string } {
-  let p = objectPath;
-  if (!p.startsWith("/")) p = `/${p}`;
-  const parts = p.split("/");
-  if (parts.length < 3) throw new Error("Invalid object path");
-  return { bucketName: parts[1], objectName: parts.slice(2).join("/") };
-}
-
 async function uploadBufferToObjectStorage(buffer: Buffer, contentType: string): Promise<string> {
-  const privateDir = objectStorageService.getPrivateObjectDir();
-  const objectId = randomUUID();
-  const fullPath = `${privateDir}/uploads/${objectId}`;
-  const { bucketName, objectName } = parseObjectPath(fullPath);
-  const bucket = objectStorageClient.bucket(bucketName);
-  const file = bucket.file(objectName);
-  await file.save(buffer, { contentType });
-  return `/objects/uploads/${objectId}`;
+  return uploadBuffer(buffer, contentType);
 }
 
 async function uploadFileFromDisk(filePath: string, contentType: string): Promise<string> {
-  const privateDir = objectStorageService.getPrivateObjectDir();
-  const objectId = randomUUID();
-  const fullPath = `${privateDir}/uploads/${objectId}`;
-  const { bucketName, objectName } = parseObjectPath(fullPath);
-  const bucket = objectStorageClient.bucket(bucketName);
-  const file = bucket.file(objectName);
-  await new Promise<void>((resolve, reject) => {
-    const readStream = fs.createReadStream(filePath);
-    const writeStream = file.createWriteStream({ metadata: { contentType } });
-    readStream.pipe(writeStream);
-    writeStream.on("finish", resolve);
-    writeStream.on("error", reject);
-    readStream.on("error", reject);
-  });
-  await fs.promises.unlink(filePath).catch(() => {});
-  return `/objects/uploads/${objectId}`;
+  return uploadFile(filePath, contentType);
 }
 
 async function deleteFromObjectStorage(imageUrl: string): Promise<void> {
-  try {
-    if (imageUrl.startsWith("/objects/")) {
-      const objectFile = await objectStorageService.getObjectEntityFile(imageUrl);
-      await objectFile.delete();
-    } else if (imageUrl.startsWith("/uploads/")) {
-      const filePath = path.join(uploadDir, path.basename(imageUrl));
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-  } catch (err) {
-    console.error("Failed to delete file:", imageUrl, err);
-  }
+  await deleteObject(imageUrl);
 }
 
 async function getImageStream(imageUrl: string): Promise<{ stream: NodeJS.ReadableStream; contentType: string } | null> {
   try {
     if (imageUrl.startsWith("/objects/")) {
-      const objectFile = await objectStorageService.getObjectEntityFile(imageUrl);
-      const [metadata] = await objectFile.getMetadata();
-      return {
-        stream: objectFile.createReadStream(),
-        contentType: (metadata.contentType as string) || "application/octet-stream",
-      };
+      return getObjectStream(imageUrl);
     } else if (imageUrl.startsWith("/uploads/")) {
       const filePath = path.join(uploadDir, path.basename(imageUrl));
       if (!fs.existsSync(filePath)) return null;
@@ -251,6 +204,39 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Gmail OAuth2 setup — visit /api/gmail/authorize to start the one-time flow
+  app.get("/api/gmail/authorize", (_req, res) => {
+    const url = getGmailAuthUrl();
+    res.redirect(url);
+  });
+
+  app.get("/api/auth/google/callback", async (req, res) => {
+    try {
+      const code = req.query.code as string;
+      if (!code) return res.status(400).send("Missing code parameter");
+      const refreshToken = await exchangeGmailCode(code);
+      res.send(`<h2>Success!</h2><p>Add this to your <code>.env</code> file:</p><pre>GMAIL_REFRESH_TOKEN=${refreshToken}</pre><p>Then restart the server.</p>`);
+    } catch (err: any) {
+      console.error("Gmail OAuth callback error:", err);
+      res.status(500).send(`<h2>Error</h2><pre>${err.message}</pre>`);
+    }
+  });
+
+  // Test email endpoint
+  app.post("/api/test-email", async (req, res) => {
+    try {
+      await sendHelpRequest({
+        clientName: "Test User",
+        clientEmail: "armando@alignworkspaces.com",
+        message: "This is a test email from Align Workspaces to verify the email system is working correctly.",
+      });
+      res.json({ success: true, message: "Test email sent to admin" });
+    } catch (err: any) {
+      console.error("Test email failed:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.post("/api/auth/profile-photo", isAuthenticated, upload.single("photo"), async (req: any, res) => {
     try {
       const userId = req.session?.magicUserId || req.user?.claims?.sub;
@@ -274,7 +260,7 @@ export async function registerRoutes(
 
       if (!updated) return res.status(404).json({ message: "User not found" });
       const { password: _p, pendingEmail: _pe, pendingEmailToken: _pt, pendingEmailExpiresAt: _pea, ...safe } = updated;
-      res.json({ ...safe, hasPassword: !!updated.password });
+      res.json(safe);
     } catch (error: any) {
       console.error("Profile photo upload error:", error);
       if (req.file?.path) await fs.promises.unlink(req.file.path).catch(() => {});
@@ -410,23 +396,14 @@ export async function registerRoutes(
   app.post("/api/admin/portfolio/upload", isAdmin, upload.single("file"), async (req: any, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-      const objectKey = `uploads/portfolio-${randomUUID()}.webp`;
-      const privateDir = objectStorageService.getPrivateObjectDir();
-      const fullPath = `${privateDir}/${objectKey}`;
-      const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-      const bucketName = parts[0];
-      const objectName = parts.slice(1).join("/");
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
       const rawBuffer = fs.readFileSync(req.file.path);
       const processedBuffer = await sharp(rawBuffer)
         .rotate()
         .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 90, effort: 4 })
         .toBuffer();
-      await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
       fs.unlinkSync(req.file.path);
-      const imageUrl = `/objects/${objectKey}`;
+      const imageUrl = await uploadBuffer(processedBuffer, "image/webp");
       const environments = JSON.parse(req.body.environments || "[]");
       const brandMessages = JSON.parse(req.body.brandMessages || "[]");
       const emotionalImpacts = JSON.parse(req.body.emotionalImpacts || "[]");
@@ -452,31 +429,17 @@ export async function registerRoutes(
       const existing = await storage.getPortfolioPhoto(req.params.id);
       if (existing && (existing as any).beforeImageUrl && (existing as any).beforeImageUrl.startsWith("/objects/uploads/")) {
         try {
-          const oldKey = (existing as any).beforeImageUrl.replace("/objects/", "");
-          const oldPrivateDir = objectStorageService.getPrivateObjectDir();
-          const oldFullPath = `${oldPrivateDir}/${oldKey}`;
-          const oldParts = oldFullPath.startsWith("/") ? oldFullPath.slice(1).split("/") : oldFullPath.split("/");
-          const oldBucket = objectStorageClient.bucket(oldParts[0]);
-          await oldBucket.file(oldParts.slice(1).join("/")).delete();
+          await deleteObject((existing as any).beforeImageUrl);
         } catch {}
       }
-      const objectKey = `uploads/before-${randomUUID()}.webp`;
-      const privateDir = objectStorageService.getPrivateObjectDir();
-      const fullPath = `${privateDir}/${objectKey}`;
-      const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-      const bucketName = parts[0];
-      const objectName = parts.slice(1).join("/");
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
       const rawBuffer = fs.readFileSync(req.file.path);
       const processedBuffer = await sharp(rawBuffer)
         .rotate()
         .resize({ width: 1200, height: 1600, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 85, effort: 4 })
         .toBuffer();
-      await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
       fs.unlinkSync(req.file.path);
-      const beforeImageUrl = `/objects/${objectKey}`;
+      const beforeImageUrl = await uploadBuffer(processedBuffer, "image/webp");
       const photo = await storage.updatePortfolioPhoto(req.params.id, { beforeImageUrl } as any);
       res.json(photo);
     } catch (err: any) {
@@ -830,8 +793,17 @@ export async function registerRoutes(
   app.get("/api/shoots", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const shoots = await storage.getShootsByUser(userId);
-      res.json(shoots);
+      const userShoots = await storage.getShootsByUser(userId);
+      // Attach gallery image count and cover image to each shoot
+      const enriched = await Promise.all(userShoots.map(async (shoot) => {
+        const images = await storage.getGalleryImages(shoot.id);
+        return {
+          ...shoot,
+          galleryCount: images.length,
+          coverImageUrl: images.length > 0 ? images[0].imageUrl : null,
+        };
+      }));
+      res.json(enriched);
     } catch {
       res.status(500).json({ message: "Failed to fetch shoots" });
     }
@@ -1259,32 +1231,10 @@ export async function registerRoutes(
     }
   });
 
-  // Serve files from Object Storage (proxy to production when running locally)
+  // Serve files from Object Storage
   app.get(/^\/objects\/(.+)$/, async (req, res) => {
-    // In local dev without Replit sidecar, proxy to production
-    if (!process.env.REPL_ID) {
-      try {
-        const prodUrl = `https://alignworkspaces.com${req.path}`;
-        const response = await fetch(prodUrl);
-        if (!response.ok) {
-          return res.status(response.status).json({ error: "Object not found" });
-        }
-        const contentType = response.headers.get("content-type") || "application/octet-stream";
-        res.setHeader("Content-Type", contentType);
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-        const buffer = Buffer.from(await response.arrayBuffer());
-        return res.send(buffer);
-      } catch (error) {
-        console.error("Error proxying object:", error);
-        return res.status(500).json({ error: "Failed to proxy object" });
-      }
-    }
-
     try {
-      const objectPath = req.path;
-      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
-      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      await objectStorageService.downloadObject(objectFile, res);
+      serveObject(req.path, res);
     } catch (error) {
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Object not found" });
@@ -1920,8 +1870,7 @@ export async function registerRoutes(
     try {
       const pro = await storage.getFeaturedProfessionalById(req.params.id);
       if (pro?.portraitImageUrl) {
-        const key = pro.portraitImageUrl.replace("/objects/", "");
-        try { await objectStorageClient.delete(key); } catch {}
+        try { await deleteObject(pro.portraitImageUrl); } catch {}
       }
       await storage.deleteFeaturedProfessional(req.params.id);
       res.json({ success: true });
@@ -1933,23 +1882,14 @@ export async function registerRoutes(
   app.post("/api/admin/featured/:id/upload-portrait", isAdmin, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-      const objectKey = `uploads/featured-${randomUUID()}.webp`;
-      const privateDir = objectStorageService.getPrivateObjectDir();
-      const fullPath = `${privateDir}/${objectKey}`;
-      const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-      const bucketName = parts[0];
-      const objectName = parts.slice(1).join("/");
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
       const rawBuffer = fs.readFileSync(req.file.path);
       const processedBuffer = await sharp(rawBuffer)
         .rotate()
         .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 90, effort: 4 })
         .toBuffer();
-      await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
       fs.unlinkSync(req.file.path);
-      const imageUrl = `/objects/${objectKey}`;
+      const imageUrl = await uploadBuffer(processedBuffer, "image/webp");
       const pro = await storage.updateFeaturedProfessional(req.params.id, { portraitImageUrl: imageUrl });
       res.json(pro);
     } catch (err: any) {
@@ -2000,6 +1940,17 @@ export async function registerRoutes(
     try {
       const validated = insertNewsletterSubscriberSchema.parse(req.body);
       const subscriber = await storage.createNewsletterSubscriber(validated);
+
+      // Sync to Kit (non-blocking)
+      import("./kit").then(({ kitSubscribe }) =>
+        kitSubscribe({
+          email: validated.email,
+          firstName: validated.firstName,
+          interests: validated.interests || [],
+          zipCode: validated.zipCode,
+        }).catch(err => console.warn("Kit subscribe sync error (non-fatal):", err.message))
+      );
+
       res.json(subscriber);
     } catch (err: any) {
       if (err.code === "23505") {
@@ -2033,6 +1984,16 @@ export async function registerRoutes(
         ...(interests !== undefined ? { interests } : {}),
         ...(zipCode !== undefined ? { zipCode } : {}),
       });
+
+      // Sync to Kit (non-blocking)
+      import("./kit").then(({ kitUpdateSubscriber }) =>
+        kitUpdateSubscriber({
+          email: userEmail,
+          interests: interests || undefined,
+          zipCode: zipCode !== undefined ? zipCode : undefined,
+        }).catch(err => console.warn("Kit preferences sync error (non-fatal):", err.message))
+      );
+
       res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -2046,6 +2007,12 @@ export async function registerRoutes(
       const sub = await storage.getNewsletterSubscriberByEmail(userEmail);
       if (!sub) return res.status(404).json({ message: "Not subscribed" });
       await storage.deleteNewsletterSubscriber(sub.id);
+
+      // Sync to Kit (non-blocking)
+      import("./kit").then(({ kitUnsubscribe }) =>
+        kitUnsubscribe(userEmail).catch(err => console.warn("Kit unsubscribe sync error (non-fatal):", err.message))
+      );
+
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -2292,23 +2259,15 @@ export async function registerRoutes(
 
       const newUrls: string[] = [];
       for (const f of files) {
-        const objectKey = `uploads/space-${randomUUID()}.webp`;
-        const privateDir = objectStorageService.getPrivateObjectDir();
-        const fullPath = `${privateDir}/${objectKey}`;
-        const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-        const bucketName = parts[0];
-        const objectName = parts.slice(1).join("/");
-        const bucket = objectStorageClient.bucket(bucketName);
-        const file = bucket.file(objectName);
         const rawBuffer = fs.readFileSync(f.path);
         const processedBuffer = await sharp(rawBuffer)
           .rotate()
           .resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
           .webp({ quality: 85, effort: 4 })
           .toBuffer();
-        await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
         fs.unlinkSync(f.path);
-        newUrls.push(`/objects/${objectKey}`);
+        const objectUrl = await uploadBuffer(processedBuffer, "image/webp");
+        newUrls.push(objectUrl);
       }
 
       const existingUrls = space.imageUrls || [];
@@ -2332,11 +2291,7 @@ export async function registerRoutes(
       const updated = await storage.updateSpace(space.id, { imageUrls: existingUrls.filter((u: string) => u !== imageUrl) });
 
       try {
-        const objectKey = imageUrl.replace("/objects/", "");
-        const privateDir = objectStorageService.getPrivateObjectDir();
-        const fullPath = `${privateDir}/${objectKey}`;
-        const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-        await objectStorageClient.bucket(parts[0]).file(parts.slice(1).join("/")).delete();
+        await deleteObject(imageUrl);
       } catch {}
 
       res.json(updated);
@@ -2491,7 +2446,7 @@ export async function registerRoutes(
         let ownerInfo = null;
         if (space.userId) {
           try {
-            const { authStorage } = await import("./replit_integrations/auth");
+            const { authStorage } = await import("./auth");
             const user = await authStorage.getUser(space.userId);
             if (user) {
               ownerInfo = { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl };
@@ -2577,23 +2532,15 @@ export async function registerRoutes(
 
       const newUrls: string[] = [];
       for (const f of files) {
-        const objectKey = `uploads/space-${randomUUID()}.webp`;
-        const privateDir = objectStorageService.getPrivateObjectDir();
-        const fullPath = `${privateDir}/${objectKey}`;
-        const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-        const bucketName = parts[0];
-        const objectName = parts.slice(1).join("/");
-        const bucket = objectStorageClient.bucket(bucketName);
-        const file = bucket.file(objectName);
         const rawBuffer = fs.readFileSync(f.path);
         const processedBuffer = await sharp(rawBuffer)
           .rotate()
           .resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
           .webp({ quality: 85, effort: 4 })
           .toBuffer();
-        await file.save(processedBuffer, { resumable: false, metadata: { contentType: "image/webp" } });
         fs.unlinkSync(f.path);
-        newUrls.push(`/objects/${objectKey}`);
+        const objectUrl = await uploadBuffer(processedBuffer, "image/webp");
+        newUrls.push(objectUrl);
       }
 
       const existingUrls = space.imageUrls || [];
@@ -2616,11 +2563,7 @@ export async function registerRoutes(
       const updated = await storage.updateSpace(space.id, { imageUrls: existingUrls.filter((u: string) => u !== imageUrl) });
 
       try {
-        const objectKey = imageUrl.replace("/objects/", "");
-        const privateDir = objectStorageService.getPrivateObjectDir();
-        const fullPath = `${privateDir}/${objectKey}`;
-        const parts = fullPath.startsWith("/") ? fullPath.slice(1).split("/") : fullPath.split("/");
-        await objectStorageClient.bucket(parts[0]).file(parts.slice(1).join("/")).delete();
+        await deleteObject(imageUrl);
       } catch {}
 
       res.json(updated);
@@ -2668,7 +2611,7 @@ export async function registerRoutes(
 
       let newOwnerInfo = null;
       try {
-        const { authStorage } = await import("./replit_integrations/auth");
+        const { authStorage } = await import("./auth");
         const user = await authStorage.getUser(targetUserId);
         if (user) {
           newOwnerInfo = { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName };
@@ -2904,7 +2847,32 @@ export async function registerRoutes(
       const enrichedGuest = await Promise.all(guestBookings.map((b) => enrichBooking(b, "guest")));
       const enrichedHost = await Promise.all(hostBookings.map((b) => enrichBooking(b, "host")));
 
-      res.json({ guestBookings: enrichedGuest, hostBookings: enrichedHost });
+      // Enrich direct conversations
+      const dmConversations = await storage.getDirectConversationsByUser(userId);
+      const enrichedDMs = await Promise.all(dmConversations.map(async (c) => {
+        const space = await storage.getSpaceById(c.spaceId);
+        const role = c.guestId === userId ? "guest" as const : "host" as const;
+        const otherId = role === "guest" ? c.hostId : c.guestId;
+        const otherUser = await storage.getUserById(otherId);
+        const latest = await storage.getLatestDirectMessage(c.id);
+        const msgs = await storage.getDirectMessages(c.id);
+        const lastRead = role === "guest" ? c.lastReadGuest : c.lastReadHost;
+        const unreadCount = lastRead
+          ? msgs.filter((m) => m.createdAt! > lastRead && m.senderId !== userId).length
+          : msgs.filter((m) => m.senderId !== userId).length;
+        return {
+          ...c,
+          spaceName: space?.name || "Unknown Space",
+          spaceSlug: space?.slug || "",
+          otherPartyName: otherUser?.firstName || (role === "guest" ? (space?.hostName || "Host") : "Guest"),
+          latestMessage: latest ? { message: latest.message, createdAt: latest.createdAt, senderRole: latest.senderRole } : null,
+          unreadCount,
+          role,
+          type: "direct" as const,
+        };
+      }));
+
+      res.json({ guestBookings: enrichedGuest, hostBookings: enrichedHost, directConversations: enrichedDMs });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -2960,6 +2928,135 @@ export async function registerRoutes(
       });
 
       res.json(msg);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ── Direct Messaging (pre-booking inquiries) ──
+
+  app.post("/api/spaces/:id/inquire", isAuthenticated, async (req: any, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const userId = req.user.claims.sub;
+      if (space.userId === userId) return res.status(400).json({ message: "You cannot message yourself" });
+
+      const messageText = String(req.body.message || "").trim();
+      if (!messageText) return res.status(400).json({ message: "Message cannot be empty" });
+
+      const senderUser = await storage.getUserById(userId);
+      const senderName = req.user.claims?.first_name || senderUser?.firstName || "Guest";
+      const senderEmail = senderUser?.email || "";
+
+      // If the space has a registered host, create a DM conversation
+      if (space.userId) {
+        const conversation = await storage.getOrCreateDirectConversation(space.id, userId, space.userId);
+        const msg = await storage.createDirectMessage({
+          conversationId: conversation.id,
+          senderId: userId,
+          senderName,
+          senderRole: "guest",
+          message: messageText,
+        });
+
+        try {
+          sendPushToUser(space.userId, {
+            title: `New inquiry about ${space.name}`,
+            body: messageText.slice(0, 100),
+            url: "/portal?tab=messages",
+            tag: `dm-${conversation.id}`,
+          });
+        } catch {}
+
+        return res.json({ conversation, message: msg });
+      }
+
+      // No registered host — send inquiry via email to admin
+      try {
+        await sendHelpRequest({
+          clientName: senderName,
+          clientEmail: senderEmail,
+          message: `Space inquiry about "${space.name}" (${space.address}):\n\n${messageText}`,
+        });
+      } catch {}
+
+      res.json({ sent: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/direct-conversations/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const conversation = await storage.getDirectConversationById(req.params.id);
+      if (!conversation) return res.status(404).json({ message: "Conversation not found" });
+
+      const userId = req.user.claims.sub;
+      if (conversation.guestId !== userId && conversation.hostId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const messages = await storage.getDirectMessages(req.params.id);
+      res.json(messages);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/direct-conversations/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const conversation = await storage.getDirectConversationById(req.params.id);
+      if (!conversation) return res.status(404).json({ message: "Conversation not found" });
+
+      const userId = req.user.claims.sub;
+      if (conversation.guestId !== userId && conversation.hostId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const senderRole = conversation.guestId === userId ? "guest" : "host";
+      const messageText = String(req.body.message || "").trim();
+      if (!messageText) return res.status(400).json({ message: "Message cannot be empty" });
+
+      const msg = await storage.createDirectMessage({
+        conversationId: req.params.id,
+        senderId: userId,
+        senderName: req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest"),
+        senderRole,
+        message: messageText,
+      });
+
+      const recipientId = senderRole === "guest" ? conversation.hostId : conversation.guestId;
+      const space = await storage.getSpaceById(conversation.spaceId);
+      try {
+        sendPushToUser(recipientId, {
+          title: `New message${space ? ` about ${space.name}` : ""}`,
+          body: messageText.slice(0, 100),
+          url: "/portal?tab=messages",
+          tag: `dm-${conversation.id}`,
+        });
+      } catch {}
+
+      res.json(msg);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/direct-conversations/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const conversation = await storage.getDirectConversationById(req.params.id);
+      if (!conversation) return res.status(404).json({ message: "Conversation not found" });
+
+      const userId = req.user.claims.sub;
+      if (conversation.guestId !== userId && conversation.hostId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const role = conversation.guestId === userId ? "guest" : "host";
+      await storage.markDirectConversationRead(req.params.id, role);
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

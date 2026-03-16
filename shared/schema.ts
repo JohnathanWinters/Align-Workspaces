@@ -433,6 +433,42 @@ export const insertSpaceMessageSchema = createInsertSchema(spaceMessages).omit({
 export type InsertSpaceMessage = z.infer<typeof insertSpaceMessageSchema>;
 export type SpaceMessage = typeof spaceMessages.$inferSelect;
 
+export const directConversations = pgTable("direct_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  guestId: text("guest_id").notNull(),
+  hostId: text("host_id").notNull(),
+  lastReadGuest: timestamp("last_read_guest"),
+  lastReadHost: timestamp("last_read_host"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDirectConversationSchema = createInsertSchema(directConversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDirectConversation = z.infer<typeof insertDirectConversationSchema>;
+export type DirectConversation = typeof directConversations.$inferSelect;
+
+export const directMessages = pgTable("direct_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull(),
+  senderId: text("sender_id").notNull(),
+  senderName: text("sender_name"),
+  senderRole: text("sender_role").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
+export type DirectMessage = typeof directMessages.$inferSelect;
+
 export const pageViews = pgTable("page_views", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sessionId: text("session_id").notNull(),

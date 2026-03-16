@@ -579,7 +579,7 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
 }
 
 function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
-  const [showCarousel, setShowCarousel] = useState(false);
+  const [, navigateTo] = useLocation();
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [paletteExpanded, setPaletteExpanded] = useState(false);
   const { user } = useAuth();
@@ -646,7 +646,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
               alt={`${space.name} - Photo ${cardPhotoIndex + 1}`}
               className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
-              onClick={() => setShowCarousel(true)}
+              onClick={() => navigateTo(`/spaces/${space.slug}`)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
             {space.imageUrls.length > 1 && (
@@ -737,16 +737,6 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </button>
         </div>
       </div>
-
-      <AnimatePresence>
-        {showCarousel && space.imageUrls && space.imageUrls.length > 0 && (
-          <PhotoCarousel
-            images={space.imageUrls}
-            spaceName={space.name}
-            onClose={() => setShowCarousel(false)}
-          />
-        )}
-      </AnimatePresence>
 
       <Link
         href={`/spaces/${space.slug}`}
@@ -1516,8 +1506,14 @@ function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
 export default function SpacesBrowsePage() {
   const [, setLocation] = useLocation();
-  const [categoryChosen, setCategoryChosen] = useState(false);
-  const [activeType, setActiveType] = useState<string>("all");
+  const [categoryChosen, setCategoryChosen] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has("type");
+  });
+  const [activeType, setActiveType] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("type") || "all";
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
@@ -1715,6 +1711,7 @@ export default function SpacesBrowsePage() {
               onClick={() => {
                 setActiveType("all");
                 setCategoryChosen(true);
+                window.history.replaceState({}, "", "/workspaces?type=all");
               }}
               className="group w-full flex items-center gap-4 p-5 sm:p-6 rounded-2xl bg-white border border-stone-100 hover:border-[#c4956a]/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
               data-testid="category-all"
@@ -1738,6 +1735,7 @@ export default function SpacesBrowsePage() {
                   onClick={() => {
                     setActiveType(type.key);
                     setCategoryChosen(true);
+                    window.history.replaceState({}, "", `/workspaces?type=${type.key}`);
                   }}
                   className="group flex flex-col items-center gap-2.5 p-6 sm:p-8 rounded-2xl bg-white border border-stone-100 hover:border-[#c4956a]/40 hover:shadow-lg transition-all duration-300 cursor-pointer"
                   data-testid={`category-${type.key}`}
@@ -1838,7 +1836,7 @@ export default function SpacesBrowsePage() {
             ].map(cat => (
               <button
                 key={cat.key}
-                onClick={() => setActiveType(cat.key)}
+                onClick={() => { setActiveType(cat.key); window.history.replaceState({}, "", `/workspaces?type=${cat.key}`); }}
                 data-testid={`quick-filter-${cat.key}`}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap ${
                   activeType === cat.key

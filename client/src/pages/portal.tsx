@@ -42,8 +42,6 @@ import {
   FileImage,
   ImagePlus,
   MessageCircle,
-  Bell,
-  BellRing,
   Building2,
   Menu,
   Star,
@@ -55,7 +53,7 @@ import PortalSpacesSection from "@/components/portal-spaces";
 import PortalMessagesSection, { useUnreadCount } from "@/components/portal-messages";
 import PortalSettings from "@/components/portal-settings";
 import { useToast } from "@/hooks/use-toast";
-import { usePushNotifications } from "@/hooks/use-push-notifications";
+
 import { playNotificationSound } from "@/lib/notification-sound";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
@@ -184,6 +182,54 @@ function buildGoogleCalendarUrl(shoot: Shoot) {
   const endD = new Date(year, month - 1, day + 1);
   const endDate = `${endD.getFullYear()}${String(endD.getMonth() + 1).padStart(2, "0")}${String(endD.getDate()).padStart(2, "0")}`;
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
+}
+
+function downloadIcsFile(shoot: Shoot) {
+  const title = shoot.title || "Portrait Session";
+  const location = shoot.location || "";
+  const description = [
+    shoot.environment ? `Environment: ${shoot.environment}` : "",
+    shoot.emotionalImpact ? `Mood: ${shoot.emotionalImpact}` : "",
+    "Align Portrait Designer - AlignPhotoDesign.com",
+  ].filter(Boolean).join("\\n");
+
+  const dateRaw = shoot.shootDate || "";
+  const [year, month, day] = dateRaw.split("-").map(Number);
+  let dtStart: string;
+  let dtEnd: string;
+
+  if (shoot.shootTime) {
+    const [hours, minutes] = shoot.shootTime.split(":").map(Number);
+    dtStart = `${dateRaw.replace(/-/g, "")}T${String(hours).padStart(2, "0")}${String(minutes).padStart(2, "0")}00`;
+    const endDate = new Date(year, month - 1, day, hours + 2, minutes);
+    dtEnd = `${endDate.getFullYear()}${String(endDate.getMonth() + 1).padStart(2, "0")}${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}${String(endDate.getMinutes()).padStart(2, "0")}00`;
+  } else {
+    dtStart = dateRaw.replace(/-/g, "");
+    const endD = new Date(year, month - 1, day + 1);
+    dtEnd = `${endD.getFullYear()}${String(endD.getMonth() + 1).padStart(2, "0")}${String(endD.getDate()).padStart(2, "0")}`;
+  }
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Align Portrait Designer//EN",
+    "BEGIN:VEVENT",
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function Lightbox({
@@ -707,7 +753,6 @@ function EditTokenSection() {
   const [buyQuantity, setBuyQuantity] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
   const [justSubmittedId, setJustSubmittedId] = useState<string | null>(null);
-  const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("client");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -898,18 +943,25 @@ function EditTokenSection() {
               <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
             </div>
           ) : tokenBalance ? (
-            <div className="flex flex-wrap gap-6 text-sm">
-              <div data-testid="text-annual-tokens">
-                <span className="text-gray-500">Included retouching sessions:</span>{" "}
-                <span className="font-semibold text-gray-900">{tokenBalance.annualTokens}</span>
-              </div>
-              <div data-testid="text-purchased-tokens">
-                <span className="text-gray-500">Additional sessions purchased:</span>{" "}
-                <span className="font-semibold text-gray-900">{tokenBalance.purchasedTokens}</span>
-              </div>
-              <div data-testid="text-reset-date">
-                <span className="text-gray-500">Sessions reset on:</span>{" "}
-                <span className="font-semibold text-gray-900">{formatDate(tokenBalance.annualTokenResetDate)}</span>
+            <div className="space-y-3">
+              {totalTokens === 0 && editRequests.length === 0 && (
+                <p className="text-sm text-gray-500 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                  Retouching sessions let you submit photos for professional editing — color correction, touch-ups, background removal, and more. Each session covers one photo.
+                </p>
+              )}
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div data-testid="text-annual-tokens">
+                  <span className="text-gray-500">Included sessions:</span>{" "}
+                  <span className="font-semibold text-gray-900">{tokenBalance.annualTokens}</span>
+                </div>
+                <div data-testid="text-purchased-tokens">
+                  <span className="text-gray-500">Purchased sessions:</span>{" "}
+                  <span className="font-semibold text-gray-900">{tokenBalance.purchasedTokens}</span>
+                </div>
+                <div data-testid="text-reset-date">
+                  <span className="text-gray-500">Resets on:</span>{" "}
+                  <span className="font-semibold text-gray-900">{formatDate(tokenBalance.annualTokenResetDate)}</span>
+                </div>
               </div>
             </div>
           ) : (
@@ -917,25 +969,6 @@ function EditTokenSection() {
           )}
         </CardContent>
       </Card>
-
-      {pushStatus === "prompt" && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <Bell className="w-5 h-5 text-blue-500 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-blue-900">Get notified when your photographer replies</p>
-            <p className="text-xs text-blue-600">Receive push notifications on this device</p>
-          </div>
-          <Button
-            size="sm"
-            onClick={subscribePush}
-            data-testid="button-enable-notifications"
-            className="bg-blue-600 text-white hover:bg-blue-700 shrink-0"
-          >
-            <BellRing className="w-3.5 h-3.5 mr-1.5" />
-            Enable
-          </Button>
-        </div>
-      )}
 
       <Button
         onClick={() => setShowSubmitDialog(true)}
@@ -1695,15 +1728,99 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
-  const [activeTab, setActiveTab] = useState<"shoots" | "edits" | "messages" | "spaces" | "settings">("shoots");
+  const [spacesSubTab, setSpacesSubTab] = useState<"favorites" | "my-spaces" | "past" | undefined>(undefined);
+  const [activeTab, setActiveTabState] = useState<"shoots" | "edits" | "messages" | "spaces" | "settings">(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "messages" || tab === "edits" || tab === "spaces" || tab === "settings" || tab === "shoots") return tab;
+    // Will be resolved by useEffect once data loads
+    return "shoots";
+  });
+  const setActiveTab = useCallback((tab: "shoots" | "edits" | "messages" | "spaces" | "settings") => {
+    setActiveTabState(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState({}, "", url.toString());
+  }, []);
+  const [tabResolved, setTabResolved] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return !!params.get("tab");
+  });
   const unreadCount = useUnreadCount();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
-  const { data: shoots = [], isLoading } = useQuery<Shoot[]>({
+  const { data: shoots = [], isLoading } = useQuery<(Shoot & { galleryCount?: number; coverImageUrl?: string | null })[]>({
     queryKey: ["/api/shoots"],
     staleTime: 0,
   });
+
+  const { data: editRequests = [] } = useQuery<EditRequest[]>({
+    queryKey: ["/api/edit-requests"],
+    queryFn: async () => {
+      const res = await fetch("/api/edit-requests", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch edit requests");
+      return res.json();
+    },
+  });
+
+  const { data: spaceBookings } = useQuery<{ guest: any[]; host: any[] }>({
+    queryKey: ["/api/space-bookings"],
+    queryFn: async () => {
+      const res = await fetch("/api/space-bookings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  // Smart default tab: user preference > auto-detect from data > shoots
+  useEffect(() => {
+    if (tabResolved) return;
+    if (isLoading) return;
+
+    // User has a saved preference
+    if (user?.defaultPortalTab) {
+      const saved = user.defaultPortalTab;
+      if (saved === "my-spaces") {
+        setActiveTab("spaces");
+        setSpacesSubTab("my-spaces");
+        setTabResolved(true);
+        return;
+      }
+      if (saved === "past-spaces") {
+        setActiveTab("spaces");
+        setSpacesSubTab("past");
+        setTabResolved(true);
+        return;
+      }
+      if (["shoots", "edits", "messages", "spaces"].includes(saved)) {
+        setActiveTab(saved as typeof activeTab);
+        setTabResolved(true);
+        return;
+      }
+    }
+
+    // Auto-detect: prioritize most recent activity
+    const latestShoot = shoots.length > 0
+      ? Math.max(...shoots.map(s => new Date(s.createdAt || 0).getTime()))
+      : 0;
+    const latestEdit = editRequests.length > 0
+      ? Math.max(...editRequests.map(e => new Date(e.createdAt || 0).getTime()))
+      : 0;
+    const allSpaceBookings = [...(spaceBookings?.guest || []), ...(spaceBookings?.host || [])];
+    const latestSpace = allSpaceBookings.length > 0
+      ? Math.max(...allSpaceBookings.map(b => new Date(b.createdAt || b.bookingDate || 0).getTime()))
+      : 0;
+
+    const most = Math.max(latestShoot, latestEdit, latestSpace);
+    if (most > 0) {
+      if (most === latestSpace) setActiveTab("spaces");
+      else if (most === latestEdit) setActiveTab("edits");
+      else setActiveTab("shoots");
+    }
+
+    setTabResolved(true);
+  }, [isLoading, shoots, editRequests, spaceBookings, user, tabResolved]);
 
   if (selectedShoot) {
     return (
@@ -1736,7 +1853,7 @@ function PortalContent() {
           <div className="flex items-center gap-2">
             <div className="relative z-[10000]">
               <button
-                onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                onClick={() => { setAccountMenuOpen(!accountMenuOpen); setMenuOpen(false); }}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 data-testid="button-account-menu"
               >
@@ -1787,7 +1904,7 @@ function PortalContent() {
             </div>
             <div className="relative z-[10000]">
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
+                onClick={() => { setMenuOpen(!menuOpen); setAccountMenuOpen(false); }}
                 data-testid="button-portal-menu"
                 className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
               >
@@ -1866,7 +1983,7 @@ function PortalContent() {
             </Link>
           </div>
 
-          <div className="flex gap-1 mb-8 border-b border-gray-200 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center" data-testid="portal-tabs">
+          <div className="flex gap-1 mb-8 border-b border-gray-200 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center" data-testid="portal-tabs">
             <button
               onClick={() => setActiveTab("shoots")}
               data-testid="tab-my-shoots"
@@ -1969,7 +2086,7 @@ function PortalContent() {
           ) : activeTab === "messages" ? (
             <PortalMessagesSection userId={user?.id || ""} />
           ) : activeTab === "spaces" ? (
-            <PortalSpacesSection userId={user?.id || ""} />
+            <PortalSpacesSection userId={user?.id || ""} initialTab={spacesSubTab} />
           ) : activeTab === "edits" ? (
             <EditTokenSection />
           ) : isLoading ? (
@@ -1983,21 +2100,37 @@ function PortalContent() {
               transition={{ delay: 0.2 }}
             >
               <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="card-empty-state">
-                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                   <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                     <Camera className="w-7 h-7 text-gray-400" />
                   </div>
                   <h3 className="font-serif text-xl text-gray-900 mb-2">Your story starts here</h3>
                   <p className="text-gray-500 text-sm max-w-sm mb-6">
-                    Once your first session is booked, it'll appear right here. Let's design something you'll be proud to share.
+                    Get your portrait session in three simple steps.
                   </p>
+                  <div className="flex flex-col sm:flex-row gap-4 mb-8 text-left max-w-md w-full">
+                    <div className="flex-1 bg-gray-50 rounded-lg p-4">
+                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] text-white text-xs font-bold flex items-center justify-center mb-2">1</div>
+                      <p className="text-sm font-medium text-gray-900">Design</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Choose your environment, mood, and style</p>
+                    </div>
+                    <div className="flex-1 bg-gray-50 rounded-lg p-4">
+                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] text-white text-xs font-bold flex items-center justify-center mb-2">2</div>
+                      <p className="text-sm font-medium text-gray-900">Shoot</p>
+                      <p className="text-xs text-gray-500 mt-0.5">We'll schedule and photograph your session</p>
+                    </div>
+                    <div className="flex-1 bg-gray-50 rounded-lg p-4">
+                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] text-white text-xs font-bold flex items-center justify-center mb-2">3</div>
+                      <p className="text-sm font-medium text-gray-900">Gallery</p>
+                      <p className="text-xs text-gray-500 mt-0.5">View, favorite, and download your photos</p>
+                    </div>
+                  </div>
                   <Link href="/portrait-builder">
                     <Button
                       size="lg"
                       data-testid="button-design-shoot-empty"
                       className="text-base px-8 bg-[#1a1a1a] text-white hover:bg-black"
                     >
-                      <ArrowDown className="w-4 h-4 mr-2" />
                       Start Designing Your Shoot
                     </Button>
                   </Link>
@@ -2015,10 +2148,19 @@ function PortalContent() {
                     transition={{ delay: index * 0.08 }}
                   >
                     <Card
-                      className="bg-white hover:shadow-md transition-shadow cursor-pointer group"
+                      className="bg-white hover:shadow-md transition-shadow cursor-pointer group h-full overflow-hidden"
                       data-testid={`card-shoot-${shoot.id}`}
                       onClick={() => setSelectedShoot(shoot)}
                     >
+                      {shoot.coverImageUrl && (
+                        <div className="aspect-[16/9] overflow-hidden">
+                          <img
+                            src={shoot.coverImageUrl}
+                            alt={shoot.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="font-serif text-lg text-gray-900 group-hover:text-black transition-colors">
@@ -2033,7 +2175,7 @@ function PortalContent() {
                           </span>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-0 flex-1 flex flex-col">
                         <div className="space-y-2 text-sm text-gray-500">
                           {shoot.environment && (
                             <div className="flex items-center gap-2">
@@ -2073,23 +2215,57 @@ function PortalContent() {
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col gap-2.5 mt-3">
+                        <div className="flex flex-col gap-2.5 mt-auto pt-3">
                           {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
-                            <a
-                              href={buildGoogleCalendarUrl(shoot)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              data-testid={`button-calendar-sync-${shoot.id}`}
-                              className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
-                            >
-                              <CalendarPlus className="w-4 h-4" />
-                              Add to Google Calendar
-                            </a>
+                            <div className="flex gap-2">
+                              <a
+                                href={buildGoogleCalendarUrl(shoot)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid={`button-calendar-sync-${shoot.id}`}
+                                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
+                              >
+                                <CalendarPlus className="w-4 h-4" />
+                                Google Calendar
+                              </a>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); downloadIcsFile(shoot); }}
+                                data-testid={`button-ics-download-${shoot.id}`}
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                .ics
+                              </button>
+                            </div>
                           )}
                           <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
-                            <Images className="w-3 h-3" />
-                            Tap to view gallery
+                            {shoot.status === "completed" && (shoot.galleryCount ?? 0) > 0 ? (
+                              <>
+                                <Images className="w-3 h-3" />
+                                View {shoot.galleryCount} photos
+                              </>
+                            ) : shoot.status === "in-progress" ? (
+                              <>
+                                <Clock className="w-3 h-3" />
+                                Photos are being edited
+                              </>
+                            ) : shoot.status === "scheduled" ? (
+                              <>
+                                <Calendar className="w-3 h-3" />
+                                Session coming up
+                              </>
+                            ) : (shoot.galleryCount ?? 0) > 0 ? (
+                              <>
+                                <Images className="w-3 h-3" />
+                                View {shoot.galleryCount} photos
+                              </>
+                            ) : (
+                              <>
+                                <Images className="w-3 h-3" />
+                                Tap to view gallery
+                              </>
+                            )}
                           </p>
                         </div>
                       </CardContent>

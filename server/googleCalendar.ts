@@ -1,46 +1,16 @@
-// Google Calendar integration (Replit connector: google-calendar)
 import { google } from 'googleapis';
 
-let connectionSettings: any;
+function getCalendarClient() {
+  const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_CALENDAR_REFRESH_TOKEN;
 
-async function getAccessToken() {
-  if (connectionSettings && connectionSettings.settings.expires_at && new Date(connectionSettings.settings.expires_at).getTime() > Date.now()) {
-    return connectionSettings.settings.access_token;
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error('Google Calendar credentials not configured (GOOGLE_CALENDAR_CLIENT_ID, GOOGLE_CALENDAR_CLIENT_SECRET, GOOGLE_CALENDAR_REFRESH_TOKEN)');
   }
 
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY
-    ? 'repl ' + process.env.REPL_IDENTITY
-    : process.env.WEB_REPL_RENEWAL
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X-Replit-Token not found for repl/depl');
-  }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=google-calendar',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X-Replit-Token': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  const accessToken = connectionSettings?.settings?.access_token || connectionSettings.settings?.oauth?.credentials?.access_token;
-
-  if (!connectionSettings || !accessToken) {
-    throw new Error('Google Calendar not connected');
-  }
-  return accessToken;
-}
-
-async function getUncachableGoogleCalendarClient() {
-  const accessToken = await getAccessToken();
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({ access_token: accessToken });
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
   return google.calendar({ version: 'v3', auth: oauth2Client });
 }
 
@@ -58,7 +28,7 @@ interface BookingEventParams {
 
 export async function createBookingCalendarEvent(params: BookingEventParams): Promise<string | null> {
   try {
-    const calendar = await getUncachableGoogleCalendarClient();
+    const calendar = getCalendarClient();
 
     const [startH, startM] = params.bookingStartTime.split(":").map(Number);
     const startDate = new Date(`${params.bookingDate}T${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00`);
@@ -77,7 +47,7 @@ export async function createBookingCalendarEvent(params: BookingEventParams): Pr
     const event = await calendar.events.insert({
       calendarId: 'primary',
       requestBody: {
-        summary: `📸 ${params.spaceName} — ${params.guestName}`,
+        summary: `${params.spaceName} — ${params.guestName}`,
         description: [
           `Space booking via Align`,
           `Guest: ${params.guestName}${params.guestEmail ? ` (${params.guestEmail})` : ""}`,
@@ -108,7 +78,7 @@ export async function createBookingCalendarEvent(params: BookingEventParams): Pr
 
 export async function deleteBookingCalendarEvent(eventId: string): Promise<boolean> {
   try {
-    const calendar = await getUncachableGoogleCalendarClient();
+    const calendar = getCalendarClient();
     await calendar.events.delete({ calendarId: 'primary', eventId });
     console.log(`Google Calendar event deleted: ${eventId}`);
     return true;
@@ -131,7 +101,7 @@ export function generateAddToCalendarUrl(params: BookingEventParams): string {
 
   const urlParams = new URLSearchParams({
     action: "TEMPLATE",
-    text: `📸 ${params.spaceName} — Booking`,
+    text: `${params.spaceName} — Booking`,
     dates: `${startStr}/${endStr}`,
     details: `Space booking via Align\nGuest: ${params.guestName}\nDuration: ${params.bookingHours} hour${params.bookingHours > 1 ? "s" : ""}`,
     ctz: "America/New_York",

@@ -1,4 +1,4 @@
-import { getStripeSync, getUncachableStripeClient } from './stripeClient';
+import { getUncachableStripeClient } from './stripeClient';
 import { storage } from './storage';
 import { sendSpaceBookingNotification } from './gmail';
 import { createBookingCalendarEvent } from './googleCalendar';
@@ -113,7 +113,5 @@ export class WebhookHandlers {
       console.log("Custom webhook processing skipped (signature verification or non-token event):", (err as Error).message);
     }
 
-    const sync = await getStripeSync();
-    await sync.processWebhook(payload, signature);
   }
 }

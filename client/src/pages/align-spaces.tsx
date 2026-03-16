@@ -525,21 +525,26 @@ export default function AlignSpacesPage() {
                   className="group block rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300"
                   data-testid={`featured-pro-${pro.id}`}
                 >
-                  <div className="aspect-[3/4] overflow-hidden bg-stone-100">
+                  <div className="aspect-[3/4] overflow-hidden bg-stone-100 relative">
                     {pro.portraitImageUrl ? (() => {
                       const crop = pro.portraitCropPosition as any;
                       const x = crop?.x ?? 50;
                       const y = crop?.y ?? 50;
                       const zoom = crop?.zoom ?? 1;
+                      // Use negative inset to simulate zoom via overflow + scale,
+                      // keeping the image sharp by letting the browser sample more pixels
+                      const insetPct = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
                       return (
                         <img
                           src={pro.portraitImageUrl}
                           alt={pro.name}
-                          className="w-full h-full object-cover transition-transform duration-500"
+                          className="absolute object-cover transition-transform duration-500"
                           style={{
                             objectPosition: `${x}% ${y}%`,
-                            transform: `scale(${zoom})`,
-                            transformOrigin: `${x}% ${y}%`,
+                            top: `-${insetPct}%`,
+                            left: `-${insetPct}%`,
+                            width: `${100 + insetPct * 2}%`,
+                            height: `${100 + insetPct * 2}%`,
                           }}
                         />
                       );

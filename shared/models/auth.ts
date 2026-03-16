@@ -23,6 +23,7 @@ export const users = pgTable("users", {
   pendingEmailExpiresAt: timestamp("pending_email_expires_at"),
   stripeAccountId: varchar("stripe_account_id"),
   stripeOnboardingComplete: varchar("stripe_onboarding_complete").default("false"),
+  defaultPortalTab: varchar("default_portal_tab"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

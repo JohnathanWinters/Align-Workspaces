@@ -1,55 +1,58 @@
 import { google } from 'googleapis';
 
-let connectionSettings: any;
-
 const FROM_NAME = 'Align Workspaces';
 const FROM_EMAIL = 'hello@alignworkspaces.com';
 const FROM_HEADER = `${FROM_NAME} <${FROM_EMAIL}>`;
 const ADMIN_EMAIL = 'armando@alignworkspaces.com';
-const SITE_URL = 'https://alignworkspaces.com';
+const SITE_URL = process.env.SITE_URL || 'https://alignworkspaces.com';
 
-async function getAccessToken() {
-  if (connectionSettings && connectionSettings.settings.expires_at && new Date(connectionSettings.settings.expires_at).getTime() > Date.now()) {
-    return connectionSettings.settings.access_token;
-  }
-  
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
+// ---------- Google OAuth2 ----------
 
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+function getOAuth2Client() {
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret) {
+    throw new Error('GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET not set');
   }
 
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=google-mail',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
+  const oauth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    'http://localhost:5000/api/auth/google/callback'
+  );
 
-  const accessToken = connectionSettings?.settings?.access_token || connectionSettings.settings?.oauth?.credentials?.access_token;
-
-  if (!connectionSettings || !accessToken) {
-    throw new Error('Gmail not connected');
+  if (refreshToken) {
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
   }
-  return accessToken;
+
+  return oauth2Client;
 }
 
-async function getUncachableGmailClient() {
-  const accessToken = await getAccessToken();
-
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({
-    access_token: accessToken
+/** Returns the URL the admin should visit once to authorize Gmail access */
+export function getGmailAuthUrl() {
+  const oauth2Client = getOAuth2Client();
+  return oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: ['https://www.googleapis.com/auth/gmail.send'],
   });
+}
 
+/** Exchange the one-time auth code for tokens; returns the refresh token to store */
+export async function exchangeGmailCode(code: string): Promise<string> {
+  const oauth2Client = getOAuth2Client();
+  const { tokens } = await oauth2Client.getToken(code);
+  if (!tokens.refresh_token) {
+    throw new Error('No refresh token returned — try revoking access at https://myaccount.google.com/permissions and re-authorizing');
+  }
+  return tokens.refresh_token;
+}
+
+async function getGmailClient() {
+  const oauth2Client = getOAuth2Client();
+  // This automatically refreshes the access token using the stored refresh token
   return google.gmail({ version: 'v1', auth: oauth2Client });
 }
 
@@ -101,29 +104,28 @@ function mimeEncodeSubject(subject: string) {
   return '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
 }
 
-function sendEmail(to: string, subject: string, htmlBody: string) {
-  return getUncachableGmailClient().then(gmail => {
-    const rawMessage = [
-      `MIME-Version: 1.0`,
-      `To: ${to}`,
-      `From: ${FROM_HEADER}`,
-      `Reply-To: ${FROM_HEADER}`,
-      `Subject: ${mimeEncodeSubject(subject)}`,
-      `Content-Type: text/html; charset="UTF-8"`,
-      ``,
-      htmlBody,
-    ].join('\r\n');
+async function sendEmail(to: string, subject: string, htmlBody: string) {
+  const gmail = await getGmailClient();
+  const rawMessage = [
+    `MIME-Version: 1.0`,
+    `To: ${to}`,
+    `From: ${FROM_HEADER}`,
+    `Reply-To: ${FROM_HEADER}`,
+    `Subject: ${mimeEncodeSubject(subject)}`,
+    `Content-Type: text/html; charset="UTF-8"`,
+    ``,
+    htmlBody,
+  ].join('\r\n');
 
-    const encodedMessage = Buffer.from(rawMessage)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+  const encodedMessage = Buffer.from(rawMessage)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 
-    return gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw: encodedMessage },
-    });
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: { raw: encodedMessage },
   });
 }
 

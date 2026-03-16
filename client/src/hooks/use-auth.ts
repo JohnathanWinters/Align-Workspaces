@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/models/auth";
 
-export type AuthUser = Omit<User, "password" | "pendingEmail" | "pendingEmailToken" | "pendingEmailExpiresAt"> & { hasPassword: boolean };
+export type AuthUser = Omit<User, "password" | "pendingEmail" | "pendingEmailToken" | "pendingEmailExpiresAt">;
 
 async function fetchUser(): Promise<AuthUser | null> {
   const response = await fetch("/api/auth/user", {
