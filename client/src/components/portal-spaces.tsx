@@ -185,7 +185,7 @@ function SpacePhotoManager({ space }: { space: Space }) {
           data-testid={`input-space-photos-${space.id}`}
         />
       </div>
-      {dragOver && (
+      {images.length > 0 && dragOver && (
         <div className="mb-2 py-6 border-2 border-dashed border-[#c4956a] rounded-lg flex flex-col items-center gap-1 text-[#c4956a] bg-[#c4956a]/5 transition-colors">
           <Upload className="w-5 h-5" />
           <span className="text-xs font-medium">Drop photos here</span>
@@ -232,11 +232,13 @@ function SpacePhotoManager({ space }: { space: Space }) {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="w-full py-6 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center gap-2 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a] transition-colors"
+          className={`w-full py-6 border-2 border-dashed rounded-lg flex flex-col items-center gap-2 transition-colors ${
+            dragOver ? "border-[#c4956a] text-[#c4956a] bg-[#c4956a]/5" : "border-gray-200 text-gray-400 hover:border-[#c4956a] hover:text-[#c4956a]"
+          }`}
           data-testid={`button-upload-first-photo-${space.id}`}
         >
           <Upload className="w-6 h-6" />
-          <span className="text-xs">Drop photos here or click to upload</span>
+          <span className="text-xs">{dragOver ? "Drop photos here" : "Drop photos here or click to upload"}</span>
         </button>
       )}
     </div>
