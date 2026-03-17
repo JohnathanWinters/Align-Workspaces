@@ -480,7 +480,7 @@ export default function AlignSpacesPage() {
                 Answer a few questions about your environment and your presence and the feeling you want clients to walk away with. We'll match you with a creative direction and a wardrobe guide and a color palette, then build a shoot concept you can book on the spot.
               </p>
               <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
-                Takes about 5 minutes. Ends with a complete shoot plan built around you.
+                Takes about 2 minutes. Ends with a complete shoot plan built around you.
               </p>
               <Link
                 href="/portrait-builder"
