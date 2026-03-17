@@ -52,6 +52,7 @@ import {
   ArrowRight,
   Clock,
   CalendarDays,
+  CalendarPlus,
   Instagram,
   Globe,
   ChevronDown,
@@ -6483,6 +6484,23 @@ function AdminDashboard({ token }: { token: string }) {
                                                   <Receipt className="w-3 h-3 mr-1" />
                                                   Invoice
                                                 </Button>
+                                                {shoot.shootDate && (
+                                                  <a
+                                                    href={buildShootCalendarUrl(shoot, user.email || undefined)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    data-testid={`button-calendar-${shoot.id}`}
+                                                  >
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                    >
+                                                      <CalendarPlus className="w-3 h-3 mr-1" />
+                                                      Calendar
+                                                    </Button>
+                                                  </a>
+                                                )}
                                                 <Button
                                                   variant="outline"
                                                   size="sm"
@@ -6600,6 +6618,35 @@ function AdminDashboard({ token }: { token: string }) {
       )}
     </div>
   );
+}
+
+function buildShootCalendarUrl(shoot: Shoot, clientEmail?: string) {
+  const title = encodeURIComponent(shoot.title || "Portrait Session");
+  const location = shoot.location ? encodeURIComponent(shoot.location) : "";
+  const details = encodeURIComponent(
+    [
+      clientEmail ? `Client: ${clientEmail}` : "",
+      shoot.environment ? `Environment: ${shoot.environment}` : "",
+      shoot.emotionalImpact ? `Mood: ${shoot.emotionalImpact}` : "",
+      "Align Workspaces",
+    ].filter(Boolean).join("\n")
+  );
+
+  const dateRaw = shoot.shootDate || "";
+  const [year, month, day] = dateRaw.split("-").map(Number);
+
+  if (shoot.shootTime) {
+    const [hours, minutes] = shoot.shootTime.split(":").map(Number);
+    const start = `${dateRaw.replace(/-/g, "")}T${String(hours).padStart(2, "0")}${String(minutes).padStart(2, "0")}00`;
+    const endDate = new Date(year, month - 1, day, hours + 2, minutes);
+    const end = `${endDate.getFullYear()}${String(endDate.getMonth() + 1).padStart(2, "0")}${String(endDate.getDate()).padStart(2, "0")}T${String(endDate.getHours()).padStart(2, "0")}${String(endDate.getMinutes()).padStart(2, "0")}00`;
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
+  }
+
+  const startDate = dateRaw.replace(/-/g, "");
+  const endD = new Date(year, month - 1, day + 1);
+  const endDate = `${endD.getFullYear()}${String(endD.getMonth() + 1).padStart(2, "0")}${String(endD.getDate()).padStart(2, "0")}`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}&location=${location}`;
 }
 
 export default function AdminPage() {
