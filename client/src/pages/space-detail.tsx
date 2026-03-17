@@ -403,10 +403,9 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
 
   // Fetch real fee breakdown from API (includes tier detection + tax)
   const { data: feeData } = useQuery<{
-    basePriceCents: number; guestFeeAmount: number; guestFeePercent: number;
-    taxAmount: number; taxRate: number; totalGuestCharged: number;
+    basePriceCents: number; guestFeeAmount: number;
+    taxAmount: number; totalGuestCharged: number;
     isRepeatGuest: boolean; isHostReferred: boolean;
-    renterFee: number; totalCharge: number;
   }>({
     queryKey: ["/api/spaces", space.id, "booking-fees", bookingHours],
     queryFn: () => fetch(`/api/spaces/${space.id}/booking-fees?hours=${bookingHours}`).then(r => r.json()),
@@ -416,7 +415,6 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
   const guestFee = feeData?.guestFeeAmount ?? Math.round(basePriceCents * 0.05);
   const taxAmount = feeData?.taxAmount ?? Math.round(basePriceCents * 0.07);
   const totalCharge = feeData?.totalGuestCharged ?? (basePriceCents + guestFee + taxAmount);
-  const guestFeePercent = feeData?.guestFeePercent ?? 0.05;
   const isRepeatGuest = feeData?.isRepeatGuest ?? false;
   const standardFee = Math.round(basePriceCents * 0.05);
   const loyaltySavings = isRepeatGuest ? standardFee - guestFee : 0;

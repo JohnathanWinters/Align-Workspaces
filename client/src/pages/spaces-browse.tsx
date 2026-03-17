@@ -944,8 +944,21 @@ function BookingPopup({
   const availableSlots = bookingDate ? getAvailableTimeSlots(effectiveSchedule, bookingDate, bufferMinutes) : [];
   const maxHours = bookingDate && bookingStartTime ? getMaxHoursFromSlot(effectiveSchedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
   const basePriceCents = space.pricePerHour * 100 * bookingHours;
-  const renterFee = Math.round(basePriceCents * 0.07);
-  const totalCharge = basePriceCents + renterFee;
+
+  // Fetch real fee breakdown from API (includes tier detection + tax)
+  const { data: feeData } = useQuery<{
+    guestFeeAmount: number; taxAmount: number; totalGuestCharged: number; isRepeatGuest: boolean;
+  }>({
+    queryKey: ["/api/spaces", space.id, "booking-fees", bookingHours],
+    queryFn: () => fetch(`/api/spaces/${space.id}/booking-fees?hours=${bookingHours}`).then(r => r.json()),
+    enabled: bookingHours >= 1,
+  });
+
+  const guestFee = feeData?.guestFeeAmount ?? Math.round(basePriceCents * 0.05);
+  const taxAmount = feeData?.taxAmount ?? Math.round(basePriceCents * 0.07);
+  const totalCharge = feeData?.totalGuestCharged ?? (basePriceCents + guestFee + taxAmount);
+  const isRepeatGuest = feeData?.isRepeatGuest ?? false;
+  const loyaltySavings = isRepeatGuest ? Math.round(basePriceCents * 0.05) - guestFee : 0;
 
   const isDateAvailable = (date: Date): boolean => {
     const yyyy = date.getFullYear();
@@ -1218,9 +1231,19 @@ function BookingPopup({
                     <AnimatedPrice value={basePriceCents} />
                   </div>
                   <div className="flex justify-between text-sm text-foreground/60">
-                    <span>Service fee (7%)</span>
-                    <AnimatedPrice value={renterFee} />
+                    <span>Service fee</span>
+                    <AnimatedPrice value={guestFee} />
                   </div>
+                  <div className="flex justify-between text-sm text-foreground/60">
+                    <span>Taxes</span>
+                    <AnimatedPrice value={taxAmount} />
+                  </div>
+                  {isRepeatGuest && loyaltySavings > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                      <span>Loyalty discount</span>
+                      <span>-<AnimatedPrice value={loyaltySavings} /></span>
+                    </div>
+                  )}
                   <div className="border-t border-stone-200 pt-2 flex justify-between text-base font-bold text-foreground">
                     <span>Total</span>
                     <motion.span

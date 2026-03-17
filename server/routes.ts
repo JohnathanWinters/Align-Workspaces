@@ -2774,15 +2774,18 @@ export async function registerRoutes(
 
       const enriched = await Promise.all(payouts.map(async (b) => {
         const space = await storage.getSpaceById(b.spaceId);
+        // Host sees: gross booking amount (subtotal), their fee, and net payout
+        // Per visibility rules: DO NOT show guest fee amounts or guest totals
+        const subtotal = (b.hostPayoutAmount ?? b.hostEarnings ?? 0) + (b.hostFeeAmount ?? 0);
         return {
           id: b.id,
           spaceName: space?.name || "Unknown Space",
           bookingDate: b.bookingDate,
           bookingHours: b.bookingHours,
-          grossAmount: b.totalGuestCharged ?? b.paymentAmount,
+          bookingAmount: subtotal, // What the host listed (subtotal)
           hostFeeAmount: b.hostFeeAmount,
           hostFeePercent: b.hostFeePercent,
-          feeTier: b.feeTier,
+          feeTier: b.feeTier === "host_referred" ? "referral" : b.feeTier === "repeat_guest" ? "repeat" : "standard",
           payoutAmount: b.hostPayoutAmount ?? b.hostEarnings,
           payoutStatus: b.payoutStatus || "pending",
           stripeTransferId: b.stripeTransferId,
@@ -2798,7 +2801,7 @@ export async function registerRoutes(
       const totalPending = pendingPayouts.reduce((sum, p) => sum + (p.payoutAmount || 0), 0);
 
       // Savings vs Peerspace (20% host fee)
-      const totalGross = enriched.reduce((sum, p) => sum + (p.grossAmount || 0), 0);
+      const totalGross = enriched.reduce((sum, p) => sum + (p.bookingAmount || 0), 0);
       const peerspaceWouldCharge = Math.round(totalGross * 0.20);
       const alignCharged = enriched.reduce((sum, p) => sum + (p.hostFeeAmount || 0), 0);
       const savedVsPeerspace = peerspaceWouldCharge - alignCharged;
@@ -3022,13 +3025,11 @@ export async function registerRoutes(
       const { tier, isRepeatGuest, isHostReferred } = await detectFeeTier(req, space);
       const fees = calculateSpaceBookingFees(basePriceCents, tier);
 
-      // Guest-facing response: don't expose host fee or platform details
+      // Guest-facing response: only dollar amounts, no percentages or host details
       res.json({
         basePriceCents: fees.basePriceCents,
         guestFeeAmount: fees.guestFeeAmount,
-        guestFeePercent: fees.guestFeePercent,
         taxAmount: fees.taxAmount,
-        taxRate: fees.taxRate,
         totalGuestCharged: fees.totalGuestCharged,
         pricePerHour: space.pricePerHour,
         hours,

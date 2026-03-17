@@ -1156,7 +1156,7 @@ function ReferralLinksTab() {
 
       {totalSaved > 0 && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800">
-          Your referral bookings saved you <strong>${(totalSaved / 100).toFixed(2)}</strong> in fees (8% vs 12.5%)
+          Your referral bookings saved you <strong>${(totalSaved / 100).toFixed(2)}</strong> in service fees
         </div>
       )}
 
@@ -1175,7 +1175,7 @@ function ReferralLinksTab() {
               </div>
               <div>
                 <p className="text-sm font-medium text-stone-800">Master referral link</p>
-                <p className="text-xs text-stone-400">One link for all your listings — 8% fee instead of 12.5%</p>
+                <p className="text-xs text-stone-400">One link for all your listings — lower service fee on referred bookings</p>
               </div>
             </button>
           )}
@@ -1275,10 +1275,10 @@ function ReferralLinksTab() {
       <div className="bg-stone-50 rounded-lg p-4 space-y-2">
         <p className="text-xs font-semibold text-stone-600">How referral links work</p>
         <ul className="text-xs text-stone-500 space-y-1.5">
-          <li>Share your link with clients — when they book, you pay only <strong>8%</strong> instead of 12.5%</li>
-          <li>Your clients pay the same service fee either way</li>
+          <li>Share your link with clients — when they book through it, your service fee is lower</li>
+          <li>Your clients pay the same fee either way — the savings are yours</li>
           <li>Referral credit lasts 30 days after a client clicks your link</li>
-          <li>If a client clicks your link but books a different space from you, the discount still applies</li>
+          <li>If a client clicks your link but books a different space from you, the savings still apply</li>
         </ul>
       </div>
     </div>
@@ -1375,7 +1375,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-stone-800">Repeat Guest</p>
             <p className="text-xs text-stone-500">
-              You get a <strong>3% service fee</strong> instead of 5% on every booking
+              You get a lower service fee on every booking
               {loyaltyData.lifetimeSavings > 0 && (
                 <> — you've saved <strong>${(loyaltyData.lifetimeSavings / 100).toFixed(2)}</strong> so far</>
               )}
