@@ -1051,6 +1051,184 @@ interface ReferralLink {
   createdAt: string;
 }
 
+function EarningsTab() {
+  const { data, isLoading } = useQuery<{
+    hasSpaces: boolean;
+    allTime: { totalEarnings: number; totalHostFees: number; bookingCount: number; avgFeePercent: string };
+    thisMonth: { earnings: number; hostFees: number; bookingCount: number; savedVsPeerspace: number };
+    tierBreakdown: { standard: number; referral: number; repeat: number };
+  }>({
+    queryKey: ["/api/host/earnings"],
+    queryFn: async () => {
+      const res = await fetch("/api/host/earnings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  }
+
+  if (!data?.hasSpaces || !data.allTime) {
+    return (
+      <div className="text-center py-12 text-stone-500">
+        <DollarSign className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+        <p className="text-sm font-medium mb-1">No earnings yet</p>
+        <p className="text-xs text-stone-400">Earnings will appear here once guests book your spaces.</p>
+      </div>
+    );
+  }
+
+  const tierLabels: Record<string, string> = { standard: "Standard", referral: "Referred", repeat: "Repeat guest" };
+
+  return (
+    <div className="space-y-5">
+      {/* This month callout */}
+      {data.thisMonth.savedVsPeerspace > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-emerald-800">
+            You saved <strong>${(data.thisMonth.savedVsPeerspace / 100).toFixed(2)}</strong> vs Peerspace's 20% fee this month
+          </p>
+        </div>
+      )}
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">This Month</p>
+          <p className="text-2xl font-semibold text-stone-900 mt-1">${(data.thisMonth.earnings / 100).toFixed(2)}</p>
+          <p className="text-xs text-stone-400 mt-0.5">{data.thisMonth.bookingCount} booking{data.thisMonth.bookingCount !== 1 ? "s" : ""}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">All Time</p>
+          <p className="text-2xl font-semibold text-stone-900 mt-1">${(data.allTime.totalEarnings / 100).toFixed(2)}</p>
+          <p className="text-xs text-stone-400 mt-0.5">{data.allTime.bookingCount} booking{data.allTime.bookingCount !== 1 ? "s" : ""}</p>
+        </div>
+      </div>
+
+      {/* Tier breakdown */}
+      <div className="bg-white rounded-xl border border-stone-200 p-4">
+        <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-3">Bookings by Type</p>
+        <div className="space-y-2.5">
+          {Object.entries(data.tierBreakdown).filter(([, count]) => count > 0).map(([tier, count]) => {
+            const total = data.allTime.bookingCount || 1;
+            const pct = Math.round((count / total) * 100);
+            return (
+              <div key={tier}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-stone-600">{tierLabels[tier] || tier}</span>
+                  <span className="text-stone-800 font-medium">{count} ({pct}%)</span>
+                </div>
+                <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: tier === "referral" ? "#c4956a" : tier === "repeat" ? "#f59e0b" : "#78716c",
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Avg fee */}
+      <div className="flex items-center justify-between bg-stone-50 rounded-lg px-4 py-3">
+        <span className="text-sm text-stone-600">Average service fee</span>
+        <span className="text-sm font-semibold text-stone-800">{data.allTime.avgFeePercent}%</span>
+      </div>
+    </div>
+  );
+}
+
+function PayoutsTab() {
+  const { data, isLoading } = useQuery<{
+    payouts: Array<{
+      id: string; spaceName: string; bookingDate: string; bookingHours: number;
+      bookingAmount: number; hostFeeAmount: number; feeTier: string;
+      payoutAmount: number; payoutStatus: string; createdAt: string;
+    }>;
+    summary: { totalEarnings: number; totalPaid: number; totalPending: number; payoutCount: number; savedVsPeerspace: number };
+  }>({
+    queryKey: ["/api/host/payouts"],
+    queryFn: async () => {
+      const res = await fetch("/api/host/payouts", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  }
+
+  if (!data?.payouts?.length) {
+    return (
+      <div className="text-center py-12 text-stone-500">
+        <CreditCard className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+        <p className="text-sm font-medium mb-1">No payouts yet</p>
+        <p className="text-xs text-stone-400">Payouts will appear here after your bookings are completed.</p>
+      </div>
+    );
+  }
+
+  const statusStyles: Record<string, string> = {
+    paid: "bg-emerald-50 text-emerald-700",
+    processing: "bg-blue-50 text-blue-700",
+    pending: "bg-amber-50 text-amber-700",
+    held: "bg-red-50 text-red-700",
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+          <p className="text-lg font-semibold text-stone-900">${(data.summary.totalPaid / 100).toFixed(0)}</p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider">Paid Out</p>
+        </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+          <p className="text-lg font-semibold text-stone-900">${(data.summary.totalPending / 100).toFixed(0)}</p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider">Pending</p>
+        </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+          <p className="text-lg font-semibold text-emerald-700">${(data.summary.savedVsPeerspace / 100).toFixed(0)}</p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider">Saved</p>
+        </div>
+      </div>
+
+      {/* Payout list */}
+      <div className="space-y-2">
+        {data.payouts.map((p) => (
+          <div key={p.id} className="bg-white rounded-xl border border-stone-200 p-4 flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-stone-800 truncate">{p.spaceName}</p>
+              <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
+                <CalendarDays className="w-3 h-3" />
+                {p.bookingDate} · {p.bookingHours}hr
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-sm font-semibold text-stone-900">${(p.payoutAmount / 100).toFixed(2)}</p>
+              <div className="flex items-center gap-1.5 justify-end mt-0.5">
+                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusStyles[p.payoutStatus] || "bg-stone-100 text-stone-600"}`}>
+                  {p.payoutStatus === "paid" ? "Paid" : p.payoutStatus === "processing" ? "Processing" : p.payoutStatus === "held" ? "On hold" : "Pending"}
+                </span>
+                {p.payoutStatus === "paid" && (
+                  <span className="text-[9px] text-emerald-600 font-medium">Fast pay</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ReferralLinksTab() {
   const { toast } = useToast();
 
@@ -1285,8 +1463,10 @@ function ReferralLinksTab() {
   );
 }
 
-export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: "favorites" | "my-spaces" | "referrals" | "past" }) {
-  const [spacesTab, setSpacesTab] = useState<"favorites" | "my-spaces" | "referrals" | "past">(initialTab || "favorites");
+type SpacesTabKey = "favorites" | "my-spaces" | "earnings" | "payouts" | "referrals" | "past";
+
+export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: SpacesTabKey }) {
+  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(initialTab || "favorites");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
 
   // Fetch counts to auto-detect best sub-tab
@@ -1331,7 +1511,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
       hasFavorites && { key: "favorites" as const, time: 0 },
       hasMySpaces && { key: "my-spaces" as const, time: Math.max(...mySpaces.map(s => new Date(s.createdAt || 0).getTime())) },
       hasPast && { key: "past" as const, time: Math.max(...pastBookings.map((b: any) => new Date(b.createdAt || 0).getTime())) },
-    ].filter(Boolean) as { key: "favorites" | "my-spaces" | "referrals" | "past"; time: number }[];
+    ].filter(Boolean) as { key: SpacesTabKey; time: number }[];
 
     if (tabs.length === 1) {
       setSpacesTab(tabs[0].key);
@@ -1344,11 +1524,17 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
     setTabResolved(true);
   }, [favorites, mySpaces, bookingsData, tabResolved, favoritesLoading, mySpacesLoading, bookingsLoading]);
 
+  const isHost = mySpaces.length > 0;
+
   const tabs = [
     { key: "favorites" as const, label: "Favorites", icon: Heart },
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
-    { key: "referrals" as const, label: "Referrals", icon: Share2 },
-    { key: "past" as const, label: "Past Spaces", icon: Clock },
+    ...(isHost ? [
+      { key: "earnings" as const, label: "Earnings", icon: DollarSign },
+      { key: "payouts" as const, label: "Payouts", icon: CreditCard },
+      { key: "referrals" as const, label: "Referrals", icon: Share2 },
+    ] : []),
+    { key: "past" as const, label: "Past", icon: Clock },
   ];
 
   const { data: loyaltyData } = useQuery<{
@@ -1404,6 +1590,8 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
       {spacesTab === "favorites" && <FavoritesTab />}
       {spacesTab === "my-spaces" && <MySpacesTab />}
+      {spacesTab === "earnings" && <EarningsTab />}
+      {spacesTab === "payouts" && <PayoutsTab />}
       {spacesTab === "referrals" && <ReferralLinksTab />}
       {spacesTab === "past" && <PastSpacesTab />}
     </div>

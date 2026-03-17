@@ -2821,6 +2821,88 @@ export async function registerRoutes(
     }
   });
 
+  // --- Host earnings summary ---
+
+  app.get("/api/host/earnings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const hostSpaces = await storage.getSpacesByUser(userId);
+      if (hostSpaces.length === 0) {
+        return res.json({ hasSpaces: false });
+      }
+
+      // Get all bookings for host's spaces
+      const allBookings: any[] = [];
+      for (const space of hostSpaces) {
+        const bookings = await storage.getSpaceBookingsBySpace(space.id);
+        for (const b of bookings) {
+          if (b.paymentStatus === "paid") {
+            allBookings.push({ ...b, spaceName: space.name });
+          }
+        }
+      }
+
+      const now = new Date();
+      const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+      // All-time stats
+      let totalEarnings = 0;
+      let totalHostFees = 0;
+      let monthEarnings = 0;
+      let monthHostFees = 0;
+      let monthBookingCount = 0;
+      const tierCounts: Record<string, number> = { standard: 0, referral: 0, repeat: 0 };
+
+      for (const b of allBookings) {
+        const payout = b.hostPayoutAmount ?? b.hostEarnings ?? 0;
+        const hostFee = b.hostFeeAmount ?? 0;
+        totalEarnings += payout;
+        totalHostFees += hostFee;
+
+        const bookingMonth = (b.bookingDate || "").slice(0, 7);
+        if (bookingMonth === thisMonth) {
+          monthEarnings += payout;
+          monthHostFees += hostFee;
+          monthBookingCount++;
+        }
+
+        const tier = b.feeTier === "host_referred" ? "referral" : b.feeTier === "repeat_guest" ? "repeat" : "standard";
+        tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+      }
+
+      // Average fee percentage
+      const totalSubtotal = allBookings.reduce((s, b) => s + ((b.hostPayoutAmount ?? b.hostEarnings ?? 0) + (b.hostFeeAmount ?? 0)), 0);
+      const avgFeePercent = totalSubtotal > 0 ? ((totalHostFees / totalSubtotal) * 100).toFixed(1) : "0";
+
+      // Savings vs Peerspace (20% host fee)
+      const peerspaceMonthFees = Math.round(
+        allBookings
+          .filter(b => (b.bookingDate || "").slice(0, 7) === thisMonth)
+          .reduce((s, b) => s + ((b.hostPayoutAmount ?? b.hostEarnings ?? 0) + (b.hostFeeAmount ?? 0)), 0) * 0.20
+      );
+      const savedVsPeerspaceMonth = peerspaceMonthFees - monthHostFees;
+
+      res.json({
+        hasSpaces: true,
+        allTime: {
+          totalEarnings,
+          totalHostFees,
+          bookingCount: allBookings.length,
+          avgFeePercent,
+        },
+        thisMonth: {
+          earnings: monthEarnings,
+          hostFees: monthHostFees,
+          bookingCount: monthBookingCount,
+          savedVsPeerspace: savedVsPeerspaceMonth,
+        },
+        tierBreakdown: tierCounts,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // --- Guest loyalty status ---
 
   app.get("/api/guest/loyalty", isAuthenticated, async (req: any, res) => {
