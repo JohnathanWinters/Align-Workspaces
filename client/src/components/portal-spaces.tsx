@@ -33,6 +33,7 @@ import {
   Link2,
   Copy,
   BarChart3,
+  Star,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -749,7 +750,7 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-gray-900 mb-1">Set up payouts to receive earnings</h3>
             <p className="text-xs text-gray-500 leading-relaxed mb-3">
-              Connect your bank account to receive payments when guests book your space. Align charges a 7% host fee on each booking.
+              Connect your bank account to receive payments when guests book your space. Keep 87.5% of every booking — or 92% when you refer clients.
             </p>
             <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
               <ShieldCheck className="w-4 h-4 text-stone-500 flex-shrink-0" />
@@ -895,7 +896,7 @@ function PastSpacesTab() {
   const pastBookings = bookings.filter((b: any) => {
     if (!b.bookingDate) return false;
     const bookingDate = new Date(b.bookingDate);
-    return bookingDate < now && (b.status === "confirmed" || b.status === "completed");
+    return bookingDate < now && (b.status === "confirmed" || b.status === "completed" || b.status === "approved");
   });
 
   if (pastBookings.length === 0) {
@@ -936,12 +937,22 @@ function PastSpacesTab() {
                   <CalendarDays className="w-3 h-3" />
                   {booking.bookingDate} · {booking.bookingStartTime} · {booking.bookingHours}hr
                 </p>
-                {booking.paymentAmount && (
-                  <p className="text-xs text-gray-500 mt-1">${(booking.paymentAmount / 100).toFixed(2)} paid</p>
+                {(booking.totalGuestCharged || booking.paymentAmount) && (
+                  <p className="text-xs text-gray-500 mt-1">${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid</p>
                 )}
               </div>
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-end gap-1.5">
                 <Badge className="text-[10px] bg-stone-100 text-stone-600">Completed</Badge>
+                {booking.feeTier === "repeat_guest" && (
+                  <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                    <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty discount
+                  </Badge>
+                )}
+                {booking.feeTier === "host_referred" && (
+                  <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                    Referred
+                  </Badge>
+                )}
               </div>
             </div>
           </Card>
@@ -1340,8 +1351,39 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
     { key: "past" as const, label: "Past Spaces", icon: Clock },
   ];
 
+  const { data: loyaltyData } = useQuery<{
+    isRepeatGuest: boolean;
+    completedBookings: number;
+    lifetimeSavings: number;
+  }>({
+    queryKey: ["/api/guest/loyalty"],
+    queryFn: async () => {
+      const res = await fetch("/api/guest/loyalty", { credentials: "include" });
+      if (!res.ok) return { isRepeatGuest: false, completedBookings: 0, lifetimeSavings: 0 };
+      return res.json();
+    },
+  });
+
   return (
     <div className="space-y-6">
+      {/* Repeat guest loyalty badge */}
+      {loyaltyData?.isRepeatGuest && (
+        <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl px-4 py-3" data-testid="loyalty-badge">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+            <Star className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-stone-800">Repeat Guest</p>
+            <p className="text-xs text-stone-500">
+              You get a <strong>3% service fee</strong> instead of 5% on every booking
+              {loyaltyData.lifetimeSavings > 0 && (
+                <> — you've saved <strong>${(loyaltyData.lifetimeSavings / 100).toFixed(2)}</strong> so far</>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-1 bg-stone-100 rounded-lg p-1" data-testid="spaces-subtabs">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button

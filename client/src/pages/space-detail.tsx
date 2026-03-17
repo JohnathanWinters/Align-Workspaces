@@ -634,11 +634,14 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                       <span className="text-stone-700"><AnimatedPrice value={taxAmount} /></span>
                     </div>
                     {isRepeatGuest && loyaltySavings > 0 && (
-                      <div className="flex justify-between text-sm text-emerald-600">
-                        <span className="flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Loyalty discount
-                        </span>
-                        <span>-<AnimatedPrice value={loyaltySavings} /></span>
+                      <div className="bg-emerald-50 rounded-lg px-3 py-2 -mx-1">
+                        <div className="flex justify-between text-sm text-emerald-700">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Check className="w-3 h-3" /> Loyalty discount applied
+                          </span>
+                          <span className="font-semibold">-<AnimatedPrice value={loyaltySavings} /></span>
+                        </div>
+                        <p className="text-[10px] text-emerald-600 mt-0.5">You saved ${(loyaltySavings / 100).toFixed(2)} with your repeat guest discount</p>
                       </div>
                     )}
                     <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-stone-200">

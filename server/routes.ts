@@ -2818,6 +2818,44 @@ export async function registerRoutes(
     }
   });
 
+  // --- Guest loyalty status ---
+
+  app.get("/api/guest/loyalty", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const completedCount = await storage.getCompletedBookingCount(userId);
+      const isRepeatGuest = completedCount >= 1;
+
+      // Calculate lifetime loyalty savings from bookings that used repeat_guest tier
+      const guestBookings = await storage.getSpaceBookingsByUser(userId);
+      const loyaltyBookings = guestBookings.filter(b => b.feeTier === "repeat_guest" && b.paymentStatus === "paid");
+      const lifetimeSavings = loyaltyBookings.reduce((sum, b) => {
+        // Standard guest fee would be 5%, repeat is 3%, savings = 2% of base
+        const baseCents = (b.totalGuestCharged || b.paymentAmount || 0) - (b.guestFeeAmount || b.renterFeeAmount || 0) - (b.taxAmount || 0);
+        const wouldHavePaid = Math.round(baseCents * 0.05);
+        const actuallyPaid = b.guestFeeAmount || b.renterFeeAmount || 0;
+        return sum + Math.max(0, wouldHavePaid - actuallyPaid);
+      }, 0);
+
+      // First completed booking date
+      const completedBookings = guestBookings
+        .filter(b => b.status === "completed")
+        .sort((a, b) => new Date(a.bookingDate || "").getTime() - new Date(b.bookingDate || "").getTime());
+      const firstCompletedDate = completedBookings[0]?.bookingDate || null;
+
+      res.json({
+        isRepeatGuest,
+        completedBookings: completedCount,
+        loyaltyBookingsCount: loyaltyBookings.length,
+        lifetimeSavings,
+        firstCompletedDate,
+        currentGuestFeePercent: isRepeatGuest ? 0.03 : 0.05,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // --- Host referral link management ---
 
   app.get("/api/host/referral-links", isAuthenticated, async (req: any, res) => {

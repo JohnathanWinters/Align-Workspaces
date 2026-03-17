@@ -902,7 +902,9 @@ export class DatabaseStorage implements IStorage {
       .from(spaceBookings)
       .where(and(
         eq(spaceBookings.userId, userId),
-        eq(spaceBookings.status, "completed"),
+        eq(spaceBookings.paymentStatus, "paid"),
+        // Count bookings that are completed, or approved with a past date
+        sql`(${spaceBookings.status} = 'completed' OR (${spaceBookings.status} = 'approved' AND ${spaceBookings.bookingDate} < CURRENT_DATE))`,
       ));
     return result[0]?.count ?? 0;
   }
