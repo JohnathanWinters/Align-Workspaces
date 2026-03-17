@@ -941,8 +941,35 @@ function BookingPopup({
   };
   const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
 
-  const availableSlots = bookingDate ? getAvailableTimeSlots(effectiveSchedule, bookingDate, bufferMinutes) : [];
-  const maxHours = bookingDate && bookingStartTime ? getMaxHoursFromSlot(effectiveSchedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
+  // Fetch booked slots for the selected date
+  const { data: bookedData } = useQuery<{ bookedSlots: Array<{ startMin: number; endMin: number }> }>({
+    queryKey: ["/api/spaces", space.id, "booked-slots", bookingDate],
+    queryFn: () => fetch(`/api/spaces/${space.id}/booked-slots?date=${bookingDate}`).then(r => r.json()),
+    enabled: !!bookingDate,
+  });
+
+  const allSlots = bookingDate ? getAvailableTimeSlots(effectiveSchedule, bookingDate, bufferMinutes) : [];
+  const availableSlots = allSlots.filter(slot => {
+    if (!bookedData?.bookedSlots?.length) return true;
+    const [h, m] = slot.split(":").map(Number);
+    const slotStart = h * 60 + m;
+    const slotEnd = slotStart + 60;
+    return !bookedData.bookedSlots.some(b => slotStart < b.endMin && slotEnd > b.startMin);
+  });
+
+  const maxHours = bookingDate && bookingStartTime ? (() => {
+    const scheduleMax = getMaxHoursFromSlot(effectiveSchedule, bookingDate, bookingStartTime, bufferMinutes);
+    if (!bookedData?.bookedSlots?.length) return scheduleMax;
+    const [h, m] = bookingStartTime.split(":").map(Number);
+    const startMin = h * 60 + m;
+    let maxMin = startMin + scheduleMax * 60;
+    for (const b of bookedData.bookedSlots) {
+      if (b.startMin > startMin && b.startMin < maxMin) {
+        maxMin = b.startMin - bufferMinutes;
+      }
+    }
+    return Math.max(1, Math.floor((maxMin - startMin) / 60));
+  })() : 8;
   const basePriceCents = space.pricePerHour * 100 * bookingHours;
 
   // Fetch real fee breakdown from API (includes tier detection + tax)

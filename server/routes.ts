@@ -3094,6 +3094,31 @@ export async function registerRoutes(
     return { tier, isRepeatGuest, isHostReferred, referralLinkId };
   }
 
+  // Return booked time ranges for a space on a given date
+  app.get("/api/spaces/:id/booked-slots", async (req, res) => {
+    try {
+      const { date } = req.query;
+      if (!date) return res.status(400).json({ message: "Date required" });
+
+      const bookings = await storage.getSpaceBookingsBySpace(req.params.id);
+      const space = await storage.getSpaceById(req.params.id);
+      const bufferMinutes = space?.bufferMinutes ?? 15;
+
+      const bookedSlots = bookings
+        .filter(b => b.bookingDate === date && b.status !== "cancelled" && b.status !== "rejected" && b.bookingStartTime)
+        .map(b => {
+          const [h, m] = b.bookingStartTime!.split(":").map(Number);
+          const startMin = h * 60 + m;
+          const endMin = startMin + (b.bookingHours || 1) * 60 + bufferMinutes;
+          return { start: b.bookingStartTime!, hours: b.bookingHours || 1, startMin, endMin };
+        });
+
+      res.json({ date, bookedSlots });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/spaces/:id/booking-fees", async (req: any, res) => {
     try {
       const space = await storage.getSpaceById(req.params.id);
@@ -3139,6 +3164,34 @@ export async function registerRoutes(
       const { bookingDate, bookingStartTime, bookingHours } = req.body;
       if (!bookingDate) return res.status(400).json({ message: "Booking date is required" });
       const hours = parseInt(bookingHours) || 1;
+
+      // Check for overlapping bookings
+      if (bookingStartTime) {
+        const existingBookings = await storage.getSpaceBookingsBySpace(space.id);
+        const bufferMinutes = space.bufferMinutes ?? 15;
+
+        const [startH, startM] = bookingStartTime.split(":").map(Number);
+        const requestedStart = startH * 60 + startM;
+        const requestedEnd = requestedStart + hours * 60;
+
+        const hasConflict = existingBookings.some(b => {
+          if (b.bookingDate !== bookingDate) return false;
+          if (b.status === "cancelled" || b.status === "rejected") return false;
+          if (!b.bookingStartTime) return false;
+
+          const [bH, bM] = b.bookingStartTime.split(":").map(Number);
+          const bStart = bH * 60 + bM;
+          const bEnd = bStart + (b.bookingHours || 1) * 60 + bufferMinutes;
+
+          // Overlap check: requested slot overlaps if it starts before existing ends
+          // AND ends after existing starts (accounting for buffer)
+          return requestedStart < bEnd && requestedEnd + bufferMinutes > bStart;
+        });
+
+        if (hasConflict) {
+          return res.status(409).json({ message: "This time slot is already booked. Please choose a different time." });
+        }
+      }
 
       const basePriceCents = space.pricePerHour * 100 * hours;
 
