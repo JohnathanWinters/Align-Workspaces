@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, pageViews, analyticsEvents, spaceBookings } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, pageViews, analyticsEvents, spaceBookings, referralLinks } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -4253,6 +4253,136 @@ ${featuredSection}
   });
 
   // --- Tax & Revenue Reporting ---
+
+  app.get("/api/admin/revenue", isAdmin, async (_req, res) => {
+    try {
+      // All paid bookings
+      const allBookings = await db.select().from(spaceBookings)
+        .where(eq(spaceBookings.paymentStatus, "paid"))
+        .orderBy(desc(spaceBookings.createdAt));
+
+      const now = new Date();
+      const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const thisWeekStart = new Date(now);
+      thisWeekStart.setDate(now.getDate() - now.getDay());
+      thisWeekStart.setHours(0, 0, 0, 0);
+
+      // Revenue by period
+      let todayRevenue = 0, weekRevenue = 0, monthRevenue = 0, allTimeRevenue = 0;
+      let todayBookings = 0, weekBookings = 0, monthBookings = 0;
+      const todayStr = now.toISOString().split("T")[0];
+
+      // Daily revenue for chart (last 30 days)
+      const dailyRevenue: Record<string, { date: string; revenue: number; bookings: number }> = {};
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split("T")[0];
+        dailyRevenue[key] = { date: key, revenue: 0, bookings: 0 };
+      }
+
+      for (const b of allBookings) {
+        const rev = b.platformRevenue || ((b.guestFeeAmount || b.renterFeeAmount || 0) + (b.hostFeeAmount || 0));
+        const bookingDate = b.bookingDate || b.createdAt?.toISOString().split("T")[0] || "";
+        allTimeRevenue += rev;
+
+        if (bookingDate === todayStr) { todayRevenue += rev; todayBookings++; }
+        if (bookingDate >= thisWeekStart.toISOString().split("T")[0]) { weekRevenue += rev; weekBookings++; }
+        if (bookingDate.startsWith(thisMonth)) { monthRevenue += rev; monthBookings++; }
+
+        if (dailyRevenue[bookingDate]) {
+          dailyRevenue[bookingDate].revenue += rev;
+          dailyRevenue[bookingDate].bookings++;
+        }
+      }
+
+      // Target tracker: $3,000/month platform revenue
+      const monthlyTarget = 300000; // $3,000 in cents
+      const targetProgress = Math.min(100, Math.round((monthRevenue / monthlyTarget) * 100));
+      const grossNeeded = monthlyTarget > monthRevenue
+        ? Math.round((monthlyTarget - monthRevenue) / 0.16) // ~16% blended take
+        : 0;
+
+      // Bookings per day average (last 30 days)
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const recentBookings = allBookings.filter(b => {
+        const d = b.bookingDate || "";
+        return d >= thirtyDaysAgo.toISOString().split("T")[0];
+      });
+      const bookingsPerDay = (recentBookings.length / 30).toFixed(1);
+
+      // Host & guest metrics
+      const allUsers = await storage.getAllUsers();
+      const allSpaces = await storage.getAllSpaces();
+      const activeHosts = new Set(allSpaces.filter(s => s.isActive === 1 && s.userId).map(s => s.userId)).size;
+      const guestIds = new Set(allBookings.map(b => b.userId));
+      const totalGuests = guestIds.size;
+
+      // Repeat guest conversion: guests with 2+ bookings / total guests
+      const guestBookingCounts: Record<string, number> = {};
+      for (const b of allBookings) {
+        guestBookingCounts[b.userId] = (guestBookingCounts[b.userId] || 0) + 1;
+      }
+      const repeatGuests = Object.values(guestBookingCounts).filter(c => c >= 2).length;
+      const repeatConversion = totalGuests > 0 ? Math.round((repeatGuests / totalGuests) * 100) : 0;
+
+      // Top hosts by referral revenue
+      const allReferralLinks = await db.select().from(referralLinks)
+        .orderBy(desc(referralLinks.totalRevenueGenerated));
+
+      const topReferrers = [];
+      for (const link of allReferralLinks.slice(0, 10)) {
+        if ((link.bookingCount || 0) === 0) continue;
+        const host = await storage.getUserById(link.hostId);
+        let spaceName = "All listings";
+        if (link.spaceId) {
+          const space = await storage.getSpaceById(link.spaceId);
+          spaceName = space?.name || "Unknown";
+        }
+        topReferrers.push({
+          hostName: host?.firstName || "Unknown",
+          spaceName,
+          clicks: link.clickCount || 0,
+          bookings: link.bookingCount || 0,
+          revenue: link.totalRevenueGenerated || 0,
+        });
+      }
+
+      res.json({
+        revenue: {
+          today: todayRevenue,
+          week: weekRevenue,
+          month: monthRevenue,
+          allTime: allTimeRevenue,
+        },
+        bookings: {
+          today: todayBookings,
+          week: weekBookings,
+          month: monthBookings,
+          allTime: allBookings.length,
+          perDay: bookingsPerDay,
+        },
+        target: {
+          monthly: monthlyTarget,
+          current: monthRevenue,
+          progress: targetProgress,
+          grossNeeded,
+        },
+        dailyRevenue: Object.values(dailyRevenue),
+        metrics: {
+          totalUsers: allUsers.length,
+          activeHosts,
+          totalGuests,
+          repeatGuests,
+          repeatConversion,
+        },
+        topReferrers,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
 
   app.get("/api/admin/tax-report", isAdmin, async (req, res) => {
     try {

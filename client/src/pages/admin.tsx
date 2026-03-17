@@ -5107,6 +5107,169 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   );
 }
 
+function RevenueDashboard({ token, onBack }: { token: string; onBack: () => void }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminFetch("/api/admin/revenue", token).then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] flex justify-center items-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] flex justify-center items-center">
+        <p className="text-gray-500">No revenue data available yet.</p>
+      </div>
+    );
+  }
+
+  const maxDailyRev = Math.max(...data.dailyRevenue.map((d: any) => d.revenue), 1);
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Back
+            </button>
+            <p className="font-serif text-lg text-gray-900">Revenue Dashboard</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Revenue cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Today", value: `$${(data.revenue.today / 100).toFixed(2)}`, sub: `${data.bookings.today} bookings` },
+            { label: "This Week", value: `$${(data.revenue.week / 100).toFixed(0)}`, sub: `${data.bookings.week} bookings` },
+            { label: "This Month", value: `$${(data.revenue.month / 100).toFixed(0)}`, sub: `${data.bookings.month} bookings` },
+            { label: "All Time", value: `$${(data.revenue.allTime / 100).toFixed(0)}`, sub: `${data.bookings.allTime} bookings` },
+          ].map(({ label, value, sub }) => (
+            <Card key={label} className="border-gray-100">
+              <CardContent className="p-4">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{label}</p>
+                <p className="text-xl font-semibold text-gray-900 mt-1">{value}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Monthly target tracker */}
+        <Card className="border-gray-100">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Monthly Revenue Target</p>
+                <p className="text-xs text-gray-400">$3,000 platform revenue / month</p>
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{data.target.progress}%</span>
+            </div>
+            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: `${data.target.progress}%`,
+                  backgroundColor: data.target.progress >= 100 ? "#10b981" : data.target.progress >= 60 ? "#c4956a" : "#f59e0b",
+                }}
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-xs text-gray-400">
+              <span>${(data.target.current / 100).toFixed(0)} earned</span>
+              <span>${(data.target.monthly / 100).toFixed(0)} goal</span>
+            </div>
+            {data.target.grossNeeded > 0 && (
+              <p className="text-xs text-gray-500 mt-2">
+                Need ~${(data.target.grossNeeded / 100).toFixed(0)} more in gross bookings to hit target
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Daily revenue chart (last 30 days) */}
+        <Card className="border-gray-100">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-700">Daily Revenue (Last 30 Days)</CardTitle>
+            <p className="text-xs text-gray-400">{data.bookings.perDay} bookings/day avg</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-[2px] h-32">
+              {data.dailyRevenue.map((d: any) => {
+                const height = maxDailyRev > 0 ? Math.max(2, (d.revenue / maxDailyRev) * 100) : 2;
+                return (
+                  <div key={d.date} className="flex-1 flex flex-col items-center justify-end group relative">
+                    <div
+                      className="w-full rounded-t-sm transition-colors bg-[#c4956a]/60 hover:bg-[#c4956a]"
+                      style={{ height: `${height}%` }}
+                    />
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                      {d.date.slice(5)}: ${(d.revenue / 100).toFixed(0)} ({d.bookings})
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-between mt-1 text-[9px] text-gray-300">
+              <span>{data.dailyRevenue[0]?.date.slice(5)}</span>
+              <span>{data.dailyRevenue[data.dailyRevenue.length - 1]?.date.slice(5)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Host & Guest Metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Total Users", value: data.metrics.totalUsers },
+            { label: "Active Hosts", value: data.metrics.activeHosts },
+            { label: "Total Guests", value: data.metrics.totalGuests },
+            { label: "Repeat Guests", value: data.metrics.repeatGuests },
+            { label: "Repeat Rate", value: `${data.metrics.repeatConversion}%` },
+          ].map(({ label, value }) => (
+            <Card key={label} className="border-gray-100">
+              <CardContent className="p-3 text-center">
+                <p className="text-lg font-semibold text-gray-900">{value}</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider">{label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Top referrers */}
+        {data.topReferrers?.length > 0 && (
+          <Card className="border-gray-100">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700">Top Referral Performers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="divide-y divide-gray-100">
+                {data.topReferrers.map((r: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{r.hostName}</p>
+                      <p className="text-xs text-gray-400">{r.spaceName} · {r.clicks} clicks · {r.bookings} bookings</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">${(r.revenue / 100).toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function TaxReportManager({ token, onBack }: { token: string; onBack: () => void }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -5921,7 +6084,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -6214,6 +6377,10 @@ function AdminDashboard({ token }: { token: string }) {
     return <TaxReportManager token={token} onBack={() => setView("clients")} />;
   }
 
+  if (view === "revenue") {
+    return <RevenueDashboard token={token} onBack={() => setView("clients")} />;
+  }
+
   if (view === "pipeline") {
     return <PipelineManager token={token} onBack={() => setView("clients")} />;
   }
@@ -6498,6 +6665,16 @@ function AdminDashboard({ token }: { token: string }) {
             >
               <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
               Analytics
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("revenue")}
+              data-testid="button-manage-revenue"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
+            >
+              <Coins className="w-3.5 h-3.5 mr-1.5" />
+              Revenue
             </Button>
             <Button
               variant="outline"
