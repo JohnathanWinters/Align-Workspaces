@@ -9,6 +9,7 @@ import { seedPortfolioIfEmpty } from "./seed-portfolio";
 import { fixPortfolioImageExtensions } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
 import { startPayoutProcessing } from "./payouts";
+import { WebhookHandlers } from "./webhookHandlers";
 
 const app = express();
 const httpServer = createServer(app);
@@ -99,6 +100,21 @@ app.use((req, res, next) => {
   });
 
   next();
+});
+
+// Stripe webhook — uses rawBody captured by express.json verify callback
+app.post("/api/stripe/webhook", async (req, res) => {
+  const signature = req.headers["stripe-signature"];
+  if (!signature || !req.rawBody) {
+    return res.status(400).json({ message: "Missing signature or body" });
+  }
+  try {
+    await WebhookHandlers.processWebhook(req.rawBody as Buffer, signature as string);
+    res.json({ received: true });
+  } catch (err: any) {
+    console.error("Webhook error:", err.message);
+    res.status(400).json({ message: err.message });
+  }
 });
 
 (async () => {
