@@ -306,6 +306,32 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
+  app.patch("/api/auth/notification-preferences", async (req: any, res: Response) => {
+    try {
+      const userId = await getAuthUserId(req);
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const { pushMessages, pushBookings, emailMessages, emailBookings } = req.body;
+      const prefs = {
+        pushMessages: pushMessages !== false,
+        pushBookings: pushBookings !== false,
+        emailMessages: emailMessages !== false,
+        emailBookings: emailBookings !== false,
+      };
+
+      const [updated] = await db.update(users).set({
+        notificationPreferences: prefs,
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId)).returning();
+
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json(sanitizeUser(updated));
+    } catch (error: any) {
+      console.error("Update notification preferences error:", error);
+      res.status(500).json({ message: "Failed to update notification preferences" });
+    }
+  });
+
   app.post("/api/auth/logout", (req: any, res) => {
     req.session?.destroy?.((err: any) => {
       if (err) console.error("Logout error:", err);

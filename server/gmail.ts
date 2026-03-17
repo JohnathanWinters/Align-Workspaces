@@ -480,3 +480,28 @@ export async function sendSpaceBookingNotification(data: {
   const to = data.hostEmail || ADMIN_EMAIL;
   await sendEmail(to, subject, html);
 }
+
+export async function sendUnreadMessageEmail(data: {
+  to: string;
+  recipientName: string;
+  subject: string;
+  previewText: string;
+  url: string;
+}) {
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">${data.subject}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">Hi ${data.recipientName}, you have an unread message on Align.</p>
+
+    <div style="background-color:#f5f3f0;border-radius:8px;padding:16px;">
+      <p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.previewText}</p>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${SITE_URL}${data.url}" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        View Message
+      </a>
+    </div>
+  `);
+
+  await sendEmail(data.to, data.subject, html);
+}

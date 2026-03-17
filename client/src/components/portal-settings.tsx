@@ -39,6 +39,7 @@ export default function PortalSettings() {
       <ProfilePhotoSection user={user} />
       <NameSection user={user} />
       <DefaultTabSection user={user} />
+      <NotificationSection user={user} />
       <EmailSection user={user} />
       <NewsletterSection user={user} />
     </motion.div>
@@ -510,6 +511,74 @@ function DefaultTabSection({ user }: { user: AuthUser }) {
             {opt.label}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function NotificationSection({ user }: { user: AuthUser }) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const prefs = (user as any).notificationPreferences || {
+    pushMessages: true,
+    pushBookings: true,
+    emailMessages: true,
+    emailBookings: true,
+  };
+
+  async function toggle(key: string, value: boolean) {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/auth/notification-preferences", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...prefs, [key]: value }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      const updated = await res.json();
+      queryClient.setQueryData(["/api/auth/user"], updated);
+      toast({ title: "Notification preferences updated" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const options = [
+    { key: "pushMessages", label: "Push notifications for messages", icon: Bell },
+    { key: "pushBookings", label: "Push notifications for bookings", icon: Bell },
+    { key: "emailMessages", label: "Email notifications for messages", icon: Mail },
+    { key: "emailBookings", label: "Email notifications for bookings", icon: Mail },
+  ];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-5" data-testid="section-notifications">
+      <div className="flex items-center gap-2 mb-1">
+        <Bell className="w-4 h-4 text-gray-400" />
+        <p className="text-sm font-medium text-gray-900">Notifications</p>
+      </div>
+      <p className="text-xs text-gray-400 mb-3">Choose how you want to be notified about activity.</p>
+      <div className="space-y-2">
+        {options.map((opt) => {
+          const enabled = (prefs as any)[opt.key] !== false;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => toggle(opt.key, !enabled)}
+              disabled={saving}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-100 hover:border-gray-200 transition-all text-left disabled:opacity-50"
+              data-testid={`toggle-${opt.key}`}
+            >
+              <opt.icon className={`w-4 h-4 ${enabled ? "text-gray-800" : "text-gray-300"}`} />
+              <span className="text-sm text-gray-700 flex-1">{opt.label}</span>
+              <div className={`w-8 h-5 rounded-full transition-colors relative ${enabled ? "bg-gray-800" : "bg-gray-200"}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${enabled ? "left-3.5" : "left-0.5"}`} />
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

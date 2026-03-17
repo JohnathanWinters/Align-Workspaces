@@ -24,6 +24,12 @@ export const users = pgTable("users", {
   stripeAccountId: varchar("stripe_account_id"),
   stripeOnboardingComplete: varchar("stripe_onboarding_complete").default("false"),
   defaultPortalTab: varchar("default_portal_tab"),
+  notificationPreferences: jsonb("notification_preferences").$type<{
+    pushMessages?: boolean;
+    pushBookings?: boolean;
+    emailMessages?: boolean;
+    emailBookings?: boolean;
+  }>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

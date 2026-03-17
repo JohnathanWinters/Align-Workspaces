@@ -7,6 +7,7 @@ self.addEventListener("push", (event) => {
     body: data.body || "",
     tag: data.tag || "chat-message",
     renotify: true,
+    vibrate: [200, 100, 200],
     data: {
       url: data.url || "/portal",
     },

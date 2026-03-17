@@ -6,7 +6,7 @@ import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail, getGmailAuthUrl, exchangeGmailCode } from "./gmail";
-import { sendPushToUser, sendPushToRole } from "./pushNotifications";
+import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees } from "@shared/pricing";
 import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
@@ -2938,13 +2938,31 @@ export async function registerRoutes(
       const messageText = String(req.body.message || "").trim();
       if (!messageText) return res.status(400).json({ message: "Message cannot be empty" });
 
+      const senderName = req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest");
       const msg = await storage.createSpaceMessage({
         spaceBookingId: req.params.id,
         senderId: userId,
-        senderName: req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest"),
+        senderName,
         senderRole,
         message: messageText,
       });
+
+      // Send push notification to the other party
+      try {
+        const space = senderRole === "host" ? null : await storage.getSpaceById(booking.spaceId);
+        const recipientId = senderRole === "guest" ? (space?.userId || null) : booking.userId;
+        if (recipientId) {
+          const spaceName = space?.name || (senderRole === "host" ? await storage.getSpaceById(booking.spaceId).then(s => s?.name) : undefined);
+          sendPushToUser(recipientId, {
+            title: `New message${spaceName ? ` about ${spaceName}` : ""}`,
+            body: messageText.slice(0, 100),
+            url: "/portal?tab=messages",
+            tag: `booking-${req.params.id}`,
+          });
+        }
+      } catch (pushErr) {
+        console.error("Failed to send booking message push:", pushErr);
+      }
 
       res.json(msg);
     } catch (err: any) {
@@ -3075,6 +3093,7 @@ export async function registerRoutes(
 
       const role = conversation.guestId === userId ? "guest" : "host";
       await storage.markDirectConversationRead(req.params.id, role);
+      cancelEmailFallback(userId, `dm-${req.params.id}`);
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -3385,6 +3404,7 @@ export async function registerRoutes(
         if (!space || space.userId !== userId) return res.status(403).json({ message: "Not authorized" });
         await storage.markBookingRead(booking.id, "host");
       }
+      cancelEmailFallback(userId, `booking-${req.params.id}`);
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });

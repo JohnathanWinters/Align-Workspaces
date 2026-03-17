@@ -2,6 +2,7 @@ import { getUncachableStripeClient } from './stripeClient';
 import { storage } from './storage';
 import { sendSpaceBookingNotification } from './gmail';
 import { createBookingCalendarEvent } from './googleCalendar';
+import { sendPushToUser } from './pushNotifications';
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -104,6 +105,21 @@ export class WebhookHandlers {
             }
           } catch (calErr) {
             console.error("Failed to create calendar event:", calErr);
+          }
+
+          // Push notification to host about new paid booking
+          try {
+            const space = await storage.getSpaceById(booking?.spaceId || session.metadata.spaceId);
+            if (space?.userId) {
+              sendPushToUser(space.userId, {
+                title: `New booking: ${space.name}`,
+                body: `${guestName} booked ${dateDisplay}${timeStr}, ${bookingHours} hour${bookingHours > 1 ? "s" : ""}`,
+                url: "/portal?tab=messages",
+                tag: `booking-${bookingId}`,
+              });
+            }
+          } catch (pushErr) {
+            console.error("Failed to send booking push:", pushErr);
           }
 
           console.log(`Space booking ${bookingId} paid & confirmed, host notified`);

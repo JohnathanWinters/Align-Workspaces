@@ -4484,12 +4484,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           <Card className="border-gray-100">
             <CardContent className="p-4 space-y-2 text-sm">
               {selectedContact.nextFollowUp && (
-                <p className={`flex items-center gap-2 ${new Date(selectedContact.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : ""}`}>
-                  <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp).toLocaleDateString()}
+                <p className={`flex items-center gap-2 ${new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00") <= new Date() ? "text-red-600 font-medium" : ""}`}>
+                  <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
                 </p>
               )}
               {selectedContact.lastContactDate && (
-                <p className="flex items-center gap-2 text-gray-500"><Clock className="w-3.5 h-3.5" /> Last contact: {new Date(selectedContact.lastContactDate).toLocaleDateString()}</p>
+                <p className="flex items-center gap-2 text-gray-500"><Clock className="w-3.5 h-3.5" /> Last contact: {new Date(selectedContact.lastContactDate.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}</p>
               )}
               {selectedContact.notes && <p className="text-gray-600 mt-2">{selectedContact.notes}</p>}
               <div className="flex gap-2 mt-3">
@@ -4901,12 +4901,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                                   <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-gray-400" /> {c.source}</span>
                                 </div>
                                 {c.nextFollowUp && (
-                                  <p className={`text-xs flex items-center gap-1 ${new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                                    <CalendarDays className="w-3 h-3" /> Follow-up: {new Date(c.nextFollowUp).toLocaleDateString()}
+                                  <p className={`text-xs flex items-center gap-1 ${new Date(c.nextFollowUp.toString().split("T")[0] + "T00:00:00") <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                                    <CalendarDays className="w-3 h-3" /> Follow-up: {new Date(c.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
                                   </p>
                                 )}
                                 {c.lastContactDate && (
-                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Last contact: {new Date(c.lastContactDate).toLocaleDateString()}</p>
+                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Last contact: {new Date(c.lastContactDate.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}</p>
                                 )}
                                 {c.notes && <p className="text-xs text-gray-600">{c.notes}</p>}
                                 <div className="flex items-center gap-2 pt-1">
