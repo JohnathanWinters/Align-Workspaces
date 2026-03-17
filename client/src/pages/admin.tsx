@@ -2157,6 +2157,17 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     if (!editingId) return;
     setSaving(true);
     try {
+      // Auto-derive tags from targetProfession for browse filtering
+      const professionToTag: Record<string, string> = {
+        "Therapy & Counseling": "therapy",
+        "Coaching & Consulting": "coaching",
+        "Wellness & Holistic": "wellness",
+        "Workshops & Classes": "workshop",
+        "Creative Studio": "creative",
+      };
+      const selectedProfessions = (editForm.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+      const derivedTags = selectedProfessions.map((p: string) => professionToTag[p]).filter(Boolean);
+
       const payload: any = {
         ...editForm,
         pricePerHour: parseInt(editForm.pricePerHour) || 0,
@@ -2164,6 +2175,8 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
         capacity: parseInt(editForm.capacity) || null,
         bufferMinutes: parseInt(editForm.bufferMinutes) || 15,
         amenities: editForm.amenities.split(",").map((a: string) => a.trim()).filter(Boolean),
+        tags: derivedTags.length > 0 ? derivedTags : editForm.tags,
+        type: derivedTags[0] || editForm.type,
       };
       const res = await fetch(`/api/admin/spaces/${editingId}`, {
         method: "PATCH",
@@ -2296,35 +2309,6 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             <option value="workshop">Workshops & Classes</option>
                             <option value="creative">Creative Studio</option>
                           </select>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="block text-xs font-medium text-gray-500 mb-1.5">Space Categories</label>
-                          <div className="flex flex-wrap gap-2">
-                            {[
-                              { key: "therapy", label: "Therapy & Counseling" },
-                              { key: "coaching", label: "Coaching & Consulting" },
-                              { key: "wellness", label: "Wellness & Holistic" },
-                              { key: "workshop", label: "Workshops & Classes" },
-                              { key: "creative", label: "Creative Studio" },
-                            ].map(cat => {
-                              const selected = (editForm.tags || []).includes(cat.key);
-                              return (
-                                <button
-                                  key={cat.key}
-                                  type="button"
-                                  data-testid={`tag-edit-${cat.key}`}
-                                  onClick={() => {
-                                    const current: string[] = editForm.tags || [];
-                                    const next = selected ? current.filter((t: string) => t !== cat.key) : [...current, cat.key];
-                                    setEditForm({ ...editForm, tags: next, type: next[0] || editForm.type });
-                                  }}
-                                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selected ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"}`}
-                                >
-                                  {cat.label}
-                                </button>
-                              );
-                            })}
-                          </div>
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">Address</label>
