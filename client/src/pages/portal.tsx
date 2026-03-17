@@ -345,7 +345,7 @@ function GalleryImageCard({ image, index, isFav, isVisible, onToggleFavorite, on
       onClick={() => { if (isVisible) onOpenLightbox(index); }}
     >
       <img
-        src={image.imageUrl}
+        src={image.thumbnailUrl || image.imageUrl}
         alt={image.originalFilename || image.caption || "Photo"}
         className="w-full h-full object-cover"
         loading={isVisible ? "eager" : "lazy"}

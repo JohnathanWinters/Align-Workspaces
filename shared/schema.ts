@@ -116,6 +116,7 @@ export const galleryImages = pgTable("gallery_images", {
   shootId: varchar("shoot_id").notNull(),
   folderId: varchar("folder_id"),
   imageUrl: text("image_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
   originalFilename: text("original_filename"),
   caption: text("caption"),
   sortOrder: integer("sort_order").default(0),

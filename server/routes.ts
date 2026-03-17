@@ -1211,12 +1211,31 @@ export async function registerRoutes(
       const images = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const contentType = file.mimetype || "application/octet-stream";
-        const objectPath = await uploadFileFromDisk(file.path, contentType);
+        const rawBuffer = fs.readFileSync(file.path);
+
+        // Generate optimized display version (2400px wide, WebP 90%)
+        const displayBuffer = await sharp(rawBuffer)
+          .rotate()
+          .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 90, effort: 4 })
+          .toBuffer();
+        const imageUrl = await uploadBufferToObjectStorage(displayBuffer, "image/webp");
+
+        // Generate thumbnail (800px wide, WebP 80%)
+        const thumbBuffer = await sharp(rawBuffer)
+          .rotate()
+          .resize({ width: 800, height: 1067, fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 80, effort: 4 })
+          .toBuffer();
+        const thumbnailUrl = await uploadBufferToObjectStorage(thumbBuffer, "image/webp");
+
+        await fs.promises.unlink(file.path).catch(() => {});
+
         const image = await storage.createGalleryImage({
           shootId,
           folderId: folderId || null,
-          imageUrl: objectPath,
+          imageUrl,
+          thumbnailUrl,
           originalFilename: file.originalname,
           sortOrder: i,
         });
