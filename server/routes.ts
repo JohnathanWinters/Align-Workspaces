@@ -3180,7 +3180,7 @@ export async function registerRoutes(
         hostPayoutAmount: fees.hostPayoutAmount,
         platformRevenue: fees.platformRevenue,
         referralLinkId,
-        payoutStatus: "pending",
+        payoutStatus: hostStripeAccountId ? "paid" : "pending",
         paymentStatus: "pending",
       });
 
@@ -3242,9 +3242,18 @@ export async function registerRoutes(
         },
       };
 
-      // Platform collects the full payment. Host payout is created as a
-      // separate Stripe Transfer after the booking completes (within 24 hours).
-      // This gives us control over holds, disputes, and cancellation refunds.
+      // Destination charges: host gets paid directly by Stripe.
+      // Platform collects application fee = guest fee + host fee + tax.
+      // Host receives: totalGuestCharged - applicationFee = subtotal - hostFee
+      if (hostStripeAccountId) {
+        const applicationFee = fees.guestFeeAmount + fees.hostFeeAmount + fees.taxAmount;
+        sessionConfig.payment_intent_data = {
+          application_fee_amount: applicationFee,
+          transfer_data: {
+            destination: hostStripeAccountId,
+          },
+        };
+      }
 
       const session = await stripe.checkout.sessions.create(sessionConfig);
       await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id });
@@ -3570,7 +3579,7 @@ export async function registerRoutes(
               refundStatus: "refunded",
               refundAmount: refund.amount,
               paymentStatus: refundAmount >= (booking.totalGuestCharged ?? booking.paymentAmount ?? 0) ? "refunded" : "partial_refund",
-              payoutStatus: "held",
+              payoutStatus: "reversed", // Stripe auto-reverses the host transfer on refund
               updatedAt: new Date(),
             });
             refundResult = { refunded: true, amount: refund.amount, reason: refundReason };

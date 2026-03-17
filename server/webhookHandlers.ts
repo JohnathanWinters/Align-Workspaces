@@ -30,10 +30,14 @@ export class WebhookHandlers {
           const booking = await storage.getSpaceBookingById(bookingId);
 
           const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
+          // With destination charges, host is paid directly by Stripe at charge time
+          const hasTransfer = !!(session as any).transfer_data?.destination;
           await storage.updateSpaceBooking(bookingId, {
             paymentStatus: "paid",
             status: "approved",
             ...(paymentIntentId ? { stripePaymentIntentId: paymentIntentId } : {}),
+            ...(hasTransfer ? { payoutStatus: "paid" } : {}),
+            updatedAt: new Date(),
           });
 
           const guestName = session.metadata.guestName || booking?.userName || "Guest";
