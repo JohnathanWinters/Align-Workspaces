@@ -150,6 +150,11 @@ const EMPLOYEE_ROLES: Record<string, string[]> = {
   ],
 };
 
+function generateReferralCode(): string {
+  // 8-char alphanumeric code, URL-safe
+  return randomBytes(6).toString("base64url").slice(0, 8);
+}
+
 function isAdmin(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -2808,6 +2813,96 @@ export async function registerRoutes(
           savedVsPeerspace,
         },
       });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // --- Host referral link management ---
+
+  app.get("/api/host/referral-links", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const links = await storage.getReferralLinksByHost(userId);
+
+      // Enrich with space names
+      const enriched = await Promise.all(links.map(async (link) => {
+        let spaceName = "All listings";
+        let spaceSlug = "";
+        if (link.spaceId) {
+          const space = await storage.getSpaceById(link.spaceId);
+          spaceName = space?.name || "Unknown Space";
+          spaceSlug = space?.slug || "";
+        }
+
+        // Calculate savings from referral tier (8%) vs standard (12.5%)
+        const standardFeeOnRevenue = Math.round((link.totalRevenueGenerated || 0) * (0.125 / 0.13));
+        const referralFeeOnRevenue = Math.round((link.totalRevenueGenerated || 0) * (0.08 / 0.13));
+        const savedAmount = standardFeeOnRevenue - referralFeeOnRevenue;
+
+        return {
+          ...link,
+          spaceName,
+          spaceSlug,
+          savedAmount,
+        };
+      }));
+
+      res.json(enriched);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/host/referral-links", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { spaceId } = req.body; // null/undefined = master link for all listings
+
+      // Verify the host owns the space if a specific space is given
+      if (spaceId) {
+        const space = await storage.getSpaceById(spaceId);
+        if (!space || space.userId !== userId) {
+          return res.status(403).json({ message: "You can only create referral links for your own spaces" });
+        }
+      }
+
+      // Check if a link already exists for this host + space combo
+      const existing = await storage.getReferralLinksByHost(userId);
+      const duplicate = existing.find(l =>
+        (spaceId && l.spaceId === spaceId) || (!spaceId && !l.spaceId)
+      );
+      if (duplicate) {
+        return res.json(duplicate); // Return existing link instead of creating duplicate
+      }
+
+      // Generate a unique short code
+      const code = generateReferralCode();
+
+      const link = await storage.createReferralLink({
+        hostId: userId,
+        spaceId: spaceId || null,
+        uniqueCode: code,
+      });
+
+      res.json(link);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/host/referral-links/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      // Verify ownership via the host's links
+      const hostLinks = await storage.getReferralLinksByHost(userId);
+      const targetLink = hostLinks.find(l => l.id === req.params.id);
+      if (!targetLink) {
+        return res.status(404).json({ message: "Referral link not found" });
+      }
+
+      await storage.deleteReferralLink(req.params.id);
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

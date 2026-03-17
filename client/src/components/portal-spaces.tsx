@@ -29,6 +29,10 @@ import {
   Heart,
   Clock,
   CalendarDays,
+  Share2,
+  Link2,
+  Copy,
+  BarChart3,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -1022,8 +1026,256 @@ function MySpacesTab() {
   );
 }
 
-export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: "favorites" | "my-spaces" | "past" }) {
-  const [spacesTab, setSpacesTab] = useState<"favorites" | "my-spaces" | "past">(initialTab || "favorites");
+interface ReferralLink {
+  id: string;
+  hostId: string;
+  spaceId: string | null;
+  uniqueCode: string;
+  clickCount: number;
+  bookingCount: number;
+  totalRevenueGenerated: number;
+  spaceName: string;
+  spaceSlug: string;
+  savedAmount: number;
+  createdAt: string;
+}
+
+function ReferralLinksTab() {
+  const { toast } = useToast();
+
+  const { data: mySpaces = [] } = useQuery<Space[]>({
+    queryKey: ["/api/my-spaces"],
+    queryFn: async () => {
+      const res = await fetch("/api/my-spaces", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const { data: links = [], isLoading } = useQuery<ReferralLink[]>({
+    queryKey: ["/api/host/referral-links"],
+    queryFn: async () => {
+      const res = await fetch("/api/host/referral-links", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (spaceId: string | null) => {
+      const res = await apiRequest("POST", "/api/host/referral-links", { spaceId });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/host/referral-links"] });
+      toast({ title: "Referral link created" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/host/referral-links/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/host/referral-links"] });
+      toast({ title: "Referral link removed" });
+    },
+  });
+
+  const copyLink = (code: string, spaceSlug?: string) => {
+    const baseUrl = window.location.origin;
+    const url = spaceSlug
+      ? `${baseUrl}/spaces/${spaceSlug}?ref=${code}`
+      : `${baseUrl}/workspaces?ref=${code}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link copied to clipboard" });
+  };
+
+  const shareLink = (code: string, spaceSlug?: string, spaceName?: string) => {
+    const baseUrl = window.location.origin;
+    const url = spaceSlug
+      ? `${baseUrl}/spaces/${spaceSlug}?ref=${code}`
+      : `${baseUrl}/workspaces?ref=${code}`;
+    const text = spaceName
+      ? `Check out ${spaceName} on Align`
+      : "Check out these workspaces on Align";
+
+    if (navigator.share) {
+      navigator.share({ title: text, url }).catch(() => {});
+    } else {
+      copyLink(code, spaceSlug);
+    }
+  };
+
+  const totalClicks = links.reduce((sum, l) => sum + (l.clickCount || 0), 0);
+  const totalBookings = links.reduce((sum, l) => sum + (l.bookingCount || 0), 0);
+  const totalRevenue = links.reduce((sum, l) => sum + (l.totalRevenueGenerated || 0), 0);
+  const totalSaved = links.reduce((sum, l) => sum + (l.savedAmount || 0), 0);
+
+  const hasMasterLink = links.some(l => !l.spaceId);
+
+  if (mySpaces.length === 0 && !isLoading) {
+    return (
+      <div className="text-center py-12 text-stone-500">
+        <Share2 className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+        <p className="text-sm font-medium mb-1">No spaces to share yet</p>
+        <p className="text-xs text-stone-400">Add a space first, then create referral links to earn lower fees.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Stats summary */}
+      {links.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Link clicks", value: totalClicks.toLocaleString() },
+            { label: "Bookings", value: totalBookings.toLocaleString() },
+            { label: "Revenue", value: `$${(totalRevenue / 100).toFixed(0)}` },
+            { label: "Fee savings", value: `$${(totalSaved / 100).toFixed(0)}` },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-stone-50 rounded-lg p-3 text-center">
+              <p className="text-lg font-semibold text-stone-900">{value}</p>
+              <p className="text-[10px] text-stone-400 uppercase tracking-wider">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalSaved > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800">
+          Your referral bookings saved you <strong>${(totalSaved / 100).toFixed(2)}</strong> in fees (8% vs 12.5%)
+        </div>
+      )}
+
+      {/* Generate links */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Create referral links</p>
+        <div className="space-y-2">
+          {!hasMasterLink && (
+            <button
+              onClick={() => createMutation.mutate(null)}
+              disabled={createMutation.isPending}
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] hover:bg-stone-50 transition-all text-left"
+            >
+              <div className="w-8 h-8 rounded-full bg-[#c4956a]/10 flex items-center justify-center flex-shrink-0">
+                <Link2 className="w-4 h-4 text-[#c4956a]" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-stone-800">Master referral link</p>
+                <p className="text-xs text-stone-400">One link for all your listings — 8% fee instead of 12.5%</p>
+              </div>
+            </button>
+          )}
+          {mySpaces
+            .filter(space => !links.some(l => l.spaceId === space.id))
+            .map(space => (
+              <button
+                key={space.id}
+                onClick={() => createMutation.mutate(space.id)}
+                disabled={createMutation.isPending}
+                className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] hover:bg-stone-50 transition-all text-left"
+              >
+                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {space.imageUrls?.[0] ? (
+                    <img src={space.imageUrls[0]} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Building2 className="w-4 h-4 text-stone-400" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-stone-800">{space.name}</p>
+                  <p className="text-xs text-stone-400">Create link for this space</p>
+                </div>
+              </button>
+            ))}
+        </div>
+      </div>
+
+      {/* Existing links */}
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+        </div>
+      ) : links.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Your referral links</p>
+          {links.map((link) => {
+            const url = link.spaceSlug
+              ? `${window.location.origin}/spaces/${link.spaceSlug}?ref=${link.uniqueCode}`
+              : `${window.location.origin}/workspaces?ref=${link.uniqueCode}`;
+
+            return (
+              <div key={link.id} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Link2 className="w-4 h-4 text-[#c4956a]" />
+                    <span className="text-sm font-medium text-stone-800">{link.spaceName}</span>
+                  </div>
+                  <button
+                    onClick={() => deleteMutation.mutate(link.id)}
+                    className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={url}
+                    className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-stone-500 truncate"
+                  />
+                  <button
+                    onClick={() => copyLink(link.uniqueCode, link.spaceSlug)}
+                    className="p-2 rounded-lg bg-stone-100 hover:bg-stone-200 transition-colors"
+                    title="Copy link"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-stone-600" />
+                  </button>
+                  <button
+                    onClick={() => shareLink(link.uniqueCode, link.spaceSlug, link.spaceName)}
+                    className="p-2 rounded-lg bg-[#c4956a]/10 hover:bg-[#c4956a]/20 transition-colors"
+                    title="Share"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-[#c4956a]" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4 text-[11px] text-stone-400">
+                  <span className="flex items-center gap-1">
+                    <BarChart3 className="w-3 h-3" /> {link.clickCount || 0} clicks
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3" /> {link.bookingCount || 0} bookings
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" /> ${((link.totalRevenueGenerated || 0) / 100).toFixed(0)} revenue
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* How it works */}
+      <div className="bg-stone-50 rounded-lg p-4 space-y-2">
+        <p className="text-xs font-semibold text-stone-600">How referral links work</p>
+        <ul className="text-xs text-stone-500 space-y-1.5">
+          <li>Share your link with clients — when they book, you pay only <strong>8%</strong> instead of 12.5%</li>
+          <li>Your clients pay the same service fee either way</li>
+          <li>Referral credit lasts 30 days after a client clicks your link</li>
+          <li>If a client clicks your link but books a different space from you, the discount still applies</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: "favorites" | "my-spaces" | "referrals" | "past" }) {
+  const [spacesTab, setSpacesTab] = useState<"favorites" | "my-spaces" | "referrals" | "past">(initialTab || "favorites");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
 
   // Fetch counts to auto-detect best sub-tab
@@ -1068,7 +1320,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
       hasFavorites && { key: "favorites" as const, time: 0 },
       hasMySpaces && { key: "my-spaces" as const, time: Math.max(...mySpaces.map(s => new Date(s.createdAt || 0).getTime())) },
       hasPast && { key: "past" as const, time: Math.max(...pastBookings.map((b: any) => new Date(b.createdAt || 0).getTime())) },
-    ].filter(Boolean) as { key: "favorites" | "my-spaces" | "past"; time: number }[];
+    ].filter(Boolean) as { key: "favorites" | "my-spaces" | "referrals" | "past"; time: number }[];
 
     if (tabs.length === 1) {
       setSpacesTab(tabs[0].key);
@@ -1084,6 +1336,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
   const tabs = [
     { key: "favorites" as const, label: "Favorites", icon: Heart },
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
+    { key: "referrals" as const, label: "Referrals", icon: Share2 },
     { key: "past" as const, label: "Past Spaces", icon: Clock },
   ];
 
@@ -1109,6 +1362,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
       {spacesTab === "favorites" && <FavoritesTab />}
       {spacesTab === "my-spaces" && <MySpacesTab />}
+      {spacesTab === "referrals" && <ReferralLinksTab />}
       {spacesTab === "past" && <PastSpacesTab />}
     </div>
   );

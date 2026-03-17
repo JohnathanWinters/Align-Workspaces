@@ -135,6 +135,9 @@ export interface IStorage {
   getBookingsReadyForCompletion(): Promise<SpaceBooking[]>;
   getBookingsPendingPayout(): Promise<SpaceBooking[]>;
   getPayoutsByHost(hostId: string): Promise<SpaceBooking[]>;
+
+  // Referral link management
+  deleteReferralLink(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -935,6 +938,10 @@ export class DatabaseStorage implements IStorage {
 
   async createFeeAuditLog(data: Omit<FeeAuditLog, "id" | "createdAt">): Promise<void> {
     await db.insert(feeAuditLog).values(data);
+  }
+
+  async deleteReferralLink(id: string): Promise<void> {
+    await db.delete(referralLinks).where(eq(referralLinks.id, id));
   }
 
   // --- Payouts ---
