@@ -75,6 +75,7 @@ const statusConfig: Record<string, { color: string; icon: any; label: string }> 
   approved: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, label: "Confirmed" },
   rejected: { color: "bg-red-50 text-red-700 border-red-200", icon: XCircle, label: "Declined" },
   cancelled: { color: "bg-gray-100 text-gray-500 border-gray-200", icon: Ban, label: "Cancelled" },
+  completed: { color: "bg-blue-50 text-blue-700 border-blue-200", icon: CheckCircle2, label: "Completed" },
 };
 
 const paymentStatusConfig: Record<string, { color: string; label: string }> = {
@@ -143,7 +144,7 @@ function ConversationList({
     <div className="divide-y divide-gray-100" data-testid="conversation-list">
       {conversations.map((c) => {
         const isDirect = c.type === "direct";
-        const status = isDirect ? null : statusConfig[(c as EnrichedBooking).status || "pending"];
+        const status = isDirect ? null : (statusConfig[(c as EnrichedBooking).status || "pending"] || statusConfig.pending);
         const StatusIcon = status?.icon;
         return (
           <button
@@ -395,7 +396,7 @@ function ConversationView({
   };
 
   const isHost = booking.role === "host";
-  const status = statusConfig[booking.status || "pending"];
+  const status = statusConfig[booking.status || "pending"] || statusConfig.pending;
   const StatusIcon = status.icon;
   const paymentInfo = booking.paymentStatus ? paymentStatusConfig[booking.paymentStatus] : null;
 
