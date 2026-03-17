@@ -130,6 +130,11 @@ export interface IStorage {
   incrementReferralClicks(id: string): Promise<void>;
   incrementReferralBookings(id: string, revenueCents: number): Promise<void>;
   createFeeAuditLog(data: Omit<FeeAuditLog, "id" | "createdAt">): Promise<void>;
+
+  // Payouts
+  getBookingsReadyForCompletion(): Promise<SpaceBooking[]>;
+  getBookingsPendingPayout(): Promise<SpaceBooking[]>;
+  getPayoutsByHost(hostId: string): Promise<SpaceBooking[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -930,6 +935,44 @@ export class DatabaseStorage implements IStorage {
 
   async createFeeAuditLog(data: Omit<FeeAuditLog, "id" | "createdAt">): Promise<void> {
     await db.insert(feeAuditLog).values(data);
+  }
+
+  // --- Payouts ---
+
+  async getBookingsReadyForCompletion(): Promise<SpaceBooking[]> {
+    // Bookings that are "approved", paid, and whose booking date has passed
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    return db.select().from(spaceBookings).where(
+      and(
+        eq(spaceBookings.status, "approved"),
+        eq(spaceBookings.paymentStatus, "paid"),
+        sql`${spaceBookings.bookingDate} < ${today}`,
+      )
+    );
+  }
+
+  async getBookingsPendingPayout(): Promise<SpaceBooking[]> {
+    // Completed bookings with payout_status "pending" (ready for transfer)
+    return db.select().from(spaceBookings).where(
+      and(
+        eq(spaceBookings.status, "completed"),
+        eq(spaceBookings.paymentStatus, "paid"),
+        sql`(${spaceBookings.payoutStatus} = 'pending' OR (${spaceBookings.payoutStatus} IS NULL AND ${spaceBookings.status} = 'completed'))`,
+      )
+    );
+  }
+
+  async getPayoutsByHost(hostId: string): Promise<SpaceBooking[]> {
+    // Get all bookings for spaces owned by this host that have been paid out
+    const hostSpaces = await this.getSpacesByUser(hostId);
+    if (hostSpaces.length === 0) return [];
+    const spaceIds = hostSpaces.map(s => s.id);
+    return db.select().from(spaceBookings).where(
+      and(
+        sql`${spaceBookings.spaceId} IN (${sql.join(spaceIds.map(id => sql`${id}`), sql`, `)})`,
+        sql`${spaceBookings.payoutStatus} IN ('paid', 'processing', 'pending', 'held')`,
+      )
+    ).orderBy(desc(spaceBookings.createdAt));
   }
 }
 

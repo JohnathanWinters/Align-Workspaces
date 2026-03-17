@@ -8,6 +8,7 @@ import { setupAuth, registerAuthRoutes } from "./auth";
 import { seedPortfolioIfEmpty } from "./seed-portfolio";
 import { fixPortfolioImageExtensions } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
+import { startPayoutProcessing } from "./payouts";
 
 const app = express();
 const httpServer = createServer(app);
@@ -141,6 +142,9 @@ app.use((req, res, next) => {
       ]).then(() => {
         log('Background initialization complete');
       });
+
+      // Start automatic payout processing (runs every hour)
+      startPayoutProcessing();
     },
   );
 })();

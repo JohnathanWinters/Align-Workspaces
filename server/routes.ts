@@ -10,6 +10,7 @@ import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotif
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees, resolveFeeTier, type FeeTier, FEE_TIERS, TAX_RATES, DEFAULT_TAX_JURISDICTION } from "@shared/pricing";
 import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
+import { calculateRefundAmount, processCompletedBookings, processPendingPayouts, holdPayout, releasePayout, reversePayout } from "./payouts";
 import { isAuthenticated } from "./auth";
 import multer from "multer";
 import path from "path";
@@ -2720,6 +2721,98 @@ export async function registerRoutes(
     }
   });
 
+  // --- Admin payout management ---
+
+  app.post("/api/admin/payouts/process", isAdmin, async (_req, res) => {
+    try {
+      const completed = await processCompletedBookings();
+      const paid = await processPendingPayouts();
+      res.json({ completedBookings: completed, payoutsProcessed: paid });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/payouts/:bookingId/hold", isAdmin, async (req, res) => {
+    try {
+      await holdPayout(req.params.bookingId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/payouts/:bookingId/release", isAdmin, async (req, res) => {
+    try {
+      await releasePayout(req.params.bookingId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/payouts/:bookingId/reverse", isAdmin, async (req, res) => {
+    try {
+      await reversePayout(req.params.bookingId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // --- Host payout history ---
+
+  app.get("/api/host/payouts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const payouts = await storage.getPayoutsByHost(userId);
+
+      const enriched = await Promise.all(payouts.map(async (b) => {
+        const space = await storage.getSpaceById(b.spaceId);
+        return {
+          id: b.id,
+          spaceName: space?.name || "Unknown Space",
+          bookingDate: b.bookingDate,
+          bookingHours: b.bookingHours,
+          grossAmount: b.totalGuestCharged ?? b.paymentAmount,
+          hostFeeAmount: b.hostFeeAmount,
+          hostFeePercent: b.hostFeePercent,
+          feeTier: b.feeTier,
+          payoutAmount: b.hostPayoutAmount ?? b.hostEarnings,
+          payoutStatus: b.payoutStatus || "pending",
+          stripeTransferId: b.stripeTransferId,
+          createdAt: b.createdAt,
+        };
+      }));
+
+      // Summary stats
+      const totalEarnings = enriched.reduce((sum, p) => sum + (p.payoutAmount || 0), 0);
+      const paidPayouts = enriched.filter(p => p.payoutStatus === "paid");
+      const totalPaid = paidPayouts.reduce((sum, p) => sum + (p.payoutAmount || 0), 0);
+      const pendingPayouts = enriched.filter(p => p.payoutStatus === "pending" || p.payoutStatus === "processing");
+      const totalPending = pendingPayouts.reduce((sum, p) => sum + (p.payoutAmount || 0), 0);
+
+      // Savings vs Peerspace (20% host fee)
+      const totalGross = enriched.reduce((sum, p) => sum + (p.grossAmount || 0), 0);
+      const peerspaceWouldCharge = Math.round(totalGross * 0.20);
+      const alignCharged = enriched.reduce((sum, p) => sum + (p.hostFeeAmount || 0), 0);
+      const savedVsPeerspace = peerspaceWouldCharge - alignCharged;
+
+      res.json({
+        payouts: enriched,
+        summary: {
+          totalEarnings,
+          totalPaid,
+          totalPending,
+          payoutCount: enriched.length,
+          savedVsPeerspace,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // --- Referral link click tracking ---
   // When a guest visits a space page via a referral link (e.g. /spaces/my-studio?ref=abc123),
   // the client calls this endpoint to set the referral cookie and track the click.
@@ -2933,14 +3026,9 @@ export async function registerRoutes(
         },
       };
 
-      if (hostStripeAccountId) {
-        sessionConfig.payment_intent_data = {
-          application_fee_amount: fees.guestFeeAmount + fees.hostFeeAmount,
-          transfer_data: {
-            destination: hostStripeAccountId,
-          },
-        };
-      }
+      // Platform collects the full payment. Host payout is created as a
+      // separate Stripe Transfer after the booking completes (within 24 hours).
+      // This gives us control over holds, disputes, and cancellation refunds.
 
       const session = await stripe.checkout.sessions.create(sessionConfig);
       await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id });
@@ -3252,31 +3340,35 @@ export async function registerRoutes(
       let refundResult: { refunded: boolean; amount?: number; reason?: string } = { refunded: false };
 
       if (status === "cancelled" && booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
-        try {
-          const stripe = getUncachableStripeClient();
-          const bookingDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
-          const hoursUntilBooking = (bookingDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+        const cancelledBy = (space?.userId === userId) ? "host" as const : "guest" as const;
+        const { amount: refundAmount, reason: refundReason } = calculateRefundAmount(booking, cancelledBy);
 
-          if (hoursUntilBooking >= 24) {
+        if (refundAmount > 0) {
+          try {
+            const stripe = await getUncachableStripeClient();
             const refund = await stripe.refunds.create({
               payment_intent: booking.stripePaymentIntentId,
+              amount: refundAmount,
             });
-            const refundedAmount = refund.amount;
             await storage.updateSpaceBooking(booking.id, {
               refundStatus: "refunded",
-              refundAmount: refundedAmount,
-              paymentStatus: "refunded",
+              refundAmount: refund.amount,
+              paymentStatus: refundAmount >= (booking.totalGuestCharged ?? booking.paymentAmount ?? 0) ? "refunded" : "partial_refund",
+              payoutStatus: "held",
+              updatedAt: new Date(),
             });
-            refundResult = { refunded: true, amount: refundedAmount, reason: "Cancelled 24+ hours before booking" };
-          } else {
-            await storage.updateSpaceBooking(booking.id, {
-              refundStatus: "non_refundable",
-            });
-            refundResult = { refunded: false, reason: "Cancelled within 24 hours — non-refundable per cancellation policy" };
+            refundResult = { refunded: true, amount: refund.amount, reason: refundReason };
+          } catch (refundErr: any) {
+            console.error("Refund error:", refundErr.message);
+            refundResult = { refunded: false, reason: "Refund processing failed — please contact support" };
           }
-        } catch (refundErr: any) {
-          console.error("Refund error:", refundErr.message);
-          refundResult = { refunded: false, reason: "Refund processing failed — please contact support" };
+        } else {
+          await storage.updateSpaceBooking(booking.id, {
+            refundStatus: "non_refundable",
+            payoutStatus: "pending",
+            updatedAt: new Date(),
+          });
+          refundResult = { refunded: false, reason: refundReason };
         }
       }
 
@@ -3308,7 +3400,7 @@ export async function registerRoutes(
           senderId: "system",
           senderName: "System",
           senderRole: "system",
-          message: `Full refund of $${((refundResult.amount || 0) / 100).toFixed(2)} issued. Refunds are processed automatically to your original payment method and may take 3–5 business days.`,
+          message: `Refund of $${((refundResult.amount || 0) / 100).toFixed(2)} issued. ${refundResult.reason} Refunds typically arrive within 3–5 business days.`,
           messageType: "system",
         });
       } else if (status === "cancelled" && booking.paymentStatus === "paid" && !refundResult.refunded) {
