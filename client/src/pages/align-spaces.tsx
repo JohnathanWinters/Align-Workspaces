@@ -205,6 +205,114 @@ function SpaceCard({ space }: { space: Space }) {
   );
 }
 
+function FeeComparisonWidget() {
+  const [amount, setAmount] = useState(200);
+
+  const competitors = [
+    { name: "Align", feePercent: 0.05, repeatPercent: 0.03, color: "#c4956a", highlight: true },
+    { name: "Giggster", feePercent: 0.10, color: "#9ca3af" },
+    { name: "Peerspace", feePercent: 0.12, color: "#9ca3af" },
+    { name: "Airbnb", feePercent: 0, note: "Higher listing prices", color: "#d1d5db" },
+  ];
+
+  const amountCents = amount * 100;
+  const alignFee = Math.round(amountCents * 0.05);
+  const alignRepeatFee = Math.round(amountCents * 0.03);
+  const maxFee = Math.round(amountCents * 0.12);
+
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+      <div className="p-5 sm:p-6 border-b border-stone-100">
+        <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">Booking Amount</label>
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input
+              type="range"
+              min={50}
+              max={1000}
+              step={25}
+              value={amount}
+              onChange={(e) => setAmount(parseInt(e.target.value))}
+              className="w-full h-2 bg-stone-100 rounded-full appearance-none cursor-pointer accent-[#c4956a]"
+              data-testid="input-comparison-slider"
+            />
+          </div>
+          <div className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5 min-w-[80px] text-center">
+            <span className="text-lg font-semibold text-stone-900">${amount}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 sm:p-6">
+        <div className="space-y-3">
+          {competitors.map((c) => {
+            const fee = c.name === "Airbnb" ? 0 : Math.round(amountCents * c.feePercent);
+            const total = amountCents + fee;
+            const barWidth = maxFee > 0 ? Math.max(5, (fee / maxFee) * 100) : 5;
+
+            return (
+              <div key={c.name} className={`rounded-xl p-3.5 ${c.highlight ? "bg-[#c4956a]/5 border border-[#c4956a]/20" : "bg-stone-50"}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-semibold ${c.highlight ? "text-[#c4956a]" : "text-stone-600"}`}>{c.name}</span>
+                    {c.highlight && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-[#c4956a] text-white px-1.5 py-0.5 rounded-full">Lowest</span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    {c.name === "Airbnb" ? (
+                      <span className="text-xs text-stone-400 italic">$0 fee*</span>
+                    ) : (
+                      <span className={`text-sm font-semibold ${c.highlight ? "text-stone-900" : "text-stone-700"}`}>
+                        ${(total / 100).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-stone-200/60 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: c.color }}
+                      initial={{ width: 0 }}
+                      animate={{ width: c.name === "Airbnb" ? "5%" : `${barWidth}%` }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    />
+                  </div>
+                  <span className="text-xs text-stone-400 w-16 text-right flex-shrink-0">
+                    {c.name === "Airbnb" ? "—" : `$${(fee / 100).toFixed(2)} fee`}
+                  </span>
+                </div>
+                {c.name === "Align" && (
+                  <p className="text-[11px] text-[#c4956a] mt-1.5">
+                    Repeat guests pay even less: <strong>${((amountCents + alignRepeatFee) / 100).toFixed(2)}</strong> total
+                  </p>
+                )}
+                {c.note && (
+                  <p className="text-[10px] text-stone-400 italic mt-1">*{c.note}</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-5 pt-4 border-t border-stone-100 flex items-center justify-between">
+          <p className="text-xs text-stone-400">
+            On a <strong>${amount}</strong> booking, you save <strong>${((Math.round(amountCents * 0.12) - alignFee) / 100).toFixed(2)}</strong> vs Peerspace
+          </p>
+          <Link
+            href="/workspaces"
+            className="text-xs font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors flex items-center gap-1"
+          >
+            Browse spaces <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -498,8 +606,20 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-fee-comparison">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8 sm:mb-10">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Transparent Pricing</span>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">See What You Actually Pay</h2>
+            <p className="text-stone-500 text-sm mt-2 max-w-md mx-auto">Low 5% service fee — less than any competitor. Enter a booking amount to compare.</p>
+          </div>
+
+          <FeeComparisonWidget />
+        </div>
+      </section>
+
       {(featuredPros || []).length > 0 && (
-        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-featured-pros">
+        <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-featured-pros">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-end justify-between mb-8 sm:mb-10">
               <div>
