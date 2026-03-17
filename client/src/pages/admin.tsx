@@ -5107,6 +5107,169 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   );
 }
 
+function TaxReportManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminFetch("/api/admin/tax-report", token).then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [token]);
+
+  const exportCSV = (quarter?: string) => {
+    const url = quarter ? `/api/admin/tax-export?quarter=${quarter}` : "/api/admin/tax-export";
+    adminFetch(url, token).then(r => r.blob()).then(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = quarter ? `align-tax-${quarter}.csv` : "align-tax-all.csv";
+      a.click();
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Back
+            </button>
+            <p className="font-serif text-lg text-gray-900">Tax & Revenue Report</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => exportCSV()} className="h-8 text-xs">
+            <Download className="w-3.5 h-3.5 mr-1.5" /> Export All
+          </Button>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6">
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        ) : !data ? (
+          <p className="text-center text-gray-500 py-20">No tax data available yet.</p>
+        ) : (
+          <>
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Tax Collected", value: `$${(data.totals.taxCollected / 100).toFixed(2)}`, sub: "Total FL sales tax" },
+                { label: "Platform Revenue", value: `$${(data.totals.platformRevenue / 100).toFixed(2)}`, sub: "Host + guest fees" },
+                { label: "Gross Bookings", value: `$${(data.totals.grossBookings / 100).toFixed(2)}`, sub: `${data.totals.bookingCount} bookings` },
+                { label: "Blended Take Rate", value: `${data.totals.blendedTakeRate}%`, sub: "Avg platform %" },
+              ].map(({ label, value, sub }) => (
+                <Card key={label} className="border-gray-100">
+                  <CardContent className="p-4">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{label}</p>
+                    <p className="text-xl font-semibold text-gray-900 mt-1">{value}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Quarterly tax summary — for FL DOR remittance */}
+            {data.quarterly?.length > 0 && (
+              <Card className="border-gray-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Quarterly Tax Summary</CardTitle>
+                  <p className="text-xs text-gray-400">For Florida DOR sales tax remittance</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="divide-y divide-gray-100">
+                    {data.quarterly.map((q: any) => (
+                      <div key={q.quarter} className="flex items-center justify-between py-3">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{q.quarter}</p>
+                          <p className="text-xs text-gray-400">{q.bookingCount} bookings</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="text-sm font-semibold text-gray-900">${(q.taxCollected / 100).toFixed(2)}</p>
+                          <Button size="sm" variant="ghost" onClick={() => exportCSV(q.quarter)} className="h-7 text-[11px] text-gray-500">
+                            <Download className="w-3 h-3 mr-1" /> CSV
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Monthly breakdown */}
+            <Card className="border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">Monthly Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-[10px] text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                        <th className="text-left py-2 font-medium">Month</th>
+                        <th className="text-right py-2 font-medium">Bookings</th>
+                        <th className="text-right py-2 font-medium">Gross</th>
+                        <th className="text-right py-2 font-medium">Tax</th>
+                        <th className="text-right py-2 font-medium">Guest Fees</th>
+                        <th className="text-right py-2 font-medium">Host Fees</th>
+                        <th className="text-right py-2 font-medium">Platform Rev</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {data.monthly.map((m: any) => (
+                        <tr key={m.month} className="hover:bg-gray-50/50">
+                          <td className="py-2.5 font-medium text-gray-800">{m.month}</td>
+                          <td className="py-2.5 text-right text-gray-600">{m.bookingCount}</td>
+                          <td className="py-2.5 text-right text-gray-600">${(m.totalSubtotal / 100).toFixed(0)}</td>
+                          <td className="py-2.5 text-right text-gray-600">${(m.totalTaxCollected / 100).toFixed(2)}</td>
+                          <td className="py-2.5 text-right text-gray-600">${(m.totalGuestFees / 100).toFixed(2)}</td>
+                          <td className="py-2.5 text-right text-gray-600">${(m.totalHostFees / 100).toFixed(2)}</td>
+                          <td className="py-2.5 text-right font-medium text-gray-800">${(m.totalPlatformRevenue / 100).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Revenue by tier */}
+            {data.monthly.length > 0 && (() => {
+              const tierTotals: Record<string, { count: number; revenue: number }> = {};
+              for (const m of data.monthly) {
+                for (const [tier, stats] of Object.entries(m.byTier) as [string, { count: number; revenue: number }][]) {
+                  if (!tierTotals[tier]) tierTotals[tier] = { count: 0, revenue: 0 };
+                  tierTotals[tier].count += stats.count;
+                  tierTotals[tier].revenue += stats.revenue;
+                }
+              }
+              const tierLabels: Record<string, string> = { standard: "Standard", host_referred: "Host Referred", repeat_guest: "Repeat Guest" };
+              return Object.keys(tierTotals).length > 0 ? (
+                <Card className="border-gray-100">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-700">Revenue by Fee Tier</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="divide-y divide-gray-100">
+                      {Object.entries(tierTotals).map(([tier, stats]) => (
+                        <div key={tier} className="flex items-center justify-between py-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{tierLabels[tier] || tier}</p>
+                            <p className="text-xs text-gray-400">{stats.count} bookings</p>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900">${(stats.revenue / 100).toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null;
+            })()}
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -5758,7 +5921,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -6047,6 +6210,10 @@ function AdminDashboard({ token }: { token: string }) {
     return <AnalyticsManager token={token} onBack={() => setView("clients")} />;
   }
 
+  if (view === "tax") {
+    return <TaxReportManager token={token} onBack={() => setView("clients")} />;
+  }
+
   if (view === "pipeline") {
     return <PipelineManager token={token} onBack={() => setView("clients")} />;
   }
@@ -6331,6 +6498,16 @@ function AdminDashboard({ token }: { token: string }) {
             >
               <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
               Analytics
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setView("tax")}
+              data-testid="button-manage-tax"
+              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
+            >
+              <Receipt className="w-3.5 h-3.5 mr-1.5" />
+              Tax Report
             </Button>
           </div>
         </div>
