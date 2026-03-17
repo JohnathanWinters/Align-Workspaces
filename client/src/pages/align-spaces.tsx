@@ -469,18 +469,18 @@ export default function AlignSpacesPage() {
               />
             </div>
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
-              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Complete Your Presence</span>
+              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">See Yourself Clearly</span>
               <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-5">
                 Portrait Builder
               </h2>
               <p className="text-[#f0e6d0]/90 text-base sm:text-[17px] leading-relaxed mb-6 max-w-md font-serif italic">
-                The space you work in and the image you present should tell the same story.
+                How you see yourself and how others see you aren't always the same thing.
               </p>
               <p className="text-[#d4c4a8] text-sm leading-relaxed mb-2 max-w-md">
-                Our guided builder helps you create a professional portrait that reflects your work, your character, and the experience you want clients to feel.
+                Walk through a short guided session that uncovers the gap between your intention and your impression. You'll define the mood, energy, and story you want your portrait to tell, then book a session designed to make that vision real.
               </p>
               <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
-                Define the look before your session begins, so every detail aligns with the environment you've built.
+                Takes about 5 minutes. Ends with a portrait plan built around you.
               </p>
               <Link
                 href="/portrait-builder"
@@ -490,7 +490,7 @@ export default function AlignSpacesPage() {
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
               >
-                Begin Your Session
+                Start the Builder
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
