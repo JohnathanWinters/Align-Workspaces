@@ -2004,6 +2004,109 @@ function AdminTransferOwnership({ space, token, onUpdate }: { space: any; token:
   );
 }
 
+function AdminSpaceBookings({ spaceId, token }: { spaceId: string; token: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!expanded) return;
+    setLoading(true);
+    adminFetch(`/api/admin/spaces/${spaceId}/bookings`, token)
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [expanded, spaceId, token]);
+
+  const statusColors: Record<string, string> = {
+    approved: "bg-emerald-50 text-emerald-700",
+    completed: "bg-blue-50 text-blue-700",
+    cancelled: "bg-gray-100 text-gray-500",
+    pending: "bg-amber-50 text-amber-700",
+    rejected: "bg-red-50 text-red-700",
+  };
+
+  const tierLabels: Record<string, string> = {
+    standard: "Standard",
+    host_referred: "Referred",
+    repeat_guest: "Repeat",
+  };
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+      >
+        <Receipt className="w-4 h-4" />
+        Bookings & Transactions
+        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
+
+      {expanded && (
+        <div className="mt-3 space-y-3">
+          {loading ? (
+            <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+          ) : !data?.bookings?.length ? (
+            <p className="text-xs text-gray-400 text-center py-4">No bookings yet</p>
+          ) : (
+            <>
+              {/* Summary row */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {[
+                  { label: "Bookings", value: data.summary.paidBookings },
+                  { label: "Total Charged", value: `$${(data.summary.totalRevenue / 100).toFixed(0)}` },
+                  { label: "Platform Rev", value: `$${(data.summary.totalPlatformRevenue / 100).toFixed(0)}` },
+                  { label: "Host Payouts", value: `$${(data.summary.totalHostPayouts / 100).toFixed(0)}` },
+                  { label: "Tax Collected", value: `$${(data.summary.totalTax / 100).toFixed(2)}` },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-gray-50 rounded-lg p-2 text-center">
+                    <p className="text-sm font-semibold text-gray-900">{value}</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-wider">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Booking rows */}
+              <div className="space-y-1.5">
+                {data.bookings.map((b: any) => (
+                  <div key={b.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-lg px-3 py-2.5 text-xs">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-800">{b.guestName}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusColors[b.status] || "bg-gray-100 text-gray-500"}`}>
+                          {b.status}
+                        </span>
+                        {b.feeTier !== "standard" && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                            {tierLabels[b.feeTier] || b.feeTier}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-400 mt-0.5">
+                        {b.bookingDate} · {b.bookingStartTime || "–"} · {b.bookingHours}hr
+                        {b.guestEmail && <span className="ml-2 text-gray-300">{b.guestEmail}</span>}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0 space-y-0.5">
+                      <p className="font-semibold text-gray-900">${(b.totalCharged / 100).toFixed(2)}</p>
+                      <div className="flex items-center gap-2 justify-end text-[10px] text-gray-400">
+                        <span>Host: ${(b.hostPayout / 100).toFixed(2)}</span>
+                        <span>Align: ${(b.platformRevenue / 100).toFixed(2)}</span>
+                        <span>Tax: ${(b.taxAmount / 100).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [spaces, setSpaces] = useState<any[]>([]);
@@ -2514,6 +2617,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                               Delete
                             </Button>
                           </div>
+                          <AdminSpaceBookings spaceId={space.id} token={token} />
                           <AdminSpacePhotos space={space} token={token} onUpdate={loadSpaces} />
                           <AdminTransferOwnership space={space} token={token} onUpdate={loadSpaces} />
                         </div>

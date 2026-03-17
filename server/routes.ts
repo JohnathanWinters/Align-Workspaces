@@ -3031,6 +3031,59 @@ export async function registerRoutes(
     }
   });
 
+  // --- Admin: bookings per space ---
+
+  app.get("/api/admin/spaces/:id/bookings", isAdmin, async (req, res) => {
+    try {
+      const bookings = await storage.getSpaceBookingsBySpace(req.params.id);
+      const enriched = bookings
+        .filter(b => b.status !== "awaiting_payment")
+        .map(b => ({
+          id: b.id,
+          guestName: b.userName || "Guest",
+          guestEmail: b.userEmail,
+          bookingDate: b.bookingDate,
+          bookingStartTime: b.bookingStartTime,
+          bookingHours: b.bookingHours,
+          status: b.status,
+          paymentStatus: b.paymentStatus,
+          feeTier: b.feeTier || "standard",
+          subtotal: (b.hostPayoutAmount ?? b.hostEarnings ?? 0) + (b.hostFeeAmount ?? 0),
+          guestFeeAmount: b.guestFeeAmount ?? b.renterFeeAmount ?? 0,
+          hostFeeAmount: b.hostFeeAmount ?? 0,
+          taxAmount: b.taxAmount ?? 0,
+          totalCharged: b.totalGuestCharged ?? b.paymentAmount ?? 0,
+          hostPayout: b.hostPayoutAmount ?? b.hostEarnings ?? 0,
+          platformRevenue: b.platformRevenue ?? ((b.guestFeeAmount ?? b.renterFeeAmount ?? 0) + (b.hostFeeAmount ?? 0)),
+          payoutStatus: b.payoutStatus,
+          refundStatus: b.refundStatus,
+          refundAmount: b.refundAmount,
+          createdAt: b.createdAt,
+        }));
+
+      // Summary
+      const paid = enriched.filter(b => b.paymentStatus === "paid");
+      const totalRevenue = paid.reduce((s, b) => s + b.totalCharged, 0);
+      const totalPlatformRevenue = paid.reduce((s, b) => s + b.platformRevenue, 0);
+      const totalHostPayouts = paid.reduce((s, b) => s + b.hostPayout, 0);
+      const totalTax = paid.reduce((s, b) => s + b.taxAmount, 0);
+
+      res.json({
+        bookings: enriched,
+        summary: {
+          totalBookings: enriched.length,
+          paidBookings: paid.length,
+          totalRevenue,
+          totalPlatformRevenue,
+          totalHostPayouts,
+          totalTax,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // --- Referral link click tracking ---
   // When a guest visits a space page via a referral link (e.g. /spaces/my-studio?ref=abc123),
   // the client calls this endpoint to set the referral cookie and track the click.
