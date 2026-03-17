@@ -564,7 +564,7 @@ export async function registerRoutes(
 
       const stripe = await getUncachableStripeClient();
       const account = await stripe.accounts.retrieve(user.stripeAccountId);
-      const onboardingComplete = account.charges_enabled && account.payouts_enabled;
+      const onboardingComplete = (account.charges_enabled && account.payouts_enabled) || account.details_submitted;
 
       if (onboardingComplete && user.stripeOnboardingComplete !== "true") {
         await storage.updateUserStripeAccount(userId, user.stripeAccountId, "true");
@@ -3063,7 +3063,8 @@ export async function registerRoutes(
     let isHostReferred = false;
     let referralLinkId: string | null = null;
 
-    const userId = req.user?.claims?.sub;
+    // Get user ID from auth middleware or session directly
+    const userId = req.user?.claims?.sub || req.session?.magicUserId;
 
     // Check repeat guest status: at least 1 completed booking
     if (userId) {
