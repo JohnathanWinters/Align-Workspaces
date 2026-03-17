@@ -1984,102 +1984,106 @@ function PortalContent() {
             </Link>
           </div>
 
-          <div className="flex gap-1 mb-8 border-b border-gray-200 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center" data-testid="portal-tabs">
-            <button
-              onClick={() => setActiveTab("shoots")}
-              data-testid="tab-my-shoots"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                activeTab === "shoots"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <Camera className="w-4 h-4" />
-              Shoots
-              {activeTab === "shoots" && (
-                <motion.div
-                  layoutId="portal-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("edits")}
-              data-testid="tab-my-edits"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                activeTab === "edits"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <ImagePlus className="w-4 h-4" />
-              Edits
-              {activeTab === "edits" && (
-                <motion.div
-                  layoutId="portal-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("messages")}
-              data-testid="tab-messages"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                activeTab === "messages"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <MessageCircle className="w-4 h-4" />
-              Messages
-              {unreadCount > 0 && (
-                <span className="bg-gray-900 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-medium" data-testid="tab-messages-unread">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-              {activeTab === "messages" && (
-                <motion.div
-                  layoutId="portal-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("spaces")}
-              data-testid="tab-my-spaces"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                activeTab === "spaces"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              Spaces
-              {activeTab === "spaces" && (
-                <motion.div
-                  layoutId="portal-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("settings")}
-              data-testid="tab-settings"
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                activeTab === "settings"
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <Settings className="w-4 h-4" />
-              Settings
-              {activeTab === "settings" && (
-                <motion.div
-                  layoutId="portal-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                />
-              )}
-            </button>
+          <div className="relative mb-8 -mx-4 sm:mx-0" data-testid="portal-tabs-wrapper">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
+            <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide" data-testid="portal-tabs">
+              <button
+                onClick={() => setActiveTab("shoots")}
+                data-testid="tab-my-shoots"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "shoots"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <Camera className="w-4 h-4" />
+                Shoots
+                {activeTab === "shoots" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("edits")}
+                data-testid="tab-my-edits"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "edits"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <ImagePlus className="w-4 h-4" />
+                Edits
+                {activeTab === "edits" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("messages")}
+                data-testid="tab-messages"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "messages"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <MessageCircle className="w-4 h-4" />
+                Messages
+                {unreadCount > 0 && (
+                  <span className="bg-gray-900 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-medium" data-testid="tab-messages-unread">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+                {activeTab === "messages" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("spaces")}
+                data-testid="tab-my-spaces"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "spaces"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                Spaces
+                {activeTab === "spaces" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("settings")}
+                data-testid="tab-settings"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "settings"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+                {activeTab === "settings" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
+            </div>
           </div>
 
           {activeTab === "settings" ? (
