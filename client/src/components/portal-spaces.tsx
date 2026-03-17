@@ -373,7 +373,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
           </select>
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Your Name / Business</label>
+          <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
           <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} data-testid={`edit-input-host-${space.id}`} />
         </div>
         <div>
@@ -396,9 +396,31 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
           <label className="text-xs text-gray-500 mb-1 block">Capacity</label>
           <Input type="number" value={formData.capacity} onChange={(e) => update("capacity", e.target.value)} data-testid={`edit-input-capacity-${space.id}`} />
         </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
-          <Input value={formData.targetProfession} onChange={(e) => update("targetProfession", e.target.value)} data-testid={`edit-input-target-${space.id}`} />
+        <div className="col-span-2">
+          <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
+          <div className="flex flex-wrap gap-2" data-testid={`edit-input-target-${space.id}`}>
+            {SPACE_TYPES.map((t) => {
+              const selected = (formData.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+              const isSelected = selected.includes(t.label);
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => {
+                    const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
+                    update("targetProfession", next.join(", "));
+                  }}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                    isSelected
+                      ? "border-gray-800 bg-gray-800 text-white"
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
@@ -531,7 +553,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Your Name / Business *</label>
+            <label className="text-xs text-gray-500 mb-1 block">Host Name *</label>
             <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-host-name" />
           </div>
           <div>
@@ -554,9 +576,31 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
             <label className="text-xs text-gray-500 mb-1 block">Capacity</label>
             <Input type="number" value={formData.capacity} onChange={(e) => update("capacity", e.target.value)} placeholder="6" data-testid="input-space-capacity" />
           </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
-            <Input value={formData.targetProfession} onChange={(e) => update("targetProfession", e.target.value)} placeholder="e.g. Therapists & Counselors" data-testid="input-space-target" />
+          <div className="col-span-2">
+            <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
+            <div className="flex flex-wrap gap-2" data-testid="input-space-target">
+              {SPACE_TYPES.map((t) => {
+                const selected = (formData.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+                const isSelected = selected.includes(t.label);
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => {
+                      const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
+                      update("targetProfession", next.join(", "));
+                    }}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                      isSelected
+                        ? "border-gray-800 bg-gray-800 text-white"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

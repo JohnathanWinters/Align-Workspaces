@@ -2074,8 +2074,20 @@ export async function registerRoutes(
       if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) {
         return res.status(404).json({ message: "Space not found" });
       }
+      // Include host profile info if the space has an owner
+      let hostProfile = null;
+      if (space.userId) {
+        const hostUser = await storage.getUserById(space.userId);
+        if (hostUser) {
+          hostProfile = {
+            firstName: hostUser.firstName,
+            lastName: hostUser.lastName,
+            profileImageUrl: hostUser.profileImageUrl,
+          };
+        }
+      }
       res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
-      res.json(space);
+      res.json({ ...space, hostProfile });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

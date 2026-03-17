@@ -1153,19 +1153,28 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
               </div>
 
               {/* ── Host card ── */}
-              {space.hostName && (
-                <div className="mb-6 pb-6 border-b border-stone-200/60">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-[#c4956a]/15 flex items-center justify-center text-[#c4956a] font-semibold text-sm">
-                      {space.hostName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-stone-800">Hosted by {space.hostName}</p>
-                      <p className="text-xs text-stone-400">Verified host</p>
+              {(space.hostName || (space as any).hostProfile) && (() => {
+                const profile = (space as any).hostProfile;
+                const displayName = profile ? `${profile.firstName || ""} ${(profile.lastName || "")[0] || ""}`.trim() + "." : space.hostName;
+                const initials = displayName ? displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() : "";
+                return (
+                  <div className="mb-6 pb-6 border-b border-stone-200/60">
+                    <div className="flex items-center gap-3">
+                      {profile?.profileImageUrl ? (
+                        <img src={profile.profileImageUrl} alt={displayName || ""} className="w-11 h-11 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-[#c4956a]/15 flex items-center justify-center text-[#c4956a] font-semibold text-sm">
+                          {initials}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-stone-800">Hosted by {displayName}</p>
+                        <p className="text-xs text-stone-400">Verified host</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* ── Mobile inline booking card ── */}
               <div className="lg:hidden mb-6">
