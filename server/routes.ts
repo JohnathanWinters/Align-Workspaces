@@ -2917,7 +2917,7 @@ export async function registerRoutes(
       const lifetimeSavings = loyaltyBookings.reduce((sum, b) => {
         // Standard guest fee would be 5%, repeat is 3%, savings = 2% of base
         const baseCents = (b.totalGuestCharged || b.paymentAmount || 0) - (b.guestFeeAmount || b.renterFeeAmount || 0) - (b.taxAmount || 0);
-        const wouldHavePaid = Math.round(baseCents * 0.05);
+        const wouldHavePaid = Math.round(baseCents * 0.07);
         const actuallyPaid = b.guestFeeAmount || b.renterFeeAmount || 0;
         return sum + Math.max(0, wouldHavePaid - actuallyPaid);
       }, 0);

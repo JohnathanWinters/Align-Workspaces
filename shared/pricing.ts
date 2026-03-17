@@ -20,15 +20,15 @@ export type FeeTier = "standard" | "host_referred" | "repeat_guest";
 export const FEE_TIERS: Record<FeeTier, { hostFeePercent: number; guestFeePercent: number }> = {
   standard: {
     hostFeePercent: 0.125,   // 12.5%
-    guestFeePercent: 0.05,   // 5%
+    guestFeePercent: 0.07,   // 7%
   },
   host_referred: {
     hostFeePercent: 0.08,    // 8%
-    guestFeePercent: 0.05,   // 5%
+    guestFeePercent: 0.07,   // 7%
   },
   repeat_guest: {
     hostFeePercent: 0.125,   // 12.5%
-    guestFeePercent: 0.03,   // 3%
+    guestFeePercent: 0.05,   // 5%
   },
 };
 

@@ -412,11 +412,11 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
     enabled: bookingHours >= 1,
   });
 
-  const guestFee = feeData?.guestFeeAmount ?? Math.round(basePriceCents * 0.05);
+  const guestFee = feeData?.guestFeeAmount ?? Math.round(basePriceCents * 0.07);
   const taxAmount = feeData?.taxAmount ?? Math.round(basePriceCents * 0.07);
   const totalCharge = feeData?.totalGuestCharged ?? (basePriceCents + guestFee + taxAmount);
   const isRepeatGuest = feeData?.isRepeatGuest ?? false;
-  const standardFee = Math.round(basePriceCents * 0.05);
+  const standardFee = Math.round(basePriceCents * 0.07);
   const loyaltySavings = isRepeatGuest ? standardFee - guestFee : 0;
 
   const isDateAvailable = (date: Date): boolean => {
