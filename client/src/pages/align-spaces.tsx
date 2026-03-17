@@ -477,10 +477,10 @@ export default function AlignSpacesPage() {
                 How you see yourself and how others see you aren't always the same thing.
               </p>
               <p className="text-[#d4c4a8] text-sm leading-relaxed mb-2 max-w-md">
-                Walk through a short guided session that uncovers the gap between your intention and your impression. You'll define the mood, energy, and story you want your portrait to tell, then book a session designed to make that vision real.
+                Answer a few questions about your environment and your presence and the feeling you want clients to walk away with. We'll match you with a creative direction and a wardrobe guide and a color palette, then build a shoot concept you can book on the spot.
               </p>
               <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
-                Takes about 5 minutes. Ends with a portrait plan built around you.
+                Takes about 5 minutes. Ends with a complete shoot plan built around you.
               </p>
               <Link
                 href="/portrait-builder"
