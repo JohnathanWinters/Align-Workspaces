@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -121,6 +121,15 @@ export interface IStorage {
   createDirectMessage(msg: InsertDirectMessage): Promise<DirectMessage>;
   getLatestDirectMessage(conversationId: string): Promise<DirectMessage | undefined>;
   markDirectConversationRead(conversationId: string, role: "guest" | "host"): Promise<void>;
+
+  // Fee system
+  getCompletedBookingCount(userId: string): Promise<number>;
+  getReferralLinkByCode(code: string): Promise<ReferralLink | undefined>;
+  getReferralLinksByHost(hostId: string): Promise<ReferralLink[]>;
+  createReferralLink(data: InsertReferralLink): Promise<ReferralLink>;
+  incrementReferralClicks(id: string): Promise<void>;
+  incrementReferralBookings(id: string, revenueCents: number): Promise<void>;
+  createFeeAuditLog(data: Omit<FeeAuditLog, "id" | "createdAt">): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -876,6 +885,51 @@ export class DatabaseStorage implements IStorage {
     } else {
       await db.update(directConversations).set({ lastReadHost: now }).where(eq(directConversations.id, conversationId));
     }
+  }
+
+  // --- Fee system ---
+
+  async getCompletedBookingCount(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` })
+      .from(spaceBookings)
+      .where(and(
+        eq(spaceBookings.userId, userId),
+        eq(spaceBookings.status, "completed"),
+      ));
+    return result[0]?.count ?? 0;
+  }
+
+  async getReferralLinkByCode(code: string): Promise<ReferralLink | undefined> {
+    const [result] = await db.select().from(referralLinks).where(eq(referralLinks.uniqueCode, code));
+    return result;
+  }
+
+  async getReferralLinksByHost(hostId: string): Promise<ReferralLink[]> {
+    return db.select().from(referralLinks).where(eq(referralLinks.hostId, hostId)).orderBy(desc(referralLinks.createdAt));
+  }
+
+  async createReferralLink(data: InsertReferralLink): Promise<ReferralLink> {
+    const [result] = await db.insert(referralLinks).values(data).returning();
+    return result;
+  }
+
+  async incrementReferralClicks(id: string): Promise<void> {
+    await db.update(referralLinks)
+      .set({ clickCount: sql`${referralLinks.clickCount} + 1` })
+      .where(eq(referralLinks.id, id));
+  }
+
+  async incrementReferralBookings(id: string, revenueCents: number): Promise<void> {
+    await db.update(referralLinks)
+      .set({
+        bookingCount: sql`${referralLinks.bookingCount} + 1`,
+        totalRevenueGenerated: sql`${referralLinks.totalRevenueGenerated} + ${revenueCents}`,
+      })
+      .where(eq(referralLinks.id, id));
+  }
+
+  async createFeeAuditLog(data: Omit<FeeAuditLog, "id" | "createdAt">): Promise<void> {
+    await db.insert(feeAuditLog).values(data);
   }
 }
 

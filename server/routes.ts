@@ -8,7 +8,7 @@ import { fromZodError } from "zod-validation-error";
 import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail, getGmailAuthUrl, exchangeGmailCode } from "./gmail";
 import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
-import { calculatePricing, calculateSpaceBookingFees } from "@shared/pricing";
+import { calculatePricing, calculateSpaceBookingFees, resolveFeeTier, type FeeTier, FEE_TIERS, TAX_RATES, DEFAULT_TAX_JURISDICTION } from "@shared/pricing";
 import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
 import { isAuthenticated } from "./auth";
 import multer from "multer";
@@ -2720,7 +2720,69 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/spaces/:id/booking-fees", async (req, res) => {
+  // --- Referral link click tracking ---
+  // When a guest visits a space page via a referral link (e.g. /spaces/my-studio?ref=abc123),
+  // the client calls this endpoint to set the referral cookie and track the click.
+  app.post("/api/referral/track", async (req: any, res) => {
+    try {
+      const { code } = req.body;
+      if (!code) return res.status(400).json({ message: "Missing referral code" });
+
+      const refLink = await storage.getReferralLinkByCode(code);
+      if (!refLink) return res.status(404).json({ message: "Invalid referral code" });
+
+      // Set cookie — 30 days, last-click attribution
+      res.cookie("align_ref", code, {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
+
+      await storage.incrementReferralClicks(refLink.id);
+      res.json({ success: true, hostId: refLink.hostId });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // --- Fee tier detection helper ---
+  async function detectFeeTier(req: any, space: any): Promise<{ tier: FeeTier; isRepeatGuest: boolean; isHostReferred: boolean; referralLinkId: string | null }> {
+    let isRepeatGuest = false;
+    let isHostReferred = false;
+    let referralLinkId: string | null = null;
+
+    const userId = req.user?.claims?.sub;
+
+    // Check repeat guest status: at least 1 completed booking
+    if (userId) {
+      const completedCount = await storage.getCompletedBookingCount(userId);
+      isRepeatGuest = completedCount >= 1;
+    }
+
+    // Check host referral: cookie or query param
+    const refCode = req.query.ref as string || req.cookies?.align_ref;
+    if (refCode) {
+      const refLink = await storage.getReferralLinkByCode(refCode);
+      if (refLink) {
+        // Referral applies if the referral link's host owns this space,
+        // OR if the referral link has no spaceId (master link for all host listings)
+        const refHostOwnsSpace = space.userId === refLink.hostId;
+        const isMasterLink = !refLink.spaceId;
+        const isSpaceSpecificMatch = refLink.spaceId === space.id;
+
+        if (refHostOwnsSpace && (isMasterLink || isSpaceSpecificMatch)) {
+          isHostReferred = true;
+          referralLinkId = refLink.id;
+        }
+      }
+    }
+
+    const tier = resolveFeeTier({ isRepeatGuest, isHostReferred });
+    return { tier, isRepeatGuest, isHostReferred, referralLinkId };
+  }
+
+  app.get("/api/spaces/:id/booking-fees", async (req: any, res) => {
     try {
       const space = await storage.getSpaceById(req.params.id);
       if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) {
@@ -2729,13 +2791,27 @@ export async function registerRoutes(
 
       const hours = parseInt(req.query.hours as string) || 1;
       const basePriceCents = space.pricePerHour * 100 * hours;
-      const fees = calculateSpaceBookingFees(basePriceCents);
 
+      // Detect tier if user is authenticated
+      const { tier, isRepeatGuest, isHostReferred } = await detectFeeTier(req, space);
+      const fees = calculateSpaceBookingFees(basePriceCents, tier);
+
+      // Guest-facing response: don't expose host fee or platform details
       res.json({
-        ...fees,
+        basePriceCents: fees.basePriceCents,
+        guestFeeAmount: fees.guestFeeAmount,
+        guestFeePercent: fees.guestFeePercent,
+        taxAmount: fees.taxAmount,
+        taxRate: fees.taxRate,
+        totalGuestCharged: fees.totalGuestCharged,
         pricePerHour: space.pricePerHour,
         hours,
         spaceName: space.name,
+        isRepeatGuest,
+        isHostReferred,
+        // Legacy fields for existing client code
+        renterFee: fees.renterFee,
+        totalCharge: fees.totalCharge,
       });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -2755,7 +2831,10 @@ export async function registerRoutes(
       const hours = parseInt(bookingHours) || 1;
 
       const basePriceCents = space.pricePerHour * 100 * hours;
-      const fees = calculateSpaceBookingFees(basePriceCents);
+
+      // Detect fee tier
+      const { tier, isRepeatGuest, isHostReferred, referralLinkId } = await detectFeeTier(req, space);
+      const fees = calculateSpaceBookingFees(basePriceCents, tier);
 
       let hostStripeAccountId: string | null = null;
       if (space.userId) {
@@ -2776,11 +2855,44 @@ export async function registerRoutes(
         bookingDate,
         bookingStartTime: bookingStartTime || null,
         bookingHours: hours,
-        paymentAmount: fees.totalCharge,
-        renterFeeAmount: fees.renterFee,
-        hostFeeAmount: fees.hostFee,
-        hostEarnings: fees.hostEarnings,
+        // Legacy fields
+        paymentAmount: fees.totalGuestCharged,
+        renterFeeAmount: fees.guestFeeAmount,
+        hostFeeAmount: fees.hostFeeAmount,
+        hostEarnings: fees.hostPayoutAmount,
+        // New tier fields
+        feeTier: fees.feeTier,
+        hostFeePercent: String(fees.hostFeePercent),
+        guestFeePercent: String(fees.guestFeePercent),
+        guestFeeAmount: fees.guestFeeAmount,
+        taxRate: String(fees.taxRate),
+        taxAmount: fees.taxAmount,
+        totalGuestCharged: fees.totalGuestCharged,
+        hostPayoutAmount: fees.hostPayoutAmount,
+        platformRevenue: fees.platformRevenue,
+        referralLinkId,
+        payoutStatus: "pending",
         paymentStatus: "pending",
+      });
+
+      // Audit log for every fee calculation
+      await storage.createFeeAuditLog({
+        bookingId: booking.id,
+        feeTier: fees.feeTier,
+        basePriceCents: fees.basePriceCents,
+        guestFeePercent: String(fees.guestFeePercent),
+        guestFeeAmount: fees.guestFeeAmount,
+        hostFeePercent: String(fees.hostFeePercent),
+        hostFeeAmount: fees.hostFeeAmount,
+        taxRate: String(fees.taxRate),
+        taxAmount: fees.taxAmount,
+        totalGuestCharged: fees.totalGuestCharged,
+        hostPayoutAmount: fees.hostPayoutAmount,
+        platformRevenue: fees.platformRevenue,
+        isRepeatGuest: isRepeatGuest ? 1 : 0,
+        isHostReferred: isHostReferred ? 1 : 0,
+        referralLinkId,
+        taxJurisdiction: DEFAULT_TAX_JURISDICTION,
       });
 
       const stripe = await getUncachableStripeClient();
@@ -2796,7 +2908,7 @@ export async function registerRoutes(
                 name: `${space.name} — ${bookingDate}`,
                 description: `${hours} hour${hours > 1 ? "s" : ""} at $${space.pricePerHour}/hr`,
               },
-              unit_amount: fees.totalCharge,
+              unit_amount: fees.totalGuestCharged,
             },
             quantity: 1,
           },
@@ -2817,12 +2929,13 @@ export async function registerRoutes(
           bookingDate,
           bookingStartTime: bookingStartTime || "",
           bookingHours: String(hours),
+          feeTier: fees.feeTier,
         },
       };
 
       if (hostStripeAccountId) {
         sessionConfig.payment_intent_data = {
-          application_fee_amount: fees.renterFee + fees.hostFee,
+          application_fee_amount: fees.guestFeeAmount + fees.hostFeeAmount,
           transfer_data: {
             destination: hostStripeAccountId,
           },
@@ -2831,6 +2944,11 @@ export async function registerRoutes(
 
       const session = await stripe.checkout.sessions.create(sessionConfig);
       await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id });
+
+      // Update referral link stats if applicable
+      if (referralLinkId) {
+        await storage.incrementReferralBookings(referralLinkId, fees.platformRevenue);
+      }
 
       res.json({ booking, checkoutUrl: session.url });
     } catch (err: any) {

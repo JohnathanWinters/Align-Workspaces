@@ -392,10 +392,27 @@ export const spaceBookings = pgTable("space_bookings", {
   bookingDate: text("booking_date"),
   bookingStartTime: text("booking_start_time"),
   bookingHours: integer("booking_hours"),
+
+  // Legacy fee fields (kept for backward compatibility with existing bookings)
   paymentAmount: integer("payment_amount"),
   renterFeeAmount: integer("renter_fee_amount"),
   hostFeeAmount: integer("host_fee_amount"),
   hostEarnings: integer("host_earnings"),
+
+  // Three-tier fee fields
+  feeTier: text("fee_tier"),                    // 'standard' | 'host_referred' | 'repeat_guest'
+  hostFeePercent: text("host_fee_percent"),      // Decimal string e.g. "0.125"
+  guestFeePercent: text("guest_fee_percent"),    // Decimal string e.g. "0.05"
+  guestFeeAmount: integer("guest_fee_amount"),   // Guest service fee in cents
+  taxRate: text("tax_rate"),                     // Decimal string e.g. "0.07"
+  taxAmount: integer("tax_amount"),              // Tax in cents
+  totalGuestCharged: integer("total_guest_charged"), // subtotal + guest fee + tax
+  hostPayoutAmount: integer("host_payout_amount"),   // subtotal - host fee
+  platformRevenue: integer("platform_revenue"),      // host fee + guest fee
+  referralLinkId: text("referral_link_id"),          // Nullable — if host-referred
+  stripeTransferId: text("stripe_transfer_id"),      // For host payout tracking
+  payoutStatus: text("payout_status"),               // 'pending' | 'processing' | 'paid' | 'held'
+
   paymentStatus: text("payment_status"),
   stripeSessionId: text("stripe_session_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
@@ -405,15 +422,59 @@ export const spaceBookings = pgTable("space_bookings", {
   lastReadGuest: timestamp("last_read_guest"),
   lastReadHost: timestamp("last_read_host"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertSpaceBookingSchema = createInsertSchema(spaceBookings).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export type InsertSpaceBooking = z.infer<typeof insertSpaceBookingSchema>;
 export type SpaceBooking = typeof spaceBookings.$inferSelect;
+
+export const referralLinks = pgTable("referral_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  hostId: text("host_id").notNull(),
+  spaceId: varchar("space_id"),                  // Nullable — null means all host listings
+  uniqueCode: text("unique_code").notNull().unique(),
+  clickCount: integer("click_count").default(0),
+  bookingCount: integer("booking_count").default(0),
+  totalRevenueGenerated: integer("total_revenue_generated").default(0), // In cents
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertReferralLinkSchema = createInsertSchema(referralLinks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertReferralLink = z.infer<typeof insertReferralLinkSchema>;
+export type ReferralLink = typeof referralLinks.$inferSelect;
+
+export const feeAuditLog = pgTable("fee_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull(),
+  feeTier: text("fee_tier").notNull(),
+  basePriceCents: integer("base_price_cents").notNull(),
+  guestFeePercent: text("guest_fee_percent").notNull(),
+  guestFeeAmount: integer("guest_fee_amount").notNull(),
+  hostFeePercent: text("host_fee_percent").notNull(),
+  hostFeeAmount: integer("host_fee_amount").notNull(),
+  taxRate: text("tax_rate").notNull(),
+  taxAmount: integer("tax_amount").notNull(),
+  totalGuestCharged: integer("total_guest_charged").notNull(),
+  hostPayoutAmount: integer("host_payout_amount").notNull(),
+  platformRevenue: integer("platform_revenue").notNull(),
+  isRepeatGuest: integer("is_repeat_guest").default(0),
+  isHostReferred: integer("is_host_referred").default(0),
+  referralLinkId: text("referral_link_id"),
+  taxJurisdiction: text("tax_jurisdiction"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type FeeAuditLog = typeof feeAuditLog.$inferSelect;
 
 export const spaceMessages = pgTable("space_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

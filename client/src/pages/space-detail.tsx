@@ -400,8 +400,26 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
   const availableSlots = bookingDate ? getAvailableTimeSlots(effectiveSchedule, bookingDate, bufferMinutes) : [];
   const maxHours = bookingDate && bookingStartTime ? getMaxHoursFromSlot(effectiveSchedule, bookingDate, bookingStartTime, bufferMinutes) : 8;
   const basePriceCents = space.pricePerHour * 100 * bookingHours;
-  const renterFee = Math.round(basePriceCents * 0.07);
-  const totalCharge = basePriceCents + renterFee;
+
+  // Fetch real fee breakdown from API (includes tier detection + tax)
+  const { data: feeData } = useQuery<{
+    basePriceCents: number; guestFeeAmount: number; guestFeePercent: number;
+    taxAmount: number; taxRate: number; totalGuestCharged: number;
+    isRepeatGuest: boolean; isHostReferred: boolean;
+    renterFee: number; totalCharge: number;
+  }>({
+    queryKey: ["/api/spaces", space.id, "booking-fees", bookingHours],
+    queryFn: () => fetch(`/api/spaces/${space.id}/booking-fees?hours=${bookingHours}`).then(r => r.json()),
+    enabled: bookingHours >= 1,
+  });
+
+  const guestFee = feeData?.guestFeeAmount ?? Math.round(basePriceCents * 0.05);
+  const taxAmount = feeData?.taxAmount ?? Math.round(basePriceCents * 0.07);
+  const totalCharge = feeData?.totalGuestCharged ?? (basePriceCents + guestFee + taxAmount);
+  const guestFeePercent = feeData?.guestFeePercent ?? 0.05;
+  const isRepeatGuest = feeData?.isRepeatGuest ?? false;
+  const standardFee = Math.round(basePriceCents * 0.05);
+  const loyaltySavings = isRepeatGuest ? standardFee - guestFee : 0;
 
   const isDateAvailable = (date: Date): boolean => {
     const yyyy = date.getFullYear();
@@ -608,9 +626,21 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                       <span className="text-stone-700"><AnimatedPrice value={basePriceCents} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-500">Service fee (7%)</span>
-                      <span className="text-stone-700"><AnimatedPrice value={renterFee} /></span>
+                      <span className="text-stone-500">Service fee</span>
+                      <span className="text-stone-700"><AnimatedPrice value={guestFee} /></span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-stone-500">Taxes</span>
+                      <span className="text-stone-700"><AnimatedPrice value={taxAmount} /></span>
+                    </div>
+                    {isRepeatGuest && loyaltySavings > 0 && (
+                      <div className="flex justify-between text-sm text-emerald-600">
+                        <span className="flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Loyalty discount
+                        </span>
+                        <span>-<AnimatedPrice value={loyaltySavings} /></span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-stone-200">
                       <span className="text-stone-800">Total</span>
                       <span className="text-[#c4956a]"><AnimatedPrice value={totalCharge} /></span>
@@ -844,6 +874,20 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
       return res.json();
     },
   });
+
+  // Track referral link clicks — set cookie on server when ?ref= param is present
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get("ref");
+    if (refCode) {
+      fetch("/api/referral/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: refCode }),
+        credentials: "include",
+      }).catch(() => {}); // Fire and forget
+    }
+  }, []);
 
   const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category?: string; title?: string; cropPosition?: { x: number; y: number; zoom: number } }>>({
     queryKey: ["/api/portfolio-photos/by-space", space?.id],
