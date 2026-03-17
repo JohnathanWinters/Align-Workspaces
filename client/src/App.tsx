@@ -16,6 +16,7 @@ import AlignSpacesPage from "@/pages/align-spaces";
 import SpacesBrowsePage from "@/pages/spaces-browse";
 import SpaceDetailPage from "@/pages/space-detail";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useAuth } from "@/hooks/use-auth";
 
 function BuildMyPhoto() {
   return <HomePage autoStart />;
@@ -45,7 +46,8 @@ function Router() {
 }
 
 function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
-  useAnalytics();
+  const { user } = useAuth();
+  useAnalytics(user?.id);
   return <>{children}</>;
 }
 

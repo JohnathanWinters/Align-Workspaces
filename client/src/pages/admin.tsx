@@ -5089,8 +5089,37 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
       "/portal": "Client Portal",
       "/featured": "Featured",
       "/workspaces": "Workspaces",
+      "/browse": "Browse Spaces",
     };
     return labels[path] || path;
+  };
+
+  const eventLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      shoot_builder_start: "Started shoot builder",
+      shoot_builder_complete: "Completed shoot booking",
+      space_view: "Viewed a space",
+      space_inquiry: "Sent space inquiry",
+      space_booking: "Booked a space",
+      contact_host_click: "Clicked contact host",
+      portfolio_photo_click: "Clicked portfolio photo",
+      portfolio_lightbox_view: "Viewed photo lightbox",
+      featured_professional_click: "Viewed featured professional",
+      gallery_favorite: "Favorited gallery photo",
+      gallery_download: "Downloaded gallery photo",
+    };
+    return labels[type] || type.replace(/_/g, " ");
+  };
+
+  const relativeTime = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const d = Math.floor(hours / 24);
+    return `${d}d ago`;
   };
 
   return (
@@ -5098,28 +5127,16 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              data-testid="button-analytics-back"
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
+            <button onClick={onBack} data-testid="button-analytics-back" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Back
             </button>
             <p className="font-serif text-lg text-gray-900" data-testid="text-analytics-title">Analytics</p>
           </div>
           <div className="flex items-center gap-2">
             {[7, 14, 30, 90].map((d) => (
-              <button
-                key={d}
-                onClick={() => setDays(d)}
-                data-testid={`button-analytics-${d}d`}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                  days === d ? "bg-[#1a1a1a] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
-              >
-                {d}d
-              </button>
+              <button key={d} onClick={() => setDays(d)} data-testid={`button-analytics-${d}d`}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${days === d ? "bg-[#1a1a1a] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"}`}
+              >{d}d</button>
             ))}
           </div>
         </div>
@@ -5127,87 +5144,144 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
+          <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
         ) : !data ? (
           <p className="text-center text-gray-500 py-20">No analytics data available yet.</p>
         ) : (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-6">
+            {/* ── Key Metrics ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-white border-gray-100">
-                <CardContent className="pt-6">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">Page Views</p>
-                  <p className="text-3xl font-serif text-gray-900 mt-1" data-testid="text-total-views">{data.totalViews.toLocaleString()}</p>
-                  <p className="text-xs text-gray-400 mt-1">Last {days} days</p>
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Page Views</p>
+                  <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-total-views">{data.totalViews.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Last {days} days</p>
                 </CardContent>
               </Card>
               <Card className="bg-white border-gray-100">
-                <CardContent className="pt-6">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">Unique Visitors</p>
-                  <p className="text-3xl font-serif text-gray-900 mt-1" data-testid="text-unique-visitors">{data.uniqueVisitors.toLocaleString()}</p>
-                  <p className="text-xs text-gray-400 mt-1">Last {days} days</p>
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Unique Visitors</p>
+                  <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-unique-visitors">{data.uniqueVisitors.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Last {days} days</p>
                 </CardContent>
               </Card>
               <Card className="bg-white border-gray-100">
-                <CardContent className="pt-6">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">Avg. Time on Page</p>
-                  <p className="text-3xl font-serif text-gray-900 mt-1" data-testid="text-avg-duration">{formatDuration(data.avgDuration)}</p>
-                  <p className="text-xs text-gray-400 mt-1">Per page view</p>
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Avg. Time on Page</p>
+                  <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-avg-duration">{formatDuration(data.avgDuration)}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Per page view</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-white border-gray-100">
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider">Bounce Rate</p>
+                  <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-bounce-rate">{data.bounceRate}%</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Single-page sessions</p>
                 </CardContent>
               </Card>
             </div>
 
+            {/* ── Conversion Funnels ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-white border-gray-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Shoot Funnel</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {data.shootFunnel.starts === 0 ? (
+                    <p className="text-xs text-gray-400 py-2">No shoot builder data yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600">Builder Started</span>
+                          <span className="text-gray-900 font-medium">{data.shootFunnel.starts}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#c4956a] rounded-full" style={{ width: "100%" }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600">Booking Completed</span>
+                          <span className="text-gray-900 font-medium">{data.shootFunnel.completes}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${data.shootFunnel.rate}%` }} />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 text-right">{data.shootFunnel.rate}% conversion</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-gray-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Space Funnel</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {data.spaceFunnel.views === 0 ? (
+                    <p className="text-xs text-gray-400 py-2">No space data yet</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600">Space Views</span>
+                          <span className="text-gray-900 font-medium">{data.spaceFunnel.views}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#c4956a] rounded-full" style={{ width: "100%" }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600">Inquiries</span>
+                          <span className="text-gray-900 font-medium">{data.spaceFunnel.inquiries}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-500 rounded-full" style={{ width: `${data.spaceFunnel.viewToInquiryRate}%` }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600">Bookings</span>
+                          <span className="text-gray-900 font-medium">{data.spaceFunnel.bookings}</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${data.spaceFunnel.inquiryToBookingRate}%` }} />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 text-right">{data.spaceFunnel.viewToInquiryRate}% inquiry, {data.spaceFunnel.inquiryToBookingRate}% booking</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* ── Daily Traffic Chart ── */}
             {data.daily.length > 0 && (
               <Card className="bg-white border-gray-100">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-700">Daily Traffic</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64">
-                    <div className="flex items-end gap-[2px] h-full">
+                  <div className="h-56">
+                    <div className="flex items-end gap-[3px] h-full">
                       {data.daily.map((d: any, i: number) => {
-                        const prev = data.daily[i - 1];
                         const maxViews = Math.max(...data.daily.map((x: any) => x.views), 1);
-                        const viewsHeight = (d.views / maxViews) * 100;
-                        const visitorsHeight = (d.visitors / maxViews) * 100;
-                        const isUp = !prev || d.views >= prev.views;
+                        const viewsH = Math.max((d.views / maxViews) * 100, 1);
+                        const visitorsH = Math.max((d.visitors / maxViews) * 100, 1);
                         const date = new Date(d.date + "T12:00:00");
                         const label = `${date.getMonth() + 1}/${date.getDate()}`;
-                        const bodyBottom = Math.min(viewsHeight, visitorsHeight);
-                        const bodyTop = Math.max(viewsHeight, visitorsHeight);
-                        const bodyHeight = Math.max(bodyTop - bodyBottom, 2);
                         return (
                           <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
                             <div className="absolute -top-8 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                               {label}: {d.views} views, {d.visitors} visitors
                             </div>
-                            <div className="relative flex flex-col items-center justify-end" style={{ height: `${Math.max(viewsHeight, 1)}%` }}>
-                              <div
-                                className="w-[2px] absolute top-0 left-1/2 -translate-x-1/2"
-                                style={{
-                                  height: `${Math.max(viewsHeight - bodyTop, 0)}%`,
-                                  backgroundColor: isUp ? "#c4956a" : "#9ca3af",
-                                }}
-                              />
-                              <div
-                                className="w-full rounded-sm transition-colors"
-                                style={{
-                                  height: `${bodyHeight}%`,
-                                  minHeight: "4px",
-                                  backgroundColor: isUp ? "#c4956a" : "#d1d5db",
-                                  border: `1px solid ${isUp ? "#b38456" : "#9ca3af"}`,
-                                }}
-                              />
-                              {bodyBottom > 1 && (
-                                <div
-                                  className="w-[2px] absolute bottom-0 left-1/2 -translate-x-1/2"
-                                  style={{
-                                    height: `${bodyBottom}%`,
-                                    backgroundColor: isUp ? "#c4956a" : "#9ca3af",
-                                  }}
-                                />
-                              )}
+                            <div className="w-full flex items-end justify-center gap-[1px]" style={{ height: `${viewsH}%` }}>
+                              <div className="flex-1 rounded-t-sm bg-[#c4956a]" style={{ height: "100%" }} />
+                              <div className="flex-1 rounded-t-sm bg-gray-300" style={{ height: `${(visitorsH / viewsH) * 100}%` }} />
                             </div>
                             {(i === 0 || i === data.daily.length - 1 || i % Math.ceil(data.daily.length / 7) === 0) && (
                               <span className="text-[9px] text-gray-400 mt-1 leading-none">{label}</span>
@@ -5217,45 +5291,35 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                       })}
                     </div>
                     <div className="flex items-center gap-4 mt-3 justify-end">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-sm bg-[#c4956a] border border-[#b38456]" />
-                        <span className="text-[10px] text-gray-500">Up from previous day</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-sm bg-[#d1d5db] border border-[#9ca3af]" />
-                        <span className="text-[10px] text-gray-500">Down from previous day</span>
-                      </div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-[#c4956a]" /><span className="text-[10px] text-gray-500">Views</span></div>
+                      <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm bg-gray-300" /><span className="text-[10px] text-gray-500">Visitors</span></div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
+            {/* ── Top Pages + Devices/Referrers ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="bg-white border-gray-100">
-                <CardHeader>
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-700">Top Pages</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {data.topPages.length === 0 ? (
                     <p className="text-sm text-gray-400">No page data yet</p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {data.topPages.map((p: any, i: number) => {
                         const maxCount = data.topPages[0]?.count || 1;
                         return (
                           <div key={i}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-gray-700 truncate max-w-[200px]" data-testid={`text-page-${i}`}>
-                                {pageLabel(p.page)}
-                              </span>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs text-gray-700 truncate max-w-[200px]">{pageLabel(p.page)}</span>
                               <span className="text-xs text-gray-400 tabular-nums">{p.count}</span>
                             </div>
                             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[#c4956a] rounded-full transition-all"
-                                style={{ width: `${(p.count / maxCount) * 100}%` }}
-                              />
+                              <div className="h-full bg-[#c4956a] rounded-full" style={{ width: `${(p.count / maxCount) * 100}%` }} />
                             </div>
                           </div>
                         );
@@ -5265,9 +5329,9 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                 </CardContent>
               </Card>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <Card className="bg-white border-gray-100">
-                  <CardHeader>
+                  <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-gray-700">Devices</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -5280,7 +5344,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                           const pct = Math.round((d.count / total) * 100);
                           return (
                             <div key={d.device} className="flex-1 text-center">
-                              <div className="text-2xl font-serif text-gray-900" data-testid={`text-device-${d.device}`}>{pct}%</div>
+                              <div className="text-2xl font-serif text-gray-900">{pct}%</div>
                               <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1 capitalize">{d.device}</p>
                             </div>
                           );
@@ -5291,7 +5355,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                 </Card>
 
                 <Card className="bg-white border-gray-100">
-                  <CardHeader>
+                  <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-gray-700">Top Referrers</CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -5301,7 +5365,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                       <div className="space-y-2">
                         {data.topReferrers.slice(0, 5).map((r: any, i: number) => (
                           <div key={i} className="flex items-center justify-between">
-                            <span className="text-xs text-gray-600 truncate max-w-[180px]" data-testid={`text-referrer-${i}`}>{r.source}</span>
+                            <span className="text-xs text-gray-600 truncate max-w-[180px]">{r.source}</span>
                             <span className="text-xs text-gray-400 tabular-nums">{r.count}</span>
                           </div>
                         ))}
@@ -5311,6 +5375,55 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                 </Card>
               </div>
             </div>
+
+            {/* ── Recent User Activity ── */}
+            <Card className="bg-white border-gray-100">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">Recent User Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!data.recentActivity || data.recentActivity.length === 0 ? (
+                  <p className="text-xs text-gray-400 py-2">No user activity tracked yet. Events will appear as users interact with your site.</p>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {data.recentActivity.map((a: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 py-1.5 border-b border-gray-50 last:border-0">
+                        <div className="w-7 h-7 rounded-full bg-[#c4956a]/15 flex items-center justify-center text-[#c4956a] font-semibold text-[10px] shrink-0">
+                          {a.userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-800 truncate">
+                            <span className="font-medium">{a.userName}</span>{" "}
+                            <span className="text-gray-500">{eventLabel(a.eventType)}</span>
+                          </p>
+                          {a.path && <p className="text-[10px] text-gray-400 truncate">{a.path}</p>}
+                        </div>
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{relativeTime(a.createdAt)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ── Event Counts Summary ── */}
+            {data.eventCounts && Object.keys(data.eventCounts).length > 0 && (
+              <Card className="bg-white border-gray-100">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">Event Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {Object.entries(data.eventCounts).sort((a: any, b: any) => b[1] - a[1]).map(([type, count]: any) => (
+                      <div key={type} className="p-3 rounded-lg bg-gray-50 text-center">
+                        <p className="text-lg font-serif text-gray-900">{count}</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5">{eventLabel(type)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </main>

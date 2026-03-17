@@ -9,10 +9,27 @@ function getSessionId(): string {
   return sid;
 }
 
-export function useAnalytics() {
+export function trackEvent(
+  eventType: string,
+  metadata: Record<string, any> = {},
+  userId?: string
+) {
+  const sessionId = getSessionId();
+  const path = window.location.pathname;
+  fetch("/api/track/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, userId, eventType, metadata, path }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+export function useAnalytics(userId?: string) {
   const startTime = useRef(Date.now());
   const lastPath = useRef("");
   const lastViewId = useRef("");
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
 
   useEffect(() => {
     const sessionId = getSessionId();
@@ -48,6 +65,7 @@ export function useAnalytics() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
+          userId: userIdRef.current || null,
           viewId,
           path,
           referrer: document.referrer || null,

@@ -473,6 +473,7 @@ export type DirectMessage = typeof directMessages.$inferSelect;
 export const pageViews = pgTable("page_views", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sessionId: text("session_id").notNull(),
+  userId: text("user_id"),
   path: text("path").notNull(),
   referrer: text("referrer"),
   userAgent: text("user_agent"),
@@ -483,6 +484,18 @@ export const pageViews = pgTable("page_views", {
 });
 
 export type PageView = typeof pageViews.$inferSelect;
+
+export const analyticsEvents = pgTable("analytics_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull(),
+  userId: text("user_id"),
+  eventType: text("event_type").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  path: text("path"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 
 export const pipelineContacts = pgTable("pipeline_contacts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -56,6 +56,7 @@ import PortalSettings from "@/components/portal-settings";
 import { useToast } from "@/hooks/use-toast";
 
 import { playNotificationSound } from "@/lib/notification-sound";
+import { trackEvent } from "@/hooks/use-analytics";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -1316,7 +1317,8 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
       if (!res.ok) throw new Error("Failed to toggle favorite");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, imageId) => {
+      trackEvent("gallery_favorite", { imageId, shootId: shoot.id });
       queryClient.invalidateQueries({ queryKey: ["/api/shoots", shoot.id, "favorites"] });
     },
   });
@@ -1355,6 +1357,7 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const favoritesCount = favoriteIds.length;
 
   const handleDownloadSingle = (imageId: string, filename: string) => {
+    trackEvent("gallery_download", { shootId: shoot.id });
     const link = document.createElement("a");
     link.href = `/api/shoots/${shoot.id}/gallery/${imageId}/download`;
     link.download = filename;
@@ -1364,6 +1367,7 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   };
 
   const handleDownloadAll = async () => {
+    trackEvent("gallery_download", { shootId: shoot.id });
     setDownloadingAll(true);
     try {
       const res = await fetch(`/api/shoots/${shoot.id}/download-all`, { credentials: "include" });

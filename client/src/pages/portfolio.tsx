@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { trackEvent } from "@/hooks/use-analytics";
 
 function getLabel(value: string, list: { value: string; label: string }[]) {
   return list.find((item) => item.value === value)?.label || value;
@@ -300,6 +301,11 @@ export default function PortfolioPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"people" | "spaces">("people");
 
+  const handlePhotoClick = (photo: PortfolioPhoto) => {
+    trackEvent("portfolio_photo_click", { photoId: photo.id });
+    setSelectedPhoto(photo);
+  };
+
   useEffect(() => {
     document.title = "Portfolio | Miami Personal Branding Photography | Align";
   }, []);
@@ -506,7 +512,7 @@ export default function PortfolioPage() {
               data-testid="portfolio-full-grid"
             >
               {filteredPhotos.map((photo, index) => (
-                <PortfolioCard key={photo.id} photo={photo} index={index} onPhotoClick={setSelectedPhoto} linkedSpace={photo.locationSpaceId ? spaceMap[photo.locationSpaceId] : null} />
+                <PortfolioCard key={photo.id} photo={photo} index={index} onPhotoClick={handlePhotoClick} linkedSpace={photo.locationSpaceId ? spaceMap[photo.locationSpaceId] : null} />
               ))}
             </motion.div>
           )}

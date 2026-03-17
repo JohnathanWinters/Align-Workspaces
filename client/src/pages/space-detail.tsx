@@ -50,6 +50,7 @@ import {
   formatTime,
 } from "@/components/availability-schedule-editor";
 import { SiteFooter } from "@/components/site-footer";
+import { trackEvent } from "@/hooks/use-analytics";
 
 function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string; explanation?: string } | null {
   if (!raw) return null;
@@ -652,6 +653,7 @@ function ContactHostModal({ space, onClose }: { space: Space; onClose: () => voi
         throw new Error(data.message || "Failed to send");
       }
       setSent(true);
+      trackEvent("space_inquiry", { spaceId: space.id });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -898,6 +900,12 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
   });
 
   useEffect(() => {
+    if (space) {
+      trackEvent("space_view", { spaceId: space.id, spaceName: space.name });
+    }
+  }, [space?.id]);
+
+  useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     if (p.get("book") === "1" && isAuthenticated) {
       setShowBooking(true);
@@ -915,6 +923,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
   };
 
   const handleContactClick = () => {
+    trackEvent("contact_host_click", { spaceId: space!.id, spaceName: space!.name });
     if (!isAuthenticated) { setAuthIntent("contact"); setShowAuth(true); return; }
     setShowContact(true);
   };

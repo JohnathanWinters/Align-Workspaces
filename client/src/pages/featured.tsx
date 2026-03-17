@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Me
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { UserIndicator } from "@/components/user-indicator";
+import { trackEvent } from "@/hooks/use-analytics";
 
 interface FeaturedProfessional {
   id: string;
@@ -163,7 +164,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
   return (
     <section
       className="cursor-pointer group max-w-[2000px] mx-auto"
-      onClick={() => setLocation(`/featured/${pro.slug}`)}
+      onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid="card-professional-of-week"
     >
       <div className="relative w-full aspect-[3/4] sm:aspect-auto sm:min-h-[65vh] lg:min-h-[70vh] 2xl:min-h-[75vh] 2xl:rounded-b-lg overflow-hidden">
@@ -257,7 +258,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: cappedDelay }}
       className="group cursor-pointer transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]"
-      onClick={() => setLocation(`/featured/${pro.slug}`)}
+      onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid={`card-featured-${pro.slug}`}
     >
       <div className="aspect-[3/4] relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300">
