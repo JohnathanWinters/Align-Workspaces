@@ -3224,7 +3224,7 @@ export async function registerRoutes(
           },
         ],
         mode: "payment",
-        success_url: `${baseUrl}/portal?space_payment=success`,
+        success_url: `${baseUrl}/portal?tab=messages&space_payment=success`,
         cancel_url: `${baseUrl}/workspaces?space_payment=cancelled`,
         customer_email: user.claims?.email || booking.userEmail,
         metadata: {
@@ -3274,7 +3274,8 @@ export async function registerRoutes(
   app.get("/api/space-bookings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const guestBookings = await storage.getSpaceBookingsByUser(userId);
+      const allGuestBookings = await storage.getSpaceBookingsByUser(userId);
+      const guestBookings = allGuestBookings.filter(b => b.status !== "awaiting_payment");
 
       const userSpaces = await storage.getSpacesByUser(userId);
       const hostBookings: any[] = [];
@@ -3707,7 +3708,7 @@ export async function registerRoutes(
           },
         ],
         mode: "payment",
-        success_url: `${baseUrl}/portal?space_payment=success`,
+        success_url: `${baseUrl}/portal?tab=messages&space_payment=success`,
         cancel_url: `${baseUrl}/portal?space_payment=cancelled`,
         customer_email: booking.userEmail || req.user.claims.email,
         metadata: {
