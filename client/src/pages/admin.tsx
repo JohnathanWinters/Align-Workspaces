@@ -2145,7 +2145,8 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
       pricePerDay: space.pricePerDay || 0,
       capacity: space.capacity || 0,
       targetProfession: space.targetProfession || "",
-      availableHours: space.availableHours || "",
+      availabilitySchedule: space.availabilitySchedule || "",
+      bufferMinutes: space.bufferMinutes ?? 15,
       hostName: space.hostName || "",
       contactEmail: space.contactEmail || "",
       amenities: (space.amenities || []).join(", "),
@@ -2161,6 +2162,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
         pricePerHour: parseInt(editForm.pricePerHour) || 0,
         pricePerDay: parseInt(editForm.pricePerDay) || null,
         capacity: parseInt(editForm.capacity) || null,
+        bufferMinutes: parseInt(editForm.bufferMinutes) || 15,
         amenities: editForm.amenities.split(",").map((a: string) => a.trim()).filter(Boolean),
       };
       const res = await fetch(`/api/admin/spaces/${editingId}`, {
@@ -2282,8 +2284,18 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Space Name</label>
                           <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-name" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Space Category</label>
+                          <select value={editForm.type} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white" data-testid="input-edit-type">
+                            <option value="therapy">Therapy & Counseling</option>
+                            <option value="coaching">Coaching & Consulting</option>
+                            <option value="wellness">Wellness & Holistic</option>
+                            <option value="workshop">Workshops & Classes</option>
+                            <option value="creative">Creative Studio</option>
+                          </select>
                         </div>
                         <div className="sm:col-span-2">
                           <label className="block text-xs font-medium text-gray-500 mb-1.5">Space Categories</label>
@@ -2338,17 +2350,57 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           <label className="block text-xs font-medium text-gray-500 mb-1">Host Name</label>
                           <input value={editForm.hostName} onChange={e => setEditForm({ ...editForm, hostName: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-host" />
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Target Profession</label>
-                          <input value={editForm.targetProfession} onChange={e => setEditForm({ ...editForm, targetProfession: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-profession" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Available Hours</label>
-                          <input value={editForm.availableHours} onChange={e => setEditForm({ ...editForm, availableHours: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-hours" />
+                        <div className="col-span-2">
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5">Target Professionals</label>
+                          <div className="flex flex-wrap gap-2" data-testid="input-edit-profession">
+                            {[
+                              { value: "therapy", label: "Therapy & Counseling" },
+                              { value: "coaching", label: "Coaching & Consulting" },
+                              { value: "wellness", label: "Wellness & Holistic" },
+                              { value: "workshop", label: "Workshops & Classes" },
+                              { value: "creative", label: "Creative Studio" },
+                            ].map((t) => {
+                              const selected = (editForm.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+                              const isSelected = selected.includes(t.label);
+                              return (
+                                <button
+                                  key={t.value}
+                                  type="button"
+                                  onClick={() => {
+                                    const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
+                                    setEditForm({ ...editForm, targetProfession: next.join(", ") });
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                    isSelected
+                                      ? "border-gray-800 bg-gray-800 text-white"
+                                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                                  }`}
+                                >
+                                  {t.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">Contact Email</label>
                           <input value={editForm.contactEmail} onChange={e => setEditForm({ ...editForm, contactEmail: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-email" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Buffer Time Between Bookings</label>
+                          <select
+                            value={editForm.bufferMinutes}
+                            onChange={e => setEditForm({ ...editForm, bufferMinutes: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                            data-testid="input-edit-buffer"
+                          >
+                            <option value="0">No buffer</option>
+                            <option value="5">5 minutes</option>
+                            <option value="10">10 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                          </select>
                         </div>
                       </div>
                       <div>
