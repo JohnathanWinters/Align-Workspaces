@@ -2672,6 +2672,8 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   const eyedropperCanvasRef = useRef<HTMLCanvasElement>(null);
   const [portfolioDragIdx, setPortfolioDragIdx] = useState<number | null>(null);
   const [portfolioDragOverIdx, setPortfolioDragOverIdx] = useState<number | null>(null);
+  const [dropZoneActive, setDropZoneActive] = useState(false);
+  const dropCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [availableSpaces, setAvailableSpaces] = useState<Array<{ id: string; name: string; neighborhood: string | null }>>([]);
 
@@ -2865,8 +2867,56 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
 
   const filteredAdminPhotos = photos.filter(p => (p.category || "people") === adminCategory);
 
+  const onDropUpload = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropCounter.current = 0;
+    setDropZoneActive(false);
+    if (e.dataTransfer.files?.length > 0) {
+      handleUpload(e.dataTransfer.files);
+    }
+  }, [handleUpload]);
+
+  const onDragEnterZone = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropCounter.current++;
+    if (e.dataTransfer.types.includes("Files")) {
+      setDropZoneActive(true);
+    }
+  }, []);
+
+  const onDragLeaveZone = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropCounter.current--;
+    if (dropCounter.current === 0) {
+      setDropZoneActive(false);
+    }
+  }, []);
+
+  const onDragOverZone = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div
+      className="max-w-5xl mx-auto px-4 sm:px-6 py-8"
+      onDragEnter={onDragEnterZone}
+      onDragLeave={onDragLeaveZone}
+      onDragOver={onDragOverZone}
+      onDrop={onDropUpload}
+    >
+      {dropZoneActive && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-2xl p-12 border-2 border-dashed border-[#c4956a] text-center shadow-2xl">
+            <Upload className="w-12 h-12 text-[#c4956a] mx-auto mb-4" />
+            <p className="text-lg font-medium text-stone-800">Drop photos to upload</p>
+            <p className="text-sm text-stone-500 mt-1">They'll be added to {adminCategory}</p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-portfolio-back">
@@ -2929,10 +2979,10 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
       {loading ? (
         <div className="text-center py-20 text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
       ) : filteredAdminPhotos.length === 0 ? (
-        <div className="text-center py-20">
+        <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-xl">
           <Images className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500 mb-2">No {adminCategory} photos yet</p>
-          <p className="text-gray-400 text-sm">Upload photos to showcase your {adminCategory}</p>
+          <p className="text-gray-400 text-sm">Drag & drop photos here or click Upload Photos</p>
         </div>
       ) : (
         <div className="space-y-6">

@@ -101,7 +101,7 @@ function PortfolioCard({ photo, index, onPhotoClick, linkedSpace }: { photo: Por
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
-      className={`${isSpaces ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg overflow-hidden relative cursor-pointer group break-inside-avoid mb-4`}
+      className={`${isSpaces ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg overflow-hidden relative cursor-pointer group`}
       onClick={() => onPhotoClick(photo)}
       data-testid={`portfolio-full-card-${index}`}
     >
@@ -479,10 +479,10 @@ export default function PortfolioPage() {
         {isLoading && (
           <div className={activeCategory === "spaces"
             ? "grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto"
-            : "columns-2 sm:columns-3 gap-4"
+            : "grid grid-cols-2 sm:grid-cols-3 gap-4"
           }>
             {[1, 2, 3].map((i) => (
-              <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg bg-foreground/5 animate-pulse ${activeCategory === "people" ? "mb-4 break-inside-avoid" : ""}`} />
+              <div key={i} className={`${activeCategory === "spaces" ? "aspect-[4/3]" : "aspect-[3/4]"} rounded-lg bg-foreground/5 animate-pulse`} />
             ))}
           </div>
         )}
@@ -501,7 +501,7 @@ export default function PortfolioPage() {
                     filteredPhotos.length === 2 ? "grid-cols-1 sm:grid-cols-2" :
                     "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                   }`
-                : "columns-2 sm:columns-3 gap-4"
+                : "grid grid-cols-2 sm:grid-cols-3 gap-4"
               }
               data-testid="portfolio-full-grid"
             >
