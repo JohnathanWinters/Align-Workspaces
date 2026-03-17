@@ -1231,10 +1231,10 @@ export async function registerRoutes(
     }
   });
 
-  // Serve files from Object Storage
+  // Serve files from Object Storage (Cloudflare R2)
   app.get(/^\/objects\/(.+)$/, async (req, res) => {
     try {
-      serveObject(req.path, res);
+      await serveObject(req.path, res);
     } catch (error) {
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Object not found" });

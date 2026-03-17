@@ -1,8 +1,21 @@
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const STORAGE_DIR = path.join(process.cwd(), ".private");
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || "";
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || "";
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "";
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "align-uploads";
+
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: R2_ACCOUNT_ID ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : undefined,
+  credentials: {
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
+  },
+});
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -12,82 +25,89 @@ export class ObjectNotFoundError extends Error {
   }
 }
 
-function ensureDir(dir: string) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-
-function resolveObjectPath(objectPath: string): string {
-  // objectPath is like "/objects/uploads/abc-123" → resolve to ".private/abc-123"
-  const fileId = objectPath
+function resolveKey(objectPath: string): string {
+  return objectPath
     .replace(/^\/objects\//, "")
     .replace(/^uploads\//, "");
-  return path.join(STORAGE_DIR, fileId);
 }
 
-export async function uploadBuffer(buffer: Buffer, _contentType: string): Promise<string> {
+function getMimeType(objectPath: string): string {
+  const ext = path.extname(objectPath).toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg", ".gif": "image/gif", ".svg": "image/svg+xml",
+  };
+  return mimeTypes[ext] || "application/octet-stream";
+}
+
+export async function uploadBuffer(buffer: Buffer, contentType: string): Promise<string> {
   const objectId = randomUUID();
-  ensureDir(STORAGE_DIR);
-  const filePath = path.join(STORAGE_DIR, objectId);
-  await fs.promises.writeFile(filePath, buffer);
+  await s3.send(new PutObjectCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: objectId,
+    Body: buffer,
+    ContentType: contentType || "application/octet-stream",
+  }));
   return `/objects/uploads/${objectId}`;
 }
 
-export async function uploadFile(filePath: string, _contentType: string): Promise<string> {
-  const objectId = randomUUID();
-  ensureDir(STORAGE_DIR);
-  const destPath = path.join(STORAGE_DIR, objectId);
-  await fs.promises.copyFile(filePath, destPath);
+export async function uploadFile(filePath: string, contentType: string): Promise<string> {
+  const buffer = await fs.promises.readFile(filePath);
+  const url = await uploadBuffer(buffer, contentType);
   await fs.promises.unlink(filePath).catch(() => {});
-  return `/objects/uploads/${objectId}`;
+  return url;
 }
 
 export async function deleteObject(objectPath: string): Promise<void> {
   try {
-    const filePath = resolveObjectPath(objectPath);
-    if (fs.existsSync(filePath)) {
-      await fs.promises.unlink(filePath);
-    }
+    const key = resolveKey(objectPath);
+    await s3.send(new DeleteObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+    }));
   } catch (err) {
-    console.error("Failed to delete file:", objectPath, err);
+    console.error("Failed to delete from R2:", objectPath, err);
   }
 }
 
 export async function getObjectStream(objectPath: string): Promise<{ stream: NodeJS.ReadableStream; contentType: string } | null> {
   try {
-    const filePath = resolveObjectPath(objectPath);
-    if (!fs.existsSync(filePath)) return null;
-    const ext = path.extname(filePath).toLowerCase();
-    const mimeTypes: Record<string, string> = {
-      ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg",
-      ".jpeg": "image/jpeg", ".gif": "image/gif", ".svg": "image/svg+xml",
-    };
+    const key = resolveKey(objectPath);
+    const response = await s3.send(new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+    }));
+    if (!response.Body) return null;
     return {
-      stream: fs.createReadStream(filePath),
-      contentType: mimeTypes[ext] || "application/octet-stream",
+      stream: response.Body as NodeJS.ReadableStream,
+      contentType: response.ContentType || getMimeType(objectPath),
     };
   } catch {
     return null;
   }
 }
 
-export function objectExists(objectPath: string): boolean {
-  const filePath = resolveObjectPath(objectPath);
-  return fs.existsSync(filePath);
+export function objectExists(_objectPath: string): boolean {
+  // Cannot synchronously check R2 — callers should handle missing objects at serve time
+  return true;
 }
 
-export function serveObject(objectPath: string, res: import("express").Response): void {
-  const filePath = resolveObjectPath(objectPath);
-  if (!fs.existsSync(filePath)) {
-    throw new ObjectNotFoundError();
+export async function serveObject(objectPath: string, res: import("express").Response): Promise<void> {
+  const key = resolveKey(objectPath);
+  try {
+    const response = await s3.send(new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+    }));
+    if (!response.Body) throw new ObjectNotFoundError();
+    res.setHeader("Content-Type", response.ContentType || getMimeType(objectPath));
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    if (response.ContentLength) res.setHeader("Content-Length", response.ContentLength);
+    (response.Body as NodeJS.ReadableStream).pipe(res);
+  } catch (err: any) {
+    if (err.name === "NoSuchKey" || err.$metadata?.httpStatusCode === 404) {
+      throw new ObjectNotFoundError();
+    }
+    throw err;
   }
-  const ext = path.extname(filePath).toLowerCase();
-  const mimeTypes: Record<string, string> = {
-    ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg", ".gif": "image/gif", ".svg": "image/svg+xml",
-  };
-  res.setHeader("Content-Type", mimeTypes[ext] || "application/octet-stream");
-  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-  fs.createReadStream(filePath).pipe(res);
 }
