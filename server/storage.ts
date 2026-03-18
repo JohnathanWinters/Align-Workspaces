@@ -153,6 +153,7 @@ export interface IStorage {
   deleteSpaceReview(id: string): Promise<void>;
   getAllReviews(): Promise<SpaceReview[]>;
   getSpaceAverageRating(spaceId: string): Promise<{ avg: number; count: number }>;
+  getAverageRatingsForSpaces(spaceIds: string[]): Promise<Map<string, { avg: number; count: number }>>;
 
   // Wishlists
   getWishlistCollections(userId: string): Promise<WishlistCollection[]>;
@@ -1098,6 +1099,29 @@ export class DatabaseStorage implements IStorage {
     return { avg: Math.round((sum / reviews.length) * 10) / 10, count: reviews.length };
   }
 
+  async getAverageRatingsForSpaces(spaceIds: string[]): Promise<Map<string, { avg: number; count: number }>> {
+    const result = new Map<string, { avg: number; count: number }>();
+    if (spaceIds.length === 0) return result;
+
+    const rows = await db.execute(sql`
+      SELECT space_id,
+        ROUND(AVG(rating)::numeric, 1) as avg_rating,
+        COUNT(*)::integer as review_count
+      FROM space_reviews
+      WHERE space_id IN ${sql`(${sql.join(spaceIds.map(id => sql`${id}`), sql`, `)})`}
+      AND status = 'published'
+      GROUP BY space_id
+    `);
+
+    for (const row of (rows as any).rows || []) {
+      result.set(row.space_id, {
+        avg: Number(row.avg_rating) || 0,
+        count: Number(row.review_count) || 0,
+      });
+    }
+    return result;
+  }
+
   // ── Wishlists ───────────────────────────────────────────────────
   async getWishlistCollections(userId: string): Promise<WishlistCollection[]> {
     return db.select().from(wishlistCollections)
@@ -1168,37 +1192,38 @@ export class DatabaseStorage implements IStorage {
 
   // ── Host Response Metrics ───────────────────────────────────────
   async getHostResponseMetrics(hostId: string): Promise<{ avgMinutes: number; responseRate: number }> {
-    const hostSpaces = await this.getSpacesByUser(hostId);
-    if (hostSpaces.length === 0) return { avgMinutes: 0, responseRate: 0 };
-    const spaceIds = hostSpaces.map(s => s.id);
+    // Single query: join spaces -> bookings -> messages, filter by host
+    const result = await db.execute(sql`
+      WITH host_spaces AS (
+        SELECT id FROM spaces WHERE user_id = ${hostId}
+      ),
+      guest_messages AS (
+        SELECT sm.id, sm.space_booking_id, sm.created_at as guest_sent_at,
+          (SELECT MIN(sm2.created_at) FROM space_messages sm2
+           WHERE sm2.space_booking_id = sm.space_booking_id
+           AND sm2.sender_role = 'host'
+           AND sm2.created_at > sm.created_at) as host_replied_at
+        FROM space_messages sm
+        JOIN space_bookings sb ON sb.id = sm.space_booking_id
+        WHERE sb.space_id IN (SELECT id FROM host_spaces)
+        AND sm.sender_role = 'guest'
+      )
+      SELECT
+        COUNT(*) as total_guest_messages,
+        COUNT(host_replied_at) as responded_count,
+        AVG(EXTRACT(EPOCH FROM (host_replied_at - guest_sent_at)) / 60)::integer as avg_minutes
+      FROM guest_messages
+    `);
 
-    // Get all booking messages for host's spaces
-    const allBookings = (await Promise.all(spaceIds.map(id => this.getSpaceBookingsBySpace(id)))).flat();
-    if (allBookings.length === 0) return { avgMinutes: 0, responseRate: 0 };
+    const row = (result as any).rows?.[0] || {};
+    const totalMessages = Number(row.total_guest_messages) || 0;
+    const respondedCount = Number(row.responded_count) || 0;
+    const avgMinutes = Number(row.avg_minutes) || 0;
 
-    let totalResponseTime = 0;
-    let respondedCount = 0;
-    let guestMessageCount = 0;
-
-    for (const booking of allBookings) {
-      const msgs = await this.getSpaceMessages(booking.id);
-      for (let i = 0; i < msgs.length; i++) {
-        if (msgs[i].senderRole === "guest") {
-          guestMessageCount++;
-          // Find the next host response
-          const hostReply = msgs.slice(i + 1).find(m => m.senderRole === "host");
-          if (hostReply && hostReply.createdAt && msgs[i].createdAt) {
-            const diff = new Date(hostReply.createdAt).getTime() - new Date(msgs[i].createdAt).getTime();
-            totalResponseTime += diff;
-            respondedCount++;
-          }
-        }
-      }
-    }
-
-    const avgMinutes = respondedCount > 0 ? Math.round(totalResponseTime / respondedCount / 60000) : 0;
-    const responseRate = guestMessageCount > 0 ? Math.round((respondedCount / guestMessageCount) * 100) : 0;
-    return { avgMinutes, responseRate };
+    return {
+      avgMinutes,
+      responseRate: totalMessages > 0 ? Math.round((respondedCount / totalMessages) * 100) : 0,
+    };
   }
 }
 

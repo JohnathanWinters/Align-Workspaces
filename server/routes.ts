@@ -408,13 +408,13 @@ export async function registerRoutes(
   app.post("/api/admin/portfolio/upload", isAdmin, upload.single("file"), async (req: any, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-      const rawBuffer = fs.readFileSync(req.file.path);
+      const rawBuffer = await fs.promises.readFile(req.file.path);
       const processedBuffer = await sharp(rawBuffer)
         .rotate()
         .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 90, effort: 4 })
         .toBuffer();
-      fs.unlinkSync(req.file.path);
+      await fs.promises.unlink(req.file.path);
       const imageUrl = await uploadBuffer(processedBuffer, "image/webp");
       const environments = JSON.parse(req.body.environments || "[]");
       const brandMessages = JSON.parse(req.body.brandMessages || "[]");
@@ -444,13 +444,13 @@ export async function registerRoutes(
           await deleteObject((existing as any).beforeImageUrl);
         } catch {}
       }
-      const rawBuffer = fs.readFileSync(req.file.path);
+      const rawBuffer = await fs.promises.readFile(req.file.path);
       const processedBuffer = await sharp(rawBuffer)
         .rotate()
         .resize({ width: 1200, height: 1600, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 85, effort: 4 })
         .toBuffer();
-      fs.unlinkSync(req.file.path);
+      await fs.promises.unlink(req.file.path);
       const beforeImageUrl = await uploadBuffer(processedBuffer, "image/webp");
       const photo = await storage.updatePortfolioPhoto(req.params.id, { beforeImageUrl } as any);
       res.json(photo);
@@ -1223,7 +1223,7 @@ export async function registerRoutes(
       const images = [];
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const rawBuffer = fs.readFileSync(file.path);
+        const rawBuffer = await fs.promises.readFile(file.path);
 
         // Generate optimized display version (2400px wide, WebP 90%)
         const displayBuffer = await sharp(rawBuffer)
@@ -1913,13 +1913,13 @@ export async function registerRoutes(
   app.post("/api/admin/featured/:id/upload-portrait", isAdmin, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-      const rawBuffer = fs.readFileSync(req.file.path);
+      const rawBuffer = await fs.promises.readFile(req.file.path);
       const processedBuffer = await sharp(rawBuffer)
         .rotate()
         .resize({ width: 2400, height: 3200, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 90, effort: 4 })
         .toBuffer();
-      fs.unlinkSync(req.file.path);
+      await fs.promises.unlink(req.file.path);
       const imageUrl = await uploadBuffer(processedBuffer, "image/webp");
       const pro = await storage.updateFeaturedProfessional(req.params.id, { portraitImageUrl: imageUrl });
       res.json(pro);
@@ -2302,13 +2302,13 @@ export async function registerRoutes(
 
       const newUrls: string[] = [];
       for (const f of files) {
-        const rawBuffer = fs.readFileSync(f.path);
+        const rawBuffer = await fs.promises.readFile(f.path);
         const processedBuffer = await sharp(rawBuffer)
           .rotate()
           .resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
           .webp({ quality: 85, effort: 4 })
           .toBuffer();
-        fs.unlinkSync(f.path);
+        await fs.promises.unlink(f.path);
         const objectUrl = await uploadBuffer(processedBuffer, "image/webp");
         newUrls.push(objectUrl);
       }
@@ -2578,13 +2578,13 @@ export async function registerRoutes(
 
       const newUrls: string[] = [];
       for (const f of files) {
-        const rawBuffer = fs.readFileSync(f.path);
+        const rawBuffer = await fs.promises.readFile(f.path);
         const processedBuffer = await sharp(rawBuffer)
           .rotate()
           .resize({ width: 1600, height: 1200, fit: "inside", withoutEnlargement: true })
           .webp({ quality: 85, effort: 4 })
           .toBuffer();
-        fs.unlinkSync(f.path);
+        await fs.promises.unlink(f.path);
         const objectUrl = await uploadBuffer(processedBuffer, "image/webp");
         newUrls.push(objectUrl);
       }
@@ -3236,34 +3236,6 @@ export async function registerRoutes(
       if (!bookingDate) return res.status(400).json({ message: "Booking date is required" });
       const hours = parseInt(bookingHours) || 1;
 
-      // Check for overlapping bookings
-      if (bookingStartTime) {
-        const existingBookings = await storage.getSpaceBookingsBySpace(space.id);
-        const bufferMinutes = space.bufferMinutes ?? 15;
-
-        const [startH, startM] = bookingStartTime.split(":").map(Number);
-        const requestedStart = startH * 60 + startM;
-        const requestedEnd = requestedStart + hours * 60;
-
-        const hasConflict = existingBookings.some(b => {
-          if (b.bookingDate !== bookingDate) return false;
-          if (b.status === "cancelled" || b.status === "rejected") return false;
-          if (!b.bookingStartTime) return false;
-
-          const [bH, bM] = b.bookingStartTime.split(":").map(Number);
-          const bStart = bH * 60 + bM;
-          const bEnd = bStart + (b.bookingHours || 1) * 60 + bufferMinutes;
-
-          // Overlap check: requested slot overlaps if it starts before existing ends
-          // AND ends after existing starts (accounting for buffer)
-          return requestedStart < bEnd && requestedEnd + bufferMinutes > bStart;
-        });
-
-        if (hasConflict) {
-          return res.status(409).json({ message: "This time slot is already booked. Please choose a different time." });
-        }
-      }
-
       const basePriceCents = space.pricePerHour * 100 * hours;
 
       // Detect fee tier
@@ -3280,33 +3252,72 @@ export async function registerRoutes(
 
       const guestName = user.claims?.first_name || "Guest";
 
-      const booking = await storage.createSpaceBooking({
-        spaceId: space.id,
-        userId: user.claims.sub,
-        userName: guestName,
-        userEmail: user.claims?.email || null,
-        status: "awaiting_payment",
-        bookingDate,
-        bookingStartTime: bookingStartTime || null,
-        bookingHours: hours,
-        // Legacy fields
-        paymentAmount: fees.totalGuestCharged,
-        renterFeeAmount: fees.guestFeeAmount,
-        hostFeeAmount: fees.hostFeeAmount,
-        hostEarnings: fees.hostPayoutAmount,
-        // New tier fields
-        feeTier: fees.feeTier,
-        hostFeePercent: String(fees.hostFeePercent),
-        guestFeePercent: String(fees.guestFeePercent),
-        guestFeeAmount: fees.guestFeeAmount,
-        taxRate: String(fees.taxRate),
-        taxAmount: fees.taxAmount,
-        totalGuestCharged: fees.totalGuestCharged,
-        hostPayoutAmount: fees.hostPayoutAmount,
-        platformRevenue: fees.platformRevenue,
-        referralLinkId,
-        payoutStatus: hostStripeAccountId ? "paid" : "pending",
-        paymentStatus: "pending",
+      // Use advisory lock to prevent race conditions on concurrent bookings for the same space.
+      // pg_advisory_xact_lock serializes booking creation per space and auto-releases on commit/rollback.
+      const spaceId = space.id;
+      const booking = await db.transaction(async (tx) => {
+        // Acquire advisory lock scoped to this space
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${spaceId}))`);
+
+        // Check for overlapping bookings inside the lock
+        if (bookingStartTime) {
+          const existingBookings = await storage.getSpaceBookingsBySpace(spaceId);
+          const bufferMinutes = space.bufferMinutes ?? 15;
+
+          const [startH, startM] = bookingStartTime.split(":").map(Number);
+          const requestedStart = startH * 60 + startM;
+          const requestedEnd = requestedStart + hours * 60;
+
+          const hasConflict = existingBookings.some(b => {
+            if (b.bookingDate !== bookingDate) return false;
+            if (b.status === "cancelled" || b.status === "rejected") return false;
+            if (!b.bookingStartTime) return false;
+
+            const [bH, bM] = b.bookingStartTime.split(":").map(Number);
+            const bStart = bH * 60 + bM;
+            const bEnd = bStart + (b.bookingHours || 1) * 60 + bufferMinutes;
+
+            // Overlap check: requested slot overlaps if it starts before existing ends
+            // AND ends after existing starts (accounting for buffer)
+            return requestedStart < bEnd && requestedEnd + bufferMinutes > bStart;
+          });
+
+          if (hasConflict) {
+            throw new Error("TIME_SLOT_CONFLICT");
+          }
+        }
+
+        // Create the booking inside the same transaction so the lock is still held
+        const newBooking = await storage.createSpaceBooking({
+          spaceId,
+          userId: user.claims.sub,
+          userName: guestName,
+          userEmail: user.claims?.email || null,
+          status: "awaiting_payment",
+          bookingDate,
+          bookingStartTime: bookingStartTime || null,
+          bookingHours: hours,
+          // Legacy fields
+          paymentAmount: fees.totalGuestCharged,
+          renterFeeAmount: fees.guestFeeAmount,
+          hostFeeAmount: fees.hostFeeAmount,
+          hostEarnings: fees.hostPayoutAmount,
+          // New tier fields
+          feeTier: fees.feeTier,
+          hostFeePercent: String(fees.hostFeePercent),
+          guestFeePercent: String(fees.guestFeePercent),
+          guestFeeAmount: fees.guestFeeAmount,
+          taxRate: String(fees.taxRate),
+          taxAmount: fees.taxAmount,
+          totalGuestCharged: fees.totalGuestCharged,
+          hostPayoutAmount: fees.hostPayoutAmount,
+          platformRevenue: fees.platformRevenue,
+          referralLinkId,
+          payoutStatus: hostStripeAccountId ? "paid" : "pending",
+          paymentStatus: "pending",
+        });
+
+        return newBooking;
       });
 
       // Audit log for every fee calculation
@@ -3390,6 +3401,9 @@ export async function registerRoutes(
 
       res.json({ booking, checkoutUrl: session.url });
     } catch (err: any) {
+      if (err.message === "TIME_SLOT_CONFLICT") {
+        return res.status(409).json({ message: "This time slot is already booked. Please choose a different time." });
+      }
       console.error("Booking error:", err);
       res.status(500).json({ message: err.message });
     }
@@ -4710,11 +4724,15 @@ export async function registerRoutes(
       const hostSpaces = await storage.getSpacesByUser(userId);
       if (hostSpaces.length === 0) return res.json({ spaces: [], totals: {} });
 
+      // Batch-fetch ratings for all host spaces in a single query
+      const spaceIds = hostSpaces.map(s => s.id);
+      const ratingsMap = await storage.getAverageRatingsForSpaces(spaceIds);
+
       const spaceAnalytics = await Promise.all(hostSpaces.map(async (space) => {
         const bookings = await storage.getSpaceBookingsBySpace(space.id);
         const completed = bookings.filter(b => b.status === "completed");
         const pending = bookings.filter(b => b.status === "pending");
-        const { avg, count: reviewCount } = await storage.getSpaceAverageRating(space.id);
+        const { avg, count: reviewCount } = ratingsMap.get(space.id) || { avg: 0, count: 0 };
 
         // Calculate revenue
         const totalRevenue = completed.reduce((sum, b) => sum + (b.hostPayoutAmount || b.hostEarnings || 0), 0);
