@@ -298,9 +298,14 @@ function ConversationView({
   });
 
   useEffect(() => {
-    fetch(`/api/space-bookings/${booking.id}/read`, { method: "POST", credentials: "include" }).catch(() => {});
+    fetch(`/api/space-bookings/${booking.id}/read`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: booking.role }),
+    }).catch(() => {});
     queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
-  }, [booking.id, messages.length]);
+  }, [booking.id, booking.role, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -3952,12 +3952,26 @@ export async function registerRoutes(
       if (!booking) return res.status(404).json({ message: "Booking not found" });
 
       const userId = req.user.claims.sub;
-      if (booking.userId === userId) {
-        await storage.markBookingRead(booking.id, "guest");
-      } else {
+      const requestedRole = req.body?.role;
+
+      if (requestedRole === "host") {
         const space = await storage.getSpaceById(booking.spaceId);
-        if (!space || space.userId !== userId) return res.status(403).json({ message: "Not authorized" });
-        await storage.markBookingRead(booking.id, "host");
+        if (space?.userId === userId) {
+          await storage.markBookingRead(booking.id, "host");
+        }
+      } else if (requestedRole === "guest") {
+        if (booking.userId === userId) {
+          await storage.markBookingRead(booking.id, "guest");
+        }
+      } else {
+        // Legacy: auto-detect role
+        if (booking.userId === userId) {
+          await storage.markBookingRead(booking.id, "guest");
+        }
+        const space = await storage.getSpaceById(booking.spaceId);
+        if (space?.userId === userId) {
+          await storage.markBookingRead(booking.id, "host");
+        }
       }
       cancelEmailFallback(userId, `booking-${req.params.id}`);
       res.json({ success: true });
