@@ -150,26 +150,22 @@ function ConversationList({
           <button
             key={c.id}
             onClick={() => onSelect(c)}
-            className={`w-full text-left px-4 py-3.5 hover:bg-gray-50 transition-colors ${
+            className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
               activeId === c.id ? "bg-stone-50 border-l-2 border-gray-900" : ""
             }`}
             data-testid={`conversation-item-${c.id}`}
           >
             <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isDirect ? "bg-amber-50" : "bg-gray-100"}`}>
-                {isDirect ? <MessageCircle className="w-5 h-5 text-amber-600" /> : <Building2 className="w-5 h-5 text-gray-500" />}
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isDirect ? "bg-amber-50" : "bg-gray-100"}`}>
+                {isDirect ? <MessageCircle className="w-4 h-4 text-amber-600" /> : <Building2 className="w-4 h-4 text-gray-500" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`text-sm truncate ${c.unreadCount > 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
-                    {c.otherPartyName}
-                  </span>
-                  <span className="text-[11px] text-gray-400 flex-shrink-0">
-                    {c.latestMessage ? formatRelativeTime(c.latestMessage.createdAt) : ""}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1.5">
-                    <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0 rounded-full border ${
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`text-sm truncate ${c.unreadCount > 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
+                      {c.otherPartyName}
+                    </span>
+                    <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0 rounded-full border flex-shrink-0 ${
                       isDirect
                         ? "bg-amber-50 text-amber-600 border-amber-200"
                         : c.role === "host"
@@ -178,28 +174,27 @@ function ConversationList({
                     }`}>
                       {isDirect ? "Inquiry" : c.role === "host" ? "Hosting" : "Renting"}
                     </span>
-                    <span className="truncate">{c.spaceName}</span>
-                  </p>
-                <div className="flex items-center justify-between mt-1">
-                  <p className={`text-xs truncate max-w-[70%] ${c.unreadCount > 0 ? "text-gray-800 font-medium" : "text-gray-400"}`}>
+                  </div>
+                  <span className="text-[10px] text-gray-400 flex-shrink-0">
+                    {c.latestMessage ? formatRelativeTime(c.latestMessage.createdAt) : ""}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-400 truncate mt-0.5">{c.spaceName}</p>
+                <div className="flex items-center justify-between mt-1 gap-2">
+                  <p className={`text-xs truncate ${c.unreadCount > 0 ? "text-gray-700 font-medium" : "text-gray-400"}`}>
                     {getMessagePreview(c.latestMessage)}
                   </p>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {c.unreadCount > 0 && (
-                      <span className="w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] flex items-center justify-center font-medium" data-testid={`unread-badge-${c.id}`}>
+                      <span className="w-4.5 h-4.5 min-w-[18px] rounded-full bg-gray-900 text-white text-[9px] flex items-center justify-center font-bold" data-testid={`unread-badge-${c.id}`}>
                         {c.unreadCount > 9 ? "9+" : c.unreadCount}
                       </span>
                     )}
-                    {isDirect ? (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-amber-50 text-amber-700 border-amber-200">
-                        <MessageCircle className="w-3 h-3 mr-0.5" />
-                        Inquiry
-                      </Badge>
-                    ) : status && StatusIcon ? (
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${status.color}`}>
-                        <StatusIcon className="w-3 h-3 mr-0.5" />
+                    {isDirect ? null : status && StatusIcon ? (
+                      <span className={`text-[10px] font-medium flex items-center gap-0.5 ${status.color.includes("emerald") ? "text-emerald-600" : status.color.includes("blue") ? "text-blue-600" : status.color.includes("amber") ? "text-amber-600" : "text-gray-500"}`}>
+                        <StatusIcon className="w-3 h-3" />
                         {status.label}
-                      </Badge>
+                      </span>
                     ) : null}
                   </div>
                 </div>
