@@ -97,14 +97,20 @@ function formatRelativeTime(dateStr: string) {
 
 function getMessagePreview(msg: { message: string; messageType?: string; senderRole: string } | null): string {
   if (!msg) return "No messages yet";
-  if (msg.messageType === "system") return msg.message;
+  if (msg.messageType === "system") {
+    // Shorten common system messages for sidebar
+    if (msg.message.includes("Payment completed")) return "Booking confirmed";
+    if (msg.message.includes("cancelled")) return "Booking cancelled";
+    if (msg.message.includes("Refund")) return "Refund issued";
+    return msg.message.length > 30 ? msg.message.slice(0, 30) + "…" : msg.message;
+  }
   if (msg.messageType === "payment_request") {
     try {
       const data = JSON.parse(msg.message);
       return `Payment requested: $${(data.amount / 100).toFixed(2)}`;
     } catch { return "Payment requested"; }
   }
-  return msg.message.length > 60 ? msg.message.slice(0, 60) + "..." : msg.message;
+  return msg.message.length > 40 ? msg.message.slice(0, 40) + "…" : msg.message;
 }
 
 function ConversationList({
