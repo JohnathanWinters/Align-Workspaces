@@ -1733,7 +1733,7 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
-  const [spacesSubTab, setSpacesSubTab] = useState<"favorites" | "my-spaces" | "past" | undefined>(undefined);
+  const [spacesSubTab, setSpacesSubTab] = useState<"favorites" | "my-bookings" | "my-spaces" | "earnings" | undefined>(undefined);
   const [activeTab, setActiveTabState] = useState<"shoots" | "edits" | "messages" | "spaces" | "settings">(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
@@ -1778,6 +1778,20 @@ function PortalContent() {
     },
   });
 
+  const { data: mySpaces = [] } = useQuery<any[]>({
+    queryKey: ["/api/my-spaces"],
+    queryFn: async () => {
+      const res = await fetch("/api/my-spaces", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  // Role detection
+  const isPhotoClient = (shoots?.length > 0) || false;
+  const isSpaceHost = mySpaces.length > 0;
+  const isNewUser = !isPhotoClient && !isSpaceHost;
+
   // Smart default tab: user preference > auto-detect from data > shoots
   useEffect(() => {
     if (tabResolved) return;
@@ -1794,7 +1808,7 @@ function PortalContent() {
       }
       if (saved === "past-spaces") {
         setActiveTab("spaces");
-        setSpacesSubTab("past");
+        setSpacesSubTab("my-bookings");
         setTabResolved(true);
         return;
       }
@@ -1975,15 +1989,21 @@ function PortalContent() {
                 Welcome{user?.firstName ? `, ${user.firstName}` : ""}
               </h1>
               <p className="text-gray-500 text-sm">
-                Manage your photoshoots and photo edits
+                {isPhotoClient && isSpaceHost
+                  ? "Manage your sessions and spaces"
+                  : isSpaceHost
+                  ? "Manage your spaces and earnings"
+                  : isPhotoClient
+                  ? "Manage your photoshoots and photo edits"
+                  : "Your portal for sessions, spaces, and more"}
               </p>
             </div>
-            <Link href="/portrait-builder">
+            <Link href={isSpaceHost && !isPhotoClient ? "/workspaces" : "/portrait-builder"}>
               <Button
                 data-testid="button-design-shoot"
                 className="bg-[#1a1a1a] text-white hover:bg-black"
               >
-                Start Designing Your Shoot
+                {isSpaceHost && !isPhotoClient ? "Browse Spaces" : "Start Designing Your Shoot"}
               </Button>
             </Link>
           </div>
@@ -1992,42 +2012,46 @@ function PortalContent() {
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
             <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide" data-testid="portal-tabs">
-              <button
-                onClick={() => setActiveTab("shoots")}
-                data-testid="tab-my-shoots"
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "shoots"
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                <Camera className="w-4 h-4" />
-                Shoots
-                {activeTab === "shoots" && (
-                  <motion.div
-                    layoutId="portal-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                  />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("edits")}
-                data-testid="tab-my-edits"
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "edits"
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                <ImagePlus className="w-4 h-4" />
-                Edits
-                {activeTab === "edits" && (
-                  <motion.div
-                    layoutId="portal-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                  />
-                )}
-              </button>
+              {(isPhotoClient || isNewUser) && (
+                <button
+                  onClick={() => setActiveTab("shoots")}
+                  data-testid="tab-my-shoots"
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                    activeTab === "shoots"
+                      ? "text-gray-900"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  <Camera className="w-4 h-4" />
+                  Shoots
+                  {activeTab === "shoots" && (
+                    <motion.div
+                      layoutId="portal-tab-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                    />
+                  )}
+                </button>
+              )}
+              {(isPhotoClient || isNewUser) && (
+                <button
+                  onClick={() => setActiveTab("edits")}
+                  data-testid="tab-my-edits"
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                    activeTab === "edits"
+                      ? "text-gray-900"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  Edits
+                  {activeTab === "edits" && (
+                    <motion.div
+                      layoutId="portal-tab-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                    />
+                  )}
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab("messages")}
                 data-testid="tab-messages"

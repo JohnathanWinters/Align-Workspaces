@@ -27,7 +27,6 @@ import {
   CreditCard,
   ShieldCheck,
   Heart,
-  Clock,
   CalendarDays,
   Share2,
   Link2,
@@ -863,7 +862,7 @@ function FavoritesTab() {
   );
 }
 
-function PastSpacesTab() {
+function MyBookingsTab() {
   const { data: bookingsData, isLoading } = useQuery<{ guest: any[]; host: any[] }>({
     queryKey: ["/api/space-bookings"],
     queryFn: async () => {
@@ -893,22 +892,30 @@ function PastSpacesTab() {
   }
 
   const now = new Date();
+  const approvedStatuses = ["confirmed", "completed", "approved"];
+
+  const upcomingBookings = bookings.filter((b: any) => {
+    if (!b.bookingDate) return false;
+    const bookingDate = new Date(b.bookingDate);
+    return bookingDate >= now && b.status === "approved";
+  });
+
   const pastBookings = bookings.filter((b: any) => {
     if (!b.bookingDate) return false;
     const bookingDate = new Date(b.bookingDate);
-    return bookingDate < now && (b.status === "confirmed" || b.status === "completed" || b.status === "approved");
+    return bookingDate < now && approvedStatuses.includes(b.status);
   });
 
-  if (pastBookings.length === 0) {
+  if (upcomingBookings.length === 0 && pastBookings.length === 0) {
     return (
-      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-past-spaces">
+      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-my-bookings">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <Clock className="w-7 h-7 text-gray-400" />
+            <CalendarDays className="w-7 h-7 text-gray-400" />
           </div>
-          <h3 className="font-serif text-xl text-gray-900 mb-2">No past bookings</h3>
+          <h3 className="font-serif text-xl text-gray-900 mb-2">No bookings yet</h3>
           <p className="text-gray-500 text-sm max-w-sm">
-            Spaces you've booked will appear here after your session.
+            Spaces you've booked will appear here.
           </p>
         </CardContent>
       </Card>
@@ -917,47 +924,64 @@ function PastSpacesTab() {
 
   const spaceMap = new Map(allSpaces.map(s => [s.id, s]));
 
+  const renderBookingCard = (booking: any, variant: "upcoming" | "past") => {
+    const space = spaceMap.get(booking.spaceId);
+    return (
+      <Card key={booking.id} className="overflow-hidden border border-gray-100" data-testid={`card-${variant}-booking-${booking.id}`}>
+        <div className="flex gap-4 p-4">
+          <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+            {space && (space.imageUrls as string[])?.[0] ? (
+              <img src={(space.imageUrls as string[])[0]} alt={space?.name || "Space"} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium text-gray-900 text-sm truncate">{space?.name || "Space"}</h4>
+            <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+              <CalendarDays className="w-3 h-3" />
+              {booking.bookingDate} · {booking.bookingStartTime} · {booking.bookingHours}hr
+            </p>
+            {(booking.totalGuestCharged || booking.paymentAmount) && (
+              <p className="text-xs text-gray-500 mt-1">${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid</p>
+            )}
+          </div>
+          <div className="flex flex-col items-end gap-1.5">
+            {variant === "upcoming" ? (
+              <Badge className="text-[10px] bg-blue-50 text-blue-700">Upcoming</Badge>
+            ) : (
+              <Badge className="text-[10px] bg-stone-100 text-stone-600">Completed</Badge>
+            )}
+            {booking.feeTier === "repeat_guest" && (
+              <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty discount
+              </Badge>
+            )}
+            {booking.feeTier === "host_referred" && (
+              <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                Referred
+              </Badge>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   return (
-    <div className="grid gap-3">
-      {pastBookings.map((booking: any) => {
-        const space = spaceMap.get(booking.spaceId);
-        return (
-          <Card key={booking.id} className="overflow-hidden border border-gray-100" data-testid={`card-past-booking-${booking.id}`}>
-            <div className="flex gap-4 p-4">
-              <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                {space && (space.imageUrls as string[])?.[0] ? (
-                  <img src={(space.imageUrls as string[])[0]} alt={space?.name || "Space"} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-gray-900 text-sm truncate">{space?.name || "Space"}</h4>
-                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                  <CalendarDays className="w-3 h-3" />
-                  {booking.bookingDate} · {booking.bookingStartTime} · {booking.bookingHours}hr
-                </p>
-                {(booking.totalGuestCharged || booking.paymentAmount) && (
-                  <p className="text-xs text-gray-500 mt-1">${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid</p>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-1.5">
-                <Badge className="text-[10px] bg-stone-100 text-stone-600">Completed</Badge>
-                {booking.feeTier === "repeat_guest" && (
-                  <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
-                    <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty discount
-                  </Badge>
-                )}
-                {booking.feeTier === "host_referred" && (
-                  <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                    Referred
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </Card>
-        );
-      })}
+    <div className="space-y-6">
+      {upcomingBookings.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Upcoming</h3>
+          {upcomingBookings.map((booking: any) => renderBookingCard(booking, "upcoming"))}
+        </div>
+      )}
+      {pastBookings.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Past</h3>
+          {pastBookings.map((booking: any) => renderBookingCard(booking, "past"))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1052,7 +1076,10 @@ interface ReferralLink {
 }
 
 function EarningsTab() {
-  const { data, isLoading } = useQuery<{
+  const { toast } = useToast();
+
+  // Earnings data
+  const { data: earningsData, isLoading: earningsLoading } = useQuery<{
     hasSpaces: boolean;
     allTime: { totalEarnings: number; totalHostFees: number; bookingCount: number; avgFeePercent: string };
     thisMonth: { earnings: number; hostFees: number; bookingCount: number; savedVsPeerspace: number };
@@ -1066,86 +1093,8 @@ function EarningsTab() {
     },
   });
 
-  if (isLoading) {
-    return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
-  }
-
-  if (!data?.hasSpaces || !data.allTime) {
-    return (
-      <div className="text-center py-12 text-stone-500">
-        <DollarSign className="w-8 h-8 mx-auto mb-3 text-stone-300" />
-        <p className="text-sm font-medium mb-1">No earnings yet</p>
-        <p className="text-xs text-stone-400">Earnings will appear here once guests book your spaces.</p>
-      </div>
-    );
-  }
-
-  const tierLabels: Record<string, string> = { standard: "Standard", referral: "Referred", repeat: "Repeat guest" };
-
-  return (
-    <div className="space-y-5">
-      {/* This month callout */}
-      {data.thisMonth.savedVsPeerspace > 0 && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-          <p className="text-sm text-emerald-800">
-            You saved <strong>${(data.thisMonth.savedVsPeerspace / 100).toFixed(2)}</strong> vs Peerspace's 20% fee this month
-          </p>
-        </div>
-      )}
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">This Month</p>
-          <p className="text-2xl font-semibold text-stone-900 mt-1">${(data.thisMonth.earnings / 100).toFixed(2)}</p>
-          <p className="text-xs text-stone-400 mt-0.5">{data.thisMonth.bookingCount} booking{data.thisMonth.bookingCount !== 1 ? "s" : ""}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">All Time</p>
-          <p className="text-2xl font-semibold text-stone-900 mt-1">${(data.allTime.totalEarnings / 100).toFixed(2)}</p>
-          <p className="text-xs text-stone-400 mt-0.5">{data.allTime.bookingCount} booking{data.allTime.bookingCount !== 1 ? "s" : ""}</p>
-        </div>
-      </div>
-
-      {/* Tier breakdown */}
-      <div className="bg-white rounded-xl border border-stone-200 p-4">
-        <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-3">Bookings by Type</p>
-        <div className="space-y-2.5">
-          {Object.entries(data.tierBreakdown).filter(([, count]) => count > 0).map(([tier, count]) => {
-            const total = data.allTime.bookingCount || 1;
-            const pct = Math.round((count / total) * 100);
-            return (
-              <div key={tier}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-stone-600">{tierLabels[tier] || tier}</span>
-                  <span className="text-stone-800 font-medium">{count} ({pct}%)</span>
-                </div>
-                <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${pct}%`,
-                      backgroundColor: tier === "referral" ? "#c4956a" : tier === "repeat" ? "#f59e0b" : "#78716c",
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Avg fee */}
-      <div className="flex items-center justify-between bg-stone-50 rounded-lg px-4 py-3">
-        <span className="text-sm text-stone-600">Average service fee</span>
-        <span className="text-sm font-semibold text-stone-800">{data.allTime.avgFeePercent}%</span>
-      </div>
-    </div>
-  );
-}
-
-function PayoutsTab() {
-  const { data, isLoading } = useQuery<{
+  // Payouts data
+  const { data: payoutsData, isLoading: payoutsLoading } = useQuery<{
     payouts: Array<{
       id: string; spaceName: string; bookingDate: string; bookingHours: number;
       bookingAmount: number; hostFeeAmount: number; feeTier: string;
@@ -1161,77 +1110,7 @@ function PayoutsTab() {
     },
   });
 
-  if (isLoading) {
-    return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
-  }
-
-  if (!data?.payouts?.length) {
-    return (
-      <div className="text-center py-12 text-stone-500">
-        <CreditCard className="w-8 h-8 mx-auto mb-3 text-stone-300" />
-        <p className="text-sm font-medium mb-1">No payouts yet</p>
-        <p className="text-xs text-stone-400">Payouts will appear here after your bookings are completed.</p>
-      </div>
-    );
-  }
-
-  const statusStyles: Record<string, string> = {
-    paid: "bg-emerald-50 text-emerald-700",
-    processing: "bg-blue-50 text-blue-700",
-    pending: "bg-amber-50 text-amber-700",
-    held: "bg-red-50 text-red-700",
-  };
-
-  return (
-    <div className="space-y-5">
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
-          <p className="text-lg font-semibold text-stone-900">${(data.summary.totalPaid / 100).toFixed(0)}</p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider">Paid Out</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
-          <p className="text-lg font-semibold text-stone-900">${(data.summary.totalPending / 100).toFixed(0)}</p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider">Pending</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
-          <p className="text-lg font-semibold text-emerald-700">${(data.summary.savedVsPeerspace / 100).toFixed(0)}</p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider">Saved</p>
-        </div>
-      </div>
-
-      {/* Payout list */}
-      <div className="space-y-2">
-        {data.payouts.map((p) => (
-          <div key={p.id} className="bg-white rounded-xl border border-stone-200 p-4 flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-stone-800 truncate">{p.spaceName}</p>
-              <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
-                <CalendarDays className="w-3 h-3" />
-                {p.bookingDate} · {p.bookingHours}hr
-              </p>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-sm font-semibold text-stone-900">${(p.payoutAmount / 100).toFixed(2)}</p>
-              <div className="flex items-center gap-1.5 justify-end mt-0.5">
-                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusStyles[p.payoutStatus] || "bg-stone-100 text-stone-600"}`}>
-                  {p.payoutStatus === "paid" ? "Paid" : p.payoutStatus === "processing" ? "Processing" : p.payoutStatus === "held" ? "On hold" : "Pending"}
-                </span>
-                {p.payoutStatus === "paid" && (
-                  <span className="text-[9px] text-emerald-600 font-medium">Fast pay</span>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ReferralLinksTab() {
-  const { toast } = useToast();
-
+  // Referral links data
   const { data: mySpaces = [] } = useQuery<Space[]>({
     queryKey: ["/api/my-spaces"],
     queryFn: async () => {
@@ -1241,7 +1120,7 @@ function ReferralLinksTab() {
     },
   });
 
-  const { data: links = [], isLoading } = useQuery<ReferralLink[]>({
+  const { data: links = [], isLoading: linksLoading } = useQuery<ReferralLink[]>({
     queryKey: ["/api/host/referral-links"],
     queryFn: async () => {
       const res = await fetch("/api/host/referral-links", { credentials: "include" });
@@ -1296,177 +1175,305 @@ function ReferralLinksTab() {
     }
   };
 
-  const totalClicks = links.reduce((sum, l) => sum + (l.clickCount || 0), 0);
-  const totalBookings = links.reduce((sum, l) => sum + (l.bookingCount || 0), 0);
-  const totalRevenue = links.reduce((sum, l) => sum + (l.totalRevenueGenerated || 0), 0);
-  const totalSaved = links.reduce((sum, l) => sum + (l.savedAmount || 0), 0);
+  if (earningsLoading || payoutsLoading) {
+    return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+  }
 
-  const hasMasterLink = links.some(l => !l.spaceId);
-
-  if (mySpaces.length === 0 && !isLoading) {
+  if (!earningsData?.hasSpaces || !earningsData.allTime) {
     return (
       <div className="text-center py-12 text-stone-500">
-        <Share2 className="w-8 h-8 mx-auto mb-3 text-stone-300" />
-        <p className="text-sm font-medium mb-1">No spaces to share yet</p>
-        <p className="text-xs text-stone-400">Add a space first, then create referral links to earn lower fees.</p>
+        <DollarSign className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+        <p className="text-sm font-medium mb-1">No earnings yet</p>
+        <p className="text-xs text-stone-400">Earnings will appear here once guests book your spaces.</p>
       </div>
     );
   }
 
+  const tierLabels: Record<string, string> = { standard: "Standard", referral: "Referred", repeat: "Repeat guest" };
+
+  const payoutStatusStyles: Record<string, string> = {
+    paid: "bg-emerald-50 text-emerald-700",
+    processing: "bg-blue-50 text-blue-700",
+    pending: "bg-amber-50 text-amber-700",
+    held: "bg-red-50 text-red-700",
+  };
+
+  const totalClicks = links.reduce((sum, l) => sum + (l.clickCount || 0), 0);
+  const totalBookings = links.reduce((sum, l) => sum + (l.bookingCount || 0), 0);
+  const totalRevenue = links.reduce((sum, l) => sum + (l.totalRevenueGenerated || 0), 0);
+  const totalSaved = links.reduce((sum, l) => sum + (l.savedAmount || 0), 0);
+  const hasMasterLink = links.some(l => !l.spaceId);
+
   return (
-    <div className="space-y-6">
-      {/* Stats summary */}
-      {links.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: "Link clicks", value: totalClicks.toLocaleString() },
-            { label: "Bookings", value: totalBookings.toLocaleString() },
-            { label: "Revenue", value: `$${(totalRevenue / 100).toFixed(0)}` },
-            { label: "Fee savings", value: `$${(totalSaved / 100).toFixed(0)}` },
-          ].map(({ label, value }) => (
-            <div key={label} className="bg-stone-50 rounded-lg p-3 text-center">
-              <p className="text-lg font-semibold text-stone-900">{value}</p>
-              <p className="text-[10px] text-stone-400 uppercase tracking-wider">{label}</p>
-            </div>
-          ))}
+    <div className="space-y-5">
+      {/* 1. Savings callout */}
+      {earningsData.thisMonth.savedVsPeerspace > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-emerald-800">
+            You saved <strong>${(earningsData.thisMonth.savedVsPeerspace / 100).toFixed(2)}</strong> vs Peerspace's 20% fee this month
+          </p>
         </div>
       )}
 
-      {totalSaved > 0 && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800">
-          Your referral bookings saved you <strong>${(totalSaved / 100).toFixed(2)}</strong> in service fees
+      {/* 2. Summary cards - merged earnings + payouts */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">This Month</p>
+          <p className="text-2xl font-semibold text-stone-900 mt-1">${(earningsData.thisMonth.earnings / 100).toFixed(2)}</p>
+          <p className="text-xs text-stone-400 mt-0.5">{earningsData.thisMonth.bookingCount} booking{earningsData.thisMonth.bookingCount !== 1 ? "s" : ""}</p>
         </div>
-      )}
-
-      {/* Generate links */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Create referral links</p>
-        <div className="space-y-2">
-          {!hasMasterLink && (
-            <button
-              onClick={() => createMutation.mutate(null)}
-              disabled={createMutation.isPending}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] hover:bg-stone-50 transition-all text-left"
-            >
-              <div className="w-8 h-8 rounded-full bg-[#c4956a]/10 flex items-center justify-center flex-shrink-0">
-                <Link2 className="w-4 h-4 text-[#c4956a]" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-stone-800">Master referral link</p>
-                <p className="text-xs text-stone-400">One link for all your listings — lower service fee on referred bookings</p>
-              </div>
-            </button>
-          )}
-          {mySpaces
-            .filter(space => !links.some(l => l.spaceId === space.id))
-            .map(space => (
-              <button
-                key={space.id}
-                onClick={() => createMutation.mutate(space.id)}
-                disabled={createMutation.isPending}
-                className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] hover:bg-stone-50 transition-all text-left"
-              >
-                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {space.imageUrls?.[0] ? (
-                    <img src={space.imageUrls[0]} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <Building2 className="w-4 h-4 text-stone-400" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-stone-800">{space.name}</p>
-                  <p className="text-xs text-stone-400">Create link for this space</p>
-                </div>
-              </button>
-            ))}
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium">All Time</p>
+          <p className="text-2xl font-semibold text-stone-900 mt-1">${(earningsData.allTime.totalEarnings / 100).toFixed(2)}</p>
+          <p className="text-xs text-stone-400 mt-0.5">{earningsData.allTime.bookingCount} booking{earningsData.allTime.bookingCount !== 1 ? "s" : ""}</p>
         </div>
       </div>
 
-      {/* Existing links */}
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+      {payoutsData?.summary && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+            <p className="text-lg font-semibold text-stone-900">${(payoutsData.summary.totalPaid / 100).toFixed(0)}</p>
+            <p className="text-[10px] text-stone-400 uppercase tracking-wider">Paid Out</p>
+          </div>
+          <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+            <p className="text-lg font-semibold text-stone-900">${(payoutsData.summary.totalPending / 100).toFixed(0)}</p>
+            <p className="text-[10px] text-stone-400 uppercase tracking-wider">Pending</p>
+          </div>
+          <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+            <p className="text-lg font-semibold text-emerald-700">${(payoutsData.summary.savedVsPeerspace / 100).toFixed(0)}</p>
+            <p className="text-[10px] text-stone-400 uppercase tracking-wider">Saved</p>
+          </div>
         </div>
-      ) : links.length > 0 ? (
-        <div className="space-y-3">
-          <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Your referral links</p>
-          {links.map((link) => {
-            const url = link.spaceSlug
-              ? `${window.location.origin}/spaces/${link.spaceSlug}?ref=${link.uniqueCode}`
-              : `${window.location.origin}/workspaces?ref=${link.uniqueCode}`;
+      )}
 
+      {/* 3. Tier breakdown */}
+      <div className="bg-white rounded-xl border border-stone-200 p-4">
+        <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-3">Bookings by Type</p>
+        <div className="space-y-2.5">
+          {Object.entries(earningsData.tierBreakdown).filter(([, count]) => count > 0).map(([tier, count]) => {
+            const total = earningsData.allTime.bookingCount || 1;
+            const pct = Math.round((count / total) * 100);
             return (
-              <div key={link.id} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Link2 className="w-4 h-4 text-[#c4956a]" />
-                    <span className="text-sm font-medium text-stone-800">{link.spaceName}</span>
-                  </div>
-                  <button
-                    onClick={() => deleteMutation.mutate(link.id)}
-                    className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+              <div key={tier}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-stone-600">{tierLabels[tier] || tier}</span>
+                  <span className="text-stone-800 font-medium">{count} ({pct}%)</span>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    readOnly
-                    value={url}
-                    className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-stone-500 truncate"
+                <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: tier === "referral" ? "#c4956a" : tier === "repeat" ? "#f59e0b" : "#78716c",
+                    }}
                   />
-                  <button
-                    onClick={() => copyLink(link.uniqueCode, link.spaceSlug)}
-                    className="p-2 rounded-lg bg-stone-100 hover:bg-stone-200 transition-colors"
-                    title="Copy link"
-                  >
-                    <Copy className="w-3.5 h-3.5 text-stone-600" />
-                  </button>
-                  <button
-                    onClick={() => shareLink(link.uniqueCode, link.spaceSlug, link.spaceName)}
-                    className="p-2 rounded-lg bg-[#c4956a]/10 hover:bg-[#c4956a]/20 transition-colors"
-                    title="Share"
-                  >
-                    <Share2 className="w-3.5 h-3.5 text-[#c4956a]" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-4 text-[11px] text-stone-400">
-                  <span className="flex items-center gap-1">
-                    <BarChart3 className="w-3 h-3" /> {link.clickCount || 0} clicks
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <CalendarDays className="w-3 h-3" /> {link.bookingCount || 0} bookings
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <DollarSign className="w-3 h-3" /> ${((link.totalRevenueGenerated || 0) / 100).toFixed(0)} revenue
-                  </span>
                 </div>
               </div>
             );
           })}
         </div>
-      ) : null}
+      </div>
 
-      {/* How it works */}
-      <div className="bg-stone-50 rounded-lg p-4 space-y-2">
-        <p className="text-xs font-semibold text-stone-600">How referral links work</p>
-        <ul className="text-xs text-stone-500 space-y-1.5">
-          <li>Share your link with clients — when they book through it, your service fee is lower</li>
-          <li>Your clients pay the same fee either way — the savings are yours</li>
-          <li>Referral credit lasts 30 days after a client clicks your link</li>
-          <li>If a client clicks your link but books a different space from you, the savings still apply</li>
-        </ul>
+      {/* Avg fee */}
+      <div className="flex items-center justify-between bg-stone-50 rounded-lg px-4 py-3">
+        <span className="text-sm text-stone-600">Average service fee</span>
+        <span className="text-sm font-semibold text-stone-800">{earningsData.allTime.avgFeePercent}%</span>
+      </div>
+
+      {/* 4. Payout history list */}
+      {payoutsData?.payouts && payoutsData.payouts.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider pt-2">Payout History</h3>
+          <div className="space-y-2">
+            {payoutsData.payouts.map((p) => (
+              <div key={p.id} className="bg-white rounded-xl border border-stone-200 p-4 flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-stone-800 truncate">{p.spaceName}</p>
+                  <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
+                    <CalendarDays className="w-3 h-3" />
+                    {p.bookingDate} · {p.bookingHours}hr
+                  </p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-semibold text-stone-900">${(p.payoutAmount / 100).toFixed(2)}</p>
+                  <div className="flex items-center gap-1.5 justify-end mt-0.5">
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${payoutStatusStyles[p.payoutStatus] || "bg-stone-100 text-stone-600"}`}>
+                      {p.payoutStatus === "paid" ? "Paid" : p.payoutStatus === "processing" ? "Processing" : p.payoutStatus === "held" ? "On hold" : "Pending"}
+                    </span>
+                    {p.payoutStatus === "paid" && (
+                      <span className="text-[9px] text-emerald-600 font-medium">Fast pay</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 5. Referral links section */}
+      <div className="border-t border-stone-200 pt-5 mt-2 space-y-6">
+        <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Referral Links</h3>
+
+        {/* Referral stats summary */}
+        {links.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Link clicks", value: totalClicks.toLocaleString() },
+              { label: "Bookings", value: totalBookings.toLocaleString() },
+              { label: "Revenue", value: `$${(totalRevenue / 100).toFixed(0)}` },
+              { label: "Fee savings", value: `$${(totalSaved / 100).toFixed(0)}` },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-stone-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-semibold text-stone-900">{value}</p>
+                <p className="text-[10px] text-stone-400 uppercase tracking-wider">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {totalSaved > 0 && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 text-sm text-emerald-800">
+            Your referral bookings saved you <strong>${(totalSaved / 100).toFixed(2)}</strong> in service fees
+          </div>
+        )}
+
+        {/* Generate links */}
+        {mySpaces.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Create referral links</p>
+            <div className="space-y-2">
+              {!hasMasterLink && (
+                <button
+                  onClick={() => createMutation.mutate(null)}
+                  disabled={createMutation.isPending}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] hover:bg-stone-50 transition-all text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#c4956a]/10 flex items-center justify-center flex-shrink-0">
+                    <Link2 className="w-4 h-4 text-[#c4956a]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-stone-800">Master referral link</p>
+                    <p className="text-xs text-stone-400">One link for all your listings — lower service fee on referred bookings</p>
+                  </div>
+                </button>
+              )}
+              {mySpaces
+                .filter(space => !links.some(l => l.spaceId === space.id))
+                .map(space => (
+                  <button
+                    key={space.id}
+                    onClick={() => createMutation.mutate(space.id)}
+                    disabled={createMutation.isPending}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] hover:bg-stone-50 transition-all text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {space.imageUrls?.[0] ? (
+                        <img src={space.imageUrls[0]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <Building2 className="w-4 h-4 text-stone-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-stone-800">{space.name}</p>
+                      <p className="text-xs text-stone-400">Create link for this space</p>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Existing links */}
+        {linksLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+          </div>
+        ) : links.length > 0 ? (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-stone-500 uppercase tracking-wider">Your referral links</p>
+            {links.map((link) => {
+              const url = link.spaceSlug
+                ? `${window.location.origin}/spaces/${link.spaceSlug}?ref=${link.uniqueCode}`
+                : `${window.location.origin}/workspaces?ref=${link.uniqueCode}`;
+
+              return (
+                <div key={link.id} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-[#c4956a]" />
+                      <span className="text-sm font-medium text-stone-800">{link.spaceName}</span>
+                    </div>
+                    <button
+                      onClick={() => deleteMutation.mutate(link.id)}
+                      className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={url}
+                      className="flex-1 text-xs bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-stone-500 truncate"
+                    />
+                    <button
+                      onClick={() => copyLink(link.uniqueCode, link.spaceSlug)}
+                      className="p-2 rounded-lg bg-stone-100 hover:bg-stone-200 transition-colors"
+                      title="Copy link"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-stone-600" />
+                    </button>
+                    <button
+                      onClick={() => shareLink(link.uniqueCode, link.spaceSlug, link.spaceName)}
+                      className="p-2 rounded-lg bg-[#c4956a]/10 hover:bg-[#c4956a]/20 transition-colors"
+                      title="Share"
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-[#c4956a]" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[11px] text-stone-400">
+                    <span className="flex items-center gap-1">
+                      <BarChart3 className="w-3 h-3" /> {link.clickCount || 0} clicks
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="w-3 h-3" /> {link.bookingCount || 0} bookings
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <DollarSign className="w-3 h-3" /> ${((link.totalRevenueGenerated || 0) / 100).toFixed(0)} revenue
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* How it works */}
+        <div className="bg-stone-50 rounded-lg p-4 space-y-2">
+          <p className="text-xs font-semibold text-stone-600">How referral links work</p>
+          <ul className="text-xs text-stone-500 space-y-1.5">
+            <li>Share your link with clients — when they book through it, your service fee is lower</li>
+            <li>Your clients pay the same fee either way — the savings are yours</li>
+            <li>Referral credit lasts 30 days after a client clicks your link</li>
+            <li>If a client clicks your link but books a different space from you, the savings still apply</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
 }
 
-type SpacesTabKey = "favorites" | "my-spaces" | "earnings" | "payouts" | "referrals" | "past";
+type SpacesTabKey = "favorites" | "my-bookings" | "my-spaces" | "earnings";
 
 export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: SpacesTabKey }) {
-  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(initialTab || "favorites");
+  // Handle legacy tab values
+  const resolvedInitialTab: SpacesTabKey | undefined = initialTab === "past" as any ? "my-bookings"
+    : initialTab === "payouts" as any || initialTab === "referrals" as any ? "earnings"
+    : initialTab;
+  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "favorites");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
 
   // Fetch counts to auto-detect best sub-tab
@@ -1504,13 +1511,13 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
     const hasFavorites = favorites.length > 0;
     const hasMySpaces = mySpaces.length > 0;
-    const pastBookings = [...(bookingsData?.guest || []), ...(bookingsData?.host || [])];
-    const hasPast = pastBookings.length > 0;
+    const allBookings = [...(bookingsData?.guest || []), ...(bookingsData?.host || [])];
+    const hasBookings = allBookings.length > 0;
 
     const tabs = [
       hasFavorites && { key: "favorites" as const, time: 0 },
+      hasBookings && { key: "my-bookings" as const, time: Math.max(...allBookings.map((b: any) => new Date(b.createdAt || 0).getTime())) },
       hasMySpaces && { key: "my-spaces" as const, time: Math.max(...mySpaces.map(s => new Date(s.createdAt || 0).getTime())) },
-      hasPast && { key: "past" as const, time: Math.max(...pastBookings.map((b: any) => new Date(b.createdAt || 0).getTime())) },
     ].filter(Boolean) as { key: SpacesTabKey; time: number }[];
 
     if (tabs.length === 1) {
@@ -1528,13 +1535,9 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
   const tabs = [
     { key: "favorites" as const, label: "Favorites", icon: Heart },
+    { key: "my-bookings" as const, label: "My Bookings", icon: CalendarDays },
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
-    ...(isHost ? [
-      { key: "earnings" as const, label: "Earnings", icon: DollarSign },
-      { key: "payouts" as const, label: "Payouts", icon: CreditCard },
-      { key: "referrals" as const, label: "Referrals", icon: Share2 },
-    ] : []),
-    { key: "past" as const, label: "Past", icon: Clock },
+    ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
   ];
 
   const { data: loyaltyData } = useQuery<{
@@ -1589,11 +1592,9 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
       </div>
 
       {spacesTab === "favorites" && <FavoritesTab />}
+      {spacesTab === "my-bookings" && <MyBookingsTab />}
       {spacesTab === "my-spaces" && <MySpacesTab />}
       {spacesTab === "earnings" && <EarningsTab />}
-      {spacesTab === "payouts" && <PayoutsTab />}
-      {spacesTab === "referrals" && <ReferralLinksTab />}
-      {spacesTab === "past" && <PastSpacesTab />}
     </div>
   );
 }
