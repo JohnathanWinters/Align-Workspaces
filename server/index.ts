@@ -105,14 +105,25 @@ app.use((req, res, next) => {
 // Stripe webhook — uses rawBody captured by express.json verify callback
 app.post("/api/stripe/webhook", async (req, res) => {
   const signature = req.headers["stripe-signature"];
-  if (!signature || !req.rawBody) {
-    return res.status(400).json({ message: "Missing signature or body" });
+  const rawBody = req.rawBody;
+
+  if (!signature) {
+    console.error("Webhook: missing stripe-signature header");
+    return res.status(400).json({ message: "Missing signature" });
   }
+  if (!rawBody) {
+    console.error("Webhook: missing rawBody — express.json verify may not be capturing it");
+    return res.status(400).json({ message: "Missing body" });
+  }
+
+  // Ensure rawBody is a Buffer
+  const payload = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(rawBody as any);
+
   try {
-    await WebhookHandlers.processWebhook(req.rawBody as Buffer, signature as string);
+    await WebhookHandlers.processWebhook(payload, signature as string);
     res.json({ received: true });
   } catch (err: any) {
-    console.error("Webhook error:", err.message);
+    console.error("Webhook processing error:", err.message);
     res.status(400).json({ message: err.message });
   }
 });

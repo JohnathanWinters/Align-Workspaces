@@ -130,7 +130,8 @@ export class WebhookHandlers {
         }
       }
     } catch (err) {
-      console.log("Custom webhook processing skipped (signature verification or non-token event):", (err as Error).message);
+      console.error("WEBHOOK HANDLER ERROR:", (err as Error).message);
+      throw err; // Re-throw so the route handler can return 400
     }
 
   }
