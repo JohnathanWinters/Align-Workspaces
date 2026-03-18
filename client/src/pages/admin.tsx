@@ -56,6 +56,13 @@ import {
   Instagram,
   Globe,
   ChevronDown,
+  Menu,
+  LayoutDashboard,
+  ArrowUpDown,
+  Bug,
+  Eye,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -6193,16 +6200,109 @@ function AdminDashboard({ token }: { token: string }) {
   const [deleteError, setDeleteError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [clientSort, setClientSort] = useState<"name" | "shoots" | "recent">("name");
+  const [clientFilter, setClientFilter] = useState<"all" | "has-shoots" | "no-shoots">("all");
+  const [clientPage, setClientPage] = useState(1);
+  const CLIENTS_PER_PAGE = 25;
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugPreviewRole, setDebugPreviewRole] = useState<"new" | "photo" | "host" | "both">("new");
+  const [debugPreviewOpen, setDebugPreviewOpen] = useState(false);
+
+  const sidebarNav = useMemo(() => [
+    {
+      label: "CRM",
+      items: [
+        { id: "clients" as const, label: "Clients", icon: Users, count: users.length },
+        { id: "pipeline" as const, label: "Book of Business", icon: FileSpreadsheet },
+      ],
+    },
+    {
+      label: "Content",
+      items: [
+        { id: "portfolio" as const, label: "Portfolio", icon: Images },
+        { id: "featured" as const, label: "Featured", icon: Star },
+        { id: "nominations" as const, label: "Nominations", icon: Heart },
+      ],
+    },
+    {
+      label: "Operations",
+      items: [
+        { id: "spaces" as const, label: "Spaces", icon: Building2 },
+        { id: "employees" as const, label: "Team", icon: Users },
+      ],
+    },
+    {
+      label: "Finance",
+      items: [
+        { id: "revenue" as const, label: "Revenue", icon: Coins },
+        { id: "tax" as const, label: "Tax Report", icon: Receipt },
+      ],
+    },
+    {
+      label: "Insights",
+      items: [
+        { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
+      ],
+    },
+  ], [users.length]);
+
+  // Map sub-views to their parent sidebar item for active highlighting
+  const activeNavId = useMemo(() => {
+    if (["create", "edit", "gallery", "tokens"].includes(view)) return "clients";
+    return view;
+  }, [view]);
 
   const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      const email = (u.email || "").toLowerCase();
-      const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
-      return email.includes(q) || name.includes(q);
+    let result = users.filter((u) => {
+      // Search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+        if (!email.includes(q) && !name.includes(q)) return false;
+      }
+      // Quick filter
+      if (clientFilter === "has-shoots") {
+        return shoots.some((s) => s.userId === u.id);
+      }
+      if (clientFilter === "no-shoots") {
+        return !shoots.some((s) => s.userId === u.id);
+      }
+      return true;
     });
-  }, [users, searchQuery]);
+
+    // Sort
+    result.sort((a, b) => {
+      if (clientSort === "name") {
+        const nameA = `${a.firstName || ""} ${a.lastName || ""}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ""} ${b.lastName || ""}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      if (clientSort === "shoots") {
+        const countA = shoots.filter((s) => s.userId === a.id).length;
+        const countB = shoots.filter((s) => s.userId === b.id).length;
+        return countB - countA;
+      }
+      // recent: sort by most recent shoot date
+      const latestA = shoots.filter((s) => s.userId === a.id).sort((x, y) => (y.shootDate || "").localeCompare(x.shootDate || ""))[0]?.shootDate || "";
+      const latestB = shoots.filter((s) => s.userId === b.id).sort((x, y) => (y.shootDate || "").localeCompare(x.shootDate || ""))[0]?.shootDate || "";
+      return latestB.localeCompare(latestA);
+    });
+
+    return result;
+  }, [users, searchQuery, clientFilter, clientSort, shoots]);
+
+  const totalClientPages = Math.max(1, Math.ceil(filteredUsers.length / CLIENTS_PER_PAGE));
+  const paginatedUsers = useMemo(() => {
+    const start = (clientPage - 1) * CLIENTS_PER_PAGE;
+    return filteredUsers.slice(start, start + CLIENTS_PER_PAGE);
+  }, [filteredUsers, clientPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setClientPage(1);
+  }, [searchQuery, clientFilter, clientSort]);
 
   useEffect(() => {
     if (expandedClient && !filteredUsers.some(u => u.id === expandedClient)) {
@@ -6406,741 +6506,1087 @@ function AdminDashboard({ token }: { token: string }) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
 
-  if (view === "gallery" && galleryShoot) {
-    return (
-      <GalleryManager
-        shootId={galleryShoot.id}
-        shootTitle={galleryShoot.title}
-        token={token}
-        onBack={() => { setView("clients"); setGalleryShoot(null); }}
-      />
-    );
-  }
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-full min-h-[60vh]">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        </div>
+      );
+    }
 
-  if (view === "tokens" && selectedTokenUser) {
-    const name = `${selectedTokenUser.firstName || ""} ${selectedTokenUser.lastName || ""}`.trim() || selectedTokenUser.email || "Client";
-    return (
-      <TokenManager
-        userId={selectedTokenUser.id}
-        userName={name}
-        token={token}
-        onBack={() => { setView("clients"); setSelectedTokenUser(null); loadData(); }}
-      />
-    );
-  }
+    if (view === "gallery" && galleryShoot) {
+      return (
+        <GalleryManager
+          shootId={galleryShoot.id}
+          shootTitle={galleryShoot.title}
+          token={token}
+          onBack={() => { setView("clients"); setGalleryShoot(null); }}
+        />
+      );
+    }
 
-  if (view === "employees") {
-    return <EmployeeManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "tokens" && selectedTokenUser) {
+      const name = `${selectedTokenUser.firstName || ""} ${selectedTokenUser.lastName || ""}`.trim() || selectedTokenUser.email || "Client";
+      return (
+        <TokenManager
+          userId={selectedTokenUser.id}
+          userName={name}
+          token={token}
+          onBack={() => { setView("clients"); setSelectedTokenUser(null); loadData(); }}
+        />
+      );
+    }
 
-  if (view === "portfolio") {
-    return <PortfolioManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "employees") {
+      return <EmployeeManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "featured") {
-    return <FeaturedManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "portfolio") {
+      return <PortfolioManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "nominations") {
-    return <NominationsManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "featured") {
+      return <FeaturedManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "spaces") {
-    return <AdminSpacesManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "nominations") {
+      return <NominationsManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "analytics") {
-    return <AnalyticsManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "spaces") {
+      return <AdminSpacesManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "tax") {
-    return <TaxReportManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "analytics") {
+      return <AnalyticsManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "revenue") {
-    return <RevenueDashboard token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "tax") {
+      return <TaxReportManager token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "pipeline") {
-    return <PipelineManager token={token} onBack={() => setView("clients")} />;
-  }
+    if (view === "revenue") {
+      return <RevenueDashboard token={token} onBack={() => setView("clients")} />;
+    }
 
-  if (view === "create" || view === "edit") {
-    const isEdit = view === "edit";
+    if (view === "pipeline") {
+      return <PipelineManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "create" || view === "edit") {
+      const isEdit = view === "edit";
+      return (
+        <div className="min-h-screen bg-[#faf9f7]">
+          <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+            <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
+              <button
+                onClick={() => { setView("clients"); setEditingShoot(null); setForm(defaultShootForm); }}
+                data-testid="button-back-to-clients"
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <div className="h-4 w-px bg-gray-200" />
+              <p className="font-serif text-lg text-gray-900">
+                {isEdit ? "Edit Photoshoot" : "New Photoshoot"}
+              </p>
+            </div>
+          </header>
+
+          <main className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              {!isEdit && selectedUser && (
+                <div className="flex items-center gap-3 mb-6 p-3 bg-white rounded-lg border border-gray-100">
+                  <Avatar className="w-10 h-10" data-testid="img-selected-user">
+                    {selectedUser.profileImageUrl && <AvatarImage src={selectedUser.profileImageUrl} />}
+                    <AvatarFallback className="bg-gray-100 text-gray-500">
+                      <User className="w-5 h-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {selectedUser.firstName} {selectedUser.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500">{selectedUser.email}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-5">
+                <div>
+                  <Label className="text-sm text-gray-700">Title</Label>
+                  <Input
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="e.g., Spring Brand Refresh"
+                    data-testid="input-shoot-title"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-gray-700">Environment</Label>
+                    <Select value={form.environment} onValueChange={(v) => setForm({ ...form, environment: v })}>
+                      <SelectTrigger className="mt-1" data-testid="select-environment">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {environments.map((e) => (
+                          <SelectItem key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-700">Brand Message</Label>
+                    <Select value={form.brandMessage} onValueChange={(v) => setForm({ ...form, brandMessage: v })}>
+                      <SelectTrigger className="mt-1" data-testid="select-brand-message">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brandMessages.map((b) => (
+                          <SelectItem key={b} value={b}>{b.charAt(0).toUpperCase() + b.slice(1)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-gray-700">Emotional Impact</Label>
+                    <Select value={form.emotionalImpact} onValueChange={(v) => setForm({ ...form, emotionalImpact: v })}>
+                      <SelectTrigger className="mt-1" data-testid="select-emotional-impact">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {emotionalImpacts.map((e) => (
+                          <SelectItem key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-700">Shoot Intent</Label>
+                    <Select value={form.shootIntent} onValueChange={(v) => setForm({ ...form, shootIntent: v })}>
+                      <SelectTrigger className="mt-1" data-testid="select-shoot-intent">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shootIntents.map((s) => (
+                          <SelectItem key={s} value={s}>{s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-gray-700">Status</Label>
+                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      <SelectTrigger className="mt-1" data-testid="select-status">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map((s) => (
+                          <SelectItem key={s} value={s}>{s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-700">Shoot Date</Label>
+                    <Input
+                      type="date"
+                      value={form.shootDate}
+                      onChange={(e) => setForm({ ...form, shootDate: e.target.value })}
+                      data-testid="input-shoot-date"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-700">Shoot Time</Label>
+                    <Input
+                      type="time"
+                      value={form.shootTime}
+                      onChange={(e) => setForm({ ...form, shootTime: e.target.value })}
+                      data-testid="input-shoot-time"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-700">Location</Label>
+                  <Input
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    placeholder="e.g., 123 Main St, Miami, FL 33101"
+                    data-testid="input-shoot-location"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-700">Notes</Label>
+                  <Textarea
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    placeholder="Any additional notes about this shoot..."
+                    data-testid="input-shoot-notes"
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={isEdit ? handleUpdateShoot : handleCreateShoot}
+                    disabled={saving || !form.title}
+                    data-testid="button-save-shoot"
+                    className="bg-[#1a1a1a] text-white"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {isEdit ? "Update Shoot" : "Create Shoot"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setView("clients"); setEditingShoot(null); setForm(defaultShootForm); }}
+                    data-testid="button-cancel"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </main>
+        </div>
+      );
+    }
+
+    // Default: Clients view
     return (
       <div className="min-h-screen bg-[#faf9f7]">
-        <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-4">
-            <button
-              onClick={() => { setView("clients"); setEditingShoot(null); setForm(defaultShootForm); }}
-              data-testid="button-back-to-clients"
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </button>
-            <div className="h-4 w-px bg-gray-200" />
-            <p className="font-serif text-lg text-gray-900">
-              {isEdit ? "Edit Photoshoot" : "New Photoshoot"}
-            </p>
-          </div>
-        </header>
+        <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+          {pushStatus === "prompt" && (
+            <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6">
+              <Bell className="w-5 h-5 text-blue-500 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-blue-900">Get notified when clients message you</p>
+                <p className="text-xs text-blue-600">Receive push notifications on this device</p>
+              </div>
+              <Button
+                size="sm"
+                onClick={subscribePush}
+                className="bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs"
+              >
+                <BellRing className="w-3.5 h-3.5 mr-1.5" />
+                Enable
+              </Button>
+            </div>
+          )}
 
-        <main className="max-w-3xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            {!isEdit && selectedUser && (
-              <div className="flex items-center gap-3 mb-6 p-3 bg-white rounded-lg border border-gray-100">
-                <Avatar className="w-10 h-10" data-testid="img-selected-user">
-                  {selectedUser.profileImageUrl && <AvatarImage src={selectedUser.profileImageUrl} />}
-                  <AvatarFallback className="bg-gray-100 text-gray-500">
-                    <User className="w-5 h-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {selectedUser.firstName} {selectedUser.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500">{selectedUser.email}</p>
+            {/* Stats bar */}
+            {users.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Total Clients</p>
+                  <p className="text-xl font-semibold text-gray-900">{users.length}</p>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Active Shoots</p>
+                  <p className="text-xl font-semibold text-gray-900">{shoots.length}</p>
+                </div>
+                <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">With Shoots</p>
+                  <p className="text-xl font-semibold text-gray-900">{users.filter(u => shoots.some(s => s.userId === u.id)).length}</p>
                 </div>
               </div>
             )}
 
-            <div className="space-y-5">
-              <div>
-                <Label className="text-sm text-gray-700">Title</Label>
-                <Input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g., Professional Headshots - Spring 2026"
-                  data-testid="input-shoot-title"
-                  className="mt-1"
-                />
-              </div>
+            <div className="flex items-baseline gap-2 mb-4">
+              <h2 className="font-serif text-2xl text-gray-900">Clients</h2>
+              {users.length > 0 && (
+                <span className="text-sm text-gray-400 font-medium">({filteredUsers.length}{searchQuery || clientFilter !== "all" ? ` of ${users.length}` : ""})</span>
+              )}
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-700">Environment</Label>
-                  <Select value={form.environment} onValueChange={(v) => setForm({ ...form, environment: v })}>
-                    <SelectTrigger className="mt-1" data-testid="select-environment">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {environments.map((e) => (
-                        <SelectItem key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-700">Brand Message</Label>
-                  <Select value={form.brandMessage} onValueChange={(v) => setForm({ ...form, brandMessage: v })}>
-                    <SelectTrigger className="mt-1" data-testid="select-brand-message">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {brandMessages.map((b) => (
-                        <SelectItem key={b} value={b}>{b.charAt(0).toUpperCase() + b.slice(1)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-700">Emotional Impact</Label>
-                  <Select value={form.emotionalImpact} onValueChange={(v) => setForm({ ...form, emotionalImpact: v })}>
-                    <SelectTrigger className="mt-1" data-testid="select-emotional-impact">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {emotionalImpacts.map((e) => (
-                        <SelectItem key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-700">Shoot Intent</Label>
-                  <Select value={form.shootIntent} onValueChange={(v) => setForm({ ...form, shootIntent: v })}>
-                    <SelectTrigger className="mt-1" data-testid="select-shoot-intent">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shootIntents.map((s) => (
-                        <SelectItem key={s} value={s}>{s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-700">Status</Label>
-                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                    <SelectTrigger className="mt-1" data-testid="select-status">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses.map((s) => (
-                        <SelectItem key={s} value={s}>{s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-700">Shoot Date</Label>
-                  <Input
-                    type="date"
-                    value={form.shootDate}
-                    onChange={(e) => setForm({ ...form, shootDate: e.target.value })}
-                    data-testid="input-shoot-date"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-700">Shoot Time</Label>
-                  <Input
-                    type="time"
-                    value={form.shootTime}
-                    onChange={(e) => setForm({ ...form, shootTime: e.target.value })}
-                    data-testid="input-shoot-time"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm text-gray-700">Location</Label>
-                <Input
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  placeholder="e.g., 123 Main St, Miami, FL 33101"
-                  data-testid="input-shoot-location"
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm text-gray-700">Notes</Label>
-                <Textarea
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="Any additional notes about this shoot..."
-                  data-testid="input-shoot-notes"
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <Button
-                  onClick={isEdit ? handleUpdateShoot : handleCreateShoot}
-                  disabled={saving || !form.title}
-                  data-testid="button-save-shoot"
-                  className="bg-[#1a1a1a] text-white"
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search clients by email or name..."
+                data-testid="input-search-clients"
+                className="pl-10 bg-white"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  data-testid="button-clear-search"
                 >
-                  {saving ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  {isEdit ? "Update Shoot" : "Create Shoot"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => { setView("clients"); setEditingShoot(null); setForm(defaultShootForm); }}
-                  data-testid="button-cancel"
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter chips + sort */}
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              <div className="flex gap-1.5">
+                {([
+                  { id: "all" as const, label: "All" },
+                  { id: "has-shoots" as const, label: "Has Shoots" },
+                  { id: "no-shoots" as const, label: "No Shoots" },
+                ] as const).map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setClientFilter(f.id)}
+                    data-testid={`filter-clients-${f.id}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      clientFilter === f.id
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+              <div className="ml-auto flex items-center gap-1.5">
+                <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+                <select
+                  value={clientSort}
+                  onChange={(e) => setClientSort(e.target.value as "name" | "shoots" | "recent")}
+                  data-testid="select-client-sort"
+                  className="text-xs text-gray-600 bg-transparent border-none focus:outline-none cursor-pointer font-medium"
                 >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
+                  <option value="name">Name</option>
+                  <option value="shoots">Most Shoots</option>
+                  <option value="recent">Recent Activity</option>
+                </select>
               </div>
             </div>
+
+            {filteredUsers.length === 0 && searchQuery ? (
+              <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Search className="w-10 h-10 text-gray-300 mb-3" />
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No clients found</h3>
+                  <p className="text-gray-500 text-sm">
+                    No clients match "{searchQuery}". Try a different search.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : users.length === 0 ? (
+              <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Users className="w-10 h-10 text-gray-300 mb-3" />
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No clients yet</h3>
+                  <p className="text-gray-500 text-sm">
+                    Clients will appear here after they sign in to the Client Portal.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+              <input
+                ref={userPhotoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  const userId = (e.target as HTMLInputElement).dataset.userId;
+                  if (file && userId) handleUploadUserPhoto(userId, file);
+                  e.target.value = "";
+                }}
+              />
+              <div className="space-y-1">
+                {paginatedUsers.map((user) => {
+                  const userShoots = getUserShoots(user.id);
+                  const isExpanded = expandedClient === user.id;
+                  const displayName = user.firstName || user.lastName
+                    ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                    : "No name";
+                  return (
+                    <div key={user.id} data-testid={`card-client-${user.id}`}>
+                      <button
+                        onClick={() => setExpandedClient(isExpanded ? null : user.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${isExpanded ? "bg-white shadow-sm ring-1 ring-gray-200" : "bg-white/60 hover:bg-white"}`}
+                        data-testid={`button-expand-client-${user.id}`}
+                      >
+                        <Avatar className="w-8 h-8 shrink-0">
+                          {user.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
+                          <AvatarFallback className="bg-gray-100 text-gray-500 text-xs">
+                            <User className="w-4 h-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
+                          <p className="text-xs text-gray-400 truncate">{user.email || "No email"}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {userShoots.length > 0 && (
+                            <span className="text-[11px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+                              {userShoots.length} shoot{userShoots.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                        </div>
+                      </button>
+
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="bg-white rounded-b-lg shadow-sm ring-1 ring-gray-200 ring-t-0 -mt-1 px-4 pb-4 pt-2">
+                              {editingUser === user.id ? (
+                                <div className="space-y-2 py-2">
+                                  <div className="flex gap-2">
+                                    <Input
+                                      value={editUserForm.firstName}
+                                      onChange={(e) => setEditUserForm({ ...editUserForm, firstName: e.target.value })}
+                                      placeholder="First name"
+                                      data-testid={`input-edit-firstname-${user.id}`}
+                                      className="h-8 text-sm"
+                                    />
+                                    <Input
+                                      value={editUserForm.lastName}
+                                      onChange={(e) => setEditUserForm({ ...editUserForm, lastName: e.target.value })}
+                                      placeholder="Last name"
+                                      data-testid={`input-edit-lastname-${user.id}`}
+                                      className="h-8 text-sm"
+                                    />
+                                  </div>
+                                  <Input
+                                    value={editUserForm.email}
+                                    onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                                    placeholder="Email"
+                                    type="email"
+                                    data-testid={`input-edit-email-${user.id}`}
+                                    className="h-8 text-sm"
+                                  />
+                                  <div className="flex gap-1.5">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleSaveUser(user.id)}
+                                      disabled={savingUser}
+                                      data-testid={`button-save-user-${user.id}`}
+                                      className="h-7 bg-[#1a1a1a] text-white text-xs"
+                                    >
+                                      {savingUser ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => setEditingUser(null)}
+                                      className="h-7 text-xs"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex flex-wrap items-center gap-2 py-2 border-b border-gray-100">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => startCreate(user)}
+                                      data-testid={`button-add-shoot-${user.id}`}
+                                      className="bg-[#1a1a1a] text-white h-7 text-xs"
+                                    >
+                                      <Plus className="w-3 h-3 mr-1" />
+                                      Add Shoot
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => { setSelectedTokenUser(user); setView("tokens"); }}
+                                      data-testid={`button-tokens-${user.id}`}
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                    >
+                                      <ImagePlus className="w-3 h-3 mr-1" />
+                                      Editor
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => startEditUser(user)}
+                                      data-testid={`button-edit-user-${user.id}`}
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                    >
+                                      <Edit className="w-3 h-3 mr-1" />
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={uploadingUserPhoto === user.id}
+                                      onClick={() => {
+                                        if (userPhotoInputRef.current) {
+                                          userPhotoInputRef.current.dataset.userId = user.id;
+                                          userPhotoInputRef.current.click();
+                                        }
+                                      }}
+                                      data-testid={`button-photo-user-${user.id}`}
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                    >
+                                      {uploadingUserPhoto === user.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Camera className="w-3 h-3 mr-1" />}
+                                      Photo
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDeletingUser(user);
+                                        setDeletePassword("");
+                                        setDeleteConfirmText("");
+                                        setDeleteError("");
+                                      }}
+                                      data-testid={`button-delete-user-${user.id}`}
+                                      className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="w-3 h-3 mr-1" />
+                                      Delete
+                                    </Button>
+                                    <div className="flex items-center gap-1.5 ml-auto">
+                                      <Badge variant="secondary" className="text-[11px]" data-testid={`badge-annual-tokens-${user.id}`}>
+                                        <Coins className="w-3 h-3 mr-1" />
+                                        Annual: {tokenMap.get(user.id)?.annualTokens ?? 0}
+                                      </Badge>
+                                      <Badge variant="secondary" className="text-[11px]" data-testid={`badge-purchased-tokens-${user.id}`}>
+                                        <Coins className="w-3 h-3 mr-1" />
+                                        Purchased: {tokenMap.get(user.id)?.purchasedTokens ?? 0}
+                                      </Badge>
+                                    </div>
+                                  </div>
+
+                                  <div className="pt-3">
+                                    {userShoots.length === 0 ? (
+                                      <p className="text-sm text-gray-400 italic py-1">No photoshoots assigned</p>
+                                    ) : (
+                                      <div className="space-y-2">
+                                        {userShoots.map((shoot) => (
+                                          <div
+                                            key={shoot.id}
+                                            className="p-3 rounded-lg bg-gray-50"
+                                            data-testid={`shoot-row-${shoot.id}`}
+                                          >
+                                            <div className="flex items-start gap-3">
+                                              <Camera className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{shoot.title}</p>
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                                  {shoot.status && (
+                                                    <span className="capitalize">{shoot.status}</span>
+                                                  )}
+                                                  {shoot.environment && (
+                                                    <>
+                                                      <span>·</span>
+                                                      <span className="capitalize">{shoot.environment}</span>
+                                                    </>
+                                                  )}
+                                                  {shoot.shootDate && (
+                                                    <>
+                                                      <span>·</span>
+                                                      <span>
+                                                        {new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
+                                                        {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+                                                      </span>
+                                                    </>
+                                                  )}
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => openGallery(shoot)}
+                                                    data-testid={`button-gallery-${shoot.id}`}
+                                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                  >
+                                                    <Images className="w-3 h-3 mr-1" />
+                                                    Gallery
+                                                  </Button>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => startEdit(shoot)}
+                                                    data-testid={`button-edit-shoot-${shoot.id}`}
+                                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                  >
+                                                    <Edit className="w-3 h-3 mr-1" />
+                                                    Edit
+                                                  </Button>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setInvoiceShoot(shoot)}
+                                                    data-testid={`button-invoice-${shoot.id}`}
+                                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                  >
+                                                    <Receipt className="w-3 h-3 mr-1" />
+                                                    Invoice
+                                                  </Button>
+                                                  {shoot.shootDate && (
+                                                    <a
+                                                      href={buildShootCalendarUrl(shoot, user.email || undefined)}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      data-testid={`button-calendar-${shoot.id}`}
+                                                    >
+                                                      <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                                      >
+                                                        <CalendarPlus className="w-3 h-3 mr-1" />
+                                                        Calendar
+                                                      </Button>
+                                                    </a>
+                                                  )}
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteShoot(shoot.id)}
+                                                    data-testid={`button-delete-shoot-${shoot.id}`}
+                                                    className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
+                                                  >
+                                                    <Trash2 className="w-3 h-3 mr-1" />
+                                                    Delete
+                                                  </Button>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalClientPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-400">
+                    Showing {(clientPage - 1) * CLIENTS_PER_PAGE + 1}–{Math.min(clientPage * CLIENTS_PER_PAGE, filteredUsers.length)} of {filteredUsers.length}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={clientPage <= 1}
+                      onClick={() => setClientPage(p => p - 1)}
+                      className="h-7 w-7 p-0 text-gray-500"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </Button>
+                    {Array.from({ length: totalClientPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalClientPages || Math.abs(p - clientPage) <= 1)
+                      .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, idx) =>
+                        typeof p === "string" ? (
+                          <span key={`ellipsis-${idx}`} className="text-xs text-gray-400 px-1">...</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setClientPage(p)}
+                            className={`h-7 min-w-[28px] px-1.5 rounded text-xs font-medium transition-colors ${
+                              clientPage === p ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={clientPage >= totalClientPages}
+                      onClick={() => setClientPage(p => p + 1)}
+                      className="h-7 w-7 p-0 text-gray-500"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              </>
+            )}
           </motion.div>
         </main>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center">
-              <Lock className="w-4 h-4 text-white" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mr-3 pr-3 sm:mr-0 sm:pr-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("pipeline")}
-              data-testid="button-manage-pipeline"
-              className="h-8 text-xs border-stone-300 text-stone-700 font-medium flex-shrink-0"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" />
-              <span className="hidden sm:inline">Book of Business</span>
-              <span className="sm:hidden">Pipeline</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("portfolio")}
-              data-testid="button-manage-portfolio"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Images className="w-3.5 h-3.5 mr-1.5" />
-              Portfolio
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("featured")}
-              data-testid="button-manage-featured"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Star className="w-3.5 h-3.5 mr-1.5" />
-              Featured
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("nominations")}
-              data-testid="button-manage-nominations"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Heart className="w-3.5 h-3.5 mr-1.5" />
-              <span className="hidden sm:inline">Nominations</span>
-              <span className="sm:hidden">Noms</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("employees")}
-              data-testid="button-manage-team"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Users className="w-3.5 h-3.5 mr-1.5" />
-              Team
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("spaces")}
-              data-testid="button-manage-spaces"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Building2 className="w-3.5 h-3.5 mr-1.5" />
-              Spaces
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("analytics")}
-              data-testid="button-manage-analytics"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <BarChart3 className="w-3.5 h-3.5 mr-1.5" />
-              Analytics
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("revenue")}
-              data-testid="button-manage-revenue"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Coins className="w-3.5 h-3.5 mr-1.5" />
-              Revenue
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setView("tax")}
-              data-testid="button-manage-tax"
-              className="h-8 text-xs border-gray-200 text-gray-600 flex-shrink-0"
-            >
-              <Receipt className="w-3.5 h-3.5 mr-1.5" />
-              Tax Report
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
-        {pushStatus === "prompt" && (
-          <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6">
-            <Bell className="w-5 h-5 text-blue-500 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-blue-900">Get notified when clients message you</p>
-              <p className="text-xs text-blue-600">Receive push notifications on this device</p>
-            </div>
-            <Button
-              size="sm"
-              onClick={subscribePush}
-              data-testid="button-admin-enable-notifications"
-              className="bg-blue-600 text-white hover:bg-blue-700 shrink-0"
-            >
-              <BellRing className="w-3.5 h-3.5 mr-1.5" />
-              Enable
-            </Button>
-          </div>
+    <div className="flex h-screen bg-[#faf9f7]">
+      {/* Mobile sidebar overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-baseline gap-2 mb-6">
-            <h2 className="font-serif text-2xl text-gray-900">Clients</h2>
-            {users.length > 0 && (
-              <span className="text-sm text-gray-400 font-medium">({filteredUsers.length}{searchQuery ? ` of ${users.length}` : ""})</span>
-            )}
-          </div>
+      </AnimatePresence>
 
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search clients by email or name..."
-              data-testid="input-search-clients"
-              className="pl-10 bg-white"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                data-testid="button-clear-search"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-56 bg-white border-r border-gray-200 flex flex-col transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Sidebar header */}
+        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100">
+          <div className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center">
+            <Lock className="w-4 h-4 text-white" />
           </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900 leading-tight">Admin Panel</p>
+            <p className="text-[11px] text-gray-400">Align Workspaces</p>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="ml-auto lg:hidden text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-          {filteredUsers.length === 0 && searchQuery ? (
-            <Card className="border-dashed border-2 border-gray-200 bg-white/50">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <Search className="w-10 h-10 text-gray-300 mb-3" />
-                <h3 className="font-serif text-lg text-gray-900 mb-1">No clients found</h3>
-                <p className="text-gray-500 text-sm">
-                  No clients match "{searchQuery}". Try a different search.
-                </p>
-              </CardContent>
-            </Card>
-          ) : users.length === 0 ? (
-            <Card className="border-dashed border-2 border-gray-200 bg-white/50">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <Users className="w-10 h-10 text-gray-300 mb-3" />
-                <h3 className="font-serif text-lg text-gray-900 mb-1">No clients yet</h3>
-                <p className="text-gray-500 text-sm">
-                  Clients will appear here after they sign in to the Client Portal.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-            <input
-              ref={userPhotoInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                const userId = (e.target as HTMLInputElement).dataset.userId;
-                if (file && userId) handleUploadUserPhoto(userId, file);
-                e.target.value = "";
-              }}
-            />
-            <div className="space-y-1">
-              {filteredUsers.map((user) => {
-                const userShoots = getUserShoots(user.id);
-                const isExpanded = expandedClient === user.id;
-                const displayName = user.firstName || user.lastName
-                  ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                  : "No name";
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
+          {sidebarNav.map((group) => (
+            <div key={group.label} className="mb-4">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-1.5">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeNavId === item.id;
                 return (
-                  <div key={user.id} data-testid={`card-client-${user.id}`}>
-                    <button
-                      onClick={() => setExpandedClient(isExpanded ? null : user.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${isExpanded ? "bg-white shadow-sm ring-1 ring-gray-200" : "bg-white/60 hover:bg-white"}`}
-                      data-testid={`button-expand-client-${user.id}`}
-                    >
-                      <Avatar className="w-8 h-8 shrink-0">
-                        {user.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
-                        <AvatarFallback className="bg-gray-100 text-gray-500 text-xs">
-                          <User className="w-4 h-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
-                        <p className="text-xs text-gray-400 truncate">{user.email || "No email"}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {userShoots.length > 0 && (
-                          <span className="text-[11px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
-                            {userShoots.length} shoot{userShoots.length !== 1 ? "s" : ""}
-                          </span>
-                        )}
-                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-                      </div>
-                    </button>
-
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="bg-white rounded-b-lg shadow-sm ring-1 ring-gray-200 ring-t-0 -mt-1 px-4 pb-4 pt-2">
-                            {editingUser === user.id ? (
-                              <div className="space-y-2 py-2">
-                                <div className="flex gap-2">
-                                  <Input
-                                    value={editUserForm.firstName}
-                                    onChange={(e) => setEditUserForm({ ...editUserForm, firstName: e.target.value })}
-                                    placeholder="First name"
-                                    data-testid={`input-edit-firstname-${user.id}`}
-                                    className="h-8 text-sm"
-                                  />
-                                  <Input
-                                    value={editUserForm.lastName}
-                                    onChange={(e) => setEditUserForm({ ...editUserForm, lastName: e.target.value })}
-                                    placeholder="Last name"
-                                    data-testid={`input-edit-lastname-${user.id}`}
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                                <Input
-                                  value={editUserForm.email}
-                                  onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
-                                  placeholder="Email"
-                                  type="email"
-                                  data-testid={`input-edit-email-${user.id}`}
-                                  className="h-8 text-sm"
-                                />
-                                <div className="flex gap-1.5">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleSaveUser(user.id)}
-                                    disabled={savingUser}
-                                    data-testid={`button-save-user-${user.id}`}
-                                    className="h-7 bg-[#1a1a1a] text-white text-xs"
-                                  >
-                                    {savingUser ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
-                                    Save
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setEditingUser(null)}
-                                    className="h-7 text-xs"
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex flex-wrap items-center gap-2 py-2 border-b border-gray-100">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => startCreate(user)}
-                                    data-testid={`button-add-shoot-${user.id}`}
-                                    className="bg-[#1a1a1a] text-white h-7 text-xs"
-                                  >
-                                    <Plus className="w-3 h-3 mr-1" />
-                                    Add Shoot
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => { setSelectedTokenUser(user); setView("tokens"); }}
-                                    data-testid={`button-tokens-${user.id}`}
-                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                  >
-                                    <ImagePlus className="w-3 h-3 mr-1" />
-                                    Editor
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => startEditUser(user)}
-                                    data-testid={`button-edit-user-${user.id}`}
-                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                  >
-                                    <Edit className="w-3 h-3 mr-1" />
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={uploadingUserPhoto === user.id}
-                                    onClick={() => {
-                                      if (userPhotoInputRef.current) {
-                                        userPhotoInputRef.current.dataset.userId = user.id;
-                                        userPhotoInputRef.current.click();
-                                      }
-                                    }}
-                                    data-testid={`button-photo-user-${user.id}`}
-                                    className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                  >
-                                    {uploadingUserPhoto === user.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Camera className="w-3 h-3 mr-1" />}
-                                    Photo
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setDeletingUser(user);
-                                      setDeletePassword("");
-                                      setDeleteConfirmText("");
-                                      setDeleteError("");
-                                    }}
-                                    data-testid={`button-delete-user-${user.id}`}
-                                    className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="w-3 h-3 mr-1" />
-                                    Delete
-                                  </Button>
-                                  <div className="flex items-center gap-1.5 ml-auto">
-                                    <Badge variant="secondary" className="text-[11px]" data-testid={`badge-annual-tokens-${user.id}`}>
-                                      <Coins className="w-3 h-3 mr-1" />
-                                      Annual: {tokenMap.get(user.id)?.annualTokens ?? 0}
-                                    </Badge>
-                                    <Badge variant="secondary" className="text-[11px]" data-testid={`badge-purchased-tokens-${user.id}`}>
-                                      <Coins className="w-3 h-3 mr-1" />
-                                      Purchased: {tokenMap.get(user.id)?.purchasedTokens ?? 0}
-                                    </Badge>
-                                  </div>
-                                </div>
-
-                                <div className="pt-3">
-                                  {userShoots.length === 0 ? (
-                                    <p className="text-sm text-gray-400 italic py-1">No photoshoots assigned</p>
-                                  ) : (
-                                    <div className="space-y-2">
-                                      {userShoots.map((shoot) => (
-                                        <div
-                                          key={shoot.id}
-                                          className="p-3 rounded-lg bg-gray-50"
-                                          data-testid={`shoot-row-${shoot.id}`}
-                                        >
-                                          <div className="flex items-start gap-3">
-                                            <Camera className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                            <div className="flex-1 min-w-0">
-                                              <p className="text-sm font-medium text-gray-900 truncate">{shoot.title}</p>
-                                              <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                                                {shoot.status && (
-                                                  <span className="capitalize">{shoot.status}</span>
-                                                )}
-                                                {shoot.environment && (
-                                                  <>
-                                                    <span>·</span>
-                                                    <span className="capitalize">{shoot.environment}</span>
-                                                  </>
-                                                )}
-                                                {shoot.shootDate && (
-                                                  <>
-                                                    <span>·</span>
-                                                    <span>
-                                                      {new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
-                                                      {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
-                                                    </span>
-                                                  </>
-                                                )}
-                                              </div>
-                                              <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => openGallery(shoot)}
-                                                  data-testid={`button-gallery-${shoot.id}`}
-                                                  className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                                >
-                                                  <Images className="w-3 h-3 mr-1" />
-                                                  Gallery
-                                                </Button>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => startEdit(shoot)}
-                                                  data-testid={`button-edit-shoot-${shoot.id}`}
-                                                  className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                                >
-                                                  <Edit className="w-3 h-3 mr-1" />
-                                                  Edit
-                                                </Button>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => setInvoiceShoot(shoot)}
-                                                  data-testid={`button-invoice-${shoot.id}`}
-                                                  className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                                >
-                                                  <Receipt className="w-3 h-3 mr-1" />
-                                                  Invoice
-                                                </Button>
-                                                {shoot.shootDate && (
-                                                  <a
-                                                    href={buildShootCalendarUrl(shoot, user.email || undefined)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    data-testid={`button-calendar-${shoot.id}`}
-                                                  >
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
-                                                    >
-                                                      <CalendarPlus className="w-3 h-3 mr-1" />
-                                                      Calendar
-                                                    </Button>
-                                                  </a>
-                                                )}
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => handleDeleteShoot(shoot.id)}
-                                                  data-testid={`button-delete-shoot-${shoot.id}`}
-                                                  className="h-7 text-xs px-2 text-red-500 border-red-200 hover:bg-red-50"
-                                                >
-                                                  <Trash2 className="w-3 h-3 mr-1" />
-                                                  Delete
-                                                </Button>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setView(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    data-testid={`sidebar-nav-${item.id}`}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm transition-colors mb-0.5 ${
+                      isActive
+                        ? "bg-gray-900 text-white font-medium"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                    {"count" in item && item.count !== undefined && item.count > 0 && (
+                      <span className={`ml-auto text-[11px] px-1.5 py-0.5 rounded-full font-medium ${
+                        isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {item.count}
+                      </span>
+                    )}
+                  </button>
                 );
               })}
             </div>
-            </>
-          )}
-        </motion.div>
-      </main>
+          ))}
+        </nav>
 
+        {/* Debug Panel */}
+        <div className="border-t border-gray-100 px-2 py-2">
+          <button
+            onClick={() => setDebugOpen(!debugOpen)}
+            data-testid="button-toggle-debug"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <Bug className="w-3.5 h-3.5" />
+            <span className="font-medium">Debug Tools</span>
+            <ChevronDown className={`w-3 h-3 ml-auto transition-transform ${debugOpen ? "rotate-180" : ""}`} />
+          </button>
+          <AnimatePresence>
+            {debugOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-3 py-2 space-y-3">
+                  {/* Portal Preview */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Portal Preview</p>
+                    <select
+                      value={debugPreviewRole}
+                      onChange={(e) => setDebugPreviewRole(e.target.value as typeof debugPreviewRole)}
+                      data-testid="select-debug-role"
+                      className="w-full text-xs border border-gray-200 rounded-md px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-gray-400 mb-2"
+                    >
+                      <option value="new">New User (no data)</option>
+                      <option value="photo">Photo Client Only</option>
+                      <option value="host">Space Host Only</option>
+                      <option value="both">Both Roles</option>
+                    </select>
+                    <button
+                      onClick={() => setDebugPreviewOpen(true)}
+                      data-testid="button-open-preview"
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors"
+                    >
+                      <Eye className="w-3 h-3" />
+                      Preview Portal
+                    </button>
+                  </div>
+
+                  {/* Conditional Flags Reference */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Conditional Flags</p>
+                    <div className="space-y-1 text-[11px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">isPhotoClient</span>
+                        <span className={`px-1.5 py-0.5 rounded font-mono ${debugPreviewRole === "photo" || debugPreviewRole === "both" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"}`}>
+                          {debugPreviewRole === "photo" || debugPreviewRole === "both" ? "true" : "false"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">isSpaceHost</span>
+                        <span className={`px-1.5 py-0.5 rounded font-mono ${debugPreviewRole === "host" || debugPreviewRole === "both" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"}`}>
+                          {debugPreviewRole === "host" || debugPreviewRole === "both" ? "true" : "false"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-500">isNewUser</span>
+                        <span className={`px-1.5 py-0.5 rounded font-mono ${debugPreviewRole === "new" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-400"}`}>
+                          {debugPreviewRole === "new" ? "true" : "false"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visible Tabs Preview */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Visible Tabs</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(debugPreviewRole === "photo" || debugPreviewRole === "both" || debugPreviewRole === "new") && (
+                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Shoots</span>
+                      )}
+                      {(debugPreviewRole === "photo" || debugPreviewRole === "both" || debugPreviewRole === "new") && (
+                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Edits</span>
+                      )}
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Messages</span>
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Spaces</span>
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Settings</span>
+                    </div>
+                  </div>
+
+                  {/* Current Admin State */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Admin State</p>
+                    <div className="space-y-1 text-[11px] font-mono">
+                      <p className="text-gray-500">view: <span className="text-gray-800">{view}</span></p>
+                      <p className="text-gray-500">users: <span className="text-gray-800">{users.length}</span></p>
+                      <p className="text-gray-500">shoots: <span className="text-gray-800">{shoots.length}</span></p>
+                      <p className="text-gray-500">tokens: <span className="text-gray-800">{allEditTokens.length}</span></p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </aside>
+
+      {/* Debug Portal Preview Modal */}
+      <AnimatePresence>
+        {debugPreviewOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4"
+            onClick={() => setDebugPreviewOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-violet-600" />
+                  <p className="text-sm font-medium text-gray-900">Portal Preview</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">
+                    {debugPreviewRole === "new" && "New User"}
+                    {debugPreviewRole === "photo" && "Photo Client"}
+                    {debugPreviewRole === "host" && "Space Host"}
+                    {debugPreviewRole === "both" && "Both Roles"}
+                  </span>
+                </div>
+                <button onClick={() => setDebugPreviewOpen(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* Simulated portal tab bar */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">Tab Bar Preview</p>
+                  <div className="flex gap-1 bg-white rounded-lg p-1 border border-gray-100">
+                    {(debugPreviewRole === "photo" || debugPreviewRole === "both" || debugPreviewRole === "new") && (
+                      <div className="flex-1 text-center py-2 rounded-md bg-gray-900 text-white text-xs font-medium">Shoots</div>
+                    )}
+                    {(debugPreviewRole === "photo" || debugPreviewRole === "both" || debugPreviewRole === "new") && (
+                      <div className="flex-1 text-center py-2 rounded-md text-gray-500 text-xs">Edits</div>
+                    )}
+                    <div className="flex-1 text-center py-2 rounded-md text-gray-500 text-xs">Messages</div>
+                    <div className="flex-1 text-center py-2 rounded-md text-gray-500 text-xs">Spaces</div>
+                    <div className="flex-1 text-center py-2 rounded-md text-gray-500 text-xs">Settings</div>
+                  </div>
+                </div>
+
+                {/* Content areas preview */}
+                <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Spaces Sub-tabs</p>
+                    <div className="flex gap-2">
+                      <span className="px-3 py-1.5 rounded-full bg-gray-900 text-white text-xs font-medium">Favorites</span>
+                      <span className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs">My Bookings</span>
+                      {(debugPreviewRole === "host" || debugPreviewRole === "both") && (
+                        <span className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs relative">
+                          My Spaces
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full flex items-center justify-center">
+                            <span className="text-[8px] text-white font-bold">H</span>
+                          </span>
+                        </span>
+                      )}
+                      {(debugPreviewRole === "host" || debugPreviewRole === "both") && (
+                        <span className="px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs relative">
+                          Earnings
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full flex items-center justify-center">
+                            <span className="text-[8px] text-white font-bold">H</span>
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Conditional Elements</p>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${debugPreviewRole === "photo" || debugPreviewRole === "both" || debugPreviewRole === "new" ? "bg-emerald-500" : "bg-gray-300"}`} />
+                        <span className="text-gray-700">Shoots tab</span>
+                        <span className="text-gray-400 ml-auto">isPhotoClient || isNewUser</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${debugPreviewRole === "photo" || debugPreviewRole === "both" || debugPreviewRole === "new" ? "bg-emerald-500" : "bg-gray-300"}`} />
+                        <span className="text-gray-700">Edits tab</span>
+                        <span className="text-gray-400 ml-auto">isPhotoClient || isNewUser</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${debugPreviewRole === "host" || debugPreviewRole === "both" ? "bg-emerald-500" : "bg-gray-300"}`} />
+                        <span className="text-gray-700">My Spaces sub-tab</span>
+                        <span className="text-gray-400 ml-auto">isSpaceHost</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${debugPreviewRole === "host" || debugPreviewRole === "both" ? "bg-emerald-500" : "bg-gray-300"}`} />
+                        <span className="text-gray-700">Earnings sub-tab</span>
+                        <span className="text-gray-400 ml-auto">isSpaceHost</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-gray-700">Messages tab</span>
+                        <span className="text-gray-400 ml-auto">always visible</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-gray-700">Spaces tab</span>
+                        <span className="text-gray-400 ml-auto">always visible</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="text-gray-700">Settings tab</span>
+                        <span className="text-gray-400 ml-auto">always visible</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header className="h-12 border-b border-gray-200 bg-white flex items-center px-3 sm:px-4 gap-3 shrink-0">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden text-gray-500 hover:text-gray-900"
+            data-testid="button-toggle-sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <p className="text-sm font-medium text-gray-700 truncate">
+            {view === "clients" && "Clients"}
+            {view === "pipeline" && "Book of Business"}
+            {view === "portfolio" && "Portfolio"}
+            {view === "featured" && "Featured"}
+            {view === "nominations" && "Nominations"}
+            {view === "employees" && "Team"}
+            {view === "spaces" && "Spaces"}
+            {view === "analytics" && "Analytics"}
+            {view === "revenue" && "Revenue"}
+            {view === "tax" && "Tax Report"}
+            {view === "create" && "New Photoshoot"}
+            {view === "edit" && "Edit Photoshoot"}
+            {view === "gallery" && "Gallery"}
+            {view === "tokens" && "Edit Tokens"}
+          </p>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          {renderContent()}
+        </div>
+      </div>
+
+      {/* Modals (rendered outside layout) */}
       {invoiceShoot && (
         <InvoiceModal
           shoot={invoiceShoot}
