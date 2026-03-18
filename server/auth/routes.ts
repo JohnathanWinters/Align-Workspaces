@@ -103,7 +103,7 @@ export function registerAuthRoutes(app: Express): void {
 
       req.session.save((err) => {
         if (err) console.error("Session save error:", err);
-        const destination = (typeof returnTo === "string" && returnTo.startsWith("/")) ? returnTo : "/";
+        const destination = (typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//")) ? returnTo : "/";
         res.redirect(destination);
       });
     } catch (error: any) {
@@ -234,7 +234,7 @@ export function registerAuthRoutes(app: Express): void {
       .cancel{background:none;color:#6b6560;font-size:13px;margin-top:12px;padding:8px}
       .cancel:hover{color:#1a1a1a;background:none}</style></head>
       <body><div class="card"><h1>Confirm Email Change</h1>
-      <p>Change your email to:<br><span class="email">${user.pendingEmail}</span></p>
+      <p>Change your email to:<br><span class="email">${(user.pendingEmail || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}</span></p>
       <form method="POST" action="/api/auth/confirm-email-change"><input type="hidden" name="token" value="${token}">
       <button type="submit">Confirm Change</button></form>
       <a href="/portal"><button type="button" class="cancel">Cancel</button></a></div></body></html>`);

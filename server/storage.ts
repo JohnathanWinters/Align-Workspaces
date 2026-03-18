@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -144,6 +144,34 @@ export interface IStorage {
 
   // Referral link management
   deleteReferralLink(id: string): Promise<void>;
+
+  // Reviews
+  getSpaceReviews(spaceId: string): Promise<SpaceReview[]>;
+  getReviewByBooking(bookingId: string): Promise<SpaceReview | undefined>;
+  createSpaceReview(data: InsertSpaceReview): Promise<SpaceReview>;
+  updateSpaceReview(id: string, data: Partial<SpaceReview>): Promise<SpaceReview>;
+  deleteSpaceReview(id: string): Promise<void>;
+  getAllReviews(): Promise<SpaceReview[]>;
+  getSpaceAverageRating(spaceId: string): Promise<{ avg: number; count: number }>;
+
+  // Wishlists
+  getWishlistCollections(userId: string): Promise<WishlistCollection[]>;
+  createWishlistCollection(data: InsertWishlistCollection): Promise<WishlistCollection>;
+  updateWishlistCollection(id: string, name: string): Promise<WishlistCollection>;
+  deleteWishlistCollection(id: string): Promise<void>;
+  getWishlistItems(collectionId: string): Promise<WishlistItem[]>;
+  addWishlistItem(collectionId: string, spaceId: string): Promise<WishlistItem>;
+  removeWishlistItem(collectionId: string, spaceId: string): Promise<void>;
+
+  // Recurring bookings
+  createRecurringBooking(data: InsertRecurringBooking): Promise<RecurringBooking>;
+  getRecurringBookingsByUser(userId: string): Promise<RecurringBooking[]>;
+  getRecurringBookingsBySpace(spaceId: string): Promise<RecurringBooking[]>;
+  updateRecurringBooking(id: string, data: Partial<RecurringBooking>): Promise<RecurringBooking>;
+  deleteRecurringBooking(id: string): Promise<void>;
+
+  // Host response metrics
+  getHostResponseMetrics(hostId: string): Promise<{ avgMinutes: number; responseRate: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1031,6 +1059,146 @@ export class DatabaseStorage implements IStorage {
         sql`${spaceBookings.payoutStatus} IN ('paid', 'processing', 'pending', 'held')`,
       )
     ).orderBy(desc(spaceBookings.createdAt));
+  }
+  // ── Reviews ──────────────────────────────────────────────────────
+  async getSpaceReviews(spaceId: string): Promise<SpaceReview[]> {
+    return db.select().from(spaceReviews)
+      .where(and(eq(spaceReviews.spaceId, spaceId), eq(spaceReviews.status, "published")))
+      .orderBy(desc(spaceReviews.createdAt));
+  }
+
+  async getReviewByBooking(bookingId: string): Promise<SpaceReview | undefined> {
+    const [result] = await db.select().from(spaceReviews).where(eq(spaceReviews.bookingId, bookingId));
+    return result;
+  }
+
+  async createSpaceReview(data: InsertSpaceReview): Promise<SpaceReview> {
+    const [result] = await db.insert(spaceReviews).values(data).returning();
+    return result;
+  }
+
+  async updateSpaceReview(id: string, data: Partial<SpaceReview>): Promise<SpaceReview> {
+    const [result] = await db.update(spaceReviews).set(data).where(eq(spaceReviews.id, id)).returning();
+    return result;
+  }
+
+  async deleteSpaceReview(id: string): Promise<void> {
+    await db.delete(spaceReviews).where(eq(spaceReviews.id, id));
+  }
+
+  async getAllReviews(): Promise<SpaceReview[]> {
+    return db.select().from(spaceReviews).orderBy(desc(spaceReviews.createdAt));
+  }
+
+  async getSpaceAverageRating(spaceId: string): Promise<{ avg: number; count: number }> {
+    const reviews = await db.select().from(spaceReviews)
+      .where(and(eq(spaceReviews.spaceId, spaceId), eq(spaceReviews.status, "published")));
+    if (reviews.length === 0) return { avg: 0, count: 0 };
+    const sum = reviews.reduce((s, r) => s + r.rating, 0);
+    return { avg: Math.round((sum / reviews.length) * 10) / 10, count: reviews.length };
+  }
+
+  // ── Wishlists ───────────────────────────────────────────────────
+  async getWishlistCollections(userId: string): Promise<WishlistCollection[]> {
+    return db.select().from(wishlistCollections)
+      .where(eq(wishlistCollections.userId, userId))
+      .orderBy(desc(wishlistCollections.createdAt));
+  }
+
+  async createWishlistCollection(data: InsertWishlistCollection): Promise<WishlistCollection> {
+    const [result] = await db.insert(wishlistCollections).values(data).returning();
+    return result;
+  }
+
+  async updateWishlistCollection(id: string, name: string): Promise<WishlistCollection> {
+    const [result] = await db.update(wishlistCollections).set({ name }).where(eq(wishlistCollections.id, id)).returning();
+    return result;
+  }
+
+  async deleteWishlistCollection(id: string): Promise<void> {
+    await db.delete(wishlistItems).where(eq(wishlistItems.collectionId, id));
+    await db.delete(wishlistCollections).where(eq(wishlistCollections.id, id));
+  }
+
+  async getWishlistItems(collectionId: string): Promise<WishlistItem[]> {
+    return db.select().from(wishlistItems)
+      .where(eq(wishlistItems.collectionId, collectionId))
+      .orderBy(desc(wishlistItems.createdAt));
+  }
+
+  async addWishlistItem(collectionId: string, spaceId: string): Promise<WishlistItem> {
+    const existing = await db.select().from(wishlistItems)
+      .where(and(eq(wishlistItems.collectionId, collectionId), eq(wishlistItems.spaceId, spaceId)));
+    if (existing.length > 0) return existing[0];
+    const [result] = await db.insert(wishlistItems).values({ collectionId, spaceId }).returning();
+    return result;
+  }
+
+  async removeWishlistItem(collectionId: string, spaceId: string): Promise<void> {
+    await db.delete(wishlistItems)
+      .where(and(eq(wishlistItems.collectionId, collectionId), eq(wishlistItems.spaceId, spaceId)));
+  }
+
+  // ── Recurring Bookings ──────────────────────────────────────────
+  async createRecurringBooking(data: InsertRecurringBooking): Promise<RecurringBooking> {
+    const [result] = await db.insert(recurringBookings).values(data).returning();
+    return result;
+  }
+
+  async getRecurringBookingsByUser(userId: string): Promise<RecurringBooking[]> {
+    return db.select().from(recurringBookings)
+      .where(eq(recurringBookings.userId, userId))
+      .orderBy(desc(recurringBookings.createdAt));
+  }
+
+  async getRecurringBookingsBySpace(spaceId: string): Promise<RecurringBooking[]> {
+    return db.select().from(recurringBookings)
+      .where(eq(recurringBookings.spaceId, spaceId))
+      .orderBy(desc(recurringBookings.createdAt));
+  }
+
+  async updateRecurringBooking(id: string, data: Partial<RecurringBooking>): Promise<RecurringBooking> {
+    const [result] = await db.update(recurringBookings).set(data).where(eq(recurringBookings.id, id)).returning();
+    return result;
+  }
+
+  async deleteRecurringBooking(id: string): Promise<void> {
+    await db.delete(recurringBookings).where(eq(recurringBookings.id, id));
+  }
+
+  // ── Host Response Metrics ───────────────────────────────────────
+  async getHostResponseMetrics(hostId: string): Promise<{ avgMinutes: number; responseRate: number }> {
+    const hostSpaces = await this.getSpacesByUser(hostId);
+    if (hostSpaces.length === 0) return { avgMinutes: 0, responseRate: 0 };
+    const spaceIds = hostSpaces.map(s => s.id);
+
+    // Get all booking messages for host's spaces
+    const allBookings = (await Promise.all(spaceIds.map(id => this.getSpaceBookingsBySpace(id)))).flat();
+    if (allBookings.length === 0) return { avgMinutes: 0, responseRate: 0 };
+
+    let totalResponseTime = 0;
+    let respondedCount = 0;
+    let guestMessageCount = 0;
+
+    for (const booking of allBookings) {
+      const msgs = await this.getSpaceMessages(booking.id);
+      for (let i = 0; i < msgs.length; i++) {
+        if (msgs[i].senderRole === "guest") {
+          guestMessageCount++;
+          // Find the next host response
+          const hostReply = msgs.slice(i + 1).find(m => m.senderRole === "host");
+          if (hostReply && hostReply.createdAt && msgs[i].createdAt) {
+            const diff = new Date(hostReply.createdAt).getTime() - new Date(msgs[i].createdAt).getTime();
+            totalResponseTime += diff;
+            respondedCount++;
+          }
+        }
+      }
+    }
+
+    const avgMinutes = respondedCount > 0 ? Math.round(totalResponseTime / respondedCount / 60000) : 0;
+    const responseRate = guestMessageCount > 0 ? Math.round((respondedCount / guestMessageCount) * 100) : 0;
+    return { avgMinutes, responseRate };
   }
 }
 

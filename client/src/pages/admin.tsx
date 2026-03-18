@@ -34,6 +34,7 @@ import {
   MapPin,
   Coins,
   MessageCircle,
+  MessageSquare,
   Bell,
   BellRing,
   Download,
@@ -2111,6 +2112,268 @@ function AdminSpaceBookings({ spaceId, token }: { spaceId: string; token: string
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "hidden" | "flagged">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (!opts.isFormData) headers["Content-Type"] = "application/json";
+    return fetch(url, { ...opts, headers: { ...headers, ...opts.headers } });
+  }, [token]);
+
+  const loadReviews = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminFetchLocal("/api/admin/reviews");
+      if (res.ok) {
+        setReviews(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  }, [adminFetchLocal]);
+
+  useEffect(() => { loadReviews(); }, [loadReviews]);
+
+  const updateStatus = async (id: string, status: "published" | "hidden" | "flagged") => {
+    try {
+      const res = await adminFetchLocal(`/api/admin/reviews/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        toast({ title: `Review marked as ${status}` });
+        loadReviews();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const deleteReview = async (id: string) => {
+    if (!confirm("Delete this review? This cannot be undone.")) return;
+    try {
+      const res = await adminFetchLocal(`/api/admin/reviews/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast({ title: "Review deleted" });
+        loadReviews();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const statusColor = (s: string) => {
+    if (s === "published") return "bg-green-100 text-green-700";
+    if (s === "hidden") return "bg-yellow-100 text-yellow-700";
+    if (s === "flagged") return "bg-red-100 text-red-700";
+    return "bg-gray-100 text-gray-600";
+  };
+
+  const filtered = reviews.filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const guestName = (r.guestName || r.userName || "").toLowerCase();
+      const spaceName = (r.spaceName || "").toLowerCase();
+      return guestName.includes(q) || spaceName.includes(q);
+    }
+    return true;
+  });
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Star
+            key={s}
+            className={`w-3.5 h-3.5 ${s <= rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-reviews-back">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="font-serif text-xl font-semibold">Reviews ({filtered.length})</h1>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by guest or space name..."
+              className="pl-10 bg-white"
+              data-testid="input-reviews-search"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+            <SelectTrigger className="w-full sm:w-44 bg-white" data-testid="select-reviews-status-filter">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="hidden">Hidden</SelectItem>
+              <SelectItem value="flagged">Flagged</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <Card className="border-dashed border-2 bg-white/50">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <MessageSquare className="w-10 h-10 text-gray-300 mb-3" />
+              <h3 className="font-serif text-lg text-gray-900 mb-1">No reviews found</h3>
+              <p className="text-gray-500 text-sm">
+                {statusFilter !== "all" ? `No ${statusFilter} reviews` : "Reviews will appear here once guests leave feedback"}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            {/* Table header */}
+            <div className="hidden sm:grid grid-cols-[1.5fr_1fr_100px_1.5fr_90px_90px_120px] gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <span>Space</span>
+              <span>Guest</span>
+              <span>Rating</span>
+              <span>Comment</span>
+              <span>Status</span>
+              <span>Date</span>
+              <span className="text-right">Actions</span>
+            </div>
+
+            {/* Review rows */}
+            <div className="divide-y divide-gray-100">
+              {filtered.map((review: any) => (
+                <div
+                  key={review.id}
+                  className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_100px_1.5fr_90px_90px_120px] gap-2 sm:gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors items-center"
+                  data-testid={`review-row-${review.id}`}
+                >
+                  {/* Space name */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
+                    <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
+                      {review.spaceName || "Unknown Space"}
+                    </span>
+                  </div>
+
+                  {/* Guest name */}
+                  <div className="text-sm text-gray-600 truncate" data-testid={`text-review-guest-${review.id}`}>
+                    <span className="sm:hidden text-xs text-gray-400 mr-1">by</span>
+                    {review.guestName || review.userName || "Unknown Guest"}
+                  </div>
+
+                  {/* Rating */}
+                  <div data-testid={`rating-review-${review.id}`}>
+                    {renderStars(review.rating || 0)}
+                  </div>
+
+                  {/* Comment (truncated) */}
+                  <div className="text-sm text-gray-500 truncate" title={review.comment || ""} data-testid={`text-review-comment-${review.id}`}>
+                    {review.comment ? (review.comment.length > 60 ? review.comment.slice(0, 60) + "..." : review.comment) : <span className="italic text-gray-300">No comment</span>}
+                  </div>
+
+                  {/* Status badge */}
+                  <div>
+                    <Badge className={`text-[10px] ${statusColor(review.status)} shrink-0`} variant="secondary" data-testid={`badge-review-status-${review.id}`}>
+                      {review.status || "unknown"}
+                    </Badge>
+                  </div>
+
+                  {/* Date */}
+                  <div className="text-xs text-gray-400" data-testid={`text-review-date-${review.id}`}>
+                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "N/A"}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 justify-end">
+                    {review.status !== "published" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateStatus(review.id, "published")}
+                        className="h-7 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                        title="Publish"
+                        data-testid={`button-review-publish-${review.id}`}
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {review.status !== "hidden" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateStatus(review.id, "hidden")}
+                        className="h-7 px-2 text-xs text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                        title="Hide"
+                        data-testid={`button-review-hide-${review.id}`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {review.status !== "flagged" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateStatus(review.id, "flagged")}
+                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Flag"
+                        data-testid={`button-review-flag-${review.id}`}
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteReview(review.id)}
+                      className="h-7 px-2 text-xs text-gray-400 hover:text-red-600 hover:bg-red-50"
+                      title="Delete"
+                      data-testid={`button-review-delete-${review.id}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
@@ -6180,7 +6443,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -6231,6 +6494,7 @@ function AdminDashboard({ token }: { token: string }) {
       items: [
         { id: "spaces" as const, label: "Spaces", icon: Building2 },
         { id: "employees" as const, label: "Team", icon: Users },
+        { id: "reviews" as const, label: "Reviews", icon: MessageSquare },
       ],
     },
     {
@@ -6558,6 +6822,10 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "spaces") {
       return <AdminSpacesManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "reviews") {
+      return <ReviewsManager token={token} onBack={() => setView("clients")} />;
     }
 
     if (view === "analytics") {
@@ -7605,6 +7873,7 @@ function AdminDashboard({ token }: { token: string }) {
             {view === "nominations" && "Nominations"}
             {view === "employees" && "Team"}
             {view === "spaces" && "Spaces"}
+            {view === "reviews" && "Reviews"}
             {view === "analytics" && "Analytics"}
             {view === "revenue" && "Revenue"}
             {view === "tax" && "Tax Report"}

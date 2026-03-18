@@ -35,6 +35,11 @@ import {
   Sparkles,
   Mail,
   MessageCircle,
+  Star,
+  Shield,
+  ExternalLink,
+  Copy,
+  Award,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -98,6 +103,59 @@ const TYPE_COLORS: Record<string, string> = {
   art_studio: "bg-purple-50 text-purple-700",
   photo_studio: "bg-rose-50 text-rose-700",
 };
+
+const BADGE_COLORS: Record<string, string> = {
+  new: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  superhost: "bg-amber-50 text-amber-700 border-amber-200",
+  verified: "bg-blue-50 text-blue-700 border-blue-200",
+  top_rated: "bg-purple-50 text-purple-700 border-purple-200",
+  responsive: "bg-teal-50 text-teal-700 border-teal-200",
+  experienced: "bg-indigo-50 text-indigo-700 border-indigo-200",
+};
+
+function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
+  const sizeClass = size === "md" ? "w-5 h-5" : "w-3.5 h-3.5";
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`${sizeClass} ${
+            star <= Math.round(rating)
+              ? "text-amber-400 fill-amber-400"
+              : "text-stone-200 fill-stone-200"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ClickableStarRating({ rating, onRate }: { rating: number; onRate: (r: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onRate(star)}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          className="p-0.5 transition-transform hover:scale-110"
+        >
+          <Star
+            className={`w-7 h-7 transition-colors ${
+              star <= (hovered || rating)
+                ? "text-amber-400 fill-amber-400"
+                : "text-stone-300"
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function getAmenityIcon(amenity: string) {
   const l = amenity.toLowerCase();
@@ -892,6 +950,10 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
   const [showBooking, setShowBooking] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [authIntent, setAuthIntent] = useState<"book" | "contact">("book");
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
 
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -952,6 +1014,110 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/space-favorites/check", space?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/space-favorites"] });
+    },
+  });
+
+  /* ── reviews ── */
+  const { data: reviewsData } = useQuery<{ reviews: Array<{ id: string; guestName: string; rating: number; title?: string; comment: string; createdAt: string; hostResponse?: string }>; averageRating: number; reviewCount: number }>({
+    queryKey: ["/api/spaces", space?.id, "reviews"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${space!.id}/reviews`);
+      if (!res.ok) return { reviews: [], averageRating: 0, reviewCount: 0 };
+      return res.json();
+    },
+    enabled: !!space?.id,
+  });
+
+  /* ── host badges ── */
+  const { data: hostBadges = [] } = useQuery<Array<{ key: string; label: string; description: string }>>({
+    queryKey: ["/api/spaces", space?.id, "badges"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${space!.id}/badges`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!space?.id,
+  });
+
+  /* ── similar spaces ── */
+  const { data: similarSpaces = [] } = useQuery<Space[]>({
+    queryKey: ["/api/spaces", space?.id, "similar"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${space!.id}/similar`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!space?.id,
+  });
+
+  /* ── host response metrics ── */
+  const { data: hostMetrics } = useQuery<{ avgMinutes: number; responseRate: number; responseLabel: string }>({
+    queryKey: ["/api/spaces", space?.id, "host-metrics"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${space!.id}/host-metrics`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!space?.id,
+  });
+
+  /* ── cancellation policy ── */
+  const { data: cancellationPolicy } = useQuery<{ policy: string; name: string; description: string }>({
+    queryKey: ["/api/spaces", space?.id, "cancellation-policy"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${space!.id}/cancellation-policy`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!space?.id,
+  });
+
+  /* ── portfolio (work created here) ── */
+  const { data: portfolioWork = [] } = useQuery<Array<{ id: string; imageUrl: string; title?: string; category?: string }>>({
+    queryKey: ["/api/spaces", space?.id, "portfolio"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${space!.id}/portfolio`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!space?.id,
+  });
+
+  /* ── user bookings for review eligibility ── */
+  const { data: userBookings = [] } = useQuery<Array<{ id: string; spaceId: string; status: string; hasReview?: boolean }>>({
+    queryKey: ["/api/space-bookings"],
+    queryFn: async () => {
+      const res = await fetch("/api/space-bookings", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!user && !!space?.id,
+  });
+
+  const reviewableBooking = userBookings.find(
+    (b) => b.spaceId === space?.id && b.status === "completed" && !b.hasReview
+  );
+
+  /* ── review submission ── */
+  const submitReviewMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/space-bookings/${reviewableBooking!.id}/review`, {
+        rating: reviewRating,
+        title: reviewTitle || undefined,
+        comment: reviewComment,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Review submitted", description: "Thank you for your feedback!" });
+      setReviewRating(0);
+      setReviewTitle("");
+      setReviewComment("");
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", space?.id, "reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
@@ -1133,9 +1299,71 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
               <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 mb-2" data-testid="text-space-name">
                 {space.name}
               </h1>
-              <div className="flex items-center gap-2 text-stone-500 text-sm mb-2">
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span>{space.address}</span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-stone-500 text-sm">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span>{space.address}</span>
+                </div>
+                {/* Social Sharing */}
+                <div className="relative flex-shrink-0">
+                  <button
+                    onClick={() => setShowShareMenu(!showShareMenu)}
+                    className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 transition-colors p-1.5 rounded-lg hover:bg-stone-100"
+                    data-testid="button-share-trigger"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                  {showShareMenu && (
+                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl border border-stone-200 shadow-lg p-2 z-20 min-w-[180px]">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.href);
+                          toast({ title: "Link copied", description: "Space link copied to clipboard" });
+                          setShowShareMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors"
+                        data-testid="button-share-copy"
+                      >
+                        <Copy className="w-4 h-4 text-stone-400" />
+                        Copy link
+                      </button>
+                      <a
+                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${space.name} on Align Spaces`)}&url=${encodeURIComponent(window.location.href)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setShowShareMenu(false)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors"
+                        data-testid="button-share-twitter"
+                      >
+                        <ExternalLink className="w-4 h-4 text-stone-400" />
+                        Share on X
+                      </a>
+                      <a
+                        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setShowShareMenu(false)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors"
+                        data-testid="button-share-facebook"
+                      >
+                        <ExternalLink className="w-4 h-4 text-stone-400" />
+                        Share on Facebook
+                      </a>
+                      <a
+                        href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(window.location.href)}&media=${encodeURIComponent(images[0] || "")}&description=${encodeURIComponent(space.name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setShowShareMenu(false)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors"
+                        data-testid="button-share-pinterest"
+                      >
+                        <ExternalLink className="w-4 h-4 text-stone-400" />
+                        Share on Pinterest
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
               {space.targetProfession && (
                 <p className="text-sm text-[#c4956a] font-medium mb-4">
@@ -1256,6 +1484,30 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                         <p className="text-xs text-stone-400">Verified host</p>
                       </div>
                     </div>
+                    {/* Host Badges */}
+                    {hostBadges.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3" data-testid="host-badges">
+                        {hostBadges.map((badge) => (
+                          <span
+                            key={badge.key}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                              BADGE_COLORS[badge.key] || "bg-stone-50 text-stone-600 border-stone-200"
+                            }`}
+                            title={badge.description}
+                          >
+                            <Award className="w-3 h-3" />
+                            {badge.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Host Response Metrics */}
+                    {hostMetrics?.responseLabel && (
+                      <div className="flex items-center gap-2 mt-3 text-xs text-stone-500" data-testid="host-response-metrics">
+                        <Clock className="w-3.5 h-3.5 text-stone-400" />
+                        <span>{hostMetrics.responseLabel}</span>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -1271,6 +1523,19 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                   onShare={handleShare}
                 />
               </div>
+
+              {/* ── Cancellation Policy ── */}
+              {cancellationPolicy && (
+                <div className="mb-6 pb-6 border-b border-stone-200/60" data-testid="cancellation-policy">
+                  <div className="p-4 bg-stone-50/80 rounded-xl border border-stone-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-4 h-4 text-[#c4956a]" />
+                      <h2 className="text-sm font-semibold text-stone-800">{cancellationPolicy.name}</h2>
+                    </div>
+                    <p className="text-xs text-stone-500 leading-relaxed">{cancellationPolicy.description}</p>
+                  </div>
+                </div>
+              )}
 
               {/* ── Sessions at this space (portfolio photos) ── */}
               {portfolioPhotos.length > 0 && (
@@ -1354,6 +1619,126 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                   </button>
                 </div>
               )}
+
+              {/* ── Reviews Section ── */}
+              <div className="mb-6 pb-6 border-b border-stone-200/60" data-testid="reviews-section">
+                <h2 className="font-serif text-lg font-semibold text-stone-900 mb-4">Reviews</h2>
+                {reviewsData && reviewsData.reviewCount > 0 ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-5">
+                      <StarRating rating={reviewsData.averageRating} size="md" />
+                      <span className="text-sm font-semibold text-stone-800">{reviewsData.averageRating.toFixed(1)}</span>
+                      <span className="text-sm text-stone-500">({reviewsData.reviewCount} review{reviewsData.reviewCount !== 1 ? "s" : ""})</span>
+                    </div>
+                    <div className="space-y-4">
+                      {reviewsData.reviews.map((review) => (
+                        <div key={review.id} className="p-4 bg-white rounded-xl border border-stone-200/80">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-[#c4956a]/15 flex items-center justify-center text-[#c4956a] font-semibold text-xs">
+                                {review.guestName?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-stone-800">{review.guestName}</p>
+                                <p className="text-xs text-stone-400">{new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                              </div>
+                            </div>
+                            <StarRating rating={review.rating} />
+                          </div>
+                          {review.title && (
+                            <p className="text-sm font-semibold text-stone-800 mb-1">{review.title}</p>
+                          )}
+                          <p className="text-sm text-stone-600 leading-relaxed">{review.comment}</p>
+                          {review.hostResponse && (
+                            <div className="mt-3 pl-3 border-l-2 border-[#c4956a]/30">
+                              <p className="text-xs font-medium text-stone-700 mb-0.5">Host response</p>
+                              <p className="text-xs text-stone-500 leading-relaxed">{review.hostResponse}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-3 py-4">
+                    <p className="text-sm text-stone-500">No reviews yet</p>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200">
+                      New
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Leave a Review (for eligible users) ── */}
+              {reviewableBooking && (
+                <div className="mb-6 pb-6 border-b border-stone-200/60" data-testid="review-form">
+                  <h2 className="font-serif text-lg font-semibold text-stone-900 mb-4">Leave a Review</h2>
+                  <div className="p-4 bg-white rounded-xl border border-stone-200/80 space-y-4">
+                    <div>
+                      <p className="text-sm text-stone-600 mb-2">Your rating</p>
+                      <ClickableStarRating rating={reviewRating} onRate={setReviewRating} />
+                    </div>
+                    <div>
+                      <Input
+                        placeholder="Review title (optional)"
+                        value={reviewTitle}
+                        onChange={(e) => setReviewTitle(e.target.value)}
+                        className="text-sm"
+                        data-testid="input-review-title"
+                      />
+                    </div>
+                    <div>
+                      <Textarea
+                        placeholder="Share your experience..."
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        rows={3}
+                        className="resize-none text-sm"
+                        data-testid="input-review-comment"
+                      />
+                    </div>
+                    <button
+                      onClick={() => submitReviewMutation.mutate()}
+                      disabled={submitReviewMutation.isPending || reviewRating === 0 || !reviewComment.trim()}
+                      className="w-full py-2.5 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                      data-testid="button-submit-review"
+                    >
+                      {submitReviewMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                      Submit Review
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Work Created Here (Portfolio) ── */}
+              {portfolioWork.length > 0 && (
+                <div className="mb-6 pb-6 border-b border-stone-200/60" data-testid="portfolio-work">
+                  <h2 className="font-serif text-lg font-semibold text-stone-900 mb-1 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#c4956a]" />
+                    Work Created Here
+                  </h2>
+                  <p className="text-xs text-stone-400 mb-3">
+                    {portfolioWork.length} piece{portfolioWork.length !== 1 ? "s" : ""} from creators who used this space
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {portfolioWork.map((photo) => (
+                      <div key={photo.id} className="group">
+                        <div className="aspect-[3/4] overflow-hidden rounded-xl relative">
+                          <img
+                            src={photo.imageUrl}
+                            alt={photo.title || "Portfolio work"}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        </div>
+                        {photo.title && (
+                          <p className="text-xs text-stone-500 mt-1.5 truncate">{photo.title}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── Right column (desktop only) — sticky booking card ── */}
@@ -1371,6 +1756,46 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
             </div>
           </div>
         </div>
+
+        {/* ── Similar Spaces (You might also like) ── */}
+        {similarSpaces.length > 0 && (
+          <div className="px-4 sm:px-6 pb-6" data-testid="similar-spaces">
+            <h2 className="font-serif text-lg font-semibold text-stone-900 mb-4">You might also like</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {similarSpaces.slice(0, 4).map((similar) => (
+                <Link
+                  key={similar.id}
+                  href={`/spaces/${similar.slug}`}
+                  className="group block"
+                  data-testid={`similar-space-${similar.id}`}
+                >
+                  <div className="aspect-[4/3] overflow-hidden rounded-xl mb-2 bg-stone-100">
+                    {similar.imageUrls && similar.imageUrls[0] ? (
+                      <img
+                        src={similar.imageUrls[0]}
+                        alt={similar.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Building2 className="w-8 h-8 text-stone-300" />
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium text-stone-800 truncate group-hover:text-[#c4956a] transition-colors">
+                    {similar.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-stone-500">{TYPE_LABELS[similar.type] || similar.type}</span>
+                    <span className="text-xs text-stone-300">&middot;</span>
+                    <span className="text-xs font-medium text-stone-700">${similar.pricePerHour}/hr</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <SiteFooter />

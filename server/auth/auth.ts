@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const sessionOpts: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "local-dev-secret",
+    secret: process.env.SESSION_SECRET || (process.env.NODE_ENV === "production" ? (() => { throw new Error("SESSION_SECRET must be set in production"); })() : "local-dev-secret"),
     resave: false,
     saveUninitialized: false,
     cookie: {

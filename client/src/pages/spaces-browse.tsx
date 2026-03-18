@@ -41,6 +41,9 @@ import {
   Mail,
   Heart,
   Share2,
+  Search,
+  History,
+  Timer,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -96,6 +99,39 @@ const MIAMI_ZIP_COORDS: Record<string, [number, number]> = {
 
 function getZipCoords(zip: string): [number, number] | null {
   return MIAMI_ZIP_COORDS[zip] || null;
+}
+
+// Recently viewed spaces — localStorage helpers
+const RECENT_SPACES_KEY = "recentlyViewedSpaces";
+const MAX_RECENT = 10;
+
+interface RecentlyViewedEntry {
+  spaceId: string;
+  timestamp: number;
+}
+
+function getRecentlyViewed(): RecentlyViewedEntry[] {
+  try {
+    const raw = localStorage.getItem(RECENT_SPACES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (e: any) => typeof e.spaceId === "string" && typeof e.timestamp === "number"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function addRecentlyViewed(spaceId: string) {
+  const existing = getRecentlyViewed().filter((e) => e.spaceId !== spaceId);
+  const updated = [{ spaceId, timestamp: Date.now() }, ...existing].slice(0, MAX_RECENT);
+  localStorage.setItem(RECENT_SPACES_KEY, JSON.stringify(updated));
+}
+
+function clearRecentlyViewed() {
+  localStorage.removeItem(RECENT_SPACES_KEY);
 }
 
 const SPACE_TYPES = [
@@ -578,7 +614,7 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
   } catch { return null; }
 }
 
-function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number }) {
+function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolioPhotoCount, onView }: { space: Space; onHover?: (id: string) => void; onLeave?: () => void; isHighlighted?: boolean; distance?: number | null; portfolioPhotoCount?: number; onView?: (id: string) => void }) {
   const [, navigateTo] = useLocation();
   const [cardPhotoIndex, setCardPhotoIndex] = useState(0);
   const [paletteExpanded, setPaletteExpanded] = useState(false);
@@ -646,7 +682,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
               alt={`${space.name} - Photo ${cardPhotoIndex + 1}`}
               className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
-              onClick={() => navigateTo(`/spaces/${space.slug}`)}
+              onClick={() => { onView?.(space.id); navigateTo(`/spaces/${space.slug}`); }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
             {space.imageUrls.length > 1 && (
@@ -742,6 +778,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
         href={`/spaces/${space.slug}`}
         className="block p-4 flex flex-col flex-1"
         data-testid={`link-space-${space.id}`}
+        onClick={() => onView?.(space.id)}
       >
         <h3 className="font-serif text-[17px] font-semibold text-stone-900 mb-1 leading-snug" data-testid={`text-space-name-${space.id}`}>
           {space.name}
@@ -1578,6 +1615,25 @@ export default function SpacesBrowsePage() {
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // Availability search state
+  const [availDate, setAvailDate] = useState<string>("");
+  const [availStartTime, setAvailStartTime] = useState<string>("");
+  const [availHours, setAvailHours] = useState<string>("");
+  const availSearchActive = !!(availDate && availStartTime && availHours);
+
+  // Recently viewed state
+  const [recentEntries, setRecentEntries] = useState<RecentlyViewedEntry[]>(() => getRecentlyViewed());
+
+  const handleViewSpace = useCallback((spaceId: string) => {
+    addRecentlyViewed(spaceId);
+    setRecentEntries(getRecentlyViewed());
+  }, []);
+
+  const handleClearRecent = useCallback(() => {
+    clearRecentlyViewed();
+    setRecentEntries([]);
+  }, []);
+
 
   const zipCoords = useMemo(() => {
     if (zipCode.length === 5) {
@@ -1587,7 +1643,7 @@ export default function SpacesBrowsePage() {
     return null;
   }, [zipCode]);
 
-  const { data: allSpaces = [], isLoading } = useQuery<Space[]>({
+  const { data: defaultSpaces = [], isLoading: isLoadingDefault } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
     queryFn: async () => {
       const res = await fetch("/api/spaces");
@@ -1596,6 +1652,36 @@ export default function SpacesBrowsePage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  // Availability search query
+  const { data: availableSpaces, isLoading: isLoadingAvail } = useQuery<Space[]>({
+    queryKey: ["/api/spaces/search/available", availDate, availStartTime, availHours, activeType],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        date: availDate,
+        startTime: availStartTime,
+        hours: availHours,
+      });
+      if (activeType !== "all") params.set("type", activeType);
+      const res = await fetch(`/api/spaces/search/available?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    enabled: availSearchActive,
+    staleTime: 30 * 1000,
+  });
+
+  const allSpaces = availSearchActive && availableSpaces ? availableSpaces : defaultSpaces;
+  const isLoading = availSearchActive ? isLoadingAvail : isLoadingDefault;
+
+  // Resolve recently viewed spaces from IDs
+  const recentSpaces = useMemo(() => {
+    if (recentEntries.length === 0 || defaultSpaces.length === 0) return [];
+    const spaceMap = new Map(defaultSpaces.map((s) => [s.id, s]));
+    return recentEntries
+      .map((e) => spaceMap.get(e.spaceId))
+      .filter((s): s is Space => !!s);
+  }, [recentEntries, defaultSpaces]);
 
   const { data: photoCounts = {} } = useQuery<Record<string, number>>({
     queryKey: ["/api/spaces/photo-counts"],
@@ -1686,8 +1772,9 @@ export default function SpacesBrowsePage() {
     if (priceMax) count++;
     if (zipCode.length === 5) count++;
     if (availableToday) count++;
+    if (availSearchActive) count++;
     return count;
-  }, [priceMin, priceMax, zipCode, availableToday]);
+  }, [priceMin, priceMax, zipCode, availableToday, availSearchActive]);
 
   const handleMarkerClick = useCallback((id: string) => {
     setHoveredCardId(id);
@@ -1710,6 +1797,12 @@ export default function SpacesBrowsePage() {
     }
   }, []);
 
+  const clearAvailFilters = useCallback(() => {
+    setAvailDate("");
+    setAvailStartTime("");
+    setAvailHours("");
+  }, []);
+
   const clearAllFilters = useCallback(() => {
     setPriceMin("");
     setPriceMax("");
@@ -1717,7 +1810,8 @@ export default function SpacesBrowsePage() {
     setSortBy("default");
     setAvailableToday(false);
     setZipError("");
-  }, []);
+    clearAvailFilters();
+  }, [clearAvailFilters]);
 
   useEffect(() => {
     document.title = "Workspaces | Align Spaces, Miami Workspaces for Professionals";
@@ -2047,6 +2141,58 @@ export default function SpacesBrowsePage() {
                   </div>
                 </div>
 
+                <div className="flex items-end gap-2">
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={availDate}
+                      onChange={e => setAvailDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-36 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
+                      data-testid="input-avail-date"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Start time</label>
+                    <input
+                      type="time"
+                      value={availStartTime}
+                      onChange={e => setAvailStartTime(e.target.value)}
+                      className="w-28 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors"
+                      data-testid="input-avail-time"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Duration</label>
+                    <select
+                      value={availHours}
+                      onChange={e => setAvailHours(e.target.value)}
+                      className="w-24 px-2.5 py-1.5 rounded-lg border border-stone-200 text-sm bg-white focus:outline-none focus:border-[#c4956a] transition-colors cursor-pointer"
+                      data-testid="select-avail-hours"
+                    >
+                      <option value="">--</option>
+                      <option value="1">1 hr</option>
+                      <option value="2">2 hrs</option>
+                      <option value="3">3 hrs</option>
+                      <option value="4">4 hrs</option>
+                      <option value="5">5 hrs</option>
+                      <option value="6">6 hrs</option>
+                      <option value="8">8 hrs</option>
+                    </select>
+                  </div>
+                  {availSearchActive && (
+                    <button
+                      onClick={clearAvailFilters}
+                      className="pb-1.5 text-xs text-foreground/40 hover:text-foreground/60 transition-colors"
+                      data-testid="button-clear-avail"
+                      title="Clear availability search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
                 {activeFilterCount > 0 && (
                   <button
                     onClick={clearAllFilters}
@@ -2068,8 +2214,63 @@ export default function SpacesBrowsePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-foreground/50">
                 <span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? "space" : "spaces"} in Miami
+                {availSearchActive && (
+                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                    <Search className="w-3 h-3" />
+                    available {availDate} at {availStartTime} for {availHours}h
+                  </span>
+                )}
               </p>
             </div>
+
+            {/* Recently Viewed Section */}
+            {recentSpaces.length > 0 && (
+              <div data-testid="recently-viewed-section">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground/50 uppercase tracking-wider">
+                    <History className="w-3.5 h-3.5" />
+                    Recently Viewed
+                  </div>
+                  <button
+                    onClick={handleClearRecent}
+                    className="text-[11px] text-foreground/30 hover:text-foreground/50 transition-colors"
+                    data-testid="button-clear-recent"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
+                  {recentSpaces.map((space) => (
+                    <Link
+                      key={space.id}
+                      href={`/spaces/${space.slug}`}
+                      className="flex-shrink-0 w-44 bg-white rounded-lg border border-stone-200/80 overflow-hidden hover:shadow-md transition-shadow group"
+                      data-testid={`recent-space-${space.id}`}
+                      onClick={() => handleViewSpace(space.id)}
+                    >
+                      <div className="h-24 bg-stone-100 overflow-hidden">
+                        {space.imageUrls && space.imageUrls[0] ? (
+                          <img
+                            src={space.imageUrls[0]}
+                            alt={space.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Building2 className="w-6 h-6 text-stone-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-semibold text-stone-800 truncate leading-snug">{space.name}</p>
+                        <p className="text-[11px] text-[#c4956a] font-medium mt-0.5">${space.pricePerHour}/hr</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {isLoading ? (
               <div className="space-y-4">
@@ -2114,6 +2315,7 @@ export default function SpacesBrowsePage() {
                         isHighlighted={hoveredCardId === space.id}
                         distance={getDistanceForSpace(space)}
                         portfolioPhotoCount={photoCounts[space.id]}
+                        onView={handleViewSpace}
                       />
                     </div>
                   ))}

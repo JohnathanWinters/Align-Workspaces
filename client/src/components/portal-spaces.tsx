@@ -33,6 +33,14 @@ import {
   Copy,
   BarChart3,
   Star,
+  FolderHeart,
+  ChevronDown,
+  ChevronUp,
+  TrendingUp,
+  Repeat,
+  Pause,
+  Play,
+  XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -320,6 +328,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     targetProfession: space.targetProfession || "",
     hostName: space.hostName || "",
     bufferMinutes: String(space.bufferMinutes ?? 15),
+    cancellationPolicy: (space as any).cancellationPolicy || "flexible",
   });
 
   const updateMutation = useMutation({
@@ -333,6 +342,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
         amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
+        cancellationPolicy: formData.cancellationPolicy,
       };
       await apiRequest("PATCH", `/api/spaces/${space.id}`, payload);
     },
@@ -448,6 +458,26 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
           </select>
         </div>
         <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
+      </div>
+      <div>
+        <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
+        <select
+          value={formData.cancellationPolicy}
+          onChange={(e) => update("cancellationPolicy", e.target.value)}
+          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
+          data-testid={`edit-select-cancellation-${space.id}`}
+        >
+          <option value="flexible">Flexible</option>
+          <option value="moderate">Moderate</option>
+          <option value="strict">Strict</option>
+        </select>
+        <p className="text-[10px] text-gray-400 mt-1">
+          {formData.cancellationPolicy === "flexible"
+            ? "Full refund up to 24 hours before the booking"
+            : formData.cancellationPolicy === "moderate"
+            ? "Full refund up to 5 days before; 50% refund after that"
+            : "50% refund up to 7 days before; no refund after that"}
+        </p>
       </div>
       <div>
         <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
@@ -862,6 +892,124 @@ function FavoritesTab() {
   );
 }
 
+function RecurringBookingsSection() {
+  const { toast } = useToast();
+  const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  const { data: recurringBookings = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/recurring-bookings"],
+    queryFn: async () => {
+      const res = await fetch("/api/recurring-bookings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await apiRequest("PATCH", `/api/recurring-bookings/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recurring-bookings"] });
+      toast({ title: "Recurring booking updated" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  if (isLoading) return null;
+  if (recurringBookings.length === 0) return null;
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="text-[10px] bg-green-50 text-green-700 border-green-200">Active</Badge>;
+      case "paused":
+        return <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">Paused</Badge>;
+      case "cancelled":
+        return <Badge className="text-[10px] bg-stone-100 text-stone-500 border-stone-200">Cancelled</Badge>;
+      default:
+        return <Badge className="text-[10px] bg-gray-100 text-gray-600">{status}</Badge>;
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+        <Repeat className="w-3.5 h-3.5" />
+        Recurring Bookings
+      </h3>
+      {recurringBookings.map((rb: any) => (
+        <Card key={rb.id} className="overflow-hidden border border-gray-100" data-testid={`card-recurring-${rb.id}`}>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-gray-900 text-sm truncate">{rb.spaceName || "Space"}</h4>
+                  {getStatusBadge(rb.status)}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3" />
+                    {DAY_NAMES[rb.dayOfWeek] || `Day ${rb.dayOfWeek}`}
+                  </span>
+                  {rb.time && (
+                    <span>{rb.time}</span>
+                  )}
+                  {rb.hours && (
+                    <span>{rb.hours}hr</span>
+                  )}
+                </div>
+              </div>
+              {rb.status !== "cancelled" && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {rb.status === "active" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "paused" })}
+                      disabled={updateStatusMutation.isPending}
+                      data-testid={`button-pause-${rb.id}`}
+                    >
+                      <Pause className="w-3 h-3 mr-1" />
+                      Pause
+                    </Button>
+                  ) : rb.status === "paused" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "active" })}
+                      disabled={updateStatusMutation.isPending}
+                      data-testid={`button-resume-${rb.id}`}
+                    >
+                      <Play className="w-3 h-3 mr-1" />
+                      Resume
+                    </Button>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                    onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "cancelled" })}
+                    disabled={updateStatusMutation.isPending}
+                    data-testid={`button-cancel-recurring-${rb.id}`}
+                  >
+                    <XCircle className="w-3 h-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 function MyBookingsTab() {
   const { data: bookingsData, isLoading } = useQuery<{ guest: any[]; host: any[] }>({
     queryKey: ["/api/space-bookings"],
@@ -910,17 +1058,20 @@ function MyBookingsTab() {
 
   if (upcomingBookings.length === 0 && pastBookings.length === 0) {
     return (
-      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-my-bookings">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <CalendarDays className="w-7 h-7 text-gray-400" />
-          </div>
-          <h3 className="font-serif text-xl text-gray-900 mb-2">No bookings yet</h3>
-          <p className="text-gray-500 text-sm max-w-sm">
-            Spaces you've booked will appear here.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-my-bookings">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <CalendarDays className="w-7 h-7 text-gray-400" />
+            </div>
+            <h3 className="font-serif text-xl text-gray-900 mb-2">No bookings yet</h3>
+            <p className="text-gray-500 text-sm max-w-sm">
+              Spaces you've booked will appear here.
+            </p>
+          </CardContent>
+        </Card>
+        <RecurringBookingsSection />
+      </div>
     );
   }
 
@@ -1010,6 +1161,7 @@ function MyBookingsTab() {
           {upcomingBookings.map((booking: any) => renderBookingCard(booking, "upcoming"))}
         </div>
       )}
+      <RecurringBookingsSection />
       {pastBookings.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Past</h3>
@@ -1500,13 +1652,382 @@ function EarningsTab() {
   );
 }
 
-type SpacesTabKey = "favorites" | "my-bookings" | "my-spaces" | "earnings";
+// Wishlists / Collections tab
+function WishlistsTab() {
+  const { toast } = useToast();
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  const { data: wishlists = [], isLoading } = useQuery<{ id: string; name: string; items: any[]; itemCount: number }[]>({
+    queryKey: ["/api/wishlists"],
+    queryFn: async () => {
+      const res = await fetch("/api/wishlists", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (name: string) => {
+      await apiRequest("POST", "/api/wishlists", { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      setNewName("");
+      setCreating(false);
+      toast({ title: "Collection created" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/wishlists/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      toast({ title: "Collection deleted" });
+    },
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: async ({ collectionId, spaceId }: { collectionId: string; spaceId: string }) => {
+      await apiRequest("DELETE", `/api/wishlists/${collectionId}/items/${spaceId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      toast({ title: "Space removed from collection" });
+    },
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      await apiRequest("PATCH", `/api/wishlists/${id}`, { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      setRenamingId(null);
+      toast({ title: "Collection renamed" });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium text-gray-900 text-sm">Your Collections</h3>
+        {!creating && (
+          <Button
+            onClick={() => setCreating(true)}
+            size="sm"
+            className="bg-gray-900 text-white hover:bg-black"
+            data-testid="button-create-collection"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Create Collection
+          </Button>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {creating && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+            <Card className="bg-white">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="Collection name..."
+                    className="flex-1"
+                    data-testid="input-collection-name"
+                    onKeyDown={(e) => { if (e.key === "Enter" && newName.trim()) createMutation.mutate(newName.trim()); }}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => createMutation.mutate(newName.trim())}
+                    disabled={!newName.trim() || createMutation.isPending}
+                    className="bg-gray-900 text-white hover:bg-black"
+                    data-testid="button-save-collection"
+                  >
+                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setCreating(false); setNewName(""); }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {wishlists.length === 0 && !creating ? (
+        <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-wishlists">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <FolderHeart className="w-7 h-7 text-gray-400" />
+            </div>
+            <h3 className="font-serif text-xl text-gray-900 mb-2">No collections yet</h3>
+            <p className="text-gray-500 text-sm max-w-sm">
+              Create collections to organize your favorite spaces into groups.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {wishlists.map((wl) => (
+            <Card key={wl.id} className="bg-white overflow-hidden" data-testid={`card-wishlist-${wl.id}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {renamingId === wl.id ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          className="flex-1 h-8 text-sm"
+                          data-testid={`input-rename-${wl.id}`}
+                          onKeyDown={(e) => { if (e.key === "Enter" && renameValue.trim()) renameMutation.mutate({ id: wl.id, name: renameValue.trim() }); if (e.key === "Escape") setRenamingId(null); }}
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2"
+                          onClick={() => renameMutation.mutate({ id: wl.id, name: renameValue.trim() })}
+                          disabled={!renameValue.trim() || renameMutation.isPending}
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setRenamingId(null)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <FolderHeart className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+                        <span className="font-medium text-gray-900 text-sm truncate">{wl.name}</span>
+                        <Badge className="bg-stone-100 text-stone-600 text-[10px]">{wl.itemCount} space{wl.itemCount !== 1 ? "s" : ""}</Badge>
+                      </>
+                    )}
+                  </div>
+                  {renamingId !== wl.id && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setRenamingId(wl.id); setRenameValue(wl.name); }}
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                        data-testid={`button-rename-${wl.id}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => deleteMutation.mutate(wl.id)}
+                        className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                        data-testid={`button-delete-collection-${wl.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setExpandedId(expandedId === wl.id ? null : wl.id)}
+                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                        data-testid={`button-expand-${wl.id}`}
+                      >
+                        {expandedId === wl.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {expandedId === wl.id && wl.items && wl.items.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3 pt-3 border-t border-gray-100"
+                    >
+                      <div className="space-y-2">
+                        {wl.items.map((item: any) => (
+                          <div key={item.spaceId || item.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
+                            <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
+                              {item.imageUrl ? (
+                                <img src={item.imageUrl} alt={item.spaceName || "Space"} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center"><Building2 className="w-4 h-4 text-gray-300" /></div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{item.spaceName || "Space"}</p>
+                              {item.address && <p className="text-xs text-gray-500 truncate">{item.address}</p>}
+                            </div>
+                            <button
+                              onClick={() => removeItemMutation.mutate({ collectionId: wl.id, spaceId: item.spaceId || item.id })}
+                              className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                              data-testid={`button-remove-item-${item.spaceId || item.id}`}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                  {expandedId === wl.id && (!wl.items || wl.items.length === 0) && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-3 pt-3 border-t border-gray-100"
+                    >
+                      <p className="text-xs text-gray-400 text-center py-3">No spaces in this collection yet.</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Host Analytics Dashboard
+function HostAnalyticsTab() {
+  const { data: analytics, isLoading } = useQuery<{
+    spaces: Array<{
+      id: string;
+      name: string;
+      bookingCount: number;
+      completedBookings: number;
+      revenue: number;
+      avgRating: number | null;
+      occupancyRate: number | null;
+    }>;
+    totals: {
+      totalBookings: number;
+      completedBookings: number;
+      totalRevenue: number;
+      avgRating: number | null;
+    };
+  }>({
+    queryKey: ["/api/host/analytics"],
+    queryFn: async () => {
+      const res = await fetch("/api/host/analytics", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!analytics || !analytics.totals) {
+    return (
+      <div className="text-center py-12 text-stone-500">
+        <TrendingUp className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+        <p className="text-sm font-medium mb-1">No analytics yet</p>
+        <p className="text-xs text-stone-400">Analytics will appear here once guests start booking your spaces.</p>
+      </div>
+    );
+  }
+
+  const { totals, spaces } = analytics;
+
+  return (
+    <div className="space-y-5">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
+          <p className="text-2xl font-semibold text-stone-900">{totals.totalBookings}</p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Total Bookings</p>
+        </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
+          <p className="text-2xl font-semibold text-stone-900">{totals.completedBookings}</p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Completed</p>
+        </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
+          <p className="text-2xl font-semibold text-stone-900">${(totals.totalRevenue / 100).toFixed(2)}</p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Total Revenue</p>
+        </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
+          <p className="text-2xl font-semibold text-stone-900">
+            {totals.avgRating != null ? totals.avgRating.toFixed(1) : "--"}
+          </p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Avg Rating</p>
+        </div>
+      </div>
+
+      {/* Per-space breakdown */}
+      {spaces.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Per-Space Breakdown</h3>
+          <div className="space-y-2">
+            {spaces.map((space) => (
+              <div key={space.id} className="bg-white rounded-xl border border-stone-200 p-4" data-testid={`analytics-space-${space.id}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-stone-800 truncate">{space.name}</h4>
+                  {space.avgRating != null && (
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-sm font-medium text-stone-700">{space.avgRating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div>
+                    <p className="text-lg font-semibold text-stone-900">{space.bookingCount}</p>
+                    <p className="text-[10px] text-stone-400 uppercase">Bookings</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-stone-900">{space.completedBookings}</p>
+                    <p className="text-[10px] text-stone-400 uppercase">Completed</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-stone-900">${(space.revenue / 100).toFixed(2)}</p>
+                    <p className="text-[10px] text-stone-400 uppercase">Revenue</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-stone-900">
+                      {space.occupancyRate != null ? `${Math.round(space.occupancyRate)}%` : "--"}
+                    </p>
+                    <p className="text-[10px] text-stone-400 uppercase">Occupancy</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type SpacesTabKey = "favorites" | "my-bookings" | "my-spaces" | "earnings" | "wishlists" | "analytics";
 
 export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: SpacesTabKey }) {
   // Handle legacy tab values
   const resolvedInitialTab: SpacesTabKey | undefined = initialTab === "past" as any ? "my-bookings"
     : initialTab === "payouts" as any || initialTab === "referrals" as any ? "earnings"
-    : initialTab;
+    : initialTab as SpacesTabKey | undefined;
   const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "favorites");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
 
@@ -1571,9 +2092,11 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
   const tabs = [
     ...(hasFavs ? [{ key: "favorites" as const, label: "Favorites", icon: Heart }] : []),
+    { key: "wishlists" as const, label: "Wishlists", icon: FolderHeart },
     { key: "my-bookings" as const, label: "My Bookings", icon: CalendarDays },
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
+    ...(isHost ? [{ key: "analytics" as const, label: "Analytics", icon: TrendingUp }] : []),
   ];
 
   const { data: loyaltyData } = useQuery<{
@@ -1628,9 +2151,11 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
       </div>
 
       {spacesTab === "favorites" && <FavoritesTab />}
+      {spacesTab === "wishlists" && <WishlistsTab />}
       {spacesTab === "my-bookings" && <MyBookingsTab />}
       {spacesTab === "my-spaces" && <MySpacesTab />}
       {spacesTab === "earnings" && <EarningsTab />}
+      {spacesTab === "analytics" && <HostAnalyticsTab />}
     </div>
   );
 }

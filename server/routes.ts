@@ -168,7 +168,7 @@ function isAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function isAdminOrEmployee(req: Request, res: Response, next: NextFunction) {
+async function isAdminOrEmployee(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Authentication required" });
@@ -183,6 +183,11 @@ function isAdminOrEmployee(req: Request, res: Response, next: NextFunction) {
     const empId = parts[1];
     const empRole = parts[2];
     if (empId && empRole) {
+      // Validate employee exists, is active, and role matches
+      const employee = await storage.getEmployeeById(empId);
+      if (!employee || employee.active !== 1 || employee.role !== empRole) {
+        return res.status(403).json({ message: "Invalid or inactive employee credentials" });
+      }
       (req as any).adminRole = "employee";
       (req as any).employeeId = empId;
       (req as any).employeeRole = empRole;
@@ -224,12 +229,13 @@ export async function registerRoutes(
       res.send(`<h2>Success!</h2><p>Add this to your <code>.env</code> file:</p><pre>GMAIL_REFRESH_TOKEN=${refreshToken}</pre><p>Then restart the server.</p>`);
     } catch (err: any) {
       console.error("Gmail OAuth callback error:", err);
-      res.status(500).send(`<h2>Error</h2><pre>${err.message}</pre>`);
+      const safeMsg = String(err.message || "Unknown error").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      res.status(500).send(`<h2>Error</h2><pre>${safeMsg}</pre>`);
     }
   });
 
   // Test email endpoint
-  app.post("/api/test-email", async (req, res) => {
+  app.post("/api/test-email", isAdmin, async (req, res) => {
     try {
       await sendHelpRequest({
         clientName: "Test User",
@@ -345,7 +351,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/leads", async (_req, res) => {
+  app.get("/api/leads", isAdmin, async (_req, res) => {
     try {
       const allLeads = await storage.getLeads();
       res.json(allLeads);
@@ -354,7 +360,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/portfolio-photos", async (req, res) => {
+  app.post("/api/portfolio-photos", isAdmin, async (req, res) => {
     try {
       const data = insertPortfolioPhotoSchema.parse(req.body);
       const photo = await storage.createPortfolioPhoto(data);
@@ -2368,6 +2374,9 @@ export async function registerRoutes(
       if (body.contactEmail !== undefined) updates.contactEmail = String(body.contactEmail).trim();
       if (body.targetProfession !== undefined) updates.targetProfession = String(body.targetProfession).trim();
       if (body.availableHours !== undefined) updates.availableHours = String(body.availableHours).trim();
+      if (body.cancellationPolicy !== undefined && ["flexible", "moderate", "strict"].includes(body.cancellationPolicy)) {
+        updates.cancellationPolicy = body.cancellationPolicy;
+      }
 
       if (body.pricePerHour !== undefined) {
         const n = Number(body.pricePerHour);
@@ -4192,6 +4201,556 @@ export async function registerRoutes(
       });
 
       res.json({ url });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // REVIEWS & RATINGS
+  // ══════════════════════════════════════════════════════════════════
+
+  // Get reviews for a space (public)
+  app.get("/api/spaces/:id/reviews", async (req, res) => {
+    try {
+      const reviews = await storage.getSpaceReviews(req.params.id);
+      const { avg, count } = await storage.getSpaceAverageRating(req.params.id);
+      res.json({ reviews, averageRating: avg, reviewCount: count });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Submit a review (guest, after completed booking)
+  app.post("/api/space-bookings/:id/review", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      if (booking.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+      if (booking.status !== "completed") return res.status(400).json({ message: "Can only review completed bookings" });
+
+      const existing = await storage.getReviewByBooking(booking.id);
+      if (existing) return res.status(400).json({ message: "Already reviewed this booking" });
+
+      const { rating, title, comment } = req.body;
+      if (!rating || rating < 1 || rating > 5) return res.status(400).json({ message: "Rating must be 1-5" });
+
+      const review = await storage.createSpaceReview({
+        spaceId: booking.spaceId,
+        bookingId: booking.id,
+        guestId: req.user.claims.sub,
+        guestName: booking.userName || req.user.claims.first_name || "Guest",
+        rating: Number(rating),
+        title: title ? String(title).trim().slice(0, 200) : null,
+        comment: comment ? String(comment).trim().slice(0, 2000) : null,
+      });
+      res.json(review);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Host responds to a review
+  app.post("/api/reviews/:id/respond", isAuthenticated, async (req: any, res) => {
+    try {
+      const reviews = await storage.getAllReviews();
+      const review = reviews.find(r => r.id === req.params.id);
+      if (!review) return res.status(404).json({ message: "Review not found" });
+
+      const space = await storage.getSpaceById(review.spaceId);
+      if (!space || space.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+
+      const { response } = req.body;
+      if (!response) return res.status(400).json({ message: "Response required" });
+
+      const updated = await storage.updateSpaceReview(review.id, {
+        hostResponse: String(response).trim().slice(0, 2000),
+        hostRespondedAt: new Date(),
+      });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Check if user can review a booking
+  app.get("/api/space-bookings/:id/can-review", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ canReview: false });
+      if (booking.userId !== req.user.claims.sub) return res.json({ canReview: false });
+      if (booking.status !== "completed") return res.json({ canReview: false });
+      const existing = await storage.getReviewByBooking(booking.id);
+      res.json({ canReview: !existing, existingReview: existing || null });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: get all reviews
+  app.get("/api/admin/reviews", isAdmin, async (req: any, res) => {
+    try {
+      const reviews = await storage.getAllReviews();
+      res.json(reviews);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: update review status (hide/flag/publish)
+  app.patch("/api/admin/reviews/:id", isAdmin, async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      if (!["published", "hidden", "flagged"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      const updated = await storage.updateSpaceReview(req.params.id, { status });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: delete review
+  app.delete("/api/admin/reviews/:id", isAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteSpaceReview(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // SIMILAR / RECOMMENDED SPACES
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/spaces/:id/similar", async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const allSpaces = await storage.getSpaces();
+      const similar = allSpaces
+        .filter(s => s.id !== space.id && s.approvalStatus === "approved" && s.isActive === 1)
+        .map(s => {
+          let score = 0;
+          if (s.type === space.type) score += 3;
+          if (s.neighborhood && s.neighborhood === space.neighborhood) score += 2;
+          if (s.targetProfession && s.targetProfession === space.targetProfession) score += 2;
+          const priceDiff = Math.abs((s.pricePerHour || 0) - (space.pricePerHour || 0));
+          if (priceDiff <= 20) score += 1;
+          return { space: s, score };
+        })
+        .filter(s => s.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 4)
+        .map(s => s.space);
+
+      res.json(similar);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // HOST RESPONSE RATE & TIME
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/spaces/:id/host-metrics", async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || !space.userId) return res.json({ avgMinutes: 0, responseRate: 0, responseLabel: "" });
+
+      const metrics = await storage.getHostResponseMetrics(space.userId);
+      let responseLabel = "";
+      if (metrics.responseRate >= 90) {
+        if (metrics.avgMinutes <= 60) responseLabel = "Typically responds within an hour";
+        else if (metrics.avgMinutes <= 240) responseLabel = "Typically responds within a few hours";
+        else if (metrics.avgMinutes <= 1440) responseLabel = "Typically responds within a day";
+        else responseLabel = "Typically responds within a few days";
+      } else if (metrics.responseRate >= 50) {
+        responseLabel = "Sometimes responds within a day";
+      }
+
+      res.json({ ...metrics, responseLabel });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // SEARCH BY DATE/TIME AVAILABILITY
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/spaces/search/available", async (req, res) => {
+    try {
+      const { date, startTime, hours, type } = req.query;
+      let allSpaces = await storage.getSpaces(type ? { type: String(type) } : undefined);
+      allSpaces = allSpaces.filter(s => s.approvalStatus === "approved" && s.isActive === 1);
+
+      if (date && startTime && hours) {
+        const dateStr = String(date);
+        const startStr = String(startTime);
+        const numHours = Number(hours);
+
+        const [sH, sM] = startStr.split(":").map(Number);
+        const requestedStart = sH * 60 + sM;
+        const requestedEnd = requestedStart + numHours * 60;
+
+        const available: typeof allSpaces = [];
+        for (const space of allSpaces) {
+          const bookings = await storage.getSpaceBookingsBySpace(space.id);
+          const dayBookings = bookings.filter(b =>
+            b.bookingDate === dateStr &&
+            b.status !== "cancelled" && b.status !== "rejected"
+          );
+
+          let conflict = false;
+          for (const b of dayBookings) {
+            if (!b.bookingStartTime || !b.bookingHours) continue;
+            const [bH, bM] = b.bookingStartTime.split(":").map(Number);
+            const bStart = bH * 60 + bM;
+            const buffer = space.bufferMinutes || 15;
+            const bEnd = bStart + b.bookingHours * 60 + buffer;
+            if (requestedStart < bEnd && requestedEnd > bStart) {
+              conflict = true;
+              break;
+            }
+          }
+          if (!conflict) available.push(space);
+        }
+        res.json(available);
+      } else {
+        res.json(allSpaces);
+      }
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // WISHLISTS / COLLECTIONS
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/wishlists", isAuthenticated, async (req: any, res) => {
+    try {
+      const collections = await storage.getWishlistCollections(req.user.claims.sub);
+      const result = await Promise.all(collections.map(async (c) => {
+        const items = await storage.getWishlistItems(c.id);
+        return { ...c, items, itemCount: items.length };
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/wishlists", isAuthenticated, async (req: any, res) => {
+    try {
+      const { name } = req.body;
+      if (!name) return res.status(400).json({ message: "Name required" });
+      const collection = await storage.createWishlistCollection({
+        userId: req.user.claims.sub,
+        name: String(name).trim().slice(0, 100),
+      });
+      res.json(collection);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/wishlists/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const collections = await storage.getWishlistCollections(req.user.claims.sub);
+      const collection = collections.find(c => c.id === req.params.id);
+      if (!collection) return res.status(404).json({ message: "Collection not found" });
+      const { name } = req.body;
+      if (!name) return res.status(400).json({ message: "Name required" });
+      const updated = await storage.updateWishlistCollection(req.params.id, String(name).trim().slice(0, 100));
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/wishlists/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const collections = await storage.getWishlistCollections(req.user.claims.sub);
+      const collection = collections.find(c => c.id === req.params.id);
+      if (!collection) return res.status(404).json({ message: "Collection not found" });
+      await storage.deleteWishlistCollection(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/wishlists/:id/items", isAuthenticated, async (req: any, res) => {
+    try {
+      const collections = await storage.getWishlistCollections(req.user.claims.sub);
+      const collection = collections.find(c => c.id === req.params.id);
+      if (!collection) return res.status(404).json({ message: "Collection not found" });
+      const { spaceId } = req.body;
+      if (!spaceId) return res.status(400).json({ message: "spaceId required" });
+      const item = await storage.addWishlistItem(req.params.id, spaceId);
+      res.json(item);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/wishlists/:collectionId/items/:spaceId", isAuthenticated, async (req: any, res) => {
+    try {
+      const collections = await storage.getWishlistCollections(req.user.claims.sub);
+      const collection = collections.find(c => c.id === req.params.collectionId);
+      if (!collection) return res.status(404).json({ message: "Collection not found" });
+      await storage.removeWishlistItem(req.params.collectionId, req.params.spaceId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // RECURRING BOOKINGS
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/recurring-bookings", isAuthenticated, async (req: any, res) => {
+    try {
+      const recurring = await storage.getRecurringBookingsByUser(req.user.claims.sub);
+      res.json(recurring);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/recurring-bookings", isAuthenticated, async (req: any, res) => {
+    try {
+      const { spaceId, dayOfWeek, startTime, hours, startDate, endDate } = req.body;
+      if (!spaceId || dayOfWeek === undefined || !startTime || !hours || !startDate) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      const space = await storage.getSpaceById(spaceId);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+      if (space.approvalStatus !== "approved" || space.isActive !== 1) {
+        return res.status(400).json({ message: "Space is not available for booking" });
+      }
+
+      const dow = Number(dayOfWeek);
+      const numHours = Number(hours);
+      if (!Number.isInteger(dow) || dow < 0 || dow > 6) {
+        return res.status(400).json({ message: "dayOfWeek must be 0-6" });
+      }
+      if (!Number.isInteger(numHours) || numHours < 1 || numHours > 24) {
+        return res.status(400).json({ message: "hours must be 1-24" });
+      }
+      if (!/^\d{2}:\d{2}$/.test(String(startTime))) {
+        return res.status(400).json({ message: "startTime must be HH:MM format" });
+      }
+
+      const recurring = await storage.createRecurringBooking({
+        spaceId,
+        userId: req.user.claims.sub,
+        userName: req.user.claims.first_name || "Guest",
+        userEmail: req.user.claims.email || "",
+        dayOfWeek: dow,
+        startTime: String(startTime),
+        hours: numHours,
+        startDate: String(startDate),
+        endDate: endDate ? String(endDate) : null,
+      });
+      res.json(recurring);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/recurring-bookings/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const all = await storage.getRecurringBookingsByUser(req.user.claims.sub);
+      const rec = all.find(r => r.id === req.params.id);
+      if (!rec) return res.status(404).json({ message: "Not found" });
+
+      const { status, endDate } = req.body;
+      const updates: Partial<any> = {};
+      if (status && ["active", "paused", "cancelled"].includes(status)) updates.status = status;
+      if (endDate !== undefined) updates.endDate = endDate;
+
+      const updated = await storage.updateRecurringBooking(req.params.id, updates);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/recurring-bookings/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const all = await storage.getRecurringBookingsByUser(req.user.claims.sub);
+      const rec = all.find(r => r.id === req.params.id);
+      if (!rec) return res.status(404).json({ message: "Not found" });
+      await storage.deleteRecurringBooking(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // CANCELLATION POLICY
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/spaces/:id/cancellation-policy", async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const policy = space.cancellationPolicy || "flexible";
+      const details = {
+        flexible: {
+          name: "Flexible",
+          description: "Full refund up to 24 hours before the booking. 50% refund if cancelled within 24 hours.",
+          fullRefundHours: 24,
+          partialRefundPercent: 50,
+        },
+        moderate: {
+          name: "Moderate",
+          description: "Full refund up to 5 days before the booking. 50% refund up to 24 hours before.",
+          fullRefundHours: 120,
+          partialRefundPercent: 50,
+        },
+        strict: {
+          name: "Strict",
+          description: "Full refund up to 7 days before the booking. No refund within 7 days.",
+          fullRefundHours: 168,
+          partialRefundPercent: 0,
+        },
+      }[policy];
+
+      res.json({ policy, ...(details || { name: "Flexible", description: "Full refund up to 24 hours before the booking.", fullRefundHours: 24, partialRefundPercent: 50 }) });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // GUEST PORTFOLIO ON SPACES ("Work created here")
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/spaces/:id/portfolio", async (req, res) => {
+    try {
+      const photos = await storage.getPortfolioPhotosBySpace(req.params.id);
+      res.json(photos);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // HOST BADGES
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/spaces/:id/badges", async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const badges: { key: string; label: string; description: string }[] = [];
+
+      // "New" badge - space created within last 30 days
+      if (space.createdAt) {
+        const daysSinceCreated = (Date.now() - new Date(space.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceCreated <= 30) {
+          badges.push({ key: "new", label: "New", description: "Recently listed on Align" });
+        }
+      }
+
+      // "Superhost" - high response rate + completed bookings
+      if (space.userId) {
+        const metrics = await storage.getHostResponseMetrics(space.userId);
+        const bookings = await storage.getSpaceBookingsBySpace(space.id);
+        const completedBookings = bookings.filter(b => b.status === "completed").length;
+
+        if (metrics.responseRate >= 90 && completedBookings >= 5) {
+          badges.push({ key: "superhost", label: "Superhost", description: "Highly responsive with many successful bookings" });
+        } else if (metrics.responseRate >= 80) {
+          badges.push({ key: "responsive", label: "Responsive", description: "Typically responds quickly to inquiries" });
+        }
+
+        // "Experienced" badge
+        if (completedBookings >= 10) {
+          badges.push({ key: "experienced", label: "Experienced", description: `${completedBookings}+ completed bookings` });
+        }
+      }
+
+      // "Top Rated" badge
+      const { avg, count } = await storage.getSpaceAverageRating(space.id);
+      if (avg >= 4.5 && count >= 3) {
+        badges.push({ key: "top_rated", label: "Top Rated", description: `${avg} stars from ${count} reviews` });
+      }
+
+      // "Verified" badge — space has been approved by admin
+      if (space.approvalStatus === "approved") {
+        badges.push({ key: "verified", label: "Verified", description: "Verified by Align" });
+      }
+
+      res.json(badges);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // HOST ANALYTICS DASHBOARD
+  // ══════════════════════════════════════════════════════════════════
+
+  app.get("/api/host/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const hostSpaces = await storage.getSpacesByUser(userId);
+      if (hostSpaces.length === 0) return res.json({ spaces: [], totals: {} });
+
+      const spaceAnalytics = await Promise.all(hostSpaces.map(async (space) => {
+        const bookings = await storage.getSpaceBookingsBySpace(space.id);
+        const completed = bookings.filter(b => b.status === "completed");
+        const pending = bookings.filter(b => b.status === "pending");
+        const { avg, count: reviewCount } = await storage.getSpaceAverageRating(space.id);
+
+        // Calculate revenue
+        const totalRevenue = completed.reduce((sum, b) => sum + (b.hostPayoutAmount || b.hostEarnings || 0), 0);
+
+        // Get page views for this space
+        const slug = space.slug;
+        const viewCount = 0; // Page views would need a query - keeping simple
+
+        return {
+          spaceId: space.id,
+          spaceName: space.name,
+          slug: space.slug,
+          totalBookings: bookings.length,
+          completedBookings: completed.length,
+          pendingBookings: pending.length,
+          cancelledBookings: bookings.filter(b => b.status === "cancelled").length,
+          totalRevenue,
+          averageRating: avg,
+          reviewCount,
+          occupancyRate: completed.length > 0
+            ? Math.round((completed.reduce((s, b) => s + (b.bookingHours || 0), 0) / (30 * 8)) * 100)
+            : 0,
+        };
+      }));
+
+      const totals = {
+        totalSpaces: hostSpaces.length,
+        totalBookings: spaceAnalytics.reduce((s, a) => s + a.totalBookings, 0),
+        totalCompleted: spaceAnalytics.reduce((s, a) => s + a.completedBookings, 0),
+        totalRevenue: spaceAnalytics.reduce((s, a) => s + a.totalRevenue, 0),
+        avgRating: spaceAnalytics.filter(a => a.reviewCount > 0).length > 0
+          ? Math.round(spaceAnalytics.filter(a => a.reviewCount > 0).reduce((s, a) => s + a.averageRating, 0) / spaceAnalytics.filter(a => a.reviewCount > 0).length * 10) / 10
+          : 0,
+      };
+
+      res.json({ spaces: spaceAnalytics, totals });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

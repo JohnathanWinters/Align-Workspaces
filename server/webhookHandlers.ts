@@ -17,7 +17,11 @@ export class WebhookHandlers {
 
     try {
       const stripe = await getUncachableStripeClient();
-      const event = stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET || '');
+      if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        console.error("STRIPE_WEBHOOK_SECRET is not configured");
+        return res.status(500).json({ message: "Webhook secret not configured" });
+      }
+      const event = stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET);
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as any;
         if (session.metadata?.type === 'edit_tokens' && session.metadata?.userId) {

@@ -368,6 +368,7 @@ export const spaces = pgTable("spaces", {
   approvalStatus: text("approval_status").default("approved"),
   colorPalette: text("color_palette"),
   tags: text("tags").array(),
+  cancellationPolicy: text("cancellation_policy").default("flexible"), // 'flexible' | 'moderate' | 'strict'
   isSample: integer("is_sample").default(0),
   isActive: integer("is_active").default(1),
   createdAt: timestamp("created_at").defaultNow(),
@@ -623,3 +624,84 @@ export const insertPipelineActivitySchema = createInsertSchema(pipelineActivitie
 
 export type InsertPipelineActivity = z.infer<typeof insertPipelineActivitySchema>;
 export type PipelineActivity = typeof pipelineActivities.$inferSelect;
+
+// ── Reviews & Ratings ──────────────────────────────────────────────
+export const spaceReviews = pgTable("space_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  bookingId: varchar("booking_id").notNull(),
+  guestId: text("guest_id").notNull(),
+  guestName: text("guest_name"),
+  rating: integer("rating").notNull(),                    // 1-5 stars
+  title: text("title"),
+  comment: text("comment"),
+  hostResponse: text("host_response"),
+  hostRespondedAt: timestamp("host_responded_at"),
+  status: text("status").default("published"),            // 'published' | 'hidden' | 'flagged'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSpaceReviewSchema = createInsertSchema(spaceReviews, {
+  rating: z.number().int().min(1).max(5),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSpaceReview = z.infer<typeof insertSpaceReviewSchema>;
+export type SpaceReview = typeof spaceReviews.$inferSelect;
+
+// ── Wishlist Collections ───────────────────────────────────────────
+export const wishlistCollections = pgTable("wishlist_collections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWishlistCollectionSchema = createInsertSchema(wishlistCollections).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertWishlistCollection = z.infer<typeof insertWishlistCollectionSchema>;
+export type WishlistCollection = typeof wishlistCollections.$inferSelect;
+
+export const wishlistItems = pgTable("wishlist_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  collectionId: varchar("collection_id").notNull(),
+  spaceId: varchar("space_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWishlistItemSchema = createInsertSchema(wishlistItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertWishlistItem = z.infer<typeof insertWishlistItemSchema>;
+export type WishlistItem = typeof wishlistItems.$inferSelect;
+
+// ── Recurring Bookings ─────────────────────────────────────────────
+export const recurringBookings = pgTable("recurring_bookings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  userId: text("user_id").notNull(),
+  userName: text("user_name"),
+  userEmail: text("user_email"),
+  dayOfWeek: integer("day_of_week").notNull(),             // 0=Sun, 1=Mon, ..., 6=Sat
+  startTime: text("start_time").notNull(),                 // "09:00"
+  hours: integer("hours").notNull(),
+  startDate: text("start_date").notNull(),                 // "2026-04-01"
+  endDate: text("end_date"),                               // null = indefinite
+  status: text("status").default("active"),                // 'active' | 'paused' | 'cancelled'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertRecurringBookingSchema = createInsertSchema(recurringBookings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertRecurringBooking = z.infer<typeof insertRecurringBookingSchema>;
+export type RecurringBooking = typeof recurringBookings.$inferSelect;
