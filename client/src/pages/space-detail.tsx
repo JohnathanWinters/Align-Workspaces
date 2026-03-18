@@ -1085,18 +1085,21 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
 
   /* ── user bookings for review eligibility ── */
   const { data: userBookings = [] } = useQuery<Array<{ id: string; spaceId: string; status: string; hasReview?: boolean }>>({
-    queryKey: ["/api/space-bookings"],
+    queryKey: ["/api/space-bookings", "review-check", space?.id],
     queryFn: async () => {
       const res = await fetch("/api/space-bookings", { credentials: "include" });
       if (!res.ok) return [];
-      return res.json();
+      const data = await res.json();
+      // Endpoint returns { guest: [...], host: [...] } — flatten to array
+      const all = [...(data?.guest || []), ...(data?.host || [])];
+      return Array.isArray(all) ? all : [];
     },
     enabled: !!user && !!space?.id,
   });
 
-  const reviewableBooking = userBookings.find(
+  const reviewableBooking = Array.isArray(userBookings) ? userBookings.find(
     (b) => b.spaceId === space?.id && b.status === "completed" && !b.hasReview
-  );
+  ) : undefined;
 
   /* ── review submission ── */
   const submitReviewMutation = useMutation({

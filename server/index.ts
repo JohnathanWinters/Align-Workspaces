@@ -245,7 +245,6 @@ app.post("/api/stripe/webhook", async (req, res) => {
       log(`serving on port ${port}`);
 
       Promise.all([
-        seedPortfolioIfEmpty().catch(err => console.warn('Portfolio seed error (non-fatal):', err.message)),
         seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
         fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
       ]).then(() => {
