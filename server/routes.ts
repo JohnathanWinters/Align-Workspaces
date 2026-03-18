@@ -4182,6 +4182,8 @@ export async function registerRoutes(
         spaceName: space?.name || "Space",
         guestName: booking.userName || "Guest",
         guestEmail: booking.userEmail || "",
+        hostEmail: space?.contactEmail || "",
+        hostName: space?.hostName || "",
         bookingDate: booking.bookingDate,
         bookingStartTime: booking.bookingStartTime,
         bookingHours: booking.bookingHours,

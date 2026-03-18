@@ -19,6 +19,7 @@ interface BookingEventParams {
   guestName: string;
   guestEmail?: string;
   hostEmail?: string;
+  hostName?: string;
   bookingDate: string;
   bookingStartTime: string;
   bookingHours: number;
@@ -99,16 +100,31 @@ export function generateAddToCalendarUrl(params: BookingEventParams): string {
   const startStr = toGCalDate(startDate);
   const endStr = toGCalDate(endDate);
 
+  const details = [
+    `Space booking via Align`,
+    `Guest: ${params.guestName}${params.guestEmail ? ` (${params.guestEmail})` : ""}`,
+    params.hostName ? `Host: ${params.hostName}` : null,
+    `Duration: ${params.bookingHours} hour${params.bookingHours > 1 ? "s" : ""}`,
+    `Booking ID: ${params.bookingId}`,
+    ``,
+    `Manage booking: https://alignworkspaces.com/portal`,
+  ].filter(Boolean).join("\n");
+
   const urlParams = new URLSearchParams({
     action: "TEMPLATE",
     text: `${params.spaceName} — Booking`,
     dates: `${startStr}/${endStr}`,
-    details: `Space booking via Align\nGuest: ${params.guestName}\nDuration: ${params.bookingHours} hour${params.bookingHours > 1 ? "s" : ""}`,
+    details,
     ctz: "America/New_York",
   });
 
   if (params.spaceAddress) {
     urlParams.set("location", params.spaceAddress);
+  }
+
+  const attendees = [params.guestEmail, params.hostEmail].filter(Boolean);
+  if (attendees.length > 0) {
+    urlParams.set("add", attendees.join(","));
   }
 
   return `https://calendar.google.com/calendar/render?${urlParams.toString()}`;
