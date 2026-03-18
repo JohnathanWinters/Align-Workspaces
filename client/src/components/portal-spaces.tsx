@@ -872,7 +872,9 @@ function MyBookingsTab() {
     },
   });
 
-  const bookings = bookingsData?.guest || [];
+  const guestBookings = (bookingsData?.guest || []).map((b: any) => ({ ...b, _role: "guest" }));
+  const hostBookings = (bookingsData?.host || []).map((b: any) => ({ ...b, _role: "host" }));
+  const bookings = [...guestBookings, ...hostBookings];
 
   const { data: allSpaces = [] } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -937,13 +939,28 @@ function MyBookingsTab() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-gray-900 text-sm truncate">{space?.name || "Space"}</h4>
+            <div className="flex items-center gap-1.5">
+              <h4 className="font-medium text-gray-900 text-sm truncate">{booking.spaceName || space?.name || "Space"}</h4>
+              <span className={`text-[9px] font-semibold px-1.5 py-0 rounded-full border ${
+                booking._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"
+              }`}>
+                {booking._role === "host" ? "Hosting" : "Renting"}
+              </span>
+            </div>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
               <CalendarDays className="w-3 h-3" />
               {booking.bookingDate} · {booking.bookingStartTime} · {booking.bookingHours}hr
+              {booking._role === "host" && booking.userName && (
+                <span className="text-gray-400">· {booking.userName}</span>
+              )}
             </p>
             {(booking.totalGuestCharged || booking.paymentAmount) && (
-              <p className="text-xs text-gray-500 mt-1">${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {booking._role === "host"
+                  ? `$${((booking.hostPayoutAmount || booking.hostEarnings || 0) / 100).toFixed(2)} earned`
+                  : `$${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid`
+                }
+              </p>
             )}
           </div>
           <div className="flex flex-col items-end gap-1.5">
@@ -1533,8 +1550,10 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
   const isHost = mySpaces.length > 0;
 
+  const hasFavs = favorites.length > 0;
+
   const tabs = [
-    { key: "favorites" as const, label: "Favorites", icon: Heart },
+    ...(hasFavs ? [{ key: "favorites" as const, label: "Favorites", icon: Heart }] : []),
     { key: "my-bookings" as const, label: "My Bookings", icon: CalendarDays },
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),

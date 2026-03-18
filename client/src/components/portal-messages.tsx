@@ -157,9 +157,9 @@ function ConversationList({
             key={c.id}
             onClick={() => onSelect(c)}
             className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-              activeId === c.id ? "bg-stone-50 border-l-2 border-gray-900" : ""
+              activeId === ((c as any)._key || c.id) ? "bg-stone-50 border-l-2 border-gray-900" : ""
             }`}
-            data-testid={`conversation-item-${c.id}`}
+            data-testid={`conversation-item-${(c as any)._key || c.id}`}
           >
             <div className="flex items-start gap-3">
               <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isDirect ? "bg-amber-50" : "bg-gray-100"}`}>
@@ -1039,9 +1039,9 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
   });
 
   const allConversations: UnifiedConversation[] = [
-    ...(bookingsData?.guestBookings || []).map((b) => ({ ...b, type: "booking" as const })),
-    ...(bookingsData?.hostBookings || []).map((b) => ({ ...b, type: "booking" as const })),
-    ...(bookingsData?.directConversations || []),
+    ...(bookingsData?.guestBookings || []).map((b) => ({ ...b, type: "booking" as const, _key: `${b.id}-guest` })),
+    ...(bookingsData?.hostBookings || []).map((b) => ({ ...b, type: "booking" as const, _key: `${b.id}-host` })),
+    ...(bookingsData?.directConversations || []).map((c) => ({ ...c, _key: c.id })),
   ].sort((a, b) => {
     const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt).getTime() : new Date(a.createdAt!).getTime();
     const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt).getTime() : new Date(b.createdAt!).getTime();
@@ -1051,7 +1051,7 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
   const totalUnread = allConversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
   const currentConversation = activeConversation
-    ? allConversations.find((c) => c.id === activeConversation.id) || activeConversation
+    ? allConversations.find((c) => (c as any)._key === (activeConversation as any)?._key) || allConversations.find((c) => c.id === activeConversation.id) || activeConversation
     : null;
 
   return (
@@ -1091,7 +1091,7 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
           </div>
           <ConversationList
             conversations={allConversations}
-            activeId={activeConversation?.id || null}
+            activeId={(activeConversation as any)?._key || activeConversation?.id || null}
             onSelect={setActiveConversation}
             isLoading={isLoading}
           />
