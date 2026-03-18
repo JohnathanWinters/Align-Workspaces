@@ -63,6 +63,7 @@ import {
   Eye,
   ToggleLeft,
   ToggleRight,
+  DollarSign,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -7409,6 +7410,40 @@ function AdminDashboard({ token }: { token: string }) {
                       <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Messages</span>
                       <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Spaces</span>
                       <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded font-medium">Settings</span>
+                    </div>
+                  </div>
+
+                  {/* Background Jobs */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Background Jobs</p>
+                    <div className="space-y-1.5">
+                      <button
+                        onClick={async () => {
+                          try {
+                            await adminFetch("/api/admin/notifications/process", token, { method: "POST" });
+                            toast({ title: "Notifications processed" });
+                          } catch { toast({ title: "Failed", variant: "destructive" }); }
+                        }}
+                        data-testid="button-trigger-notifications"
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                      >
+                        <Bell className="w-3 h-3" />
+                        Trigger Notifications
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await adminFetch("/api/admin/payouts/process", token, { method: "POST" });
+                            const data = await res.json();
+                            toast({ title: `Payouts: ${data.completedBookings} completed, ${data.payoutsProcessed} paid` });
+                          } catch { toast({ title: "Failed", variant: "destructive" }); }
+                        }}
+                        data-testid="button-trigger-payouts"
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                      >
+                        <DollarSign className="w-3 h-3" />
+                        Trigger Payouts
+                      </button>
                     </div>
                   </div>
 

@@ -1,5 +1,6 @@
 import { storage } from "./storage";
 import { getUncachableStripeClient } from "./stripeClient";
+import { sendPushToUser } from "./pushNotifications";
 
 /**
  * Mark bookings as "completed" when their booking date has passed.
@@ -202,11 +203,214 @@ export function calculateRefundAmount(booking: {
   };
 }
 
+/**
+ * Auto-checkout checked-in bookings where end time + 60 min buffer has passed.
+ */
+export async function processAutoCheckouts(): Promise<number> {
+  const bookings = await storage.getBookingsNeedingAutoCheckout();
+  let count = 0;
+
+  for (const booking of bookings) {
+    try {
+      const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+      const endDateTime = new Date(startDateTime.getTime() + (booking.bookingHours || 1) * 60 * 60 * 1000);
+      const bufferEnd = new Date(endDateTime.getTime() + 60 * 60 * 1000); // 60 min buffer
+
+      if (Date.now() < bufferEnd.getTime()) continue;
+
+      const minutesPastEnd = Math.max(0, (Date.now() - endDateTime.getTime()) / (1000 * 60));
+      const overtimeMinutes = minutesPastEnd > 0 ? Math.ceil(minutesPastEnd / 30) * 30 : 0;
+
+      await storage.updateSpaceBooking(booking.id, {
+        status: "completed",
+        checkedOutAt: new Date(),
+        checkedOutBy: "system",
+        overtimeMinutes,
+        updatedAt: new Date(),
+      });
+
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: "system",
+        senderName: "System",
+        senderRole: "system",
+        message: `Session auto-completed.${overtimeMinutes > 0 ? ` (${overtimeMinutes} min overtime)` : ""}`,
+        messageType: "check_out",
+      });
+
+      count++;
+    } catch (err) {
+      console.error(`[payouts] Failed to auto-checkout booking ${booking.id}:`, (err as Error).message);
+    }
+  }
+
+  if (count > 0) {
+    console.log(`[payouts] Auto-checked-out ${count} bookings`);
+  }
+  return count;
+}
+
+/**
+ * Process booking notifications on a 15-minute interval.
+ * Sends reminders for upcoming bookings, check-in prompts, no-show alerts, and end-of-session reminders.
+ * Each notification has a time window to ensure it fires in exactly one 15-min cycle.
+ */
+export async function processBookingNotifications(): Promise<void> {
+  const now = new Date();
+  const todayStr = now.toISOString().split("T")[0];
+  const tomorrowStr = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  // Get bookings for today and tomorrow
+  const todayBookings = await storage.getBookingsForCheckInNotifications(todayStr);
+  const tomorrowBookings = await storage.getBookingsForCheckInNotifications(tomorrowStr);
+  const checkedInToday = await storage.getBookingsNeedingEndReminder(todayStr);
+  const noCheckInBookings = await storage.getBookingsNeedingNoShowAlert(todayStr);
+
+  for (const booking of tomorrowBookings) {
+    const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+    const msUntilStart = startDateTime.getTime() - now.getTime();
+    const hoursUntilStart = msUntilStart / (1000 * 60 * 60);
+    const space = await storage.getSpaceById(booking.spaceId);
+    const spaceName = space?.name || "your space";
+
+    // 24hr before: window 23.5-24.5 hrs
+    if (hoursUntilStart >= 23.5 && hoursUntilStart < 24.5) {
+      if (booking.userId) {
+        sendPushToUser(booking.userId, {
+          title: "Booking tomorrow",
+          body: `Your booking at ${spaceName} is tomorrow.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-24hr`,
+        }, "booking");
+      }
+      if (space?.userId) {
+        sendPushToUser(space.userId, {
+          title: "Booking tomorrow",
+          body: `You have a booking at ${spaceName} tomorrow.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-24hr`,
+        }, "booking");
+      }
+    }
+  }
+
+  for (const booking of todayBookings) {
+    const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+    const msUntilStart = startDateTime.getTime() - now.getTime();
+    const minUntilStart = msUntilStart / (1000 * 60);
+    const space = await storage.getSpaceById(booking.spaceId);
+    const spaceName = space?.name || "your space";
+
+    // 1hr before: window 52.5-67.5 min
+    if (minUntilStart >= 52.5 && minUntilStart < 67.5) {
+      if (booking.userId) {
+        sendPushToUser(booking.userId, {
+          title: "Session starts in 1 hour",
+          body: `Your booking at ${spaceName} starts in about 1 hour.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-1hr`,
+        }, "booking");
+      }
+      if (space?.userId) {
+        sendPushToUser(space.userId, {
+          title: "Session starts in 1 hour",
+          body: `A booking at ${spaceName} starts in about 1 hour.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-1hr`,
+        }, "booking");
+      }
+    }
+
+    // At start time: window -7.5 to 7.5 min from start
+    if (minUntilStart >= -7.5 && minUntilStart < 7.5 && !booking.checkedInAt) {
+      if (booking.userId) {
+        sendPushToUser(booking.userId, {
+          title: "Check in now",
+          body: `Your session at ${spaceName} is starting — check in now.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-start`,
+        }, "booking");
+      }
+    }
+  }
+
+  // 30 min past start, no check-in: alert host (window 22.5-37.5 min past start)
+  for (const booking of noCheckInBookings) {
+    const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+    const minPastStart = (now.getTime() - startDateTime.getTime()) / (1000 * 60);
+    if (minPastStart >= 22.5 && minPastStart < 37.5) {
+      const space = await storage.getSpaceById(booking.spaceId);
+      if (space?.userId) {
+        sendPushToUser(space.userId, {
+          title: "Guest hasn't checked in",
+          body: `The guest hasn't checked in for their booking at ${space.name}.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-noshow`,
+        }, "booking");
+      }
+    }
+  }
+
+  // End reminders for checked-in bookings
+  for (const booking of checkedInToday) {
+    const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+    const endDateTime = new Date(startDateTime.getTime() + (booking.bookingHours || 1) * 60 * 60 * 1000);
+    const minUntilEnd = (endDateTime.getTime() - now.getTime()) / (1000 * 60);
+    const space = await storage.getSpaceById(booking.spaceId);
+    const spaceName = space?.name || "your space";
+
+    // 15 min before end: window 7.5-22.5 min before end
+    if (minUntilEnd >= 7.5 && minUntilEnd < 22.5) {
+      if (booking.userId) {
+        sendPushToUser(booking.userId, {
+          title: "Session ending soon",
+          body: `Your session at ${spaceName} ends in about 15 minutes.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-15min`,
+        }, "booking");
+      }
+      if (space?.userId) {
+        sendPushToUser(space.userId, {
+          title: "Session ending soon",
+          body: `A session at ${spaceName} ends in about 15 minutes.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-15min`,
+        }, "booking");
+      }
+    }
+
+    // At end time: window -7.5 to 7.5 min from end (no checkout yet)
+    if (minUntilEnd >= -7.5 && minUntilEnd < 7.5 && !booking.checkedOutAt) {
+      if (booking.userId) {
+        sendPushToUser(booking.userId, {
+          title: "Session ended",
+          body: `Your session at ${spaceName} has ended — please check out.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-ended`,
+        }, "booking");
+      }
+      if (space?.userId) {
+        sendPushToUser(space.userId, {
+          title: "Session ended",
+          body: `The session at ${spaceName} has ended — please check out.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}-ended`,
+        }, "booking");
+      }
+    }
+  }
+
+  // Auto-checkout safety net
+  await processAutoCheckouts();
+}
+
 let payoutInterval: ReturnType<typeof setInterval> | null = null;
+let notificationInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Start the automatic payout processing loop.
  * Runs every hour: completes past bookings, then processes pending payouts.
+ * Also starts a 15-minute notification loop for booking reminders.
  */
 export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
   if (payoutInterval) return;
@@ -220,15 +424,30 @@ export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
     }
   };
 
+  const runNotifications = async () => {
+    try {
+      await processBookingNotifications();
+    } catch (err) {
+      console.error("[notifications] Processing cycle error:", (err as Error).message);
+    }
+  };
+
   // Run once on startup (delayed 30s to let server settle)
   setTimeout(run, 30_000);
+  setTimeout(runNotifications, 45_000);
   payoutInterval = setInterval(run, intervalMs);
+  notificationInterval = setInterval(runNotifications, 15 * 60 * 1000); // 15 minutes
   console.log("[payouts] Auto-processing started (every " + Math.round(intervalMs / 60000) + " min)");
+  console.log("[notifications] Booking notifications started (every 15 min)");
 }
 
 export function stopPayoutProcessing(): void {
   if (payoutInterval) {
     clearInterval(payoutInterval);
     payoutInterval = null;
+  }
+  if (notificationInterval) {
+    clearInterval(notificationInterval);
+    notificationInterval = null;
   }
 }

@@ -419,6 +419,13 @@ export const spaceBookings = pgTable("space_bookings", {
   refundStatus: text("refund_status"),
   refundAmount: integer("refund_amount"),
   googleCalendarEventId: text("google_calendar_event_id"),
+  checkedInAt: timestamp("checked_in_at"),
+  checkedOutAt: timestamp("checked_out_at"),
+  checkedInBy: text("checked_in_by"),       // "guest" | "host"
+  checkedOutBy: text("checked_out_by"),     // "guest" | "host" | "system"
+  noShow: integer("no_show").default(0),
+  overtimeMinutes: integer("overtime_minutes").default(0),
+  checkoutNotes: text("checkout_notes"),
   lastReadGuest: timestamp("last_read_guest"),
   lastReadHost: timestamp("last_read_host"),
   createdAt: timestamp("created_at").defaultNow(),

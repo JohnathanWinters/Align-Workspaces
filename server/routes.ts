@@ -10,7 +10,7 @@ import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotif
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees, resolveFeeTier, type FeeTier, FEE_TIERS, TAX_RATES, DEFAULT_TAX_JURISDICTION } from "@shared/pricing";
 import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
-import { calculateRefundAmount, processCompletedBookings, processPendingPayouts, holdPayout, releasePayout, reversePayout } from "./payouts";
+import { calculateRefundAmount, processCompletedBookings, processPendingPayouts, processBookingNotifications, holdPayout, releasePayout, reversePayout } from "./payouts";
 import { isAuthenticated } from "./auth";
 import multer from "multer";
 import path from "path";
@@ -2738,6 +2738,15 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/notifications/process", isAdmin, async (_req, res) => {
+    try {
+      await processBookingNotifications();
+      res.json({ success: true, message: "Booking notifications processed" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/admin/payouts/:bookingId/hold", isAdmin, async (req, res) => {
     try {
       await holdPayout(req.params.bookingId);
@@ -3666,6 +3675,10 @@ export async function registerRoutes(
         if (booking.userId !== userId && (!space || space.userId !== userId)) {
           return res.status(403).json({ message: "Not authorized" });
         }
+        // Allow cancelling approved or checked_in bookings
+        if (booking.status !== "approved" && booking.status !== "pending" && booking.status !== "checked_in") {
+          return res.status(400).json({ message: "Cannot cancel a booking with status: " + booking.status });
+        }
       } else {
         return res.status(400).json({ message: "Invalid status" });
       }
@@ -3939,6 +3952,176 @@ export async function registerRoutes(
 
       const updatedData = { ...rescheduleData, resolved: true };
       await storage.updateSpaceMessage(rescheduleMsg.id, { message: JSON.stringify(updatedData) });
+
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // --- Check-in / Check-out / No-show ---
+
+  app.post("/api/space-bookings/:id/check-in", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      const isGuest = booking.userId === userId;
+      const isHost = space?.userId === userId;
+      if (!isGuest && !isHost) return res.status(403).json({ message: "Not authorized" });
+
+      if (booking.status !== "approved") return res.status(400).json({ message: "Booking must be approved to check in" });
+      if (booking.paymentStatus !== "paid") return res.status(400).json({ message: "Payment must be completed before check-in" });
+      if (booking.checkedInAt) return res.status(400).json({ message: "Already checked in" });
+
+      // Time window: can check in starting 15 min before start time (no upper bound - late check-in OK)
+      const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+      const earliestCheckIn = new Date(startDateTime.getTime() - 15 * 60 * 1000);
+      if (Date.now() < earliestCheckIn.getTime()) {
+        return res.status(400).json({ message: "Too early to check in. You can check in starting 15 minutes before your booking." });
+      }
+
+      const role = isGuest ? "guest" : "host";
+      const actorName = req.user.claims?.first_name || (isHost ? "Host" : "Guest");
+
+      await storage.updateSpaceBooking(booking.id, {
+        status: "checked_in",
+        checkedInAt: new Date(),
+        checkedInBy: role,
+        updatedAt: new Date(),
+      });
+
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: "system",
+        senderName: "System",
+        senderRole: role,
+        message: `${actorName} checked in.`,
+        messageType: "check_in",
+      });
+
+      // Notify the other party
+      const recipientId = isGuest ? space?.userId : booking.userId;
+      if (recipientId) {
+        sendPushToUser(recipientId, {
+          title: "Guest checked in",
+          body: `${actorName} has checked in for their booking at ${space?.name || "your space"}.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}`,
+        }, "booking");
+      }
+
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/check-out", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      const isGuest = booking.userId === userId;
+      const isHost = space?.userId === userId;
+      if (!isGuest && !isHost) return res.status(403).json({ message: "Not authorized" });
+
+      if (booking.status !== "checked_in") return res.status(400).json({ message: "Booking must be checked in first" });
+      if (booking.checkedOutAt) return res.status(400).json({ message: "Already checked out" });
+
+      const { notes } = req.body || {};
+      const role = isGuest ? "guest" : "host";
+      const actorName = req.user.claims?.first_name || (isHost ? "Host" : "Guest");
+
+      // Calculate overtime: minutes past scheduled end, rounded up to 30-min increments
+      const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+      const endDateTime = new Date(startDateTime.getTime() + (booking.bookingHours || 1) * 60 * 60 * 1000);
+      const minutesPastEnd = Math.max(0, (Date.now() - endDateTime.getTime()) / (1000 * 60));
+      const overtimeMinutes = minutesPastEnd > 0 ? Math.ceil(minutesPastEnd / 30) * 30 : 0;
+
+      await storage.updateSpaceBooking(booking.id, {
+        status: "completed",
+        checkedOutAt: new Date(),
+        checkedOutBy: role,
+        overtimeMinutes,
+        checkoutNotes: notes || null,
+        updatedAt: new Date(),
+      });
+
+      const overtimeText = overtimeMinutes > 0 ? ` (${overtimeMinutes} min overtime)` : "";
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: "system",
+        senderName: "System",
+        senderRole: role,
+        message: `${actorName} checked out.${overtimeText}`,
+        messageType: "check_out",
+      });
+
+      // Notify the other party
+      const recipientId = isGuest ? space?.userId : booking.userId;
+      if (recipientId) {
+        sendPushToUser(recipientId, {
+          title: "Session ended",
+          body: `${actorName} has checked out.${overtimeText}`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}`,
+        }, "booking");
+      }
+
+      res.json({ success: true, overtimeMinutes });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/space-bookings/:id/no-show", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(booking.spaceId);
+      if (!space || space.userId !== userId) return res.status(403).json({ message: "Only the host can mark no-show" });
+
+      if (booking.status !== "approved") return res.status(400).json({ message: "Booking must be approved" });
+      if (booking.checkedInAt) return res.status(400).json({ message: "Guest already checked in" });
+
+      // Must be 30+ min past start time
+      const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
+      const minutesPastStart = (Date.now() - startDateTime.getTime()) / (1000 * 60);
+      if (minutesPastStart < 30) {
+        return res.status(400).json({ message: "Must wait at least 30 minutes after start time to mark no-show" });
+      }
+
+      await storage.updateSpaceBooking(booking.id, {
+        noShow: 1,
+        status: "completed",
+        updatedAt: new Date(),
+      });
+
+      await storage.createSpaceMessage({
+        spaceBookingId: booking.id,
+        senderId: "system",
+        senderName: "System",
+        senderRole: "host",
+        message: "Guest was marked as a no-show.",
+        messageType: "no_show",
+      });
+
+      // Notify guest
+      if (booking.userId) {
+        sendPushToUser(booking.userId, {
+          title: "Marked as no-show",
+          body: `You were marked as a no-show for your booking at ${space.name}.`,
+          url: "/portal?tab=messages",
+          tag: `booking-${booking.id}`,
+        }, "booking");
+      }
 
       res.json({ success: true });
     } catch (err: any) {

@@ -136,6 +136,12 @@ export interface IStorage {
   getBookingsPendingPayout(): Promise<SpaceBooking[]>;
   getPayoutsByHost(hostId: string): Promise<SpaceBooking[]>;
 
+  // Check-in/check-out notifications
+  getBookingsForCheckInNotifications(dateStr: string): Promise<SpaceBooking[]>;
+  getBookingsNeedingNoShowAlert(dateStr: string): Promise<SpaceBooking[]>;
+  getBookingsNeedingEndReminder(dateStr: string): Promise<SpaceBooking[]>;
+  getBookingsNeedingAutoCheckout(): Promise<SpaceBooking[]>;
+
   // Referral link management
   deleteReferralLink(id: string): Promise<void>;
 }
@@ -946,14 +952,57 @@ export class DatabaseStorage implements IStorage {
     await db.delete(referralLinks).where(eq(referralLinks.id, id));
   }
 
-  // --- Payouts ---
+  // --- Check-in/check-out notifications ---
 
-  async getBookingsReadyForCompletion(): Promise<SpaceBooking[]> {
-    // Bookings that are "approved", paid, and whose booking date has passed
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  async getBookingsForCheckInNotifications(dateStr: string): Promise<SpaceBooking[]> {
     return db.select().from(spaceBookings).where(
       and(
         eq(spaceBookings.status, "approved"),
+        eq(spaceBookings.paymentStatus, "paid"),
+        eq(spaceBookings.bookingDate, dateStr),
+      )
+    );
+  }
+
+  async getBookingsNeedingNoShowAlert(dateStr: string): Promise<SpaceBooking[]> {
+    return db.select().from(spaceBookings).where(
+      and(
+        eq(spaceBookings.status, "approved"),
+        eq(spaceBookings.paymentStatus, "paid"),
+        eq(spaceBookings.bookingDate, dateStr),
+        isNull(spaceBookings.checkedInAt),
+      )
+    );
+  }
+
+  async getBookingsNeedingEndReminder(dateStr: string): Promise<SpaceBooking[]> {
+    return db.select().from(spaceBookings).where(
+      and(
+        eq(spaceBookings.status, "checked_in"),
+        eq(spaceBookings.bookingDate, dateStr),
+      )
+    );
+  }
+
+  async getBookingsNeedingAutoCheckout(): Promise<SpaceBooking[]> {
+    // Checked-in bookings where the booking date has passed (auto-checkout safety net)
+    const today = new Date().toISOString().split("T")[0];
+    return db.select().from(spaceBookings).where(
+      and(
+        eq(spaceBookings.status, "checked_in"),
+        sql`${spaceBookings.bookingDate} <= ${today}`,
+      )
+    );
+  }
+
+  // --- Payouts ---
+
+  async getBookingsReadyForCompletion(): Promise<SpaceBooking[]> {
+    // Bookings that are "approved" or "checked_in", paid, and whose booking date has passed
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    return db.select().from(spaceBookings).where(
+      and(
+        sql`(${spaceBookings.status} = 'approved' OR ${spaceBookings.status} = 'checked_in')`,
         eq(spaceBookings.paymentStatus, "paid"),
         sql`${spaceBookings.bookingDate} < ${today}`,
       )

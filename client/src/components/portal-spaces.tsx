@@ -899,13 +899,13 @@ function MyBookingsTab() {
   const upcomingBookings = bookings.filter((b: any) => {
     if (!b.bookingDate) return false;
     const bookingDate = new Date(b.bookingDate);
-    return bookingDate >= now && b.status === "approved";
+    return bookingDate >= now && (b.status === "approved" || b.status === "checked_in");
   });
 
   const pastBookings = bookings.filter((b: any) => {
     if (!b.bookingDate) return false;
     const bookingDate = new Date(b.bookingDate);
-    return bookingDate < now && approvedStatuses.includes(b.status);
+    return bookingDate < now && [...approvedStatuses, "checked_in"].includes(b.status);
   });
 
   if (upcomingBookings.length === 0 && pastBookings.length === 0) {
@@ -962,9 +962,26 @@ function MyBookingsTab() {
                 }
               </p>
             )}
+            {booking.checkedInAt && (
+              <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-2">
+                <span>In: {new Date(booking.checkedInAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+                {booking.checkedOutAt && <span>Out: {new Date(booking.checkedOutAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>}
+                {(booking.overtimeMinutes ?? 0) > 0 && <span className="text-amber-600">{booking.overtimeMinutes}m overtime</span>}
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-end gap-1.5">
-            {variant === "upcoming" ? (
+            {booking.status === "checked_in" ? (
+              <Badge className="text-[10px] bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                </span>
+                In Session
+              </Badge>
+            ) : booking.noShow === 1 ? (
+              <Badge className="text-[10px] bg-red-50 text-red-700 border-red-200">No-Show</Badge>
+            ) : variant === "upcoming" ? (
               <Badge className="text-[10px] bg-blue-50 text-blue-700">Upcoming</Badge>
             ) : (
               <Badge className="text-[10px] bg-stone-100 text-stone-600">Completed</Badge>

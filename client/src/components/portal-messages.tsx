@@ -73,6 +73,7 @@ const statusConfig: Record<string, { color: string; icon: any; label: string }> 
   awaiting_payment: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Awaiting Payment" },
   pending: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Pending" },
   approved: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, label: "Confirmed" },
+  checked_in: { color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2, label: "In Session" },
   rejected: { color: "bg-red-50 text-red-700 border-red-200", icon: XCircle, label: "Declined" },
   cancelled: { color: "bg-gray-100 text-gray-500 border-gray-200", icon: Ban, label: "Cancelled" },
   completed: { color: "bg-blue-50 text-blue-700 border-blue-200", icon: CheckCircle2, label: "Completed" },
@@ -104,6 +105,9 @@ function getMessagePreview(msg: { message: string; messageType?: string; senderR
     if (msg.message.includes("Refund")) return "Refund issued";
     return msg.message.length > 30 ? msg.message.slice(0, 30) + "…" : msg.message;
   }
+  if (msg.messageType === "check_in") return "Checked in";
+  if (msg.messageType === "check_out") return "Checked out";
+  if (msg.messageType === "no_show") return "Marked as no-show";
   if (msg.messageType === "payment_request") {
     try {
       const data = JSON.parse(msg.message);
@@ -395,6 +399,52 @@ function ConversationView({
     },
   });
 
+  const checkInMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/space-bookings/${booking.id}/check-in`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+      toast({ title: "Checked in successfully" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const checkOutMutation = useMutation({
+    mutationFn: async (notes?: string) => {
+      const res = await apiRequest("POST", `/api/space-bookings/${booking.id}/check-out`, { notes });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+      const overtimeMsg = data.overtimeMinutes > 0 ? ` (${data.overtimeMinutes} min overtime)` : "";
+      toast({ title: `Checked out${overtimeMsg}` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const noShowMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/space-bookings/${booking.id}/no-show`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/space-bookings"] });
+      toast({ title: "Guest marked as no-show" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const [checkoutNotes, setCheckoutNotes] = useState("");
+
   const handleSend = () => {
     const text = newMessage.trim();
     if (!text) return;
@@ -467,15 +517,17 @@ function ConversationView({
                     {booking.paymentAmount ? ` · $${(booking.paymentAmount / 100).toFixed(2)} paid` : ""}
                   </p>
                 </div>
-                {booking.status === "approved" && (
+                {(booking.status === "approved" || booking.status === "checked_in") && (
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => setShowReschedule(!showReschedule)}
-                      className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors"
-                      data-testid="button-reschedule"
-                    >
-                      Reschedule
-                    </button>
+                    {booking.status === "approved" && (
+                      <button
+                        onClick={() => setShowReschedule(!showReschedule)}
+                        className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100 transition-colors"
+                        data-testid="button-reschedule"
+                      >
+                        Reschedule
+                      </button>
+                    )}
                     <button
                       onClick={() => setShowCancelConfirm(!showCancelConfirm)}
                       className="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
@@ -507,7 +559,7 @@ function ConversationView({
               </button>
             )}
 
-            {showCancelConfirm && booking.status === "approved" && (
+            {showCancelConfirm && (booking.status === "approved" || booking.status === "checked_in") && (
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-2" data-testid="cancel-confirm-panel">
                 {(() => {
                   const bookingDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`);
@@ -673,6 +725,116 @@ function ConversationView({
           </div>
         )}
 
+        {/* Check-in / Check-out / No-show UI */}
+        {(() => {
+          if (!booking.bookingDate || !booking.bookingStartTime) return null;
+          const startDateTime = new Date(`${booking.bookingDate}T${booking.bookingStartTime}:00`);
+          const endDateTime = new Date(startDateTime.getTime() + (booking.bookingHours || 1) * 60 * 60 * 1000);
+          const nowMs = Date.now();
+          const earliestCheckIn = new Date(startDateTime.getTime() - 15 * 60 * 1000);
+          const canCheckIn = booking.status === "approved" && booking.paymentStatus === "paid" && !booking.checkedInAt && nowMs >= earliestCheckIn.getTime();
+          const isCheckedIn = booking.status === "checked_in";
+          const canMarkNoShow = isHost && booking.status === "approved" && !booking.checkedInAt && nowMs >= startDateTime.getTime() + 30 * 60 * 1000;
+          const minutesUntilEnd = (endDateTime.getTime() - nowMs) / (1000 * 60);
+          const isOvertime = isCheckedIn && minutesUntilEnd < 0;
+          const overtimeMinutes = isOvertime ? Math.ceil(Math.abs(minutesUntilEnd) / 30) * 30 : 0;
+
+          return (
+            <>
+              {canCheckIn && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <Button
+                    onClick={() => checkInMutation.mutate()}
+                    disabled={checkInMutation.isPending}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm h-10"
+                    data-testid="button-check-in"
+                  >
+                    {checkInMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    )}
+                    {isHost ? "Confirm Guest Arrival" : "I'm Here — Check In"}
+                  </Button>
+                </div>
+              )}
+
+              {isCheckedIn && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className={`rounded-lg p-3 ${isOvertime ? "bg-amber-50 border border-amber-200" : "bg-green-50 border border-green-200"}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOvertime ? "bg-amber-400" : "bg-green-400"}`}></span>
+                        <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isOvertime ? "bg-amber-500" : "bg-green-500"}`}></span>
+                      </span>
+                      <span className={`text-xs font-medium ${isOvertime ? "text-amber-700" : "text-green-700"}`}>
+                        {isOvertime ? `Overtime: ${overtimeMinutes} min` : minutesUntilEnd < 60 ? `${Math.round(minutesUntilEnd)} min remaining` : `${Math.round(minutesUntilEnd / 60 * 10) / 10} hrs remaining`}
+                      </span>
+                    </div>
+                    {isHost && (
+                      <div className="mb-2">
+                        <textarea
+                          value={checkoutNotes}
+                          onChange={(e) => setCheckoutNotes(e.target.value)}
+                          placeholder="Checkout notes (optional)"
+                          className="w-full text-xs p-2 rounded border border-gray-200 bg-white resize-none h-16"
+                          data-testid="input-checkout-notes"
+                        />
+                      </div>
+                    )}
+                    <Button
+                      onClick={() => checkOutMutation.mutate(checkoutNotes || undefined)}
+                      disabled={checkOutMutation.isPending}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-8"
+                      data-testid="button-check-out"
+                    >
+                      {checkOutMutation.isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                      ) : (
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                      )}
+                      Check Out
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {canMarkNoShow && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="w-4 h-4 text-amber-600" />
+                      <span className="text-xs font-medium text-amber-700">Guest hasn't checked in</span>
+                    </div>
+                    <Button
+                      onClick={() => noShowMutation.mutate()}
+                      disabled={noShowMutation.isPending}
+                      variant="outline"
+                      className="w-full text-amber-700 border-amber-300 hover:bg-amber-100 text-xs h-8"
+                      data-testid="button-no-show"
+                    >
+                      {noShowMutation.isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                      ) : (
+                        <XCircle className="w-3 h-3 mr-1" />
+                      )}
+                      Mark No-Show
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {booking.checkedInAt && booking.status === "completed" && (
+                <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-3">
+                  <span>Checked in: {new Date(booking.checkedInAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+                  {booking.checkedOutAt && <span>Checked out: {new Date(booking.checkedOutAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>}
+                  {(booking.overtimeMinutes ?? 0) > 0 && <span className="text-amber-600">{booking.overtimeMinutes} min overtime</span>}
+                </div>
+              )}
+            </>
+          );
+        })()}
+
         {isHost && booking.status === "pending" && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
             <Info className="w-4 h-4 text-amber-500 flex-shrink-0" />
@@ -767,6 +929,39 @@ function ConversationView({
             const isOwn = msg.senderId === userId;
             const isSystem = msg.messageType === "system";
             const isPayment = msg.messageType === "payment_request";
+
+            if (msg.messageType === "check_in") {
+              return (
+                <div key={msg.id} className="flex justify-center" data-testid={`message-checkin-${msg.id}`}>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-full px-4 py-1.5 text-xs text-emerald-700 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {msg.message}
+                  </div>
+                </div>
+              );
+            }
+
+            if (msg.messageType === "check_out") {
+              return (
+                <div key={msg.id} className="flex justify-center" data-testid={`message-checkout-${msg.id}`}>
+                  <div className="bg-blue-50 border border-blue-200 rounded-full px-4 py-1.5 text-xs text-blue-700 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {msg.message}
+                  </div>
+                </div>
+              );
+            }
+
+            if (msg.messageType === "no_show") {
+              return (
+                <div key={msg.id} className="flex justify-center" data-testid={`message-noshow-${msg.id}`}>
+                  <div className="bg-red-50 border border-red-200 rounded-full px-4 py-1.5 text-xs text-red-700 flex items-center gap-1.5">
+                    <XCircle className="w-3 h-3" />
+                    {msg.message}
+                  </div>
+                </div>
+              );
+            }
 
             if (isSystem) {
               return (
