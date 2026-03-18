@@ -41,6 +41,7 @@ import {
   Pause,
   Play,
   XCircle,
+  BookOpen,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -2021,7 +2022,160 @@ function HostAnalyticsTab() {
   );
 }
 
-type SpacesTabKey = "favorites" | "my-bookings" | "my-spaces" | "earnings" | "wishlists" | "analytics";
+// ── Host Guide ──────────────────────────────────────────────────────
+function HostGuideTab() {
+  const sections = [
+    {
+      icon: Building2,
+      title: "List Your Space",
+      description: "Create a listing with photos, pricing, amenities, and availability. Once submitted, our team reviews and approves it.",
+      details: [
+        "Set hourly and daily rates",
+        "Upload multiple photos with drag & drop",
+        "Define your weekly availability schedule",
+        "Set buffer time between bookings (5–60 min)",
+        "Choose a cancellation policy: Flexible, Moderate, or Strict",
+        "Target specific professions (therapists, photographers, etc.)",
+      ],
+    },
+    {
+      icon: DollarSign,
+      title: "Earnings & Fees",
+      description: "You keep the majority of every booking. Align takes a small platform fee so we can keep running.",
+      details: [
+        "Standard host fee: 12.5% — you keep 87.5% of the base price",
+        "If you refer the guest via your referral link: host fee drops to 8%",
+        "Guest pays a separate service fee (5–7%) + tax — this doesn't affect your payout",
+        "Payouts go directly to your bank via Stripe Connect",
+        "Track all earnings, payouts, and savings in the Earnings tab",
+      ],
+    },
+    {
+      icon: CreditCard,
+      title: "Stripe Connect",
+      description: "Connect your Stripe account to receive payouts directly to your bank. This is required to receive payments.",
+      details: [
+        "One-time setup through Stripe's secure onboarding",
+        "Payouts arrive in your bank account on Stripe's standard schedule",
+        "With Stripe Connect, guests pay and you receive funds automatically",
+        "Without it, Align holds funds and transfers after the booking completes",
+      ],
+    },
+    {
+      icon: Link2,
+      title: "Referral Program",
+      description: "Generate referral links to share with potential guests. When they book through your link, you pay a lower host fee.",
+      details: [
+        "Create links for all your spaces or specific ones",
+        "Share on social media, email, or your website",
+        "Referred bookings: only 8% host fee (vs 12.5% standard)",
+        "Track clicks, bookings, and revenue per link",
+        "30-day cookie — guest doesn't have to book immediately",
+      ],
+    },
+    {
+      icon: CalendarDays,
+      title: "Booking Management",
+      description: "Manage all your incoming bookings from the My Spaces tab. Communicate with guests before and after booking.",
+      details: [
+        "Guests can message you before booking (direct inquiries)",
+        "Check-in / check-out tracking with overtime detection",
+        "Reschedule requests with approve/decline flow",
+        "Mark no-shows if a guest doesn't arrive",
+        "Bookings auto-add to Google Calendar",
+      ],
+    },
+    {
+      icon: Star,
+      title: "Reviews & Badges",
+      description: "After completed bookings, guests can leave reviews. High performance earns you badges that appear on your listing.",
+      details: [
+        "Respond to guest reviews directly from your portal",
+        "Earn badges: Superhost (90%+ response rate + 5 bookings), Responsive, Experienced",
+        "Top Rated badge for 4.5+ stars with 3+ reviews",
+        "Verified badge for all approved listings",
+        "New badge automatically shows for listings less than 30 days old",
+      ],
+    },
+    {
+      icon: TrendingUp,
+      title: "Analytics Dashboard",
+      description: "Track your performance across all your spaces in the Analytics tab.",
+      details: [
+        "Total bookings, completed bookings, and cancellations",
+        "Revenue breakdown per space",
+        "Average rating and review count",
+        "Occupancy rate estimates",
+      ],
+    },
+    {
+      icon: Share2,
+      title: "Visibility & Discovery",
+      description: "Your space is discoverable by guests through search, map view, and recommendations.",
+      details: [
+        "Guests can search by date/time availability",
+        "Map view with location pins by space type",
+        "\"You might also like\" recommendations on similar space pages",
+        "Guests can save your space to wishlists and favorites",
+        "Host response time is shown on your listing — fast replies build trust",
+      ],
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center py-4">
+        <h2 className="font-serif text-xl font-bold text-stone-900">Host Guide</h2>
+        <p className="text-sm text-stone-500 mt-1">Everything you need to know about hosting on Align</p>
+      </div>
+
+      {sections.map((section) => (
+        <HostGuideCard key={section.title} section={section} />
+      ))}
+    </div>
+  );
+}
+
+function HostGuideCard({ section }: { section: { icon: any; title: string; description: string; details: string[] } }) {
+  const [expanded, setExpanded] = useState(false);
+  const Icon = section.icon;
+
+  return (
+    <div className="border border-stone-200 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-stone-50 transition-colors"
+      >
+        <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <Icon className="w-4.5 h-4.5 text-stone-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm text-stone-900">{section.title}</h3>
+          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{section.description}</p>
+        </div>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-stone-400 flex-shrink-0 mt-1" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-stone-400 flex-shrink-0 mt-1" />
+        )}
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 pt-0 pl-16">
+          <ul className="space-y-1.5">
+            {section.details.map((detail, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-stone-600">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <span>{detail}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type SpacesTabKey = "favorites" | "my-bookings" | "my-spaces" | "earnings" | "wishlists" | "analytics" | "host-guide";
 
 export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: SpacesTabKey }) {
   // Handle legacy tab values
@@ -2097,6 +2251,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
     ...(isHost ? [{ key: "analytics" as const, label: "Analytics", icon: TrendingUp }] : []),
+    ...(isHost ? [{ key: "host-guide" as const, label: "Host Guide", icon: BookOpen }] : []),
   ];
 
   const { data: loyaltyData } = useQuery<{
@@ -2156,6 +2311,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
       {spacesTab === "my-spaces" && <MySpacesTab />}
       {spacesTab === "earnings" && <EarningsTab />}
       {spacesTab === "analytics" && <HostAnalyticsTab />}
+      {spacesTab === "host-guide" && <HostGuideTab />}
     </div>
   );
 }
