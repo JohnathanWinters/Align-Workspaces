@@ -2132,30 +2132,37 @@ function PortalContent() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="card-empty-state">
+              <Card className="border-dashed border-2 border-[#d4c5b0] bg-[#faf8f5]/60" data-testid="card-empty-state">
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <Camera className="w-7 h-7 text-gray-400" />
+                  <div className="w-16 h-16 mb-5 text-[#B8860B]/70">
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      <ellipse cx="32" cy="56" rx="18" ry="2" fill="currentColor" opacity="0.12" />
+                      <rect x="12" y="18" width="40" height="30" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                      <circle cx="32" cy="33" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                      <circle cx="32" cy="33" r="3" stroke="currentColor" strokeWidth="1" fill="none" />
+                      <rect x="18" y="22" width="5" height="3" rx="1" stroke="currentColor" strokeWidth="1" fill="none" />
+                      <path d="M22 18 L26 10 L38 10 L42 18" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                    </svg>
                   </div>
-                  <h3 className="font-serif text-xl text-gray-900 mb-2">Your story starts here</h3>
-                  <p className="text-gray-500 text-sm max-w-sm mb-6">
+                  <h3 className="font-serif text-xl text-[#2c2420] mb-2">Your story starts here</h3>
+                  <p className="text-[#8a7e72] text-sm max-w-sm mb-6">
                     Get your portrait session in three simple steps.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 mb-8 text-left max-w-md w-full">
-                    <div className="flex-1 bg-gray-50 rounded-lg p-4">
-                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] text-white text-xs font-bold flex items-center justify-center mb-2">1</div>
-                      <p className="text-sm font-medium text-gray-900">Design</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Choose your environment, mood, and style</p>
+                    <div className="flex-1 bg-[#faf8f5] border border-[#e0d5c7] rounded-lg p-4">
+                      <div className="w-7 h-7 rounded-full border-[1.5px] border-[#B8860B] text-[#B8860B] text-xs font-semibold flex items-center justify-center mb-2">1</div>
+                      <p className="text-sm font-medium text-[#2c2420]">Design</p>
+                      <p className="text-xs text-[#8a7e72] mt-0.5">Choose your environment, mood, and style</p>
                     </div>
-                    <div className="flex-1 bg-gray-50 rounded-lg p-4">
-                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] text-white text-xs font-bold flex items-center justify-center mb-2">2</div>
-                      <p className="text-sm font-medium text-gray-900">Shoot</p>
-                      <p className="text-xs text-gray-500 mt-0.5">We'll schedule and photograph your session</p>
+                    <div className="flex-1 bg-[#faf8f5] border border-[#e0d5c7] rounded-lg p-4">
+                      <div className="w-7 h-7 rounded-full border-[1.5px] border-[#B8860B] text-[#B8860B] text-xs font-semibold flex items-center justify-center mb-2">2</div>
+                      <p className="text-sm font-medium text-[#2c2420]">Shoot</p>
+                      <p className="text-xs text-[#8a7e72] mt-0.5">We'll schedule and photograph your session</p>
                     </div>
-                    <div className="flex-1 bg-gray-50 rounded-lg p-4">
-                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] text-white text-xs font-bold flex items-center justify-center mb-2">3</div>
-                      <p className="text-sm font-medium text-gray-900">Gallery</p>
-                      <p className="text-xs text-gray-500 mt-0.5">View, favorite, and download your photos</p>
+                    <div className="flex-1 bg-[#faf8f5] border border-[#e0d5c7] rounded-lg p-4">
+                      <div className="w-7 h-7 rounded-full border-[1.5px] border-[#B8860B] text-[#B8860B] text-xs font-semibold flex items-center justify-center mb-2">3</div>
+                      <p className="text-sm font-medium text-[#2c2420]">Gallery</p>
+                      <p className="text-xs text-[#8a7e72] mt-0.5">View, favorite, and download your photos</p>
                     </div>
                   </div>
                   <Link href="/portrait-builder">

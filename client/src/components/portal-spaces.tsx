@@ -2023,154 +2023,327 @@ function HostAnalyticsTab() {
 }
 
 // ── Host Guide ──────────────────────────────────────────────────────
+type HostGuideSection = {
+  icon: any;
+  title: string;
+  description: string;
+  details: string[];
+  status?: "complete" | "action-needed";
+};
+
 function HostGuideTab() {
-  const sections = [
+  const { data: mySpaces = [] } = useQuery<Space[]>({
+    queryKey: ["/api/my-spaces"],
+    queryFn: async () => {
+      const res = await fetch("/api/my-spaces", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const { data: connectStatus } = useQuery<{
+    connected: boolean;
+    onboardingComplete: boolean;
+  }>({
+    queryKey: ["/api/stripe/connect/status"],
+    queryFn: async () => {
+      const res = await fetch("/api/stripe/connect/status", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const { data: referralLinks = [] } = useQuery<any[]>({
+    queryKey: ["/api/host/referral-links"],
+    queryFn: async () => {
+      const res = await fetch("/api/host/referral-links", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const hasListing = mySpaces.length > 0;
+  const stripeConnected = connectStatus?.onboardingComplete ?? false;
+  const hasReferralLink = referralLinks.length > 0;
+
+  // Quick start steps
+  const quickStartSteps = [
+    { label: "List Your Space", done: hasListing, tab: "my-spaces" as const },
+    { label: "Connect Stripe", done: stripeConnected, tab: "earnings" as const },
+    { label: "Share Your Link", done: hasReferralLink, tab: "earnings" as const },
+  ];
+  const firstIncompleteStep = quickStartSteps.find((s) => !s.done);
+  const allComplete = quickStartSteps.every((s) => s.done);
+
+  const phases: {
+    label: string;
+    number: number;
+    description: string;
+    featured?: boolean;
+    sections: HostGuideSection[];
+  }[] = [
     {
-      icon: Building2,
-      title: "List Your Space",
-      description: "Create a listing with photos, pricing, amenities, and availability. Once submitted, our team reviews and approves it.",
-      details: [
-        "Set hourly and daily rates",
-        "Upload multiple photos with drag & drop",
-        "Define your weekly availability schedule",
-        "Set buffer time between bookings (5–60 min)",
-        "Choose a cancellation policy: Flexible, Moderate, or Strict",
-        "Target specific professions (therapists, photographers, etc.)",
+      label: "Getting Started",
+      number: 1,
+      description: "The essentials to start earning",
+      featured: true,
+      sections: [
+        {
+          icon: Building2,
+          title: "List Your Space",
+          description: "Create a listing with photos, pricing, amenities, and availability. Once submitted, our team reviews and approves it.",
+          status: hasListing ? "complete" : "action-needed",
+          details: [
+            "Set your own hourly and daily rates — you control the pricing",
+            "Showcase your space with multiple photos via simple drag & drop",
+            "Set your weekly availability so guests only book when you're open",
+            "Avoid back-to-back stress — add buffer time between bookings (5–60 min)",
+            "Protect yourself with the right cancellation policy: Flexible, Moderate, or Strict",
+            "Attract your ideal guests — target specific professions like therapists or photographers",
+          ],
+        },
+        {
+          icon: DollarSign,
+          title: "Earnings & Fees",
+          description: "You keep the majority of every booking. Align takes a small platform fee so we can keep running.",
+          details: [
+            "Keep 87.5% of every booking — our standard host fee is just 12.5%",
+            "Save even more with referrals — your host fee drops to 8% on referred bookings",
+            "Your payout is never affected by guest fees — they pay a separate 5–7% + tax",
+            "Get paid directly to your bank account through Stripe Connect",
+            "Stay on top of your income — track earnings, payouts, and savings in the Earnings tab",
+          ],
+        },
+        {
+          icon: CreditCard,
+          title: "Stripe Connect",
+          description: "Connect your Stripe account to receive payouts directly to your bank. This is required to receive payments.",
+          status: stripeConnected ? "complete" : "action-needed",
+          details: [
+            "Get set up in minutes — one-time onboarding through Stripe's secure flow",
+            "Receive payouts on Stripe's standard schedule, directly to your bank",
+            "Hands-off payments — guests pay and you receive funds automatically",
+            "No Stripe account yet? Align holds your funds and transfers them after the booking completes",
+          ],
+        },
       ],
     },
     {
-      icon: DollarSign,
-      title: "Earnings & Fees",
-      description: "You keep the majority of every booking. Align takes a small platform fee so we can keep running.",
-      details: [
-        "Standard host fee: 12.5% — you keep 87.5% of the base price",
-        "If you refer the guest via your referral link: host fee drops to 8%",
-        "Guest pays a separate service fee (5–7%) + tax — this doesn't affect your payout",
-        "Payouts go directly to your bank via Stripe Connect",
-        "Track all earnings, payouts, and savings in the Earnings tab",
+      label: "Managing Your Space",
+      number: 2,
+      description: "Tools to run your space smoothly",
+      sections: [
+        {
+          icon: CalendarDays,
+          title: "Booking Management",
+          description: "Manage all your incoming bookings from the My Spaces tab. Communicate with guests before and after booking.",
+          details: [
+            "Answer questions before they book — guests can message you with direct inquiries",
+            "Know exactly when guests arrive and leave — overtime is flagged automatically",
+            "Stay in control of schedule changes — approve or decline reschedule requests",
+            "Protect your time — mark no-shows so you have a record if a guest doesn't arrive",
+            "Never miss an appointment — bookings auto-sync to your Google Calendar",
+          ],
+        },
+        {
+          icon: Star,
+          title: "Reviews & Badges",
+          description: "After completed bookings, guests can leave reviews. High performance earns you badges that appear on your listing.",
+          details: [
+            "Build relationships — respond to guest reviews directly from your portal",
+            "Stand out with earned badges: Superhost (90%+ response rate + 5 bookings), Responsive, Experienced",
+            "Showcase quality — earn the Top Rated badge with 4.5+ stars and 3+ reviews",
+            "Build instant credibility — all approved listings get a Verified badge",
+            "Get noticed as a newcomer — the New badge shows automatically for your first 30 days",
+          ],
+        },
+        {
+          icon: TrendingUp,
+          title: "Analytics Dashboard",
+          description: "Track your performance across all your spaces in the Analytics tab.",
+          details: [
+            "See the full picture — total bookings, completions, and cancellations at a glance",
+            "Know what's working — view revenue breakdown per space",
+            "Track your reputation — monitor your average rating and review count",
+            "Optimize your schedule — occupancy rate estimates show your space's demand",
+          ],
+        },
       ],
     },
     {
-      icon: CreditCard,
-      title: "Stripe Connect",
-      description: "Connect your Stripe account to receive payouts directly to your bank. This is required to receive payments.",
-      details: [
-        "One-time setup through Stripe's secure onboarding",
-        "Payouts arrive in your bank account on Stripe's standard schedule",
-        "With Stripe Connect, guests pay and you receive funds automatically",
-        "Without it, Align holds funds and transfers after the booking completes",
-      ],
-    },
-    {
-      icon: Link2,
-      title: "Referral Program",
-      description: "Generate referral links to share with potential guests. When they book through your link, you pay a lower host fee.",
-      details: [
-        "Create links for all your spaces or specific ones",
-        "Share on social media, email, or your website",
-        "Referred bookings: only 8% host fee (vs 12.5% standard)",
-        "Track clicks, bookings, and revenue per link",
-        "30-day cookie — guest doesn't have to book immediately",
-      ],
-    },
-    {
-      icon: CalendarDays,
-      title: "Booking Management",
-      description: "Manage all your incoming bookings from the My Spaces tab. Communicate with guests before and after booking.",
-      details: [
-        "Guests can message you before booking (direct inquiries)",
-        "Check-in / check-out tracking with overtime detection",
-        "Reschedule requests with approve/decline flow",
-        "Mark no-shows if a guest doesn't arrive",
-        "Bookings auto-add to Google Calendar",
-      ],
-    },
-    {
-      icon: Star,
-      title: "Reviews & Badges",
-      description: "After completed bookings, guests can leave reviews. High performance earns you badges that appear on your listing.",
-      details: [
-        "Respond to guest reviews directly from your portal",
-        "Earn badges: Superhost (90%+ response rate + 5 bookings), Responsive, Experienced",
-        "Top Rated badge for 4.5+ stars with 3+ reviews",
-        "Verified badge for all approved listings",
-        "New badge automatically shows for listings less than 30 days old",
-      ],
-    },
-    {
-      icon: TrendingUp,
-      title: "Analytics Dashboard",
-      description: "Track your performance across all your spaces in the Analytics tab.",
-      details: [
-        "Total bookings, completed bookings, and cancellations",
-        "Revenue breakdown per space",
-        "Average rating and review count",
-        "Occupancy rate estimates",
-      ],
-    },
-    {
-      icon: Share2,
-      title: "Visibility & Discovery",
-      description: "Your space is discoverable by guests through search, map view, and recommendations.",
-      details: [
-        "Guests can search by date/time availability",
-        "Map view with location pins by space type",
-        "\"You might also like\" recommendations on similar space pages",
-        "Guests can save your space to wishlists and favorites",
-        "Host response time is shown on your listing — fast replies build trust",
+      label: "Growing Your Business",
+      number: 3,
+      description: "Reach more guests and earn more",
+      sections: [
+        {
+          icon: Link2,
+          title: "Referral Program",
+          description: "Generate referral links to share with potential guests. When they book through your link, you pay a lower host fee.",
+          status: hasReferralLink ? "complete" : "action-needed",
+          details: [
+            "Share one link for all your spaces or create links for specific listings",
+            "Promote anywhere — social media, email, or embed on your own website",
+            "Keep more of each booking — referred bookings cost you only 8% (vs 12.5% standard)",
+            "See what's working — track clicks, bookings, and revenue per link",
+            "Guests have 30 days to book after clicking your link — you still get credit",
+          ],
+        },
+        {
+          icon: Share2,
+          title: "Visibility & Discovery",
+          description: "Your space is discoverable by guests through search, map view, and recommendations.",
+          details: [
+            "Get found when it matters — guests can search by date and time availability",
+            "Show up on the map — your space appears with a location pin filtered by type",
+            "Get recommended — your space shows in \"You might also like\" on similar listings",
+            "Stay top of mind — guests can save your space to wishlists and favorites",
+            "Build trust with speed — your response time shows on your listing, and fast replies rank higher",
+          ],
+        },
       ],
     },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="text-center py-4">
-        <h2 className="font-serif text-xl font-bold text-stone-900">Host Guide</h2>
-        <p className="text-sm text-stone-500 mt-1">Everything you need to know about hosting on Align</p>
+        <h2 className="font-serif text-xl font-bold text-[#2c2420]">Host Guide</h2>
+        <p className="text-sm text-[#8a7e72] mt-1">Your roadmap to hosting on Align</p>
       </div>
 
-      {sections.map((section) => (
-        <HostGuideCard key={section.title} section={section} />
+      {/* Quick Start Banner */}
+      <div className="bg-[#faf8f5] border border-[#e0d5c7] rounded-xl p-5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[#B8860B] mb-3">
+          {allComplete ? "You're all set" : "Quick Start"}
+        </p>
+        <div className="flex items-center gap-0">
+          {quickStartSteps.map((step, i) => (
+            <div key={step.label} className="flex items-center flex-1 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                  step.done
+                    ? "bg-[#B8860B] text-white"
+                    : "border-[1.5px] border-[#B8860B] text-[#B8860B]"
+                }`}>
+                  {step.done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                </div>
+                <span className={`text-xs font-medium truncate ${step.done ? "text-[#8a7e72] line-through" : "text-[#2c2420]"}`}>
+                  {step.label}
+                </span>
+              </div>
+              {i < quickStartSteps.length - 1 && (
+                <div className={`flex-1 h-px mx-3 ${step.done ? "bg-[#B8860B]" : "bg-[#d4c5b0]"}`} />
+              )}
+            </div>
+          ))}
+        </div>
+        {firstIncompleteStep && (
+          <button
+            onClick={() => {
+              const tabButton = document.querySelector(`[data-testid="tab-spaces-${firstIncompleteStep.tab}"]`);
+              if (tabButton) (tabButton as HTMLButtonElement).click();
+            }}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#2c2420] text-white text-xs font-medium hover:bg-[#1a1a1a] transition-colors"
+          >
+            {firstIncompleteStep.label === "List Your Space" && "Create Your First Listing"}
+            {firstIncompleteStep.label === "Connect Stripe" && "Connect Stripe Account"}
+            {firstIncompleteStep.label === "Share Your Link" && "Create a Referral Link"}
+            <ChevronDown className="w-3 h-3 -rotate-90" />
+          </button>
+        )}
+      </div>
+
+      {/* Phases */}
+      {phases.map((phase) => (
+        <div key={phase.number}>
+          {/* Phase header */}
+          <div className="flex items-center gap-3 mb-3 mt-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#B8860B]">
+              Phase {phase.number}
+            </span>
+            <div className="h-px flex-1 bg-[#e0d5c7]" />
+          </div>
+          <div className="mb-4">
+            <h3 className="font-serif text-base font-semibold text-[#2c2420]">{phase.label}</h3>
+            <p className="text-xs text-[#8a7e72] mt-0.5">{phase.description}</p>
+          </div>
+
+          {/* Sections */}
+          <div className="space-y-3">
+            {phase.sections.map((section) => (
+              <HostGuideCard key={section.title} section={section} featured={phase.featured} />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
-function HostGuideCard({ section }: { section: { icon: any; title: string; description: string; details: string[] } }) {
+function HostGuideCard({ section, featured }: { section: HostGuideSection; featured?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = section.icon;
 
   return (
-    <div className="border border-stone-200 rounded-xl overflow-hidden">
+    <div className={`rounded-xl overflow-hidden ${
+      featured
+        ? "border-[1.5px] border-[#d4c5b0] bg-[#faf8f5]/40"
+        : "border border-stone-200"
+    }`}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-stone-50 transition-colors"
+        className="w-full flex items-start gap-3.5 p-4 text-left hover:bg-[#faf8f5]/60 transition-colors"
       >
-        <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Icon className="w-4.5 h-4.5 text-stone-600" />
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+          featured ? "bg-[#B8860B]/10" : "bg-stone-100"
+        }`}>
+          <Icon className={`w-4.5 h-4.5 ${featured ? "text-[#B8860B]" : "text-stone-600"}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm text-stone-900">{section.title}</h3>
-          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{section.description}</p>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-sm text-[#2c2420]">{section.title}</h3>
+            {section.status === "complete" && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#B8860B] bg-[#B8860B]/10 px-2 py-0.5 rounded-full">
+                <CheckCircle2 className="w-3 h-3" /> Done
+              </span>
+            )}
+            {section.status === "action-needed" && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[#8a7e72] bg-stone-100 px-2 py-0.5 rounded-full">
+                Set up
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[#8a7e72] mt-0.5 leading-relaxed">{section.description}</p>
         </div>
         {expanded ? (
-          <ChevronUp className="w-4 h-4 text-stone-400 flex-shrink-0 mt-1" />
+          <ChevronUp className="w-4 h-4 text-[#B8860B]/60 flex-shrink-0 mt-1" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-stone-400 flex-shrink-0 mt-1" />
+          <ChevronDown className="w-4 h-4 text-[#B8860B]/60 flex-shrink-0 mt-1" />
         )}
       </button>
-      {expanded && (
-        <div className="px-4 pb-4 pt-0 pl-16">
-          <ul className="space-y-1.5">
-            {section.details.map((detail, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-stone-600">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span>{detail}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-0 pl-16">
+              <ul className="space-y-1.5">
+                {section.details.map((detail, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-[#5c5248]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#B8860B]/70 flex-shrink-0 mt-0.5" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
