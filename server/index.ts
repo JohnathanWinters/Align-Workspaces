@@ -72,6 +72,8 @@ app.use((req, res, next) => {
   if (req.path === "/api/track") return next();
   // Skip CSRF for push subscriptions
   if (req.path.startsWith("/api/push/")) return next();
+  // Skip CSRF for admin/employee login (password-based auth, no token yet)
+  if (req.path === "/api/admin/login" || req.path === "/api/employee/login") return next();
   // Skip CSRF for admin API calls (use Bearer token auth)
   if (req.headers.authorization?.startsWith("Bearer ")) return next();
 
