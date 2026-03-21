@@ -377,14 +377,18 @@ export default function AlignSpacesPage() {
 
           {!spacesLoading && allSpaces.length > 0 && (
             <div className="mt-8 space-y-5">
-              <div className="text-center">
+              <div className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="section-post-space-cta">
+                <p className="text-sm text-foreground/60">
+                  <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
+                  <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
+                </p>
                 <Link
-                  href="/workspaces"
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
-                  data-testid="link-browse-all-bottom"
+                  href="/workspaces?list=true"
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors font-medium"
+                  data-testid="button-post-space-cta"
                 >
-                  Browse all spaces with map
-                  <ArrowRight className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
+                  Post your space
                 </Link>
               </div>
 
@@ -411,25 +415,6 @@ export default function AlignSpacesPage() {
               </div>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="px-4 sm:px-6 pb-8 sm:pb-12" data-testid="section-post-space-cta">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 bg-[#faf6f1] border border-[#e8ddd0]/60">
-            <p className="text-sm text-foreground/60">
-              <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
-              <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
-            </p>
-            <Link
-              href="/workspaces?list=true"
-              className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors font-medium"
-              data-testid="button-post-space-cta"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Post your space
-            </Link>
-          </div>
         </div>
       </section>
 
