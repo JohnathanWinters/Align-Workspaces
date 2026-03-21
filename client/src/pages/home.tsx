@@ -653,7 +653,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     {recs.fit.map((f) => (
-                                      <span key={f} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
+                                      <span key={f} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium text-[hsl(var(--muted-foreground))]">
                                         {f}
                                       </span>
                                     ))}
@@ -677,7 +677,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                                           className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                                             fabricPreview === item
                                               ? "bg-[hsl(var(--primary))] text-white ring-2 ring-[hsl(var(--primary))] ring-offset-1"
-                                              : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--primary))]/10 cursor-pointer"
+                                              : "bg-[hsl(var(--muted))] border border-dashed border-gray-300 hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] cursor-pointer"
                                           }`}
                                         >
                                           {item}
@@ -711,10 +711,6 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                                   </AnimatePresence>
                                 </div>
 
-                                <div className="text-sm text-[hsl(var(--foreground))] italic leading-relaxed" data-testid="rec-style-note">
-                                  {recs.styleNote}
-                                </div>
-
                                 {recs.fabricNote && (
                                   <div className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed" data-testid="rec-fabric-note">
                                     {recs.fabricNote}
@@ -723,7 +719,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
 
                                 <div className="flex items-start gap-2 text-sm text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] rounded-lg p-3" data-testid="rec-avoid-note">
                                   <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                                  <span>{recs.avoidNote}</span>
+                                  <span>Choose pieces that feel like you, comfort translates to confidence on camera</span>
                                 </div>
                               </div>
                             </motion.div>
