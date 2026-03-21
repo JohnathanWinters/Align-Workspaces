@@ -1,42 +1,42 @@
 const environmentClothing: Record<string, { types: string[]; avoidFabrics: string[]; avoid: string }> = {
   kitchen: {
     types: ["Chef coat", "Apron over dress shirt", "Fitted culinary jacket"],
-    avoidFabrics: ["Synthetic blends", "Loose-weave fabrics", "Polyester"],
+    avoidFabrics: ["Shiny synthetics", "Sheer fabrics", "Loud patterns"],
     avoid: "Avoid loose sleeves or synthetic materials that wrinkle under heat",
   },
   restaurant: {
     types: ["Blazer with open collar", "Tailored vest", "Dark dress shirt"],
-    avoidFabrics: ["Denim", "Athletic fabrics", "Heavy canvas"],
+    avoidFabrics: ["Denim", "Distressed denim", "Loud patterns"],
     avoid: "Avoid overly casual pieces, the setting calls for polished attire",
   },
   office: {
     types: ["Tailored suit", "Structured blazer", "Button-down with slacks"],
-    avoidFabrics: ["Jersey knit", "Distressed denim", "Sheer fabrics"],
+    avoidFabrics: ["Distressed denim", "Sheer fabrics", "Loud patterns"],
     avoid: "Avoid loud patterns, solids and subtle textures photograph best",
   },
   nature: {
     types: ["Linen shirt", "Light jacket", "Henley or relaxed button-down"],
-    avoidFabrics: ["Heavy wool", "Stiff synthetics", "Formal silks"],
+    avoidFabrics: ["Shiny synthetics", "Silk", "Sheer fabrics"],
     avoid: "Avoid stiff formal wear, aim for relaxed but put-together",
   },
   workvan: {
     types: ["Work jacket", "Branded polo", "Utility vest over tee"],
-    avoidFabrics: ["Silk", "Formal wool", "Delicate fabrics"],
+    avoidFabrics: ["Silk", "Sheer fabrics", "Shiny synthetics"],
     avoid: "Avoid anything too dressy, authentic workwear reads best",
   },
   urban: {
     types: ["Leather jacket", "Fitted overcoat", "Modern blazer with crew neck"],
-    avoidFabrics: ["Baggy fleece", "Cargo fabrics", "Athletic mesh"],
+    avoidFabrics: ["Distressed denim", "Loud patterns", "Shiny synthetics"],
     avoid: "Avoid overly relaxed fits, clean lines match the city backdrop",
   },
   suburban: {
     types: ["Casual blazer", "Light sweater", "Polo or relaxed button-down"],
-    avoidFabrics: ["Heavy dark fabrics", "Stiff formal suiting", "Shiny synthetics"],
+    avoidFabrics: ["Shiny synthetics", "Loud patterns", "Denim"],
     avoid: "Avoid heavy dark suits, keep it approachable and warm",
   },
   gym: {
     types: ["Fitted athletic top", "Branded tank or compression shirt", "Clean performance jacket"],
-    avoidFabrics: ["Formal wool", "Denim", "Loose cotton tees"],
+    avoidFabrics: ["Denim", "Silk", "Loud patterns"],
     avoid: "Avoid oversized or worn-out gym clothes, go for clean, fitted performance wear",
   },
 };
@@ -79,29 +79,12 @@ const genericFit = {
 
 // Map fabric display names → image filenames in /images/fabrics/
 export const fabricImageMap: Record<string, string> = {
-  "Athletic fabrics": "athletic-fabrics.webp",
-  "Athletic mesh": "athletic-mesh.webp",
-  "Baggy fleece": "baggy-fleece.webp",
-  "Cargo fabrics": "cargo-fabrics.webp",
-  "Delicate fabrics": "delicate-fabrics.webp",
   "Denim": "denim.webp",
   "Distressed denim": "distressed-denim.webp",
-  "Formal silks": "formal-silks.webp",
-  "Formal wool": "formal-wool.webp",
-  "Heavy canvas": "heavy-canvas.webp",
-  "Heavy dark fabrics": "heavy-dark-fabrics.webp",
-  "Heavy wool": "heavy-wool.webp",
-  "Jersey knit": "jersey-knit.webp",
-  "Loose cotton tees": "loose-cotton-tees.webp",
-  "Loose-weave fabrics": "loose-weave-fabrics.webp",
   "Loud patterns": "loud-patterns.webp",
-  "Polyester": "polyester.webp",
   "Sheer fabrics": "sheer-fabrics.webp",
   "Shiny synthetics": "shiny-synthetics.webp",
   "Silk": "silk.webp",
-  "Stiff formal suiting": "stiff-formal-suiting.webp",
-  "Stiff synthetics": "stiff-synthetics.webp",
-  "Synthetic blends": "synthetic-blends.webp",
 };
 
 export function getClothingRecommendations(

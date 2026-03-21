@@ -197,7 +197,14 @@ function PhotoCard({ photo, index, onPhotoClick, className }: { photo: Portfolio
       <img
         src={photo.imageUrl}
         alt="Professional portrait photography for small business professionals in Miami"
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        className="absolute object-cover transition-transform duration-500 group-hover:scale-105"
+        style={{
+          objectPosition: `${photo.cropPosition?.x ?? 50}% ${photo.cropPosition?.y ?? 50}%`,
+          top: `-${((photo.cropPosition?.zoom ?? 1) - 1) * 50}%`,
+          left: `-${((photo.cropPosition?.zoom ?? 1) - 1) * 50}%`,
+          width: `${100 + ((photo.cropPosition?.zoom ?? 1) - 1) * 100}%`,
+          height: `${100 + ((photo.cropPosition?.zoom ?? 1) - 1) * 100}%`,
+        }}
         loading="lazy"
         decoding="async"
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -269,6 +276,9 @@ function PhotoLightbox({ photo, onClose }: { photo: PortfolioPhoto | null; onClo
                 src={photo.imageUrl}
                 alt="Professional branding portrait detail - Align Miami"
                 className="w-full h-full object-cover"
+                style={{
+                  objectPosition: `${photo.cropPosition?.x ?? 50}% ${photo.cropPosition?.y ?? 50}%`,
+                }}
                 data-testid="lightbox-image"
               />
             )}
