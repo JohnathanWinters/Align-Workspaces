@@ -1120,13 +1120,12 @@ export async function registerRoutes(
         shootId: shoot.id,
       });
 
-      if (!eventId) return res.status(500).json({ message: "Failed to create calendar event" });
-
       await db.update(shoots).set({ googleCalendarEventId: eventId }).where(eq(shoots.id, shoot.id));
       res.json({ success: true, eventId });
     } catch (err: any) {
       console.error("Failed to sync shoot to calendar:", err);
-      res.status(500).json({ message: err?.message || "Failed to sync to calendar" });
+      const detail = err?.response?.data?.error?.message || err?.message || "Failed to sync to calendar";
+      res.status(500).json({ message: detail });
     }
   });
 

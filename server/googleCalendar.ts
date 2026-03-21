@@ -89,64 +89,60 @@ interface ShootEventParams {
   shootId: string;
 }
 
-export async function createShootCalendarEvent(params: ShootEventParams): Promise<string | null> {
-  try {
-    const calendar = getCalendarClient();
-    const hours = params.durationHours || 2;
+export async function createShootCalendarEvent(params: ShootEventParams): Promise<string> {
+  const calendar = getCalendarClient();
+  const hours = params.durationHours || 2;
 
-    let startDateTime: string;
-    let endDateTime: string;
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const toLocalISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  let startDateTime: string;
+  let endDateTime: string;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const toLocalISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 
-    if (params.shootTime) {
-      const [startH, startM] = params.shootTime.split(":").map(Number);
-      const startDate = new Date(`${params.shootDate}T${pad(startH)}:${pad(startM)}:00`);
-      const endDate = new Date(startDate.getTime() + hours * 60 * 60 * 1000);
-      startDateTime = toLocalISO(startDate);
-      endDateTime = toLocalISO(endDate);
-    } else {
-      // Default to 10am-12pm if no time specified
-      startDateTime = `${params.shootDate}T10:00:00`;
-      const startDate = new Date(`${params.shootDate}T10:00:00`);
-      const endDate = new Date(startDate.getTime() + hours * 60 * 60 * 1000);
-      endDateTime = toLocalISO(endDate);
-    }
-
-    const attendees: { email: string }[] = [];
-    if (params.clientEmail) attendees.push({ email: params.clientEmail });
-
-    const event = await calendar.events.insert({
-      calendarId: 'primary',
-      requestBody: {
-        summary: `${params.shootTitle} — ${params.clientName}`,
-        description: [
-          `Portrait session via Align`,
-          `Client: ${params.clientName}${params.clientEmail ? ` (${params.clientEmail})` : ""}`,
-          `Duration: ${hours} hour${hours > 1 ? "s" : ""}`,
-          params.notes ? `Notes: ${params.notes}` : null,
-          `Shoot ID: ${params.shootId}`,
-        ].filter(Boolean).join("\n"),
-        location: params.location || undefined,
-        start: { dateTime: startDateTime, timeZone: 'America/New_York' },
-        end: { dateTime: endDateTime, timeZone: 'America/New_York' },
-        attendees,
-        reminders: {
-          useDefault: false,
-          overrides: [
-            { method: 'email', minutes: 24 * 60 },
-            { method: 'popup', minutes: 60 },
-          ],
-        },
-      },
-    });
-
-    console.log(`Google Calendar shoot event created: ${event.data.id}`);
-    return event.data.id || null;
-  } catch (err) {
-    console.error("Failed to create Google Calendar shoot event:", err);
-    return null;
+  if (params.shootTime) {
+    const [startH, startM] = params.shootTime.split(":").map(Number);
+    const startDate = new Date(`${params.shootDate}T${pad(startH)}:${pad(startM)}:00`);
+    const endDate = new Date(startDate.getTime() + hours * 60 * 60 * 1000);
+    startDateTime = toLocalISO(startDate);
+    endDateTime = toLocalISO(endDate);
+  } else {
+    // Default to 10am-12pm if no time specified
+    startDateTime = `${params.shootDate}T10:00:00`;
+    const startDate = new Date(`${params.shootDate}T10:00:00`);
+    const endDate = new Date(startDate.getTime() + hours * 60 * 60 * 1000);
+    endDateTime = toLocalISO(endDate);
   }
+
+  const attendees: { email: string }[] = [];
+  if (params.clientEmail) attendees.push({ email: params.clientEmail });
+
+  const event = await calendar.events.insert({
+    calendarId: 'primary',
+    requestBody: {
+      summary: `${params.shootTitle} — ${params.clientName}`,
+      description: [
+        `Portrait session via Align`,
+        `Client: ${params.clientName}${params.clientEmail ? ` (${params.clientEmail})` : ""}`,
+        `Duration: ${hours} hour${hours > 1 ? "s" : ""}`,
+        params.notes ? `Notes: ${params.notes}` : null,
+        `Shoot ID: ${params.shootId}`,
+      ].filter(Boolean).join("\n"),
+      location: params.location || undefined,
+      start: { dateTime: startDateTime, timeZone: 'America/New_York' },
+      end: { dateTime: endDateTime, timeZone: 'America/New_York' },
+      attendees,
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 24 * 60 },
+          { method: 'popup', minutes: 60 },
+        ],
+      },
+    },
+  });
+
+  if (!event.data.id) throw new Error("Google Calendar returned no event ID");
+  console.log(`Google Calendar shoot event created: ${event.data.id}`);
+  return event.data.id;
 }
 
 export async function deleteBookingCalendarEvent(eventId: string): Promise<boolean> {
