@@ -1188,9 +1188,14 @@ export async function registerRoutes(
         if (!item || typeof item.description !== "string" || !item.description.trim()) {
           return res.status(400).json({ message: "Each line item must have a description" });
         }
-        if (typeof item.amount !== "number" || isNaN(item.amount) || item.amount <= 0) {
-          return res.status(400).json({ message: "Each line item must have a positive amount" });
+        if (typeof item.amount !== "number" || isNaN(item.amount) || item.amount === 0) {
+          return res.status(400).json({ message: "Each line item must have a non-zero amount" });
         }
+      }
+
+      const totalAmount = lineItems.reduce((sum: number, item: any) => sum + item.amount, 0);
+      if (totalAmount <= 0) {
+        return res.status(400).json({ message: "Invoice total must be positive" });
       }
 
       const shoot = await storage.getShootById(shootId);
