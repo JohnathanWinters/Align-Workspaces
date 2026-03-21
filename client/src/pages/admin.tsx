@@ -15,6 +15,7 @@ import {
   Plus,
   Trash2,
   Edit,
+  FileText,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -6877,8 +6878,8 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
                             Gallery
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => onEditShoot(shoot)} className="h-7 text-xs px-2 text-gray-600 border-gray-200">
-                            <Edit className="w-3 h-3 mr-1" />
-                            Edit
+                            <FileText className="w-3 h-3 mr-1" />
+                            Details
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => onInvoiceShoot(shoot)} className="h-7 text-xs px-2 text-gray-600 border-gray-200">
                             <Receipt className="w-3 h-3 mr-1" />
@@ -7430,7 +7431,7 @@ function AdminDashboard({ token }: { token: string }) {
               </button>
               <div className="h-4 w-px bg-gray-200" />
               <p className="font-serif text-lg text-gray-900">
-                {isEdit ? "Edit Photoshoot" : "New Photoshoot"}
+                {isEdit ? "Shoot Details" : "New Photoshoot"}
               </p>
             </div>
           </header>
@@ -7971,8 +7972,8 @@ function AdminDashboard({ token }: { token: string }) {
                                                     data-testid={`button-edit-shoot-${shoot.id}`}
                                                     className="h-7 text-xs px-2 text-gray-600 border-gray-200"
                                                   >
-                                                    <Edit className="w-3 h-3 mr-1" />
-                                                    Edit
+                                                    <FileText className="w-3 h-3 mr-1" />
+                                                    Details
                                                   </Button>
                                                   <Button
                                                     variant="outline"
@@ -8448,7 +8449,7 @@ function AdminDashboard({ token }: { token: string }) {
             {view === "revenue" && "Revenue"}
             {view === "tax" && "Tax Report"}
             {view === "create" && "New Photoshoot"}
-            {view === "edit" && "Edit Photoshoot"}
+            {view === "edit" && "Shoot Details"}
             {view === "gallery" && "Gallery"}
             {view === "tokens" && "Edit Tokens"}
           </p>
