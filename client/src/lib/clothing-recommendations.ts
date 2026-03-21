@@ -77,6 +77,33 @@ const genericFit = {
   preference: "Choose pieces that feel like you, comfort translates to confidence on camera",
 };
 
+// Map fabric display names → image filenames in /images/fabrics/
+export const fabricImageMap: Record<string, string> = {
+  "Athletic fabrics": "athletic-fabrics.webp",
+  "Athletic mesh": "athletic-mesh.webp",
+  "Baggy fleece": "baggy-fleece.webp",
+  "Cargo fabrics": "cargo-fabrics.webp",
+  "Delicate fabrics": "delicate-fabrics.webp",
+  "Denim": "denim.webp",
+  "Distressed denim": "distressed-denim.webp",
+  "Formal silks": "formal-silks.webp",
+  "Formal wool": "formal-wool.webp",
+  "Heavy canvas": "heavy-canvas.webp",
+  "Heavy dark fabrics": "heavy-dark-fabrics.webp",
+  "Heavy wool": "heavy-wool.webp",
+  "Jersey knit": "jersey-knit.webp",
+  "Loose cotton tees": "loose-cotton-tees.webp",
+  "Loose-weave fabrics": "loose-weave-fabrics.webp",
+  "Loud patterns": "loud-patterns.webp",
+  "Polyester": "polyester.webp",
+  "Sheer fabrics": "sheer-fabrics.webp",
+  "Shiny synthetics": "shiny-synthetics.webp",
+  "Silk": "silk.webp",
+  "Stiff formal suiting": "stiff-formal-suiting.webp",
+  "Stiff synthetics": "stiff-synthetics.webp",
+  "Synthetic blends": "synthetic-blends.webp",
+};
+
 export function getClothingRecommendations(
   environment: string | null,
   brandMessage: string | null,

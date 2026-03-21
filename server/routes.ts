@@ -1023,7 +1023,7 @@ export async function registerRoutes(
     try {
       const userId = req.params.id as string;
       const { deletePassword } = req.body;
-      if (!deletePassword || deletePassword !== process.env.ADMIN_DELETE_PASSWORD) {
+      if (!deletePassword || deletePassword !== process.env.ADMIN_PASSWORD) {
         res.status(403).json({ message: "Invalid delete password" });
         return;
       }
