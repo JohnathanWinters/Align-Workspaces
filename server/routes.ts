@@ -1146,32 +1146,95 @@ export async function registerRoutes(
   });
 
   // Admin: send quick message to shoot client
-  app.post("/api/admin/shoots/:id/message", isAdmin, async (req, res) => {
+  // Admin: get shoot messages
+  app.get("/api/admin/shoots/:id/messages", isAdmin, async (req, res) => {
+    try {
+      const messages = await storage.getShootMessages(req.params.id as string);
+      res.json(messages);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Admin: send shoot message
+  app.post("/api/admin/shoots/:id/messages", isAdmin, async (req, res) => {
     try {
       const shoot = await storage.getShootById(req.params.id as string);
       if (!shoot) return res.status(404).json({ message: "Shoot not found" });
 
-      const allUsers = await storage.getAllUsers();
-      const user = allUsers.find((u) => u.id === shoot.userId);
-      if (!user?.email) return res.status(400).json({ message: "Client has no email address" });
+      const { message } = req.body;
+      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
 
-      const { subject, message } = req.body;
-      if (!subject?.trim() || !message?.trim()) {
-        return res.status(400).json({ message: "Subject and message are required" });
-      }
-
-      const clientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client";
-      await sendQuickClientMessage({
-        clientEmail: user.email,
-        clientName,
-        subject: subject.trim(),
+      const msg = await storage.createShootMessage({
+        shootId: shoot.id,
+        senderId: "admin",
+        senderRole: "admin",
+        senderName: "Align Team",
         message: message.trim(),
-        shootTitle: shoot.title,
       });
 
-      res.json({ success: true, sentTo: user.email });
+      // Also send email notification to client
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === shoot.userId);
+      if (user?.email) {
+        const clientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client";
+        try {
+          await sendQuickClientMessage({
+            clientEmail: user.email,
+            clientName,
+            subject: `New message about ${shoot.title}`,
+            message: message.trim(),
+            shootTitle: shoot.title,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send email notification:", emailErr);
+        }
+      }
+
+      res.json(msg);
     } catch (err: any) {
-      console.error("Failed to send quick message:", err);
+      console.error("Failed to send shoot message:", err);
+      res.status(500).json({ message: err?.message || "Failed to send message" });
+    }
+  });
+
+  // Client: get shoot messages
+  app.get("/api/shoots/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+      const messages = await storage.getShootMessages(req.params.id);
+      res.json(messages);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Client: send shoot message
+  app.post("/api/shoots/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+
+      const { message } = req.body;
+      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+
+      const user = await storage.getUserById(req.user.claims.sub);
+      const senderName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+
+      const msg = await storage.createShootMessage({
+        shootId: shoot.id,
+        senderId: req.user.claims.sub,
+        senderRole: "client",
+        senderName,
+        message: message.trim(),
+      });
+
+      res.json(msg);
+    } catch (err: any) {
+      console.error("Failed to send shoot message:", err);
       res.status(500).json({ message: err?.message || "Failed to send message" });
     }
   });

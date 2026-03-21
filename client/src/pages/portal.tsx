@@ -1277,6 +1277,45 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const [visitedFolders, setVisitedFolders] = useState<Set<string | null>>(new Set([null]));
   const [downloadingAll, setDownloadingAll] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [sendingChat, setSendingChat] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const loadShootMessages = useCallback(async () => {
+    setLoadingChat(true);
+    try {
+      const res = await fetch(`/api/shoots/${shoot.id}/messages`, { credentials: "include" });
+      if (res.ok) setChatMessages(await res.json());
+    } catch { /* ignore */ }
+    setLoadingChat(false);
+  }, [shoot.id]);
+
+  const handleSendChat = async () => {
+    if (!chatInput.trim()) return;
+    setSendingChat(true);
+    try {
+      const res = await fetch(`/api/shoots/${shoot.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message: chatInput.trim() }),
+      });
+      if (res.ok) {
+        const msg = await res.json();
+        setChatMessages((prev) => [...prev, msg]);
+        setChatInput("");
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      }
+    } catch { /* ignore */ }
+    setSendingChat(false);
+  };
+
+  useEffect(() => {
+    if (showChat) loadShootMessages();
+  }, [showChat, loadShootMessages]);
 
   const { data: images = [], isLoading: imagesLoading } = useQuery<GalleryImage[]>({
     queryKey: ["/api/shoots", shoot.id, "gallery"],
@@ -1407,23 +1446,99 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
               <p className="text-xs text-gray-500">{images.length} photos</p>
             </div>
           </div>
-          {images.length > 0 && (
+          <div className="flex items-center gap-2">
             <Button
-              onClick={handleDownloadAll}
-              disabled={downloadingAll}
-              data-testid="button-download-all"
-              className="bg-[#1a1a1a] text-white"
+              variant="outline"
+              onClick={() => setShowChat(!showChat)}
+              className={showChat ? "border-[#c4956a] text-[#c4956a]" : ""}
             >
-              {downloadingAll ? (
-                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4 mr-1.5" />
-              )}
-              {downloadingAll ? "Preparing..." : "Download All"}
+              <MessageCircle className="w-4 h-4 mr-1.5" />
+              Messages
             </Button>
-          )}
+            {images.length > 0 && (
+              <Button
+                onClick={handleDownloadAll}
+                disabled={downloadingAll}
+                data-testid="button-download-all"
+                className="bg-[#1a1a1a] text-white"
+              >
+                {downloadingAll ? (
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-1.5" />
+                )}
+                {downloadingAll ? "Preparing..." : "Download All"}
+              </Button>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Chat panel */}
+      {showChat && (
+        <div className="border-b border-gray-200 bg-white">
+          <div className="max-w-5xl mx-auto px-6 py-4">
+            <div className="rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Messages with Align Team</span>
+                <button onClick={() => setShowChat(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/50">
+                {loadingChat ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  </div>
+                ) : chatMessages.length === 0 ? (
+                  <div className="text-center py-6">
+                    <MessageCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">No messages yet</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => (
+                    <div key={msg.id} className={`flex ${msg.senderRole === "client" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                        msg.senderRole === "client"
+                          ? "bg-[#1a1a1a] text-white"
+                          : "bg-white border border-gray-200 text-gray-900"
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                        <p className={`text-[10px] mt-1 ${msg.senderRole === "client" ? "text-gray-400" : "text-gray-400"}`}>
+                          {msg.senderName} · {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="px-4 py-3 border-t border-gray-200 bg-white flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#c4956a]/30 focus:border-[#c4956a]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendChat();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleSendChat}
+                  disabled={sendingChat || !chatInput.trim()}
+                  className="bg-[#1a1a1a] text-white rounded-lg px-3 py-2 disabled:opacity-40"
+                >
+                  {sendingChat ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-5xl mx-auto px-6 py-8">
         {isLoading ? (

@@ -6451,8 +6451,11 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "client">("date-desc");
   const [messageShoot, setMessageShoot] = useState<Shoot | null>(null);
-  const [messageForm, setMessageForm] = useState({ subject: "", message: "" });
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const [syncingCalendar, setSyncingCalendar] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -6551,19 +6554,28 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
     }
   };
 
+  const loadChatMessages = async (shootId: string) => {
+    setLoadingMessages(true);
+    try {
+      const res = await adminFetch(`/api/admin/shoots/${shootId}/messages`, token);
+      if (res.ok) setChatMessages(await res.json());
+    } catch { /* ignore */ }
+    setLoadingMessages(false);
+  };
+
   const handleSendMessage = async () => {
-    if (!messageShoot || !messageForm.subject.trim() || !messageForm.message.trim()) return;
+    if (!messageShoot || !chatInput.trim()) return;
     setSendingMessage(true);
     try {
-      const res = await adminFetch(`/api/admin/shoots/${messageShoot.id}/message`, token, {
+      const res = await adminFetch(`/api/admin/shoots/${messageShoot.id}/messages`, token, {
         method: "POST",
-        body: JSON.stringify(messageForm),
+        body: JSON.stringify({ message: chatInput.trim() }),
       });
       if (res.ok) {
-        const data = await res.json();
-        toast({ title: "Sent", description: `Message sent to ${data.sentTo}` });
-        setMessageShoot(null);
-        setMessageForm({ subject: "", message: "" });
+        const msg = await res.json();
+        setChatMessages((prev) => [...prev, msg]);
+        setChatInput("");
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       } else {
         const err = await res.json();
         toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -6576,13 +6588,10 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
   };
 
   const openMessage = (shoot: Shoot) => {
-    const user = getUserForShoot(shoot.userId);
-    const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
     setMessageShoot(shoot);
-    setMessageForm({
-      subject: `Re: ${shoot.title}`,
-      message: `Hi ${clientName},\n\n`,
-    });
+    setChatInput("");
+    setChatMessages([]);
+    loadChatMessages(shoot.id);
   };
 
   const statusColor = (s: string) => {
@@ -6759,6 +6768,32 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
                           )}
                         </div>
 
+                        {/* Portrait Builder selections */}
+                        {(shoot.environment || shoot.brandMessage || shoot.emotionalImpact || shoot.shootIntent) && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            {shoot.environment && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-50 text-stone-600 border border-stone-200 capitalize">
+                                {shoot.environment === "workvan" ? "Work Van" : shoot.environment.replace("-", " ")}
+                              </span>
+                            )}
+                            {shoot.brandMessage && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                {{ assured: "Welcoming", empathy: "Warm", confidence: "Confident", motivation: "Motivated" }[shoot.brandMessage] || shoot.brandMessage}
+                              </span>
+                            )}
+                            {shoot.emotionalImpact && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
+                                {{ cozy: "Comfortable", bright: "Inspired", powerful: "Reassured" }[shoot.emotionalImpact] || shoot.emotionalImpact}
+                              </span>
+                            )}
+                            {shoot.shootIntent && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 capitalize">
+                                {shoot.shootIntent.replace("-", " ")}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {/* Actions */}
                         <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                           {/* Quick message */}
@@ -6849,58 +6884,86 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
 
       {/* Quick Message Modal */}
       <Dialog open={!!messageShoot} onOpenChange={(open) => { if (!open) setMessageShoot(null); }}>
-        <DialogContent className="max-w-lg" aria-describedby={undefined}>
-          <DialogTitle className="font-serif text-lg">Quick Message</DialogTitle>
+        <DialogContent className="max-w-lg p-0 gap-0 flex flex-col max-h-[80vh]" aria-describedby={undefined}>
           {messageShoot && (() => {
             const user = getUserForShoot(messageShoot.userId);
             const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
             return (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg">
-                  <Avatar className="w-7 h-7">
-                    {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
-                    <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3 h-3" /></AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{clientName}</p>
-                    <p className="text-xs text-gray-500">{user?.email || "No email"}</p>
+              <>
+                {/* Header */}
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <DialogTitle className="font-serif text-lg mb-2">Messages</DialogTitle>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-7 h-7">
+                      {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
+                      <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3 h-3" /></AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{clientName}</p>
+                      <p className="text-xs text-gray-500">{user?.email || "No email"}</p>
+                    </div>
+                    <span className="ml-auto text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">{messageShoot.title}</span>
                   </div>
-                  <span className="ml-auto text-xs text-gray-400">{messageShoot.title}</span>
                 </div>
 
-                <div>
-                  <Label className="text-sm text-gray-700">Subject</Label>
-                  <Input
-                    value={messageForm.subject}
-                    onChange={(e) => setMessageForm({ ...messageForm, subject: e.target.value })}
-                    placeholder="Subject line..."
-                    className="mt-1"
-                  />
+                {/* Messages thread */}
+                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[200px] max-h-[400px] bg-gray-50/50">
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : chatMessages.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Send className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400">No messages yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Send a message to start the conversation</p>
+                    </div>
+                  ) : (
+                    chatMessages.map((msg) => (
+                      <div key={msg.id} className={`flex ${msg.senderRole === "admin" ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                          msg.senderRole === "admin"
+                            ? "bg-[#1a1a1a] text-white"
+                            : "bg-white border border-gray-200 text-gray-900"
+                        }`}>
+                          <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                          <p className={`text-[10px] mt-1 ${msg.senderRole === "admin" ? "text-gray-400" : "text-gray-400"}`}>
+                            {msg.senderName} · {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <div ref={chatEndRef} />
                 </div>
 
-                <div>
-                  <Label className="text-sm text-gray-700">Message</Label>
-                  <Textarea
-                    value={messageForm.message}
-                    onChange={(e) => setMessageForm({ ...messageForm, message: e.target.value })}
-                    placeholder="Type your message..."
-                    className="mt-1"
-                    rows={5}
-                  />
+                {/* Input */}
+                <div className="px-4 py-3 border-t border-gray-100">
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Type a message..."
+                      rows={2}
+                      className="resize-none flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={sendingMessage || !chatInput.trim()}
+                      className="bg-[#1a1a1a] text-white self-end h-10 w-10 p-0 shrink-0"
+                    >
+                      {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Client will also receive an email notification. Press Enter to send.</p>
                 </div>
-
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setMessageShoot(null)}>Cancel</Button>
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={sendingMessage || !messageForm.subject.trim() || !messageForm.message.trim()}
-                    className="bg-[#1a1a1a] text-white"
-                  >
-                    {sendingMessage ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-                    Send Email
-                  </Button>
-                </div>
-              </div>
+              </>
             );
           })()}
         </DialogContent>

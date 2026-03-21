@@ -44,7 +44,7 @@ import {
   Info,
   Images,
 } from "lucide-react";
-import { getClothingRecommendations } from "@/lib/clothing-recommendations";
+import { getClothingRecommendations, fabricImageMap } from "@/lib/clothing-recommendations";
 import type {
   ConfiguratorState,
 } from "@/lib/configurator-data";
@@ -79,6 +79,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
   const [bookingData, setBookingData] = useState<Record<string, any> | null>(null);
   const [portalLinkPending, setPortalLinkPending] = useState(false);
   const [portalLinked, setPortalLinked] = useState(false);
+  const [fabricPreview, setFabricPreview] = useState<string | null>(null);
   const [state, setState] = useState<ConfiguratorState>({ ...initialState });
 
   const configuratorRef = useRef<HTMLDivElement>(null);
@@ -661,14 +662,51 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                                   <div className="flex items-center gap-2 mb-2">
                                     <Scissors className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
                                     <span className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Fabrics to Avoid</span>
+                                    <span className="text-[11px] text-[hsl(var(--muted-foreground))] italic">tap to preview</span>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
-                                    {recs.avoidFabrics.map((item) => (
-                                      <span key={item} className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-sm font-medium">
-                                        {item}
-                                      </span>
-                                    ))}
+                                    {recs.avoidFabrics.map((item) => {
+                                      const imgFile = fabricImageMap[item];
+                                      return (
+                                        <button
+                                          key={item}
+                                          type="button"
+                                          onClick={() => setFabricPreview(fabricPreview === item ? null : item)}
+                                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                            fabricPreview === item
+                                              ? "bg-[hsl(var(--primary))] text-white ring-2 ring-[hsl(var(--primary))] ring-offset-1"
+                                              : "bg-[hsl(var(--muted))] hover:bg-[hsl(var(--primary))]/10 cursor-pointer"
+                                          }`}
+                                        >
+                                          {item}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
+                                  <AnimatePresence>
+                                    {fabricPreview && fabricImageMap[fabricPreview] && (
+                                      <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="mt-3 rounded-lg border border-[hsl(var(--border))] overflow-hidden bg-white">
+                                          <img
+                                            src={`/images/fabrics/${fabricImageMap[fabricPreview]}`}
+                                            alt={fabricPreview}
+                                            className="w-full h-40 sm:h-48 object-cover"
+                                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                          />
+                                          <div className="px-3 py-2 text-center">
+                                            <span className="text-sm font-medium text-[hsl(var(--foreground))]">{fabricPreview}</span>
+                                            <span className="text-xs text-red-500 ml-2">Avoid</span>
+                                          </div>
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
                                 </div>
 
                                 <div className="text-sm text-[hsl(var(--foreground))] italic leading-relaxed" data-testid="rec-style-note">

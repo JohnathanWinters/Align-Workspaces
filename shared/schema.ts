@@ -97,6 +97,24 @@ export const insertShootSchema = createInsertSchema(shoots).omit({
 export type InsertShoot = z.infer<typeof insertShootSchema>;
 export type Shoot = typeof shoots.$inferSelect;
 
+export const shootMessages = pgTable("shoot_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shootId: varchar("shoot_id").notNull(),
+  senderId: text("sender_id").notNull(),
+  senderRole: text("sender_role").notNull(), // "admin" | "client"
+  senderName: text("sender_name"),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertShootMessageSchema = createInsertSchema(shootMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertShootMessage = z.infer<typeof insertShootMessageSchema>;
+export type ShootMessage = typeof shootMessages.$inferSelect;
+
 export const galleryFolders = pgTable("gallery_folders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   shootId: varchar("shoot_id").notNull(),

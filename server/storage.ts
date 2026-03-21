@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -50,6 +50,8 @@ export interface IStorage {
   getAllEditTokens(): Promise<EditToken[]>;
   getEditRequestMessages(editRequestId: string): Promise<EditRequestMessage[]>;
   createEditRequestMessage(msg: InsertEditRequestMessage): Promise<EditRequestMessage>;
+  getShootMessages(shootId: string): Promise<ShootMessage[]>;
+  createShootMessage(msg: InsertShootMessage): Promise<ShootMessage>;
   getEditRequestById(id: string): Promise<EditRequest | undefined>;
   getEditRequestPhotoById(id: string): Promise<EditRequestPhoto | undefined>;
   updateEditRequestPhoto(id: string, data: { finishedImageUrl: string; finishedFilename: string }): Promise<EditRequestPhoto>;
@@ -536,6 +538,15 @@ export class DatabaseStorage implements IStorage {
 
   async createEditRequestMessage(msg: InsertEditRequestMessage): Promise<EditRequestMessage> {
     const [result] = await db.insert(editRequestMessages).values(msg).returning();
+    return result;
+  }
+
+  async getShootMessages(shootId: string): Promise<ShootMessage[]> {
+    return db.select().from(shootMessages).where(eq(shootMessages.shootId, shootId)).orderBy(shootMessages.createdAt);
+  }
+
+  async createShootMessage(msg: InsertShootMessage): Promise<ShootMessage> {
+    const [result] = await db.insert(shootMessages).values(msg).returning();
     return result;
   }
 
