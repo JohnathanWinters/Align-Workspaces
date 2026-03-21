@@ -1605,7 +1605,10 @@ export default function SpacesBrowsePage() {
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [showFilters, setShowFilters] = useState(false);
-  const [showListModal, setShowListModal] = useState(false);
+  const [showListModal, setShowListModal] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("list") === "true";
+  });
   
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");

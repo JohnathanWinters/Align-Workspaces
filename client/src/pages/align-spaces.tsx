@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -411,6 +411,25 @@ export default function AlignSpacesPage() {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="px-4 sm:px-6 pb-8 sm:pb-12" data-testid="section-post-space-cta">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 bg-[#faf6f1] border border-[#e8ddd0]/60">
+            <p className="text-sm text-foreground/60">
+              <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
+              <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
+            </p>
+            <Link
+              href="/workspaces?list=true"
+              className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors font-medium"
+              data-testid="button-post-space-cta"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Post your space
+            </Link>
+          </div>
         </div>
       </section>
 
