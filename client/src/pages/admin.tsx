@@ -773,7 +773,7 @@ function InvoiceModal({
 
   const isValid = lineItems.every(
     (item) => item.description.trim() && item.amount.trim() && !isNaN(parseFloat(item.amount)) && parseFloat(item.amount) !== 0
-  ) && total > 0;
+  ) && totalAmount > 0;
 
   const handleSend = async () => {
     if (!isValid) return;
@@ -854,7 +854,6 @@ function InvoiceModal({
                       className="pl-7"
                       type="number"
                       step="0.01"
-                      min="0"
                     />
                   </div>
                   {lineItems.length > 1 && (
