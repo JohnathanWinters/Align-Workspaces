@@ -1,15 +1,15 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, pageViews, analyticsEvents, spaceBookings, referralLinks } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail, getGmailAuthUrl, exchangeGmailCode } from "./gmail";
+import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendEditRequestNotification, sendNewSpaceSubmissionNotification, sendSpaceBookingNotification, sendMagicLinkEmail, sendQuickClientMessage, getGmailAuthUrl, exchangeGmailCode } from "./gmail";
 import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees, resolveFeeTier, type FeeTier, FEE_TIERS, TAX_RATES, DEFAULT_TAX_JURISDICTION } from "@shared/pricing";
-import { deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
+import { createBookingCalendarEvent, createShootCalendarEvent, deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
 import { calculateRefundAmount, processCompletedBookings, processPendingPayouts, processBookingNotifications, holdPayout, releasePayout, reversePayout } from "./payouts";
 import { isAuthenticated } from "./auth";
 import multer from "multer";
@@ -1094,6 +1094,86 @@ export async function registerRoutes(
       res.json({ success: true });
     } catch {
       res.status(500).json({ message: "Failed to delete shoot" });
+    }
+  });
+
+  // Admin: sync shoot to Google Calendar
+  app.post("/api/admin/shoots/:id/calendar", isAdmin, async (req, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id as string);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (!shoot.shootDate) return res.status(400).json({ message: "Shoot must have a date to sync to calendar" });
+
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === shoot.userId);
+      const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+
+      const eventId = await createShootCalendarEvent({
+        shootTitle: shoot.title,
+        clientName,
+        clientEmail: user?.email || undefined,
+        shootDate: shoot.shootDate,
+        shootTime: shoot.shootTime || undefined,
+        durationHours: Number(shoot.durationHours) || 2,
+        location: shoot.location || undefined,
+        notes: shoot.notes || undefined,
+        shootId: shoot.id,
+      });
+
+      if (!eventId) return res.status(500).json({ message: "Failed to create calendar event" });
+
+      await db.update(shoots).set({ googleCalendarEventId: eventId }).where(eq(shoots.id, shoot.id));
+      res.json({ success: true, eventId });
+    } catch (err: any) {
+      console.error("Failed to sync shoot to calendar:", err);
+      res.status(500).json({ message: err?.message || "Failed to sync to calendar" });
+    }
+  });
+
+  // Admin: remove shoot from Google Calendar
+  app.delete("/api/admin/shoots/:id/calendar", isAdmin, async (req, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id as string);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (!shoot.googleCalendarEventId) return res.status(400).json({ message: "Shoot is not synced to calendar" });
+
+      await deleteBookingCalendarEvent(shoot.googleCalendarEventId);
+      await db.update(shoots).set({ googleCalendarEventId: null }).where(eq(shoots.id, shoot.id));
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Failed to remove shoot from calendar:", err);
+      res.status(500).json({ message: err?.message || "Failed to remove from calendar" });
+    }
+  });
+
+  // Admin: send quick message to shoot client
+  app.post("/api/admin/shoots/:id/message", isAdmin, async (req, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id as string);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === shoot.userId);
+      if (!user?.email) return res.status(400).json({ message: "Client has no email address" });
+
+      const { subject, message } = req.body;
+      if (!subject?.trim() || !message?.trim()) {
+        return res.status(400).json({ message: "Subject and message are required" });
+      }
+
+      const clientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client";
+      await sendQuickClientMessage({
+        clientEmail: user.email,
+        clientName,
+        subject: subject.trim(),
+        message: message.trim(),
+        shootTitle: shoot.title,
+      });
+
+      res.json({ success: true, sentTo: user.email });
+    } catch (err: any) {
+      console.error("Failed to send quick message:", err);
+      res.status(500).json({ message: err?.message || "Failed to send message" });
     }
   });
 

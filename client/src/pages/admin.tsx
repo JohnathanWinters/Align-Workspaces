@@ -6437,13 +6437,486 @@ function EmployeeManager({ token, onBack }: { token: string; onBack: () => void 
   );
 }
 
+function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceShoot }: {
+  token: string;
+  onBack: () => void;
+  onEditShoot: (shoot: Shoot) => void;
+  onOpenGallery: (shoot: Shoot) => void;
+  onInvoiceShoot: (shoot: Shoot) => void;
+}) {
+  const { toast } = useToast();
+  const [allShoots, setAllShoots] = useState<Shoot[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"all" | "upcoming" | "in-progress" | "completed" | "draft">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "client">("date-desc");
+  const [messageShoot, setMessageShoot] = useState<Shoot | null>(null);
+  const [messageForm, setMessageForm] = useState({ subject: "", message: "" });
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [syncingCalendar, setSyncingCalendar] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [shootsRes, usersRes] = await Promise.all([
+        adminFetch("/api/admin/shoots", token),
+        adminFetch("/api/admin/users", token),
+      ]);
+      if (shootsRes.ok) setAllShoots(await shootsRes.json());
+      if (usersRes.ok) setUsers(await usersRes.json());
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const getUserForShoot = useCallback((userId: string) => users.find(u => u.id === userId), [users]);
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const filtered = useMemo(() => {
+    let result = allShoots.filter((s) => {
+      if (statusFilter === "upcoming") {
+        return (s.status === "scheduled" || s.status === "pending-review") && s.shootDate && s.shootDate >= today;
+      }
+      if (statusFilter === "in-progress") return s.status === "in-progress";
+      if (statusFilter === "completed") return s.status === "completed";
+      if (statusFilter === "draft") return s.status === "draft";
+      return true;
+    });
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((s) => {
+        const user = getUserForShoot(s.userId);
+        const clientName = user ? `${user.firstName || ""} ${user.lastName || ""}`.toLowerCase() : "";
+        const clientEmail = (user?.email || "").toLowerCase();
+        return s.title.toLowerCase().includes(q) || clientName.includes(q) || clientEmail.includes(q) || (s.location || "").toLowerCase().includes(q);
+      });
+    }
+
+    result.sort((a, b) => {
+      if (sortBy === "date-desc") return (b.shootDate || "").localeCompare(a.shootDate || "");
+      if (sortBy === "date-asc") return (a.shootDate || "").localeCompare(b.shootDate || "");
+      const nameA = getUserForShoot(a.userId);
+      const nameB = getUserForShoot(b.userId);
+      return `${nameA?.firstName || ""} ${nameA?.lastName || ""}`.localeCompare(`${nameB?.firstName || ""} ${nameB?.lastName || ""}`);
+    });
+
+    return result;
+  }, [allShoots, statusFilter, searchQuery, sortBy, getUserForShoot, today]);
+
+  const stats = useMemo(() => ({
+    total: allShoots.length,
+    upcoming: allShoots.filter(s => (s.status === "scheduled" || s.status === "pending-review") && s.shootDate && s.shootDate >= today).length,
+    inProgress: allShoots.filter(s => s.status === "in-progress").length,
+    completed: allShoots.filter(s => s.status === "completed").length,
+  }), [allShoots, today]);
+
+  const handleCalendarSync = async (shoot: Shoot) => {
+    setSyncingCalendar(shoot.id);
+    try {
+      const res = await adminFetch(`/api/admin/shoots/${shoot.id}/calendar`, token, { method: "POST" });
+      if (res.ok) {
+        toast({ title: "Synced", description: "Shoot added to Google Calendar" });
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to sync to calendar", variant: "destructive" });
+    } finally {
+      setSyncingCalendar(null);
+    }
+  };
+
+  const handleCalendarRemove = async (shoot: Shoot) => {
+    setSyncingCalendar(shoot.id);
+    try {
+      const res = await adminFetch(`/api/admin/shoots/${shoot.id}/calendar`, token, { method: "DELETE" });
+      if (res.ok) {
+        toast({ title: "Removed", description: "Shoot removed from Google Calendar" });
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to remove from calendar", variant: "destructive" });
+    } finally {
+      setSyncingCalendar(null);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageShoot || !messageForm.subject.trim() || !messageForm.message.trim()) return;
+    setSendingMessage(true);
+    try {
+      const res = await adminFetch(`/api/admin/shoots/${messageShoot.id}/message`, token, {
+        method: "POST",
+        body: JSON.stringify(messageForm),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: "Sent", description: `Message sent to ${data.sentTo}` });
+        setMessageShoot(null);
+        setMessageForm({ subject: "", message: "" });
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  const openMessage = (shoot: Shoot) => {
+    const user = getUserForShoot(shoot.userId);
+    const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+    setMessageShoot(shoot);
+    setMessageForm({
+      subject: `Re: ${shoot.title}`,
+      message: `Hi ${clientName},\n\n`,
+    });
+  };
+
+  const statusColor = (s: string) => {
+    if (s === "completed") return "bg-green-100 text-green-700";
+    if (s === "scheduled") return "bg-blue-100 text-blue-700";
+    if (s === "in-progress") return "bg-amber-100 text-amber-700";
+    if (s === "pending-review") return "bg-purple-100 text-purple-700";
+    return "bg-gray-100 text-gray-600";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Total</p>
+              <p className="text-xl font-semibold text-gray-900">{stats.total}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Upcoming</p>
+              <p className="text-xl font-semibold text-blue-600">{stats.upcoming}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">In Progress</p>
+              <p className="text-xl font-semibold text-amber-600">{stats.inProgress}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Completed</p>
+              <p className="text-xl font-semibold text-green-600">{stats.completed}</p>
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-2 mb-4">
+            <h2 className="font-serif text-2xl text-gray-900">Shoots</h2>
+            <span className="text-sm text-gray-400 font-medium">({filtered.length}{searchQuery || statusFilter !== "all" ? ` of ${allShoots.length}` : ""})</span>
+          </div>
+
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title, client, or location..."
+              className="pl-10 bg-white"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Filters + sort */}
+          <div className="flex items-center gap-2 mb-6 flex-wrap">
+            <div className="flex gap-1.5">
+              {([
+                { id: "all" as const, label: "All" },
+                { id: "upcoming" as const, label: "Upcoming" },
+                { id: "in-progress" as const, label: "In Progress" },
+                { id: "completed" as const, label: "Completed" },
+                { id: "draft" as const, label: "Draft" },
+              ] as const).map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    statusFilter === f.id ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="ml-auto flex items-center gap-1.5">
+              <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="text-xs text-gray-600 bg-transparent border-none focus:outline-none cursor-pointer font-medium"
+              >
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="client">Client Name</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Shoot list */}
+          {filtered.length === 0 ? (
+            <Card className="border-dashed border-2 border-gray-200 bg-white/50">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <Camera className="w-10 h-10 text-gray-300 mb-3" />
+                <h3 className="font-serif text-lg text-gray-900 mb-1">
+                  {searchQuery || statusFilter !== "all" ? "No matching shoots" : "No shoots yet"}
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  {searchQuery ? `No shoots match "${searchQuery}".` : "Create a shoot from the Clients tab to get started."}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((shoot) => {
+                const user = getUserForShoot(shoot.userId);
+                const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "No name" : "Unknown";
+                const clientEmail = user?.email || "";
+                const isSynced = !!shoot.googleCalendarEventId;
+                const isSyncing = syncingCalendar === shoot.id;
+                const isUpcoming = shoot.shootDate && shoot.shootDate >= today;
+
+                return (
+                  <div key={shoot.id} className="bg-white rounded-lg border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+                    <div className="flex items-start gap-3">
+                      {/* Client avatar */}
+                      <Avatar className="w-9 h-9 shrink-0 mt-0.5">
+                        {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
+                        <AvatarFallback className="bg-gray-100 text-gray-500 text-xs">
+                          <User className="w-4 h-4" />
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1 min-w-0">
+                        {/* Title + status */}
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-medium text-gray-900 truncate">{shoot.title}</p>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize shrink-0 ${statusColor(shoot.status || "draft")}`}>
+                            {(shoot.status || "draft").replace("-", " ")}
+                          </span>
+                          {isSynced && (
+                            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-600 shrink-0 flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3" />
+                              Synced
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Client + details */}
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="font-medium text-gray-700">{clientName}</span>
+                          {clientEmail && (
+                            <>
+                              <span>·</span>
+                              <span className="truncate">{clientEmail}</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
+                          {shoot.shootDate && (
+                            <span className="flex items-center gap-1">
+                              <CalendarDays className="w-3 h-3" />
+                              {new Date(shoot.shootDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                              {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+                            </span>
+                          )}
+                          {shoot.location && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-1 truncate">
+                                <MapPin className="w-3 h-3 shrink-0" />
+                                {shoot.location}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                          {/* Quick message */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openMessage(shoot)}
+                            className="h-7 text-xs px-2.5 text-gray-600 border-gray-200"
+                          >
+                            <Send className="w-3 h-3 mr-1" />
+                            Message
+                          </Button>
+
+                          {/* Calendar sync */}
+                          {shoot.shootDate && (
+                            isSynced ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCalendarRemove(shoot)}
+                                disabled={isSyncing}
+                                className="h-7 text-xs px-2.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                              >
+                                {isSyncing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CalendarPlus className="w-3 h-3 mr-1" />}
+                                Unsync
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCalendarSync(shoot)}
+                                disabled={isSyncing}
+                                className="h-7 text-xs px-2.5 text-gray-600 border-gray-200"
+                              >
+                                {isSyncing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CalendarPlus className="w-3 h-3 mr-1" />}
+                                Sync Cal
+                              </Button>
+                            )
+                          )}
+
+                          {/* Add to Calendar URL (always available as fallback) */}
+                          {shoot.shootDate && (
+                            <a
+                              href={buildShootCalendarUrl(shoot, clientEmail || undefined)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button variant="outline" size="sm" className="h-7 text-xs px-2.5 text-gray-600 border-gray-200">
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Add to Cal
+                              </Button>
+                            </a>
+                          )}
+
+                          <div className="w-px h-4 bg-gray-200 mx-0.5" />
+
+                          <Button variant="outline" size="sm" onClick={() => onOpenGallery(shoot)} className="h-7 text-xs px-2 text-gray-600 border-gray-200">
+                            <Images className="w-3 h-3 mr-1" />
+                            Gallery
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => onEditShoot(shoot)} className="h-7 text-xs px-2 text-gray-600 border-gray-200">
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => onInvoiceShoot(shoot)} className="h-7 text-xs px-2 text-gray-600 border-gray-200">
+                            <Receipt className="w-3 h-3 mr-1" />
+                            Invoice
+                          </Button>
+
+                          {/* Direct contact shortcuts */}
+                          {clientEmail && (
+                            <a href={`mailto:${clientEmail}`}>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs px-1.5 text-gray-400 hover:text-gray-600">
+                                <ExternalLink className="w-3 h-3" />
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
+      </main>
+
+      {/* Quick Message Modal */}
+      <Dialog open={!!messageShoot} onOpenChange={(open) => { if (!open) setMessageShoot(null); }}>
+        <DialogContent className="max-w-lg" aria-describedby={undefined}>
+          <DialogTitle className="font-serif text-lg">Quick Message</DialogTitle>
+          {messageShoot && (() => {
+            const user = getUserForShoot(messageShoot.userId);
+            const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg">
+                  <Avatar className="w-7 h-7">
+                    {user?.profileImageUrl && <AvatarImage src={user.profileImageUrl} />}
+                    <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3 h-3" /></AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{clientName}</p>
+                    <p className="text-xs text-gray-500">{user?.email || "No email"}</p>
+                  </div>
+                  <span className="ml-auto text-xs text-gray-400">{messageShoot.title}</span>
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-700">Subject</Label>
+                  <Input
+                    value={messageForm.subject}
+                    onChange={(e) => setMessageForm({ ...messageForm, subject: e.target.value })}
+                    placeholder="Subject line..."
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm text-gray-700">Message</Label>
+                  <Textarea
+                    value={messageForm.message}
+                    onChange={(e) => setMessageForm({ ...messageForm, message: e.target.value })}
+                    placeholder="Type your message..."
+                    className="mt-1"
+                    rows={5}
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setMessageShoot(null)}>Cancel</Button>
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage || !messageForm.subject.trim() || !messageForm.message.trim()}
+                    className="bg-[#1a1a1a] text-white"
+                  >
+                    {sendingMessage ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                    Send Email
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
   const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("admin");
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -6478,6 +6951,7 @@ function AdminDashboard({ token }: { token: string }) {
       label: "CRM",
       items: [
         { id: "clients" as const, label: "Clients", icon: Users, count: users.length },
+        { id: "shoots" as const, label: "Shoots", icon: Camera, count: shoots.length },
         { id: "pipeline" as const, label: "Book of Business", icon: FileSpreadsheet },
       ],
     },
@@ -6510,7 +6984,7 @@ function AdminDashboard({ token }: { token: string }) {
         { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
       ],
     },
-  ], [users.length]);
+  ], [users.length, shoots.length]);
 
   // Map sub-views to their parent sidebar item for active highlighting
   const activeNavId = useMemo(() => {
@@ -6842,6 +7316,18 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "pipeline") {
       return <PipelineManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "shoots") {
+      return (
+        <ShootsManager
+          token={token}
+          onBack={() => setView("clients")}
+          onEditShoot={(shoot) => startEdit(shoot)}
+          onOpenGallery={(shoot) => openGallery(shoot)}
+          onInvoiceShoot={(shoot) => setInvoiceShoot(shoot)}
+        />
+      );
     }
 
     if (view === "create" || view === "edit") {

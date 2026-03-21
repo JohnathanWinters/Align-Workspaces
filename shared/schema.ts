@@ -84,6 +84,8 @@ export const shoots = pgTable("shoots", {
   shootTime: text("shoot_time"),
   location: text("location"),
   notes: text("notes"),
+  durationHours: text("duration_hours").default("2"),
+  googleCalendarEventId: text("google_calendar_event_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

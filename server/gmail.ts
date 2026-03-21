@@ -505,3 +505,30 @@ export async function sendUnreadMessageEmail(data: {
 
   await sendEmail(data.to, data.subject, html);
 }
+
+export async function sendQuickClientMessage(data: {
+  clientEmail: string;
+  clientName: string;
+  subject: string;
+  message: string;
+  shootTitle?: string;
+}) {
+  const html = emailLayout(`
+    <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">${data.subject}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b6560;">Hi ${data.clientName},</p>
+
+    <div style="background-color:#f5f3f0;border-radius:8px;padding:16px;">
+      <p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.message}</p>
+    </div>
+
+    ${data.shootTitle ? `<p style="margin:16px 0 0;font-size:12px;color:#9a9590;">Regarding: ${data.shootTitle}</p>` : ''}
+
+    <div style="text-align:center;margin-top:24px;">
+      <a href="${SITE_URL}/portal" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        View Portal
+      </a>
+    </div>
+  `);
+
+  await sendEmail(data.clientEmail, data.subject, html);
+}
