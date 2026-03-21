@@ -772,8 +772,8 @@ function InvoiceModal({
   }, 0);
 
   const isValid = lineItems.every(
-    (item) => item.description.trim() && item.amount.trim() && !isNaN(parseFloat(item.amount)) && parseFloat(item.amount) > 0
-  );
+    (item) => item.description.trim() && item.amount.trim() && !isNaN(parseFloat(item.amount)) && parseFloat(item.amount) !== 0
+  ) && total > 0;
 
   const handleSend = async () => {
     if (!isValid) return;
