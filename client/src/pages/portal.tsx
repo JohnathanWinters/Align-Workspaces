@@ -1283,6 +1283,41 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   const [sendingChat, setSendingChat] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState(0);
+
+  const { data: reviewData, refetch: refetchReview } = useQuery<{ review: any; canReview: boolean }>({
+    queryKey: ["/api/shoots", shoot.id, "review"],
+    queryFn: async () => {
+      const res = await fetch(`/api/shoots/${shoot.id}/review`, { credentials: "include" });
+      if (!res.ok) return { review: null, canReview: false };
+      return res.json();
+    },
+    enabled: shoot.status === "completed",
+  });
+
+  const handleSubmitReview = async () => {
+    if (!reviewRating || submittingReview) return;
+    setSubmittingReview(true);
+    try {
+      const res = await fetch(`/api/shoots/${shoot.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ rating: reviewRating, title: reviewTitle.trim() || undefined, comment: reviewComment.trim() || undefined }),
+      });
+      if (res.ok) {
+        refetchReview();
+        setReviewRating(0);
+        setReviewTitle("");
+        setReviewComment("");
+      }
+    } catch { /* ignore */ }
+    setSubmittingReview(false);
+  };
 
   const loadShootMessages = useCallback(async () => {
     setLoadingChat(true);
@@ -1719,6 +1754,76 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
           </motion.div>
         )}
       </main>
+
+      {/* Review section for completed shoots */}
+      {shoot.status === "completed" && (
+        <div className="border-t border-gray-200 bg-white">
+          <div className="max-w-5xl mx-auto px-6 py-8">
+            {reviewData?.review ? (
+              <div className="max-w-xl">
+                <h3 className="font-serif text-lg text-gray-900 mb-4">Your Review</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-1 mb-2">
+                    {[1,2,3,4,5].map((s) => (
+                      <Star key={s} className={`w-4 h-4 ${s <= reviewData.review.rating ? "fill-[#c4956a] text-[#c4956a]" : "text-gray-300"}`} />
+                    ))}
+                  </div>
+                  {reviewData.review.title && <p className="text-sm font-medium text-gray-900 mb-1">{reviewData.review.title}</p>}
+                  {reviewData.review.comment && <p className="text-sm text-gray-600">{reviewData.review.comment}</p>}
+                  {reviewData.review.adminResponse && (
+                    <div className="mt-3 pl-3 border-l-2 border-[#c4956a]/30">
+                      <p className="text-xs font-medium text-gray-700">Align Team</p>
+                      <p className="text-sm text-gray-500">{reviewData.review.adminResponse}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : reviewData?.canReview ? (
+              <div className="max-w-xl">
+                <h3 className="font-serif text-lg text-gray-900 mb-1">Share Your Experience</h3>
+                <p className="text-sm text-gray-500 mb-4">We'd love to hear how your session went.</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onMouseEnter={() => setHoveredStar(s)}
+                        onMouseLeave={() => setHoveredStar(0)}
+                        onClick={() => setReviewRating(s)}
+                        className="p-0.5"
+                      >
+                        <Star className={`w-6 h-6 transition-colors ${s <= (hoveredStar || reviewRating) ? "fill-[#c4956a] text-[#c4956a]" : "text-gray-300"}`} />
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    placeholder="Review title (optional)"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#c4956a]/30 focus:border-[#c4956a]"
+                  />
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Tell us about your experience..."
+                    rows={3}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#c4956a]/30 focus:border-[#c4956a] resize-none"
+                  />
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={!reviewRating || submittingReview}
+                    className="bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-lg disabled:opacity-40"
+                  >
+                    {submittingReview ? "Submitting..." : "Submit Review"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

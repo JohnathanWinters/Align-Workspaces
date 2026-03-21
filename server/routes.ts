@@ -4483,6 +4483,123 @@ export async function registerRoutes(
   });
 
   // ══════════════════════════════════════════════════════════════════
+  // SHOOT REVIEWS
+  // ══════════════════════════════════════════════════════════════════
+
+  // Client: get own review for a shoot
+  app.get("/api/shoots/:id/review", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+      const review = await storage.getReviewByShoot(shoot.id);
+      res.json({ review: review || null, canReview: shoot.status === "completed" && !review });
+    } catch {
+      res.status(500).json({ message: "Failed to fetch review" });
+    }
+  });
+
+  // Client: submit a review for a completed shoot
+  app.post("/api/shoots/:id/review", isAuthenticated, async (req: any, res) => {
+    try {
+      const shoot = await storage.getShootById(req.params.id);
+      if (!shoot) return res.status(404).json({ message: "Shoot not found" });
+      if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
+      if (shoot.status !== "completed") return res.status(400).json({ message: "Can only review completed shoots" });
+
+      const existing = await storage.getReviewByShoot(shoot.id);
+      if (existing) return res.status(400).json({ message: "You have already reviewed this shoot" });
+
+      const { rating, title, comment } = req.body;
+      if (!rating || rating < 1 || rating > 5) return res.status(400).json({ message: "Rating must be 1-5" });
+
+      const user = await storage.getUserById(req.user.claims.sub);
+      const clientName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+
+      const review = await storage.createShootReview({
+        shootId: shoot.id,
+        clientId: req.user.claims.sub,
+        clientName,
+        rating,
+        title: title?.trim()?.slice(0, 200) || null,
+        comment: comment?.trim()?.slice(0, 2000) || null,
+      });
+
+      res.json(review);
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Failed to submit review" });
+    }
+  });
+
+  // Admin: get all shoot reviews (enriched with shoot title)
+  app.get("/api/admin/shoot-reviews", isAdmin, async (_req, res) => {
+    try {
+      const reviews = await storage.getAllShootReviews();
+      const allShoots = await storage.getAllShoots();
+      const shootMap = new Map(allShoots.map((s) => [s.id, s.title]));
+      const enriched = reviews.map((r) => ({ ...r, shootTitle: shootMap.get(r.shootId) || "Unknown Shoot" }));
+      res.json(enriched);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch shoot reviews" });
+    }
+  });
+
+  // Admin: update shoot review status
+  app.patch("/api/admin/shoot-reviews/:id", isAdmin, async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!["published", "hidden", "flagged"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      const review = await storage.updateShootReview(req.params.id as string, { status });
+      res.json(review);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: delete shoot review
+  app.delete("/api/admin/shoot-reviews/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteShootReview(req.params.id as string);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: respond to shoot review
+  app.post("/api/admin/shoot-reviews/:id/respond", isAdmin, async (req, res) => {
+    try {
+      const { response } = req.body;
+      if (!response?.trim()) return res.status(400).json({ message: "Response is required" });
+      const review = await storage.updateShootReview(req.params.id as string, {
+        adminResponse: response.trim().slice(0, 2000),
+        adminRespondedAt: new Date(),
+      });
+      res.json(review);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Public: get testimonials for homepage
+  app.get("/api/testimonials", async (_req, res) => {
+    try {
+      const [photography, workspaces] = await Promise.all([
+        storage.getPublishedShootReviews(),
+        storage.getPublishedSpaceReviews(),
+      ]);
+      res.json({
+        photography: photography.slice(0, 10),
+        workspaces: workspaces.slice(0, 10),
+      });
+    } catch {
+      res.status(500).json({ message: "Failed to fetch testimonials" });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
   // SIMILAR / RECOMMENDED SPACES
   // ══════════════════════════════════════════════════════════════════
 

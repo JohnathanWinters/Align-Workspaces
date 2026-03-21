@@ -671,6 +671,30 @@ export const insertSpaceReviewSchema = createInsertSchema(spaceReviews, {
 export type InsertSpaceReview = z.infer<typeof insertSpaceReviewSchema>;
 export type SpaceReview = typeof spaceReviews.$inferSelect;
 
+export const shootReviews = pgTable("shoot_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shootId: varchar("shoot_id").notNull(),
+  clientId: text("client_id").notNull(),
+  clientName: text("client_name"),
+  rating: integer("rating").notNull(),
+  title: text("title"),
+  comment: text("comment"),
+  adminResponse: text("admin_response"),
+  adminRespondedAt: timestamp("admin_responded_at"),
+  status: text("status").default("published"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertShootReviewSchema = createInsertSchema(shootReviews, {
+  rating: z.number().int().min(1).max(5),
+}).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertShootReview = z.infer<typeof insertShootReviewSchema>;
+export type ShootReview = typeof shootReviews.$inferSelect;
+
 // ── Wishlist Collections ───────────────────────────────────────────
 export const wishlistCollections = pgTable("wishlist_collections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

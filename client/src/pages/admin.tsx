@@ -2120,6 +2120,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "hidden" | "flagged">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "photography" | "workspaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
@@ -2131,10 +2132,14 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await adminFetchLocal("/api/admin/reviews");
-      if (res.ok) {
-        setReviews(await res.json());
-      }
+      const [spaceRes, shootRes] = await Promise.all([
+        adminFetchLocal("/api/admin/reviews"),
+        adminFetchLocal("/api/admin/shoot-reviews"),
+      ]);
+      const spaceReviews = spaceRes.ok ? (await spaceRes.json()).map((r: any) => ({ ...r, _type: "workspaces" })) : [];
+      const shootReviews = shootRes.ok ? (await shootRes.json()).map((r: any) => ({ ...r, _type: "photography" })) : [];
+      const merged = [...spaceReviews, ...shootReviews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setReviews(merged);
     } catch (err) {
       console.error(err);
     }
@@ -2143,9 +2148,10 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
 
-  const updateStatus = async (id: string, status: "published" | "hidden" | "flagged") => {
+  const updateStatus = async (id: string, status: "published" | "hidden" | "flagged", type: string) => {
+    const endpoint = type === "photography" ? `/api/admin/shoot-reviews/${id}` : `/api/admin/reviews/${id}`;
     try {
-      const res = await adminFetchLocal(`/api/admin/reviews/${id}`, {
+      const res = await adminFetchLocal(endpoint, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
@@ -2161,10 +2167,11 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
     }
   };
 
-  const deleteReview = async (id: string) => {
+  const deleteReview = async (id: string, type: string) => {
     if (!confirm("Delete this review? This cannot be undone.")) return;
+    const endpoint = type === "photography" ? `/api/admin/shoot-reviews/${id}` : `/api/admin/reviews/${id}`;
     try {
-      const res = await adminFetchLocal(`/api/admin/reviews/${id}`, { method: "DELETE" });
+      const res = await adminFetchLocal(endpoint, { method: "DELETE" });
       if (res.ok) {
         toast({ title: "Review deleted" });
         loadReviews();
@@ -2185,12 +2192,13 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   };
 
   const filtered = reviews.filter((r) => {
+    if (typeFilter !== "all" && r._type !== typeFilter) return false;
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const guestName = (r.guestName || r.userName || "").toLowerCase();
-      const spaceName = (r.spaceName || "").toLowerCase();
-      return guestName.includes(q) || spaceName.includes(q);
+      const name = (r.guestName || r.clientName || r.userName || "").toLowerCase();
+      const source = (r.spaceName || r.shootTitle || "").toLowerCase();
+      return name.includes(q) || source.includes(q);
     }
     return true;
   });
@@ -2229,11 +2237,21 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by guest or space name..."
+              placeholder="Search by name..."
               className="pl-10 bg-white"
               data-testid="input-reviews-search"
             />
           </div>
+          <Select value={typeFilter} onValueChange={(v: any) => setTypeFilter(v)}>
+            <SelectTrigger className="w-full sm:w-44 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="photography">Photography</SelectItem>
+              <SelectItem value="workspaces">Workspaces</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
             <SelectTrigger className="w-full sm:w-44 bg-white" data-testid="select-reviews-status-filter">
               <SelectValue />
@@ -2265,8 +2283,8 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Table header */}
             <div className="hidden sm:grid grid-cols-[1.5fr_1fr_100px_1.5fr_90px_90px_120px] gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <span>Space</span>
-              <span>Guest</span>
+              <span>Source</span>
+              <span>Client</span>
               <span>Rating</span>
               <span>Comment</span>
               <span>Status</span>
@@ -2282,18 +2300,22 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                   className="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_100px_1.5fr_90px_90px_120px] gap-2 sm:gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors items-center"
                   data-testid={`review-row-${review.id}`}
                 >
-                  {/* Space name */}
+                  {/* Source */}
                   <div className="flex items-center gap-2 min-w-0">
-                    <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
+                    {review._type === "photography" ? (
+                      <Camera className="w-4 h-4 text-[#c4956a] shrink-0 hidden sm:block" />
+                    ) : (
+                      <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
+                    )}
                     <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
-                      {review.spaceName || "Unknown Space"}
+                      {review._type === "photography" ? (review.shootTitle || "Photography") : (review.spaceName || "Workspace")}
                     </span>
                   </div>
 
-                  {/* Guest name */}
+                  {/* Client name */}
                   <div className="text-sm text-gray-600 truncate" data-testid={`text-review-guest-${review.id}`}>
                     <span className="sm:hidden text-xs text-gray-400 mr-1">by</span>
-                    {review.guestName || review.userName || "Unknown Guest"}
+                    {review.guestName || review.clientName || review.userName || "Unknown"}
                   </div>
 
                   {/* Rating */}
@@ -2324,7 +2346,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => updateStatus(review.id, "published")}
+                        onClick={() => updateStatus(review.id, "published", review._type)}
                         className="h-7 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
                         title="Publish"
                         data-testid={`button-review-publish-${review.id}`}
@@ -2336,7 +2358,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => updateStatus(review.id, "hidden")}
+                        onClick={() => updateStatus(review.id, "hidden", review._type)}
                         className="h-7 px-2 text-xs text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
                         title="Hide"
                         data-testid={`button-review-hide-${review.id}`}
@@ -2348,7 +2370,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => updateStatus(review.id, "flagged")}
+                        onClick={() => updateStatus(review.id, "flagged", review._type)}
                         className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                         title="Flag"
                         data-testid={`button-review-flag-${review.id}`}
@@ -2359,7 +2381,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => deleteReview(review.id)}
+                      onClick={() => deleteReview(review.id, review._type)}
                       className="h-7 px-2 text-xs text-gray-400 hover:text-red-600 hover:bg-red-50"
                       title="Delete"
                       data-testid={`button-review-delete-${review.id}`}

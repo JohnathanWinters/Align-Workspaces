@@ -45,6 +45,7 @@ import {
   Images,
 } from "lucide-react";
 import { getClothingRecommendations, fabricImageMap } from "@/lib/clothing-recommendations";
+import { TestimonialsSection } from "@/components/testimonials-section";
 import type {
   ConfiguratorState,
 } from "@/lib/configurator-data";
@@ -349,6 +350,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
       {currentStep === 0 && (
         <>
           <HeroSection onStart={handleStart} />
+          <TestimonialsSection />
         </>
       )}
 

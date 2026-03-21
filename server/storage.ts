@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -154,7 +154,14 @@ export interface IStorage {
   updateSpaceReview(id: string, data: Partial<SpaceReview>): Promise<SpaceReview>;
   deleteSpaceReview(id: string): Promise<void>;
   getAllReviews(): Promise<SpaceReview[]>;
+  getPublishedSpaceReviews(): Promise<SpaceReview[]>;
   getSpaceAverageRating(spaceId: string): Promise<{ avg: number; count: number }>;
+  getReviewByShoot(shootId: string): Promise<ShootReview | undefined>;
+  createShootReview(data: InsertShootReview): Promise<ShootReview>;
+  updateShootReview(id: string, data: Partial<ShootReview>): Promise<ShootReview>;
+  deleteShootReview(id: string): Promise<void>;
+  getAllShootReviews(): Promise<ShootReview[]>;
+  getPublishedShootReviews(): Promise<ShootReview[]>;
   getAverageRatingsForSpaces(spaceIds: string[]): Promise<Map<string, { avg: number; count: number }>>;
 
   // Wishlists
@@ -1100,6 +1107,37 @@ export class DatabaseStorage implements IStorage {
 
   async getAllReviews(): Promise<SpaceReview[]> {
     return db.select().from(spaceReviews).orderBy(desc(spaceReviews.createdAt));
+  }
+
+  async getPublishedSpaceReviews(): Promise<SpaceReview[]> {
+    return db.select().from(spaceReviews).where(eq(spaceReviews.status, "published")).orderBy(desc(spaceReviews.createdAt));
+  }
+
+  async getReviewByShoot(shootId: string): Promise<ShootReview | undefined> {
+    const [result] = await db.select().from(shootReviews).where(eq(shootReviews.shootId, shootId));
+    return result;
+  }
+
+  async createShootReview(data: InsertShootReview): Promise<ShootReview> {
+    const [result] = await db.insert(shootReviews).values(data).returning();
+    return result;
+  }
+
+  async updateShootReview(id: string, data: Partial<ShootReview>): Promise<ShootReview> {
+    const [result] = await db.update(shootReviews).set(data).where(eq(shootReviews.id, id)).returning();
+    return result;
+  }
+
+  async deleteShootReview(id: string): Promise<void> {
+    await db.delete(shootReviews).where(eq(shootReviews.id, id));
+  }
+
+  async getAllShootReviews(): Promise<ShootReview[]> {
+    return db.select().from(shootReviews).orderBy(desc(shootReviews.createdAt));
+  }
+
+  async getPublishedShootReviews(): Promise<ShootReview[]> {
+    return db.select().from(shootReviews).where(eq(shootReviews.status, "published")).orderBy(desc(shootReviews.createdAt));
   }
 
   async getSpaceAverageRating(spaceId: string): Promise<{ avg: number; count: number }> {
