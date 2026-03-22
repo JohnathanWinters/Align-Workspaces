@@ -17,10 +17,14 @@ function getOAuth2Client() {
     throw new Error('GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET not set');
   }
 
+  const callbackUrl = process.env.NODE_ENV === 'production'
+    ? `${SITE_URL}/api/auth/google/callback`
+    : 'http://localhost:5000/api/auth/google/callback';
+
   const oauth2Client = new google.auth.OAuth2(
     clientId,
     clientSecret,
-    'http://localhost:5000/api/auth/google/callback'
+    callbackUrl
   );
 
   if (refreshToken) {
