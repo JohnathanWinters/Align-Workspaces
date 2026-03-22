@@ -308,6 +308,7 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     document.title = "Portfolio | Miami Personal Branding Photography | Align";
+    window.scrollTo(0, 0);
   }, []);
 
   const { data: photos, isLoading } = useQuery<PortfolioPhoto[]>({

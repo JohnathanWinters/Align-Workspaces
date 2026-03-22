@@ -503,7 +503,10 @@ export default function AlignSpacesPage() {
                 <Link
                   href="/portfolio"
                   data-testid="button-our-work-cta"
-                  className="inline-flex items-center gap-2 uppercase px-6 py-2.5 transition-all duration-300 rounded-lg text-sm font-medium text-[#d4c4a8]/80 hover:text-[#c9a96e]"
+                  className="inline-flex items-center gap-2 uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
+                  style={{ color: "#d4c4a8", borderColor: "#d4c4a8" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(212,196,168,0.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
                   <Images className="w-4 h-4" />
                   Our Work
