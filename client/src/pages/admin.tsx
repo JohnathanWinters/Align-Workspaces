@@ -67,6 +67,7 @@ import {
   ToggleRight,
   DollarSign,
   ArrowLeft,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -8306,6 +8307,20 @@ function AdminDashboard({ token }: { token: string }) {
                       >
                         <DollarSign className="w-3 h-3" />
                         Trigger Payouts
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await adminFetch("/api/admin/test-client/seed", token, { method: "POST" });
+                            const data = await res.json();
+                            toast({ title: data.message || "Test client re-seeded" });
+                          } catch { toast({ title: "Failed to re-seed", variant: "destructive" }); }
+                        }}
+                        data-testid="button-reseed-test-client"
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Re-seed Test Client
                       </button>
                     </div>
                   </div>
