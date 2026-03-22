@@ -1046,6 +1046,35 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: send direct message to a client
+  app.post("/api/admin/users/:id/message", isAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id as string;
+      const { subject, message } = req.body;
+      if (!subject?.trim() || !message?.trim()) {
+        return res.status(400).json({ message: "Subject and message are required" });
+      }
+
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user.email) return res.status(400).json({ message: "Client has no email address" });
+
+      const clientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client";
+      await sendQuickClientMessage({
+        clientEmail: user.email,
+        clientName,
+        subject: subject.trim(),
+        message: message.trim(),
+      });
+
+      res.json({ sent: true });
+    } catch (err: any) {
+      console.error("Failed to send client message:", err);
+      res.status(500).json({ message: err?.message || "Failed to send message" });
+    }
+  });
+
   // Admin: list all shoots (with user info)
   app.get("/api/admin/shoots", isAdminOrEmployee, requirePermission("view_shoots"), async (_req, res) => {
     try {

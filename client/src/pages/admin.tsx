@@ -7030,6 +7030,10 @@ function AdminDashboard({ token }: { token: string }) {
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugPreviewRole, setDebugPreviewRole] = useState<"new" | "photo" | "host" | "both">("new");
   const [debugPreviewOpen, setDebugPreviewOpen] = useState(false);
+  const [messageUser, setMessageUser] = useState<UserType | null>(null);
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   const sidebarNav = useMemo(() => [
     {
@@ -7246,6 +7250,29 @@ function AdminDashboard({ token }: { token: string }) {
   const openGallery = (shoot: Shoot) => {
     setGalleryShoot(shoot);
     setView("gallery");
+  };
+
+  const handleSendDirectMessage = async () => {
+    if (!messageUser || !messageSubject.trim() || !messageBody.trim()) return;
+    setSendingMessage(true);
+    try {
+      const res = await adminFetch(`/api/admin/users/${messageUser.id}/message`, token, {
+        method: "POST",
+        body: JSON.stringify({ subject: messageSubject.trim(), message: messageBody.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to send");
+      }
+      toast({ title: "Message sent", description: `Email delivered to ${messageUser.email}` });
+      setMessageUser(null);
+      setMessageSubject("");
+      setMessageBody("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   const startEditUser = (user: UserType) => {
@@ -7875,6 +7902,21 @@ function AdminDashboard({ token }: { token: string }) {
                                     >
                                       <Edit className="w-3 h-3 mr-1" />
                                       Edit
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setMessageUser(user);
+                                        setMessageSubject("");
+                                        setMessageBody("");
+                                      }}
+                                      disabled={!user.email}
+                                      data-testid={`button-message-user-${user.id}`}
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                    >
+                                      <Send className="w-3 h-3 mr-1" />
+                                      Message
                                     </Button>
                                     <Button
                                       variant="outline"
@@ -8537,6 +8579,82 @@ function AdminDashboard({ token }: { token: string }) {
           </motion.div>
         </div>
       )}
+
+      <Dialog open={!!messageUser} onOpenChange={(open) => { if (!open) setMessageUser(null); }}>
+        <DialogContent className="max-w-md p-0 gap-0" aria-describedby={undefined}>
+          {messageUser && (() => {
+            const clientName = [messageUser.firstName, messageUser.lastName].filter(Boolean).join(" ") || "Client";
+            return (
+              <>
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <DialogTitle className="font-serif text-lg mb-2">Send Message</DialogTitle>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-7 h-7">
+                      {messageUser.profileImageUrl && <AvatarImage src={messageUser.profileImageUrl} />}
+                      <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3 h-3" /></AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{clientName}</p>
+                      <p className="text-xs text-gray-500">{messageUser.email}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Subject</Label>
+                    <Input
+                      value={messageSubject}
+                      onChange={(e) => setMessageSubject(e.target.value)}
+                      placeholder="e.g. Your upcoming session"
+                      data-testid="input-message-subject"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">Message</Label>
+                    <Textarea
+                      value={messageBody}
+                      onChange={(e) => setMessageBody(e.target.value)}
+                      placeholder="Write your message..."
+                      rows={4}
+                      className="resize-none"
+                      data-testid="input-message-body"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                          e.preventDefault();
+                          handleSendDirectMessage();
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+                  <p className="text-[10px] text-gray-400">Sent as email. Cmd+Enter to send.</p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMessageUser(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSendDirectMessage}
+                      disabled={sendingMessage || !messageSubject.trim() || !messageBody.trim()}
+                      className="bg-[#1a1a1a] text-white"
+                      data-testid="button-send-message"
+                    >
+                      {sendingMessage ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
+                      Send
+                    </Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
