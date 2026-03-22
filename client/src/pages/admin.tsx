@@ -71,6 +71,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
+import { ImageAttachButton, MessageImage } from "@/components/image-attach-button";
 import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
@@ -8578,6 +8579,7 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
   const [selectedConvo, setSelectedConvo] = useState<any | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -8664,17 +8666,18 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
   }, [selectedConvo?.id, chatMessages.length]);
 
   const handleSend = async () => {
-    if (!selectedConvo || !chatInput.trim()) return;
+    if (!selectedConvo || (!chatInput.trim() && !pendingImage)) return;
     setSending(true);
     try {
       const res = await adminFetch(`/api/admin/conversations/${selectedConvo.clientId}/messages`, token, {
         method: "POST",
-        body: JSON.stringify({ message: chatInput.trim() }),
+        body: JSON.stringify({ message: chatInput.trim(), imageUrl: pendingImage || undefined }),
       });
       if (res.ok) {
         const msg = await res.json();
         setChatMessages((prev) => [...prev, msg]);
         setChatInput("");
+        setPendingImage(null);
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
         loadConversations();
       } else {
@@ -8794,7 +8797,8 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
                             {msg.senderRole !== "admin" && (
                               <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
                             )}
-                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                            {msg.message && <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>}
+                            {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
                             <p className={`text-[10px] mt-1 ${msg.senderRole === "admin" ? "text-gray-400" : "text-gray-300"}`}>
                               {msg.senderName} · {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                             </p>
@@ -8807,8 +8811,15 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
 
                   {/* Input */}
                   <div className="px-4 py-3 border-t border-gray-100">
+                    {pendingImage && (
+                      <div className="mb-2 flex items-center gap-2">
+                        <img src={pendingImage} alt="Pending" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                        <button onClick={() => setPendingImage(null)} className="text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+                      </div>
+                    )}
                     <div className="flex gap-2 items-end">
                       <EmojiPickerButton onEmoji={(emoji) => setChatInput((prev) => prev + emoji)} />
+                      <ImageAttachButton onImageReady={setPendingImage} pendingImage={pendingImage} onClear={() => setPendingImage(null)} uploadUrl="/api/admin/messages/upload-image" />
                       <Textarea
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
@@ -8824,7 +8835,7 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
                       />
                       <Button
                         onClick={handleSend}
-                        disabled={sending || !chatInput.trim()}
+                        disabled={sending || (!chatInput.trim() && !pendingImage)}
                         className="bg-[#1a1a1a] text-white self-end h-10 w-10 p-0 shrink-0"
                       >
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

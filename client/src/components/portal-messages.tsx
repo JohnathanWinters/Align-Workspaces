@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
+import { ImageAttachButton, MessageImage } from "@/components/image-attach-button";
 import { useToast } from "@/hooks/use-toast";
 import {
   type WeekSchedule,
@@ -296,6 +297,7 @@ function ConversationView({
 }) {
   const { toast } = useToast();
   const [newMessage, setNewMessage] = useState("");
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDesc, setPaymentDesc] = useState("");
@@ -337,10 +339,11 @@ function ConversationView({
   const bufferMins = booking.spaceBufferMinutes ?? 15;
 
   const sendMutation = useMutation({
-    mutationFn: async (text: string) => {
-      await apiRequest("POST", `/api/space-bookings/${booking.id}/messages`, { message: text });
+    mutationFn: async ({ text, imageUrl }: { text: string; imageUrl?: string }) => {
+      await apiRequest("POST", `/api/space-bookings/${booking.id}/messages`, { message: text, imageUrl });
     },
     onSuccess: () => {
+      setPendingImage(null);
       setNewMessage("");
       queryClient.invalidateQueries({ queryKey: ["/api/space-bookings", booking.id, "messages"] });
     },
@@ -463,8 +466,8 @@ function ConversationView({
 
   const handleSend = () => {
     const text = newMessage.trim();
-    if (!text) return;
-    sendMutation.mutate(text);
+    if (!text && !pendingImage) return;
+    sendMutation.mutate({ text, imageUrl: pendingImage || undefined });
   };
 
   const isHost = booking.role === "host";
@@ -1071,7 +1074,8 @@ function ConversationView({
                   {!isOwn && (
                     <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                  {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
+                  {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
                   <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
                     {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                   </p>
@@ -1084,8 +1088,15 @@ function ConversationView({
       </div>
 
       <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
+        {pendingImage && (
+          <div className="mb-2 flex items-center gap-2">
+            <img src={pendingImage} alt="Pending" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+            <button onClick={() => setPendingImage(null)} className="text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
+          <ImageAttachButton onImageReady={setPendingImage} pendingImage={pendingImage} onClear={() => setPendingImage(null)} />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -1096,7 +1107,7 @@ function ConversationView({
           />
           <Button
             onClick={handleSend}
-            disabled={!newMessage.trim() || sendMutation.isPending}
+            disabled={(!newMessage.trim() && !pendingImage) || sendMutation.isPending}
             size="sm"
             className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
             data-testid="button-send-message"
@@ -1119,6 +1130,7 @@ function DirectConversationView({
   onBack: () => void;
 }) {
   const [newMessage, setNewMessage] = useState("");
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -1142,19 +1154,20 @@ function DirectConversationView({
   }, [messages.length]);
 
   const sendMutation = useMutation({
-    mutationFn: async (text: string) => {
-      await apiRequest("POST", `/api/direct-conversations/${conversation.id}/messages`, { message: text });
+    mutationFn: async ({ text, imageUrl }: { text: string; imageUrl?: string }) => {
+      await apiRequest("POST", `/api/direct-conversations/${conversation.id}/messages`, { message: text, imageUrl });
     },
     onSuccess: () => {
       setNewMessage("");
+      setPendingImage(null);
       queryClient.invalidateQueries({ queryKey: ["/api/direct-conversations", conversation.id, "messages"] });
     },
   });
 
   const handleSend = () => {
     const text = newMessage.trim();
-    if (!text) return;
-    sendMutation.mutate(text);
+    if (!text && !pendingImage) return;
+    sendMutation.mutate({ text, imageUrl: pendingImage || undefined });
   };
 
   return (
@@ -1200,7 +1213,8 @@ function DirectConversationView({
                   {!isOwn && (
                     <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                  {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
+                  {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
                   <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
                     {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                   </p>
@@ -1215,6 +1229,7 @@ function DirectConversationView({
       <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
         <div className="flex items-center gap-2">
           <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
+          <ImageAttachButton onImageReady={setPendingImage} pendingImage={pendingImage} onClear={() => setPendingImage(null)} />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -1225,7 +1240,7 @@ function DirectConversationView({
           />
           <Button
             onClick={handleSend}
-            disabled={!newMessage.trim() || sendMutation.isPending}
+            disabled={(!newMessage.trim() && !pendingImage) || sendMutation.isPending}
             size="sm"
             className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
             data-testid="button-send-dm"
@@ -1248,6 +1263,7 @@ function AdminConversationView({
   onBack: () => void;
 }) {
   const [newMessage, setNewMessage] = useState("");
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: messages = [], isLoading } = useQuery<any[]>({
@@ -1270,19 +1286,20 @@ function AdminConversationView({
   }, [messages.length]);
 
   const sendMutation = useMutation({
-    mutationFn: async (text: string) => {
-      await apiRequest("POST", `/api/admin-conversations/${conversation.id}/messages`, { message: text });
+    mutationFn: async ({ text, imageUrl }: { text: string; imageUrl?: string }) => {
+      await apiRequest("POST", `/api/admin-conversations/${conversation.id}/messages`, { message: text, imageUrl });
     },
     onSuccess: () => {
       setNewMessage("");
+      setPendingImage(null);
       queryClient.invalidateQueries({ queryKey: ["/api/admin-conversations", conversation.id, "messages"] });
     },
   });
 
   const handleSend = () => {
     const text = newMessage.trim();
-    if (!text) return;
-    sendMutation.mutate(text);
+    if (!text && !pendingImage) return;
+    sendMutation.mutate({ text, imageUrl: pendingImage || undefined });
   };
 
   return (
@@ -1326,7 +1343,8 @@ function AdminConversationView({
                   {!isOwn && (
                     <p className="text-[10px] font-medium text-[#c9a96e] mb-0.5">{msg.senderName}</p>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                  {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
+                  {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
                   <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
                     {new Date(msg.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                   </p>
@@ -1341,6 +1359,7 @@ function AdminConversationView({
       <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
         <div className="flex items-center gap-2">
           <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
+          <ImageAttachButton onImageReady={setPendingImage} pendingImage={pendingImage} onClear={() => setPendingImage(null)} />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -1351,7 +1370,7 @@ function AdminConversationView({
           />
           <Button
             onClick={handleSend}
-            disabled={!newMessage.trim() || sendMutation.isPending}
+            disabled={(!newMessage.trim() && !pendingImage) || sendMutation.isPending}
             size="sm"
             className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
             data-testid="button-send-admin-message"

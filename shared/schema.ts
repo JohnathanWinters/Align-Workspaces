@@ -104,6 +104,7 @@ export const shootMessages = pgTable("shoot_messages", {
   senderRole: text("sender_role").notNull(), // "admin" | "client"
   senderName: text("sender_name"),
   message: text("message").notNull(),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -240,6 +241,7 @@ export const editRequestMessages = pgTable("edit_request_messages", {
   senderRole: text("sender_role").notNull(),
   senderName: text("sender_name"),
   message: text("message").notNull(),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -511,6 +513,7 @@ export const spaceMessages = pgTable("space_messages", {
   senderName: text("sender_name"),
   senderRole: text("sender_role").notNull(),
   message: text("message").notNull(),
+  imageUrl: text("image_url"),
   messageType: text("message_type").default("text"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -548,6 +551,7 @@ export const directMessages = pgTable("direct_messages", {
   senderName: text("sender_name"),
   senderRole: text("sender_role").notNull(),
   message: text("message").notNull(),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -584,6 +588,7 @@ export const adminMessages = pgTable("admin_messages", {
   senderName: text("sender_name"),
   senderRole: text("sender_role").notNull(),
   message: text("message").notNull(),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

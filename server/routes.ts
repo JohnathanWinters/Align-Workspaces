@@ -1046,6 +1046,38 @@ export async function registerRoutes(
     }
   });
 
+  // Upload image for message attachment (authenticated users)
+  app.post("/api/messages/upload-image", isAuthenticated, upload.single("image"), async (req: any, res) => {
+    try {
+      const file = req.file;
+      if (!file) return res.status(400).json({ message: "No image provided" });
+      const raw = await fs.promises.readFile(file.path);
+      const buffer = await sharp(raw).resize(1200, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+      await fs.promises.unlink(file.path).catch(() => {});
+      const imageUrl = await uploadBufferToObjectStorage(buffer, "image/webp");
+      res.json({ imageUrl });
+    } catch (err: any) {
+      console.error("Failed to upload message image:", err);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  // Upload image for message attachment (admin)
+  app.post("/api/admin/messages/upload-image", isAdmin, upload.single("image"), async (req: any, res) => {
+    try {
+      const file = req.file;
+      if (!file) return res.status(400).json({ message: "No image provided" });
+      const raw = await fs.promises.readFile(file.path);
+      const buffer = await sharp(raw).resize(1200, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+      await fs.promises.unlink(file.path).catch(() => {});
+      const imageUrl = await uploadBufferToObjectStorage(buffer, "image/webp");
+      res.json({ imageUrl });
+    } catch (err: any) {
+      console.error("Failed to upload message image:", err);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
   // Admin: get all admin conversations
   app.get("/api/admin/conversations", isAdmin, async (_req, res) => {
     try {
@@ -1104,8 +1136,8 @@ export async function registerRoutes(
   app.post("/api/admin/conversations/:clientId/messages", isAdmin, async (req, res) => {
     try {
       const clientId = req.params.id ? req.params.id as string : req.params.clientId as string;
-      const { message } = req.body;
-      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+      const { message, imageUrl } = req.body;
+      if (!message?.trim() && !imageUrl) return res.status(400).json({ message: "Message or image is required" });
 
       const conversation = await storage.getOrCreateAdminConversation(clientId);
       const msg = await storage.createAdminMessage({
@@ -1113,7 +1145,8 @@ export async function registerRoutes(
         senderId: "admin",
         senderRole: "admin",
         senderName: "Align",
-        message: message.trim(),
+        message: (message || "").trim(),
+        imageUrl: imageUrl || null,
       });
 
       // Mark as read by admin since they just sent it
@@ -1271,15 +1304,16 @@ export async function registerRoutes(
       const shoot = await storage.getShootById(req.params.id as string);
       if (!shoot) return res.status(404).json({ message: "Shoot not found" });
 
-      const { message } = req.body;
-      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+      const { message, imageUrl } = req.body;
+      if (!message?.trim() && !imageUrl) return res.status(400).json({ message: "Message or image is required" });
 
       const msg = await storage.createShootMessage({
         shootId: shoot.id,
         senderId: "admin",
         senderRole: "admin",
         senderName: "Align Team",
-        message: message.trim(),
+        message: (message || "").trim(),
+        imageUrl: imageUrl || null,
       });
 
       // Also send email notification to client
@@ -1327,8 +1361,8 @@ export async function registerRoutes(
       if (!shoot) return res.status(404).json({ message: "Shoot not found" });
       if (shoot.userId !== req.user.claims.sub) return res.status(403).json({ message: "Access denied" });
 
-      const { message } = req.body;
-      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+      const { message, imageUrl } = req.body;
+      if (!message?.trim() && !imageUrl) return res.status(400).json({ message: "Message or image is required" });
 
       const user = await storage.getUserById(req.user.claims.sub);
       const senderName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
@@ -1338,7 +1372,8 @@ export async function registerRoutes(
         senderId: req.user.claims.sub,
         senderRole: "client",
         senderName,
-        message: message.trim(),
+        message: (message || "").trim(),
+        imageUrl: imageUrl || null,
       });
 
       res.json(msg);
@@ -3775,7 +3810,8 @@ export async function registerRoutes(
       }
 
       const messageText = String(req.body.message || "").trim();
-      if (!messageText) return res.status(400).json({ message: "Message cannot be empty" });
+      const imageUrl = req.body.imageUrl || null;
+      if (!messageText && !imageUrl) return res.status(400).json({ message: "Message cannot be empty" });
 
       const senderName = req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest");
       const msg = await storage.createSpaceMessage({
@@ -3783,7 +3819,8 @@ export async function registerRoutes(
         senderId: userId,
         senderName,
         senderRole,
-        message: messageText,
+        message: messageText || "",
+        imageUrl,
       });
 
       // Send push notification to the other party
@@ -3893,14 +3930,16 @@ export async function registerRoutes(
 
       const senderRole = conversation.guestId === userId ? "guest" : "host";
       const messageText = String(req.body.message || "").trim();
-      if (!messageText) return res.status(400).json({ message: "Message cannot be empty" });
+      const imageUrl = req.body.imageUrl || null;
+      if (!messageText && !imageUrl) return res.status(400).json({ message: "Message cannot be empty" });
 
       const msg = await storage.createDirectMessage({
         conversationId: req.params.id,
         senderId: userId,
         senderName: req.user.claims?.first_name || (senderRole === "host" ? "Host" : "Guest"),
         senderRole,
-        message: messageText,
+        message: messageText || "",
+        imageUrl,
       });
 
       const recipientId = senderRole === "guest" ? conversation.hostId : conversation.guestId;
@@ -3991,8 +4030,8 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Not authorized" });
       }
 
-      const { message } = req.body;
-      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+      const { message, imageUrl } = req.body;
+      if (!message?.trim() && !imageUrl) return res.status(400).json({ message: "Message or image is required" });
 
       const allUsers = await storage.getAllUsers();
       const user = allUsers.find((u) => u.id === userId);
@@ -4003,7 +4042,8 @@ export async function registerRoutes(
         senderId: userId,
         senderRole: "client",
         senderName,
-        message: message.trim(),
+        message: (message || "").trim(),
+        imageUrl: imageUrl || null,
       });
 
       // Mark as read by client since they just sent it
@@ -6183,6 +6223,37 @@ ${featuredSection}
       res.status(500).json({ message: err.message });
     }
   });
+
+  // Auto-cleanup: delete message images older than 3 months
+  const cleanupMessageImages = async () => {
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    const tables = [
+      { table: "admin_messages", name: "adminMessages" },
+      { table: "direct_messages", name: "directMessages" },
+      { table: "space_messages", name: "spaceMessages" },
+      { table: "shoot_messages", name: "shootMessages" },
+      { table: "edit_request_messages", name: "editRequestMessages" },
+    ];
+    for (const { table } of tables) {
+      try {
+        const { rows } = await db.execute(sql`SELECT id, image_url FROM ${sql.identifier(table)} WHERE image_url IS NOT NULL AND created_at < ${threeMonthsAgo}`);
+        for (const row of rows as any[]) {
+          try {
+            await deleteObject(row.image_url);
+            await db.execute(sql`UPDATE ${sql.identifier(table)} SET image_url = NULL WHERE id = ${row.id}`);
+          } catch {}
+        }
+        if ((rows as any[]).length > 0) console.log(`Cleaned up ${(rows as any[]).length} expired images from ${table}`);
+      } catch (err) {
+        console.error(`Failed to cleanup ${table}:`, err);
+      }
+    }
+  };
+  // Run cleanup daily
+  setInterval(cleanupMessageImages, 24 * 60 * 60 * 1000);
+  // Run once on startup after a delay
+  setTimeout(cleanupMessageImages, 30000);
 
   return httpServer;
 }
