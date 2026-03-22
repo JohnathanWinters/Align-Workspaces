@@ -8625,18 +8625,16 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
         if (existing) {
           await selectConversation(existing);
         } else {
-          // Send an empty init message to create the conversation, then refresh
-          // Actually, just select and let the admin type the first message
-          // We need to create the conversation first
+          // Create conversation without sending a message
           try {
-            const res = await adminFetch(`/api/admin/conversations/${initialClientId}/messages`, token, {
+            const res = await adminFetch(`/api/admin/conversations/${initialClientId}`, token, {
               method: "POST",
-              body: JSON.stringify({ message: "👋" }),
             });
             if (res.ok) {
-              const freshConvos = await loadConversations();
-              const newConvo = freshConvos.find((c: any) => c.clientId === initialClientId);
-              if (newConvo) await selectConversation(newConvo);
+              const newConvo = await res.json();
+              setConversations((prev) => [newConvo, ...prev]);
+              setSelectedConvo(newConvo);
+              setChatMessages([]);
             }
           } catch {}
         }

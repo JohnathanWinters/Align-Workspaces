@@ -1080,6 +1080,26 @@ export async function registerRoutes(
     }
   });
 
+  // Admin: get or create conversation with a client (no message sent)
+  app.post("/api/admin/conversations/:clientId", isAdmin, async (req, res) => {
+    try {
+      const clientId = req.params.clientId as string;
+      const conversation = await storage.getOrCreateAdminConversation(clientId);
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === clientId);
+      res.json({
+        ...conversation,
+        clientName: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client",
+        clientEmail: user?.email || "",
+        clientPhoto: user?.profileImageUrl || null,
+        latestMessage: null,
+        unreadCount: 0,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to create conversation" });
+    }
+  });
+
   // Admin: send message to client (creates conversation if needed)
   app.post("/api/admin/conversations/:clientId/messages", isAdmin, async (req, res) => {
     try {
