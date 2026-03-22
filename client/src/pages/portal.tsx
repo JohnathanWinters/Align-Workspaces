@@ -2639,6 +2639,7 @@ function PortalLogin() {
             </div>
             <p className="text-white/80 text-sm">Check your email for a sign-in link.</p>
             <p className="text-white/40 text-xs">{email}</p>
+            <p className="text-white/30 text-xs mt-2">Don't see it? Check your spam or junk folder.</p>
           </div>
         )}
 
