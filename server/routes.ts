@@ -21,7 +21,8 @@ import { randomUUID, createHash, scryptSync, randomBytes } from "crypto";
 import { uploadBuffer, uploadFile, deleteObject, getObjectStream, serveObject, ObjectNotFoundError } from "./fileStorage";
 import { authStorage } from "./auth";
 import { users } from "@shared/models/auth";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { galleryFolders, galleryImages, imageFavorites, editTokens, tokenTransactions, editRequests, editRequestPhotos, editRequestMessages, shootMessages, adminConversations, adminMessages, spaceReviews, shootReviews } from "@shared/schema";
 
 function cleanAddressForGeocoding(address: string): string {
   let cleaned = address
@@ -6219,6 +6220,148 @@ ${featuredSection}
         imported++;
       }
       res.json({ imported });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ── Demo Client Preview Endpoints ─────────────────────────────────
+  const DEMO_USER_ID = "demo-client-maria-santos";
+
+  // Get all demo client data in a single payload
+  app.get("/api/admin/demo-client/data", isAdmin, async (_req, res) => {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, DEMO_USER_ID));
+      if (!user) return res.status(404).json({ message: "Demo client not seeded. Click Re-seed to create." });
+
+      const userShoots = await db.select().from(shoots).where(eq(shoots.userId, DEMO_USER_ID)).orderBy(desc(shoots.createdAt));
+
+      // Enrich shoots with gallery count and cover image
+      const enrichedShoots = await Promise.all(userShoots.map(async (shoot) => {
+        const images = await db.select().from(galleryImages).where(eq(galleryImages.shootId, shoot.id));
+        return {
+          ...shoot,
+          galleryCount: images.length,
+          coverImageUrl: images[0]?.thumbnailUrl || images[0]?.imageUrl || null,
+        };
+      }));
+
+      const tokens = await db.select().from(editTokens).where(eq(editTokens.userId, DEMO_USER_ID));
+      const transactions = await db.select().from(tokenTransactions).where(eq(tokenTransactions.userId, DEMO_USER_ID)).orderBy(desc(tokenTransactions.createdAt));
+      const requests = await db.select().from(editRequests).where(eq(editRequests.userId, DEMO_USER_ID)).orderBy(desc(editRequests.createdAt));
+
+      const guestBookings = await db.select().from(spaceBookings).where(eq(spaceBookings.userId, DEMO_USER_ID)).orderBy(desc(spaceBookings.createdAt));
+
+      // Enrich bookings with space name
+      const enrichedBookings = await Promise.all(guestBookings.map(async (booking) => {
+        const space = await storage.getSpace(booking.spaceId);
+        return { ...booking, spaceName: space?.name || "Unknown Space", spaceSlug: space?.slug, spaceImage: space?.imageUrls?.[0] };
+      }));
+
+      const adminConvs = await db.select().from(adminConversations).where(eq(adminConversations.clientId, DEMO_USER_ID));
+      const adminMsgs = adminConvs.length > 0
+        ? await db.select().from(adminMessages).where(eq(adminMessages.conversationId, adminConvs[0].id)).orderBy(adminMessages.createdAt)
+        : [];
+
+      const shootReviewsList = await db.select().from(shootReviews).where(eq(shootReviews.clientId, DEMO_USER_ID));
+      const spaceReviewsList = await db.select().from(spaceReviews).where(eq(spaceReviews.guestId, DEMO_USER_ID));
+
+      res.json({
+        user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, profileImageUrl: user.profileImageUrl, notificationPreferences: user.notificationPreferences, defaultPortalTab: user.defaultPortalTab },
+        shoots: enrichedShoots,
+        editTokens: tokens[0] || null,
+        tokenTransactions: transactions,
+        editRequests: requests,
+        spaceBookings: { guest: enrichedBookings, host: [] },
+        adminConversation: adminConvs[0] || null,
+        adminMessages: adminMsgs,
+        shootReviews: shootReviewsList,
+        spaceReviews: spaceReviewsList,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get gallery for a demo shoot
+  app.get("/api/admin/demo-client/shoots/:id/gallery", isAdmin, async (req, res) => {
+    try {
+      const images = await db.select().from(galleryImages).where(eq(galleryImages.shootId, req.params.id)).orderBy(galleryImages.sortOrder);
+      res.json(images);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get folders for a demo shoot
+  app.get("/api/admin/demo-client/shoots/:id/folders", isAdmin, async (req, res) => {
+    try {
+      const folders = await db.select().from(galleryFolders).where(eq(galleryFolders.shootId, req.params.id)).orderBy(galleryFolders.sortOrder);
+      res.json(folders);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get favorites for a demo shoot
+  app.get("/api/admin/demo-client/shoots/:id/favorites", isAdmin, async (req, res) => {
+    try {
+      const shootImgs = await db.select({ id: galleryImages.id }).from(galleryImages).where(eq(galleryImages.shootId, req.params.id));
+      const imgIds = shootImgs.map(i => i.id);
+      if (imgIds.length === 0) return res.json([]);
+      const favs = await db.select().from(imageFavorites).where(and(eq(imageFavorites.userId, DEMO_USER_ID), inArray(imageFavorites.imageId, imgIds)));
+      res.json(favs.map(f => f.imageId));
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get edit request photos
+  app.get("/api/admin/demo-client/edit-requests/:id/photos", isAdmin, async (req, res) => {
+    try {
+      const photos = await db.select().from(editRequestPhotos).where(eq(editRequestPhotos.editRequestId, req.params.id));
+      res.json(photos);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get edit request messages
+  app.get("/api/admin/demo-client/edit-requests/:id/messages", isAdmin, async (req, res) => {
+    try {
+      const msgs = await db.select().from(editRequestMessages).where(eq(editRequestMessages.editRequestId, req.params.id)).orderBy(editRequestMessages.createdAt);
+      res.json(msgs);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get shoot messages
+  app.get("/api/admin/demo-client/shoots/:id/messages", isAdmin, async (req, res) => {
+    try {
+      const msgs = await db.select().from(shootMessages).where(eq(shootMessages.shootId, req.params.id)).orderBy(shootMessages.createdAt);
+      res.json(msgs);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Get shoot review
+  app.get("/api/admin/demo-client/shoots/:id/review", isAdmin, async (req, res) => {
+    try {
+      const [review] = await db.select().from(shootReviews).where(eq(shootReviews.shootId, req.params.id));
+      res.json(review || null);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Re-seed demo client data
+  app.post("/api/admin/demo-client/seed", isAdmin, async (_req, res) => {
+    try {
+      const { reseedDemoClient } = await import("./seed-demo-client");
+      await reseedDemoClient();
+      res.json({ message: "Demo client re-seeded successfully" });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

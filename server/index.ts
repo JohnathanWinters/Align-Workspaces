@@ -10,6 +10,7 @@ import { setupAuth, registerAuthRoutes } from "./auth";
 import { seedPortfolioIfEmpty } from "./seed-portfolio";
 import { fixPortfolioImageExtensions } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
+import { seedDemoClientIfEmpty } from "./seed-demo-client";
 import { startPayoutProcessing } from "./payouts";
 import { WebhookHandlers } from "./webhookHandlers";
 
@@ -249,6 +250,7 @@ app.post("/api/stripe/webhook", async (req, res) => {
 
       Promise.all([
         seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
+        seedDemoClientIfEmpty().catch(err => console.warn('Demo client seed error (non-fatal):', err.message)),
         fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
       ]).then(() => {
         log('Background initialization complete');
