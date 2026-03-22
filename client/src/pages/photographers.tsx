@@ -209,7 +209,7 @@ export default function PhotographersPage() {
                   <img
                     src={edithPhoto}
                     alt="Edith Caballero"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-[55%_30%]"
                     loading="lazy"
                     decoding="async"
                     data-testid="img-photographer-page-1"
