@@ -2544,25 +2544,19 @@ function PortalContent() {
 function PortalLogin() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [step, setStep] = useState<"email" | "name" | "sent">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const sendMagicLink = async (e?: string, name?: string) => {
+  const sendMagicLink = async (e?: string, fName?: string, lName?: string) => {
     setLoading(true);
     setError("");
     try {
-      if (name) {
-        await fetch("/api/auth/magic-signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: e || email, firstName: name }),
-        });
-      }
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: e || email, firstName: name, returnTo: "/portal" }),
+        body: JSON.stringify({ email: e || email, firstName: fName, lastName: lName, returnTo: "/portal" }),
       });
       const data = await res.json();
       if (data.needsName) {
@@ -2614,8 +2608,8 @@ function PortalLogin() {
         )}
 
         {step === "name" && (
-          <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim()) sendMagicLink(email.trim(), firstName.trim()); }} className="space-y-3">
-            <p className="text-white/60 text-sm mb-2">Welcome! What's your first name?</p>
+          <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim()) sendMagicLink(email.trim(), firstName.trim(), lastName.trim()); }} className="space-y-3">
+            <p className="text-white/60 text-sm mb-2">Welcome! What's your name?</p>
             <input
               type="text"
               placeholder="First name"
@@ -2624,6 +2618,13 @@ function PortalLogin() {
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
               autoFocus
               required
+            />
+            <input
+              type="text"
+              placeholder="Last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
             />
             {error && <p className="text-xs text-red-400">{error}</p>}
             <Button type="submit" disabled={loading || !firstName.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">

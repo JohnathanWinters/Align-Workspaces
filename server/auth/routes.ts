@@ -30,7 +30,7 @@ export function registerAuthRoutes(app: Express): void {
 
   app.post("/api/auth/magic-link", async (req: Request, res: Response) => {
     try {
-      const { email, firstName, returnTo } = req.body;
+      const { email, firstName, lastName, returnTo } = req.body;
       if (!email || typeof email !== "string") {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -54,7 +54,10 @@ export function registerAuthRoutes(app: Express): void {
       });
 
       const baseUrl = `${req.protocol}://${req.get("host")}`;
-      const magicUrl = `${baseUrl}/api/auth/magic-verify?token=${token}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ""}`;
+      let magicUrl = `${baseUrl}/api/auth/magic-verify?token=${token}`;
+      if (returnTo) magicUrl += `&returnTo=${encodeURIComponent(returnTo)}`;
+      if (isNewUser && firstName) magicUrl += `&firstName=${encodeURIComponent(firstName.trim())}`;
+      if (isNewUser && lastName) magicUrl += `&lastName=${encodeURIComponent(lastName.trim())}`;
 
       await sendMagicLinkEmail(normalizedEmail, magicUrl);
 
@@ -67,7 +70,7 @@ export function registerAuthRoutes(app: Express): void {
 
   app.get("/api/auth/magic-verify", async (req: Request, res: Response) => {
     try {
-      const { token, returnTo } = req.query;
+      const { token, returnTo, firstName, lastName } = req.query;
       if (!token || typeof token !== "string") {
         return res.redirect("/?auth=invalid");
       }
@@ -92,9 +95,12 @@ export function registerAuthRoutes(app: Express): void {
       let [user] = await db.select().from(users).where(eq(users.email, magicToken.email));
 
       if (!user) {
+        const newUserData: any = { email: magicToken.email };
+        if (typeof firstName === "string" && firstName.trim()) newUserData.firstName = firstName.trim();
+        if (typeof lastName === "string" && lastName.trim()) newUserData.lastName = lastName.trim();
         const [newUser] = await db
           .insert(users)
-          .values({ email: magicToken.email })
+          .values(newUserData)
           .returning();
         user = newUser;
       }
@@ -112,27 +118,13 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
+  // No longer creates user — just acknowledges the name for the magic-link call that follows
   app.post("/api/auth/magic-signup", async (req: Request, res: Response) => {
     try {
       const { email, firstName } = req.body;
       if (!email || !firstName) {
         return res.status(400).json({ message: "Email and name are required" });
       }
-
-      const normalizedEmail = email.trim().toLowerCase();
-
-      const [existing] = await db.select().from(users).where(eq(users.email, normalizedEmail));
-      if (!existing) {
-        await db.insert(users).values({
-          email: normalizedEmail,
-          firstName: firstName.trim(),
-        });
-      } else {
-        if (!existing.firstName) {
-          await db.update(users).set({ firstName: firstName.trim() }).where(eq(users.id, existing.id));
-        }
-      }
-
       res.json({ ok: true });
     } catch (error: any) {
       console.error("Magic signup error:", error);
