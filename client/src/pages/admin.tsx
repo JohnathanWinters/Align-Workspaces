@@ -75,7 +75,6 @@ import { ImageAttachButton, MessageImage } from "@/components/image-attach-butto
 import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
-import AdminClientPreview from "@/components/admin-client-preview";
 
 interface EditToken {
   id: string;
@@ -7007,7 +7006,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "client-preview">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -7075,12 +7074,6 @@ function AdminDashboard({ token }: { token: string }) {
       label: "Insights",
       items: [
         { id: "analytics" as const, label: "Analytics", icon: BarChart3 },
-      ],
-    },
-    {
-      label: "Preview",
-      items: [
-        { id: "client-preview" as const, label: "Client Preview", icon: Eye },
       ],
     },
   ], [users.length, shoots.length]);
@@ -7411,10 +7404,6 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "revenue") {
       return <RevenueDashboard token={token} onBack={() => setView("clients")} />;
-    }
-
-    if (view === "client-preview") {
-      return <AdminClientPreview token={token} onBack={() => setView("clients")} />;
     }
 
     if (view === "pipeline") {
@@ -8487,7 +8476,6 @@ function AdminDashboard({ token }: { token: string }) {
             {view === "edit" && "Shoot Details"}
             {view === "gallery" && "Gallery"}
             {view === "tokens" && "Edit Tokens"}
-            {view === "client-preview" && "Client Preview"}
           </p>
         </header>
 
