@@ -1562,7 +1562,7 @@ export default function SpacesBrowsePage() {
             <button
               onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
               data-testid="button-toggle-map"
-              className="lg:hidden flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold px-3 py-1.5 rounded-full border border-stone-200 text-foreground/60 hover:text-foreground hover:border-stone-300 transition-colors bg-white"
+              className="lg:hidden flex items-center gap-1.5 text-[11px] uppercase tracking-[0.15em] font-semibold px-3.5 py-2 rounded-full border border-[#c4956a]/40 text-[#c4956a] hover:bg-[#c4956a] hover:text-white hover:border-[#c4956a] transition-colors bg-white shadow-sm"
             >
               {mobileView === "list" ? (
                 <><MapIcon className="w-3.5 h-3.5" /> Map</>

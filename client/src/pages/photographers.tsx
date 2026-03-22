@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images } from "lucide-react";
 import { Link } from "wouter";
 const armandoPhoto = "/images/photographer-armando.webp";
+const edithPhoto = "/images/cofounder-edith.webp";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -161,7 +162,7 @@ export default function PhotographersPage() {
               <div className="w-6 h-px bg-stone-300/60" />
             </div>
             <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]" data-testid="text-team-heading">
-              Meet the Founder
+              Meet the Founders
             </h2>
           </motion.div>
 
@@ -171,38 +172,64 @@ export default function PhotographersPage() {
             transition={{ duration: 0.4, delay: 0.3 }}
             className="max-w-3xl mx-auto"
           >
-            <div className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid="card-photographer-page-0">
-              <div className="md:flex">
-                <div className="md:w-[38%] flex-shrink-0">
-                  <div className="aspect-[3/4] sm:aspect-square md:aspect-auto md:h-full overflow-hidden">
-                    <img
-                      src={armandoPhoto}
-                      alt="Armando Ramirez Romero"
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                      data-testid="img-photographer-page-0"
-                    />
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid="card-photographer-page-0">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={armandoPhoto}
+                    alt="Armando Ramirez Romero"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    data-testid="img-photographer-page-0"
+                  />
                 </div>
-                <div className="p-6 sm:p-8 md:p-8 lg:p-10 md:w-[62%] md:flex md:flex-col md:justify-center">
+                <div className="p-6 sm:p-8">
                   <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid="text-photographer-page-name-0">
                     Armando Ramirez Romero
                   </h3>
-                  <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid="text-photographer-page-role-0">Founder, Align</p>
-                  <p className="text-[12px] text-stone-400 mb-6 flex items-center gap-1">
+                  <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid="text-photographer-page-role-0">Co-Founder, Align</p>
+                  <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     Miami, FL
                   </p>
-                  <div className="space-y-4" data-testid="text-photographer-page-bio-0">
+                  <div className="space-y-3" data-testid="text-photographer-page-bio-0">
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
                       I started Align because I kept seeing the same disconnect. Talented, dedicated professionals doing meaningful work in spaces that didn't reflect any of it.
                     </p>
-                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      These weren't people cutting corners. They were therapists, coaches, and creatives who cared deeply about the experience they created for their clients. But the environments available were temporary, impersonal, or simply not built for their work.
-                    </p>
                     <p className="text-[13px] sm:text-sm text-stone-600 leading-[1.7] font-medium">
                       I built Align to close that gap.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid="card-photographer-page-1">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={edithPhoto}
+                    alt="Edith Caballero"
+                    className="w-full h-full object-cover object-top"
+                    loading="lazy"
+                    decoding="async"
+                    data-testid="img-photographer-page-1"
+                  />
+                </div>
+                <div className="p-6 sm:p-8">
+                  <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid="text-photographer-page-name-1">
+                    Edith Caballero
+                  </h3>
+                  <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid="text-photographer-page-role-1">Co-Founder, Align</p>
+                  <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    Miami, FL
+                  </p>
+                  <div className="space-y-3" data-testid="text-photographer-page-bio-1">
+                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                      I joined Align because the vision resonated immediately. The professionals we serve pour everything into their craft, and they deserve environments that match that dedication.
+                    </p>
+                    <p className="text-[13px] sm:text-sm text-stone-600 leading-[1.7] font-medium">
+                      Great work deserves a great space. We're here to make that the standard.
                     </p>
                   </div>
                 </div>

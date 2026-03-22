@@ -7035,8 +7035,8 @@ function AdminDashboard({ token }: { token: string }) {
     {
       label: "CRM",
       items: [
-        { id: "clients" as const, label: "Clients", icon: Users, count: users.length },
-        { id: "shoots" as const, label: "Shoots", icon: Camera, count: shoots.length },
+        { id: "clients" as const, label: "Clients", icon: Users },
+        { id: "shoots" as const, label: "Shoots", icon: Camera },
         { id: "pipeline" as const, label: "Book of Business", icon: FileSpreadsheet },
       ],
     },
@@ -8153,13 +8153,6 @@ function AdminDashboard({ token }: { token: string }) {
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="truncate">{item.label}</span>
-                    {"count" in item && item.count !== undefined && item.count > 0 && (
-                      <span className={`ml-auto text-[11px] px-1.5 py-0.5 rounded-full font-medium ${
-                        isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
-                      }`}>
-                        {item.count}
-                      </span>
-                    )}
                   </button>
                 );
               })}

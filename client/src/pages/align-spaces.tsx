@@ -488,17 +488,27 @@ export default function AlignSpacesPage() {
               <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
                 Takes about 2 minutes. Ends with a complete shoot plan built around you.
               </p>
-              <Link
-                href="/portrait-builder"
-                data-testid="button-portraits-cta"
-                className="inline-flex items-center gap-2 self-start uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
-                style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                Start the Builder
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/portrait-builder"
+                  data-testid="button-portraits-cta"
+                  className="inline-flex items-center gap-2 uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
+                  style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                >
+                  Start the Builder
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/portfolio"
+                  data-testid="button-our-work-cta"
+                  className="inline-flex items-center gap-2 uppercase px-6 py-2.5 transition-all duration-300 rounded-lg text-sm font-medium text-[#d4c4a8]/80 hover:text-[#c9a96e]"
+                >
+                  <Images className="w-4 h-4" />
+                  Our Work
+                </Link>
+              </div>
             </div>
           </div>
         </div>
