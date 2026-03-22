@@ -30,6 +30,7 @@ import {
   Star,
 } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { useToast } from "@/hooks/use-toast";
 import {
   type WeekSchedule,
@@ -1084,6 +1085,7 @@ function ConversationView({
 
       <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
         <div className="flex items-center gap-2">
+          <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -1212,6 +1214,7 @@ function DirectConversationView({
 
       <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
         <div className="flex items-center gap-2">
+          <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -1337,6 +1340,7 @@ function AdminConversationView({
 
       <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
         <div className="flex items-center gap-2">
+          <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

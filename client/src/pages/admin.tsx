@@ -70,6 +70,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
@@ -1398,7 +1399,8 @@ function AdminEditRequestChat({ editRequestId, token: authToken }: { editRequest
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="border-t border-gray-200 p-2 flex gap-2">
+      <div className="border-t border-gray-200 p-2 flex gap-2 items-center">
+        <EmojiPickerButton onEmoji={(emoji) => setNewMessage((prev) => prev + emoji)} />
         <Input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
@@ -6963,7 +6965,8 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
 
                 {/* Input */}
                 <div className="px-4 py-3 border-t border-gray-100">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-end">
+                    <EmojiPickerButton onEmoji={(emoji) => setChatInput((prev) => prev + emoji)} />
                     <Textarea
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
@@ -8806,7 +8809,8 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
 
                   {/* Input */}
                   <div className="px-4 py-3 border-t border-gray-100">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-end">
+                      <EmojiPickerButton onEmoji={(emoji) => setChatInput((prev) => prev + emoji)} />
                       <Textarea
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
