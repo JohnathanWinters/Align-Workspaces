@@ -195,7 +195,7 @@ export default function PhotographersPage() {
                   </p>
                   <div className="space-y-3" data-testid="text-photographer-page-bio-0">
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      Armando Ramirez is the tech, photographer, and visionary behind Align. With a background in media design, photography, law enforcement, and educational content creation, he brings both vision and structure to the spaces he helps create—ensuring they are functional, seamless, and thoughtfully executed.
+                      Armando Ramirez is the tech, photographer, and visionary behind Align. With a background in media design, photography, law enforcement, and educational content creation, he brings both vision and structure to the spaces he helps create. Ensuring that they are functional, seamless, and thoughtfully executed.
                     </p>
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
                       Armando recognized a gap between the meaningful, therapeutic work professionals offer and the spaces available to support them. Many of these environments are temporary, impersonal, or not designed with their work in mind. At the same time, he saw that many small practice owners had high-quality, thoughtfully curated office spaces sitting unused. This led him to intentionally connect the right clinicians with the right environments where the space reflects the care being offered.
