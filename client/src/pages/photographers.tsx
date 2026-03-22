@@ -195,10 +195,10 @@ export default function PhotographersPage() {
                   </p>
                   <div className="space-y-3" data-testid="text-photographer-page-bio-0">
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      I started Align because I kept seeing the same disconnect. Talented, dedicated professionals doing meaningful work in spaces that didn't reflect any of it.
+                      Armando Ramirez is the tech, photographer, and visionary behind Align. With a background in media design, photography, law enforcement, and educational content creation, he brings both vision and structure to the spaces he helps create—ensuring they are functional, seamless, and thoughtfully executed.
                     </p>
-                    <p className="text-[13px] sm:text-sm text-stone-600 leading-[1.7] font-medium">
-                      I built Align to close that gap.
+                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                      Armando recognized a gap between the meaningful, therapeutic work professionals offer and the spaces available to support them. Many of these environments are temporary, impersonal, or not designed with their work in mind. At the same time, he saw that many small practice owners had high-quality, thoughtfully curated office spaces sitting unused. This led him to intentionally connect the right clinicians with the right environments where the space reflects the care being offered.
                     </p>
                   </div>
                 </div>
@@ -226,10 +226,10 @@ export default function PhotographersPage() {
                   </p>
                   <div className="space-y-3" data-testid="text-photographer-page-bio-1">
                     <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      I joined Align because the vision resonated immediately. The professionals we serve pour everything into their craft, and they deserve environments that match that dedication.
+                      Edith Caballero (she/her), LCSW, MCAP, CCTP, RYT is an award-winning social worker, EMDR Certified Therapist™, mentor–coach, and South Florida peer community holder who creates restorative spaces for social workers, therapists, and healers to cultivate meaningful connection, restore their energy, deepen professional clarity, and embody a more sustainable way of working and living.
                     </p>
-                    <p className="text-[13px] sm:text-sm text-stone-600 leading-[1.7] font-medium">
-                      Great work deserves a great space. We're here to make that the standard.
+                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                      Her work is rooted in helping professionals build sustainable practices that prioritize both impact and balance, offering therapy, clinical supervision, consultation, and workshops. She understands the importance of access to supportive, accessible, and functional office environments that align with the therapeutic experiences clinicians intend to create.
                     </p>
                   </div>
                 </div>
