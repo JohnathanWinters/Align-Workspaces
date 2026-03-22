@@ -984,70 +984,88 @@ export default function AdminClientPreview({ token, onBack }: { token: string; o
 
   return (
     <div className="flex-1 min-h-0">
-      {/* Preview banner */}
-      <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200/60 rounded-lg p-3 mb-6 flex items-center justify-between flex-wrap gap-3">
+      {/* Preview banner — sits outside the portal simulation */}
+      <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border-b border-indigo-200/60 px-6 py-2.5 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-            <Eye className="w-4 h-4 text-indigo-600" />
+          <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center">
+            <Eye className="w-3.5 h-3.5 text-indigo-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-indigo-900">Client Portal Preview</p>
-            <p className="text-xs text-indigo-600/70">Read-only view of what <strong>{data.user.firstName} {data.user.lastName}</strong> sees in their portal</p>
+            <p className="text-xs font-medium text-indigo-900">Client Portal Preview — <strong>{data.user.firstName} {data.user.lastName}</strong></p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleReseedClick} disabled={reseeding} className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
-          {reseeding ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+        <Button variant="outline" size="sm" onClick={handleReseedClick} disabled={reseeding} className="h-7 border-indigo-200 text-indigo-700 hover:bg-indigo-50 text-xs">
+          {reseeding ? <Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1.5" />}
           Re-seed Data
         </Button>
       </div>
 
-      {/* Portal-style header */}
-      <div className="bg-[#faf9f7] rounded-xl border border-stone-200/60 overflow-hidden">
-        {/* Top bar */}
-        <div className="border-b border-stone-200/60 px-4 sm:px-6 py-3 flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Client Portal</span>
-          <div className="flex items-center gap-2">
-            <Avatar className="w-7 h-7">
-              {data.user.profileImageUrl && <AvatarImage src={data.user.profileImageUrl} alt={data.user.firstName} />}
-              <AvatarFallback className="bg-gray-100 text-gray-500"><User className="w-3.5 h-3.5" /></AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-gray-600">{data.user.firstName}</span>
+      {/* Full portal simulation — matches real portal layout exactly */}
+      <div className="min-h-screen bg-[#faf9f7]">
+        {/* Sticky header — matches portal header */}
+        <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-10">
+          <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground/60">
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Exit</span>
+            </span>
+            <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">
+              <span className="hidden sm:inline">Client Portal</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <Avatar className="w-7 h-7">
+                {data.user.profileImageUrl && <AvatarImage src={data.user.profileImageUrl} alt={data.user.firstName} />}
+                <AvatarFallback className="bg-gray-100 text-gray-500"><User className="w-3.5 h-3.5" /></AvatarFallback>
+              </Avatar>
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Welcome + Tabs */}
-        <div className="px-4 sm:px-6 pt-6">
-          <h2 className="font-serif text-2xl text-gray-900 mb-1">Welcome, {data.user.firstName}</h2>
-          <p className="text-gray-500 text-sm mb-6">Manage your photoshoots and photo edits</p>
-
-          <div className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-hide">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-                {tab.count > 0 && tab.id !== "settings" && (
-                  <span className="text-[10px] text-gray-400">({tab.count})</span>
-                )}
-                {activeTab === tab.id && (
-                  <motion.div layoutId="preview-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
-                )}
-              </button>
-            ))}
+        {/* Main content — max-w-5xl centered, exactly like the real portal */}
+        <main className="max-w-5xl mx-auto px-6 py-10">
+          <div className="mb-6 flex flex-col items-center text-center sm:items-start sm:text-left sm:flex-row sm:justify-between gap-4">
+            <div>
+              <h1 className="font-serif text-3xl text-gray-900 mb-1">
+                Welcome, {data.user.firstName}
+              </h1>
+              <p className="text-gray-500 text-sm">Manage your photoshoots and photo edits</p>
+            </div>
+            <Button className="bg-[#1a1a1a] text-white hover:bg-black opacity-50 cursor-default">
+              Start Designing Your Shoot
+            </Button>
           </div>
-        </div>
 
-        {/* Tab content */}
-        <div className="px-4 sm:px-6 py-6">
+          {/* Tabs — centered, matches portal tab bar */}
+          <div className="relative mb-8 -mx-4 sm:mx-0">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[#faf9f7] to-transparent z-10 sm:hidden" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#faf9f7] to-transparent z-10 sm:hidden" />
+            <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                  {tab.count > 0 && tab.id !== "settings" && (
+                    <span className="text-[10px] text-gray-400">({tab.count})</span>
+                  )}
+                  {activeTab === tab.id && (
+                    <motion.div layoutId="preview-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tab content */}
           {activeTab === "shoots" && <ShootsTab data={data} token={token} />}
           {activeTab === "edits" && <EditsTab data={data} token={token} />}
           {activeTab === "messages" && <MessagesTab data={data} />}
           {activeTab === "spaces" && <SpacesTab data={data} />}
           {activeTab === "settings" && <SettingsTab data={data} />}
-        </div>
+        </main>
       </div>
     </div>
   );

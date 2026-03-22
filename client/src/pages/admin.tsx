@@ -8487,6 +8487,7 @@ function AdminDashboard({ token }: { token: string }) {
             {view === "edit" && "Shoot Details"}
             {view === "gallery" && "Gallery"}
             {view === "tokens" && "Edit Tokens"}
+            {view === "client-preview" && "Client Preview"}
           </p>
         </header>
 
