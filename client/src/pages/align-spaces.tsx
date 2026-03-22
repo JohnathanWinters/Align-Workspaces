@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
 import { UserIndicator } from "@/components/user-indicator";
+import { ListSpaceModal } from "@/components/list-space-modal";
 
 interface Space {
   id: string;
@@ -208,6 +209,7 @@ function SpaceCard({ space }: { space: Space }) {
 export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showListModal, setShowListModal] = useState(false);
 
   const { data: spaces, isLoading: spacesLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -382,14 +384,14 @@ export default function AlignSpacesPage() {
                   <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
                   <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
                 </p>
-                <Link
-                  href="/workspaces?list=true"
+                <button
+                  onClick={() => setShowListModal(true)}
                   className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 w-full sm:w-auto rounded-full hover:bg-stone-800 transition-colors font-medium"
                   data-testid="button-post-space-cta"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Post your space
-                </Link>
+                </button>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 justify-center" data-testid="section-neighborhoods">
@@ -654,6 +656,10 @@ export default function AlignSpacesPage() {
       </section>
 
       <SiteFooter />
+
+      <AnimatePresence>
+        {showListModal && <ListSpaceModal onClose={() => setShowListModal(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
