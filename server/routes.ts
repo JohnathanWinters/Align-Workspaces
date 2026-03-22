@@ -1014,7 +1014,7 @@ export async function registerRoutes(
   app.get("/api/admin/users", isAdminOrEmployee, requirePermission("view_users"), async (_req, res) => {
     try {
       const allUsers = await storage.getAllUsers();
-      res.json(allUsers);
+      res.json(allUsers.filter(u => u.id !== "demo-client-maria-santos"));
     } catch {
       res.status(500).json({ message: "Failed to fetch users" });
     }
@@ -1193,7 +1193,7 @@ export async function registerRoutes(
   app.get("/api/admin/shoots", isAdminOrEmployee, requirePermission("view_shoots"), async (_req, res) => {
     try {
       const allShoots = await storage.getAllShoots();
-      res.json(allShoots);
+      res.json(allShoots.filter(s => s.userId !== "demo-client-maria-santos"));
     } catch {
       res.status(500).json({ message: "Failed to fetch shoots" });
     }
@@ -1949,7 +1949,7 @@ export async function registerRoutes(
   app.get("/api/admin/all-edit-tokens", isAdminOrEmployee, requirePermission("view_edit_tokens"), async (_req: any, res) => {
     try {
       const tokens = await storage.getAllEditTokens();
-      res.json(tokens);
+      res.json(tokens.filter(t => t.userId !== "demo-client-maria-santos"));
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -6254,7 +6254,7 @@ ${featuredSection}
 
       // Enrich bookings with space name
       const enrichedBookings = await Promise.all(guestBookings.map(async (booking) => {
-        const space = await storage.getSpace(booking.spaceId);
+        const space = await storage.getSpaceById(booking.spaceId);
         return { ...booking, spaceName: space?.name || "Unknown Space", spaceSlug: space?.slug, spaceImage: space?.imageUrls?.[0] };
       }));
 
