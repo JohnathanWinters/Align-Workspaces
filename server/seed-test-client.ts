@@ -13,6 +13,7 @@ import {
   shootMessages,
   adminConversations,
   adminMessages,
+  spaces,
   spaceBookings,
   spaceMessages,
   spaceFavorites,
@@ -39,6 +40,9 @@ const TEST_BOOKING_UPCOMING = "test-booking-upcoming";
 const TEST_BOOKING_COMPLETED = "test-booking-completed";
 const TEST_BOOKING_CHECKEDIN = "test-booking-checkedin";
 const TEST_BOOKING_CANCELLED = "test-booking-cancelled";
+const TEST_HOST_SPACE = "test-host-space-coaching";
+const TEST_HOST_BOOKING_1 = "test-host-booking-1";
+const TEST_HOST_BOOKING_2 = "test-host-booking-2";
 const TEST_WISHLIST_1 = "test-wishlist-therapy-offices";
 const TEST_WISHLIST_2 = "test-wishlist-creative-studios";
 
@@ -247,7 +251,7 @@ export async function seedTestClient() {
   await db.insert(spaceBookings).values([
     {
       id: TEST_BOOKING_UPCOMING, spaceId: "sample-space-maria-host", userId, userName: user.firstName || "Client", userEmail: TEST_EMAIL,
-      status: "confirmed", bookingDate: futureDate(10), bookingStartTime: "10:00", bookingHours: 2,
+      status: "approved", bookingDate: futureDate(10), bookingStartTime: "10:00", bookingHours: 2,
       paymentStatus: "paid", paymentAmount: 7000, feeTier: "standard",
       guestFeeAmount: 490, taxAmount: 490, totalGuestCharged: 7980, hostPayoutAmount: 6125, platformRevenue: 1365,
       message: "Saturday therapy sessions — thank you!", createdAt: pastTimestamp(7),
@@ -294,7 +298,53 @@ export async function seedTestClient() {
     hostRespondedAt: pastTimestamp(18), status: "published", createdAt: pastTimestamp(19),
   });
 
-  // 16. Space favorites
+  // 16. Host-owned space (My Spaces)
+  await db.insert(spaces).values({
+    id: TEST_HOST_SPACE,
+    name: "Nomad Coaching Studio",
+    slug: "test-nomad-coaching-studio",
+    type: "coaching",
+    description: "A private, modern coaching and consulting studio designed for one-on-one sessions. Features comfortable seating, a whiteboard wall, natural light, and a calming neutral palette. Perfect for life coaches, business consultants, and therapists seeking a professional yet warm environment.",
+    shortDescription: "Private coaching studio with natural light in Brickell",
+    address: "1200 Brickell Ave, Miami, FL 33131",
+    neighborhood: "Brickell",
+    latitude: "25.7617",
+    longitude: "-80.1918",
+    pricePerHour: 45,
+    pricePerDay: 280,
+    capacity: 4,
+    amenities: ["Wi-Fi", "Whiteboard", "Comfortable seating", "Natural light", "Climate control", "Coffee & tea", "Private restroom", "Street parking"],
+    imageUrls: ["/images/spaces/space-8d155dd6-8bfc-4515-a32a-01dd72bcfbfa.webp", "/images/spaces/space-c401b806-3712-4b45-8617-e3d30701873f.webp"],
+    colorPalette: JSON.stringify({ colors: [{ hex: "#E8E0D4", name: "Warm Linen" }, { hex: "#7A8B7A", name: "Sage" }, { hex: "#2C2C2C", name: "Charcoal" }], feel: "Grounded warmth — professional yet calming", explanation: "Warm Linen provides an inviting base, Sage introduces a natural, restorative quality, and Charcoal adds modern sophistication." }),
+    targetProfession: "Coaches & Consultants",
+    availableHours: "Mon-Fri 8:00 AM - 7:00 PM, Sat 9:00 AM - 3:00 PM",
+    hostName: user.firstName || "Host",
+    userId,
+    approvalStatus: "approved",
+    isActive: 1,
+    isSample: 0,
+  });
+
+  // 17. Bookings on host space (from other guests)
+  await db.insert(spaceBookings).values([
+    {
+      id: TEST_HOST_BOOKING_1, spaceId: TEST_HOST_SPACE, userId: "guest-seed-user-1", userName: "Sofia Martinez", userEmail: "sofia.m@example.com",
+      status: "approved", bookingDate: futureDate(5), bookingStartTime: "09:00", bookingHours: 2,
+      paymentStatus: "paid", paymentAmount: 9000, feeTier: "standard",
+      guestFeeAmount: 630, taxAmount: 630, totalGuestCharged: 10260, hostPayoutAmount: 7875, platformRevenue: 1755,
+      message: "Coaching session with a new client — thanks!", createdAt: pastTimestamp(3),
+    },
+    {
+      id: TEST_HOST_BOOKING_2, spaceId: TEST_HOST_SPACE, userId: "guest-seed-user-2", userName: "Daniel Park", userEmail: "daniel.p@example.com",
+      status: "completed", bookingDate: pastDate(8), bookingStartTime: "14:00", bookingHours: 1,
+      paymentStatus: "paid", paymentAmount: 4500, feeTier: "standard",
+      guestFeeAmount: 315, taxAmount: 315, totalGuestCharged: 5130, hostPayoutAmount: 3938, platformRevenue: 877,
+      checkedInAt: pastTimestamp(8), checkedOutAt: pastTimestamp(8), checkedInBy: "guest", checkedOutBy: "guest",
+      message: "Quick consulting session", createdAt: pastTimestamp(12),
+    },
+  ]);
+
+  // 18. Space favorites
   await db.insert(spaceFavorites).values([
     { id: "test-space-fav-1", userId, spaceId: "sample-space-maria-host" },
     { id: "test-space-fav-2", userId, spaceId: "sample-space-armando-host" },
@@ -370,9 +420,12 @@ export async function reseedTestClient() {
     await db.delete(spaceMessages).where(eq(spaceMessages.id, id));
   }
 
-  for (const id of [TEST_BOOKING_UPCOMING, TEST_BOOKING_COMPLETED, TEST_BOOKING_CHECKEDIN, TEST_BOOKING_CANCELLED]) {
+  for (const id of [TEST_BOOKING_UPCOMING, TEST_BOOKING_COMPLETED, TEST_BOOKING_CHECKEDIN, TEST_BOOKING_CANCELLED, TEST_HOST_BOOKING_1, TEST_HOST_BOOKING_2]) {
     await db.delete(spaceBookings).where(eq(spaceBookings.id, id));
   }
+
+  // Host space
+  await db.delete(spaces).where(eq(spaces.id, TEST_HOST_SPACE));
 
   // Space favorites
   for (const id of ["test-space-fav-1", "test-space-fav-2", "test-space-fav-3"]) {
