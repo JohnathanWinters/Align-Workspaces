@@ -14,6 +14,10 @@ import {
   adminConversations,
   adminMessages,
   spaceBookings,
+  spaceMessages,
+  spaceFavorites,
+  wishlistCollections,
+  wishlistItems,
   shootReviews,
   spaceReviews,
 } from "@shared/schema";
@@ -35,6 +39,8 @@ const TEST_BOOKING_UPCOMING = "test-booking-upcoming";
 const TEST_BOOKING_COMPLETED = "test-booking-completed";
 const TEST_BOOKING_CHECKEDIN = "test-booking-checkedin";
 const TEST_BOOKING_CANCELLED = "test-booking-cancelled";
+const TEST_WISHLIST_1 = "test-wishlist-therapy-offices";
+const TEST_WISHLIST_2 = "test-wishlist-creative-studios";
 
 const IMG_IDS = [
   "test-gallery-img-001", "test-gallery-img-002", "test-gallery-img-003",
@@ -288,6 +294,35 @@ export async function seedTestClient() {
     hostRespondedAt: pastTimestamp(18), status: "published", createdAt: pastTimestamp(19),
   });
 
+  // 16. Space favorites
+  await db.insert(spaceFavorites).values([
+    { id: "test-space-fav-1", userId, spaceId: "sample-space-maria-host" },
+    { id: "test-space-fav-2", userId, spaceId: "sample-space-armando-host" },
+    { id: "test-space-fav-3", userId, spaceId: "0ea55148-29d6-41dd-8428-2540b89c34ae" },
+  ]);
+
+  // 17. Wishlist collections + items
+  await db.insert(wishlistCollections).values([
+    { id: TEST_WISHLIST_1, userId, name: "Therapy Offices", createdAt: pastTimestamp(30) },
+    { id: TEST_WISHLIST_2, userId, name: "Creative Studios", createdAt: pastTimestamp(25) },
+  ]);
+  await db.insert(wishlistItems).values([
+    { id: "test-wl-item-1", collectionId: TEST_WISHLIST_1, spaceId: "sample-space-maria-host" },
+    { id: "test-wl-item-2", collectionId: TEST_WISHLIST_1, spaceId: "0ea55148-29d6-41dd-8428-2540b89c34ae" },
+    { id: "test-wl-item-3", collectionId: TEST_WISHLIST_2, spaceId: "sample-space-armando-host" },
+  ]);
+
+  // 18. Space booking messages
+  await db.insert(spaceMessages).values([
+    // Upcoming booking thread
+    { id: "test-spm-1", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: userId, senderName: user.firstName || "Client", senderRole: "guest", message: "Hi! I booked your space for Saturday morning. Is there parking available nearby?", createdAt: pastTimestamp(6) },
+    { id: "test-spm-2", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: "host", senderName: "Dr. Maria Santos", senderRole: "host", message: "Yes! There's free street parking on Miracle Mile, and a garage one block east. I'll leave the door unlocked for you at 10.", createdAt: pastTimestamp(5) },
+    { id: "test-spm-3", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: userId, senderName: user.firstName || "Client", senderRole: "guest", message: "Perfect, thank you so much!", createdAt: pastTimestamp(5) },
+    // Completed booking thread
+    { id: "test-spm-4", spaceBookingId: TEST_BOOKING_COMPLETED, senderId: userId, senderName: user.firstName || "Client", senderRole: "guest", message: "The studio was amazing! Everything was set up perfectly. Thank you!", createdAt: pastTimestamp(19) },
+    { id: "test-spm-5", spaceBookingId: TEST_BOOKING_COMPLETED, senderId: "host", senderName: "Align Studios", senderRole: "host", message: "So glad you enjoyed it! Your brand shoot photos are going to look incredible. Come back anytime!", createdAt: pastTimestamp(18) },
+  ]);
+
   console.log("Test client data seeded successfully");
 }
 
@@ -330,9 +365,26 @@ export async function reseedTestClient() {
   await db.delete(shoots).where(eq(shoots.id, TEST_SHOOT_UPCOMING));
   await db.delete(shoots).where(eq(shoots.id, TEST_SHOOT_INPROGRESS));
 
+  // Space messages
+  for (const id of ["test-spm-1", "test-spm-2", "test-spm-3", "test-spm-4", "test-spm-5"]) {
+    await db.delete(spaceMessages).where(eq(spaceMessages.id, id));
+  }
+
   for (const id of [TEST_BOOKING_UPCOMING, TEST_BOOKING_COMPLETED, TEST_BOOKING_CHECKEDIN, TEST_BOOKING_CANCELLED]) {
     await db.delete(spaceBookings).where(eq(spaceBookings.id, id));
   }
+
+  // Space favorites
+  for (const id of ["test-space-fav-1", "test-space-fav-2", "test-space-fav-3"]) {
+    await db.delete(spaceFavorites).where(eq(spaceFavorites.id, id));
+  }
+
+  // Wishlist items + collections
+  for (const id of ["test-wl-item-1", "test-wl-item-2", "test-wl-item-3"]) {
+    await db.delete(wishlistItems).where(eq(wishlistItems.id, id));
+  }
+  await db.delete(wishlistCollections).where(eq(wishlistCollections.id, TEST_WISHLIST_1));
+  await db.delete(wishlistCollections).where(eq(wishlistCollections.id, TEST_WISHLIST_2));
 
   await seedTestClient();
 }
