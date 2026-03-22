@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -123,6 +123,16 @@ export interface IStorage {
   createDirectMessage(msg: InsertDirectMessage): Promise<DirectMessage>;
   getLatestDirectMessage(conversationId: string): Promise<DirectMessage | undefined>;
   markDirectConversationRead(conversationId: string, role: "guest" | "host"): Promise<void>;
+
+  // Admin conversations
+  getOrCreateAdminConversation(clientId: string): Promise<AdminConversation>;
+  getAdminConversationById(id: string): Promise<AdminConversation | undefined>;
+  getAdminConversationByClient(clientId: string): Promise<AdminConversation | undefined>;
+  getAllAdminConversations(): Promise<AdminConversation[]>;
+  getAdminMessages(conversationId: string): Promise<AdminMessage[]>;
+  createAdminMessage(msg: InsertAdminMessage): Promise<AdminMessage>;
+  getLatestAdminMessage(conversationId: string): Promise<AdminMessage | undefined>;
+  markAdminConversationRead(conversationId: string, role: "admin" | "client"): Promise<void>;
 
   // Fee system
   getCompletedBookingCount(userId: string): Promise<number>;
@@ -945,6 +955,52 @@ export class DatabaseStorage implements IStorage {
       await db.update(directConversations).set({ lastReadGuest: now }).where(eq(directConversations.id, conversationId));
     } else {
       await db.update(directConversations).set({ lastReadHost: now }).where(eq(directConversations.id, conversationId));
+    }
+  }
+
+  // --- Admin conversations ---
+
+  async getOrCreateAdminConversation(clientId: string): Promise<AdminConversation> {
+    const [existing] = await db.select().from(adminConversations).where(eq(adminConversations.clientId, clientId));
+    if (existing) return existing;
+    const [created] = await db.insert(adminConversations).values({ clientId }).returning();
+    return created;
+  }
+
+  async getAdminConversationById(id: string): Promise<AdminConversation | undefined> {
+    const [result] = await db.select().from(adminConversations).where(eq(adminConversations.id, id));
+    return result;
+  }
+
+  async getAdminConversationByClient(clientId: string): Promise<AdminConversation | undefined> {
+    const [result] = await db.select().from(adminConversations).where(eq(adminConversations.clientId, clientId));
+    return result;
+  }
+
+  async getAllAdminConversations(): Promise<AdminConversation[]> {
+    return db.select().from(adminConversations).orderBy(desc(adminConversations.createdAt));
+  }
+
+  async getAdminMessages(conversationId: string): Promise<AdminMessage[]> {
+    return db.select().from(adminMessages).where(eq(adminMessages.conversationId, conversationId)).orderBy(adminMessages.createdAt);
+  }
+
+  async createAdminMessage(msg: InsertAdminMessage): Promise<AdminMessage> {
+    const [result] = await db.insert(adminMessages).values(msg).returning();
+    return result;
+  }
+
+  async getLatestAdminMessage(conversationId: string): Promise<AdminMessage | undefined> {
+    const [result] = await db.select().from(adminMessages).where(eq(adminMessages.conversationId, conversationId)).orderBy(desc(adminMessages.createdAt)).limit(1);
+    return result;
+  }
+
+  async markAdminConversationRead(conversationId: string, role: "admin" | "client"): Promise<void> {
+    const now = new Date();
+    if (role === "admin") {
+      await db.update(adminConversations).set({ lastReadAdmin: now }).where(eq(adminConversations.id, conversationId));
+    } else {
+      await db.update(adminConversations).set({ lastReadClient: now }).where(eq(adminConversations.id, conversationId));
     }
   }
 

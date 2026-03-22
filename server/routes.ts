@@ -1046,32 +1046,92 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: send direct message to a client
-  app.post("/api/admin/users/:id/message", isAdmin, async (req, res) => {
+  // Admin: get all admin conversations
+  app.get("/api/admin/conversations", isAdmin, async (_req, res) => {
     try {
-      const userId = req.params.id as string;
-      const { subject, message } = req.body;
-      if (!subject?.trim() || !message?.trim()) {
-        return res.status(400).json({ message: "Subject and message are required" });
-      }
-
+      const conversations = await storage.getAllAdminConversations();
       const allUsers = await storage.getAllUsers();
-      const user = allUsers.find((u) => u.id === userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-      if (!user.email) return res.status(400).json({ message: "Client has no email address" });
+      const enriched = await Promise.all(conversations.map(async (c) => {
+        const user = allUsers.find((u) => u.id === c.clientId);
+        const latestMessage = await storage.getLatestAdminMessage(c.id);
+        const messages = await storage.getAdminMessages(c.id);
+        const unreadCount = c.lastReadAdmin
+          ? messages.filter((m) => m.createdAt! > c.lastReadAdmin! && m.senderId !== "admin").length
+          : messages.filter((m) => m.senderId !== "admin").length;
+        return {
+          ...c,
+          clientName: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client",
+          clientEmail: user?.email || "",
+          clientPhoto: user?.profileImageUrl || null,
+          latestMessage: latestMessage ? { message: latestMessage.message, createdAt: latestMessage.createdAt, senderRole: latestMessage.senderRole } : null,
+          unreadCount,
+        };
+      }));
+      // Sort by latest message time
+      enriched.sort((a, b) => {
+        const aTime = a.latestMessage ? new Date(a.latestMessage.createdAt!).getTime() : new Date(a.createdAt!).getTime();
+        const bTime = b.latestMessage ? new Date(b.latestMessage.createdAt!).getTime() : new Date(b.createdAt!).getTime();
+        return bTime - aTime;
+      });
+      res.json(enriched);
+    } catch (err: any) {
+      console.error("Failed to fetch admin conversations:", err);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
 
-      const clientName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client";
-      await sendQuickClientMessage({
-        clientEmail: user.email,
-        clientName,
-        subject: subject.trim(),
+  // Admin: send message to client (creates conversation if needed)
+  app.post("/api/admin/conversations/:clientId/messages", isAdmin, async (req, res) => {
+    try {
+      const clientId = req.params.id ? req.params.id as string : req.params.clientId as string;
+      const { message } = req.body;
+      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+
+      const conversation = await storage.getOrCreateAdminConversation(clientId);
+      const msg = await storage.createAdminMessage({
+        conversationId: conversation.id,
+        senderId: "admin",
+        senderRole: "admin",
+        senderName: "Align",
         message: message.trim(),
       });
 
-      res.json({ sent: true });
+      // Mark as read by admin since they just sent it
+      await storage.markAdminConversationRead(conversation.id, "admin");
+
+      // Send push notification to client
+      try {
+        await sendPushToUser(clientId, {
+          title: "New message from Align",
+          body: message.trim().substring(0, 100),
+          url: "/portal?tab=messages",
+        });
+      } catch {}
+
+      res.json(msg);
     } catch (err: any) {
-      console.error("Failed to send client message:", err);
+      console.error("Failed to send admin message:", err);
       res.status(500).json({ message: err?.message || "Failed to send message" });
+    }
+  });
+
+  // Admin: get messages for a conversation
+  app.get("/api/admin/conversations/:id/messages", isAdmin, async (req, res) => {
+    try {
+      const messages = await storage.getAdminMessages(req.params.id as string);
+      res.json(messages);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Admin: mark conversation as read
+  app.post("/api/admin/conversations/:id/read", isAdmin, async (req, res) => {
+    try {
+      await storage.markAdminConversationRead(req.params.id as string, "admin");
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Failed to mark as read" });
     }
   });
 
@@ -3856,6 +3916,107 @@ export async function registerRoutes(
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Client: get my admin conversation
+  app.get("/api/admin-conversations/mine", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversation = await storage.getAdminConversationByClient(userId);
+      if (!conversation) return res.json(null);
+
+      const latestMessage = await storage.getLatestAdminMessage(conversation.id);
+      const messages = await storage.getAdminMessages(conversation.id);
+      const unreadCount = conversation.lastReadClient
+        ? messages.filter((m) => m.createdAt! > conversation.lastReadClient! && m.senderId !== userId).length
+        : messages.filter((m) => m.senderId !== userId).length;
+
+      res.json({
+        id: conversation.id,
+        clientId: conversation.clientId,
+        otherPartyName: "Align",
+        latestMessage: latestMessage ? { message: latestMessage.message, createdAt: latestMessage.createdAt, senderRole: latestMessage.senderRole } : null,
+        unreadCount,
+        createdAt: conversation.createdAt,
+        type: "admin",
+      });
+    } catch (err: any) {
+      console.error("Failed to fetch admin conversation:", err);
+      res.status(500).json({ message: "Failed to fetch conversation" });
+    }
+  });
+
+  // Client: get admin conversation messages
+  app.get("/api/admin-conversations/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversation = await storage.getAdminConversationById(req.params.id);
+      if (!conversation || conversation.clientId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      const messages = await storage.getAdminMessages(conversation.id);
+      res.json(messages);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Client: reply to admin conversation
+  app.post("/api/admin-conversations/:id/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversation = await storage.getAdminConversationById(req.params.id);
+      if (!conversation || conversation.clientId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const { message } = req.body;
+      if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
+
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find((u) => u.id === userId);
+      const senderName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || "Client" : "Client";
+
+      const msg = await storage.createAdminMessage({
+        conversationId: conversation.id,
+        senderId: userId,
+        senderRole: "client",
+        senderName,
+        message: message.trim(),
+      });
+
+      // Mark as read by client since they just sent it
+      await storage.markAdminConversationRead(conversation.id, "client");
+
+      // Notify admin
+      try {
+        await sendPushToRole("admin", {
+          title: `${senderName} replied`,
+          body: message.trim().substring(0, 100),
+          url: "/admin",
+        });
+      } catch {}
+
+      res.json(msg);
+    } catch (err: any) {
+      console.error("Failed to send client reply:", err);
+      res.status(500).json({ message: err?.message || "Failed to send message" });
+    }
+  });
+
+  // Client: mark admin conversation as read
+  app.post("/api/admin-conversations/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversation = await storage.getAdminConversationById(req.params.id);
+      if (!conversation || conversation.clientId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      await storage.markAdminConversationRead(req.params.id, "client");
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Failed to mark as read" });
     }
   });
 

@@ -559,6 +559,42 @@ export const insertDirectMessageSchema = createInsertSchema(directMessages).omit
 export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
 export type DirectMessage = typeof directMessages.$inferSelect;
 
+// Admin-to-client conversations (one per client)
+export const adminConversations = pgTable("admin_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: text("client_id").notNull(),
+  lastReadAdmin: timestamp("last_read_admin"),
+  lastReadClient: timestamp("last_read_client"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAdminConversationSchema = createInsertSchema(adminConversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAdminConversation = z.infer<typeof insertAdminConversationSchema>;
+export type AdminConversation = typeof adminConversations.$inferSelect;
+
+// Admin-to-client messages
+export const adminMessages = pgTable("admin_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull(),
+  senderId: text("sender_id").notNull(),
+  senderName: text("sender_name"),
+  senderRole: text("sender_role").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAdminMessageSchema = createInsertSchema(adminMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAdminMessage = z.infer<typeof insertAdminMessageSchema>;
+export type AdminMessage = typeof adminMessages.$inferSelect;
+
 export const pageViews = pgTable("page_views", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sessionId: text("session_id").notNull(),

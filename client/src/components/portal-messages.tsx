@@ -27,6 +27,7 @@ import {
   CalendarPlus,
   Bell,
   BellRing,
+  Star,
 } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useToast } from "@/hooks/use-toast";
@@ -65,9 +66,20 @@ interface EnrichedDirectConversation {
   type: "direct";
 }
 
+interface EnrichedAdminConversation {
+  id: string;
+  clientId: string;
+  otherPartyName: string;
+  latestMessage: { message: string; createdAt: string; senderRole: string } | null;
+  unreadCount: number;
+  createdAt: string;
+  type: "admin";
+}
+
 type UnifiedConversation =
   | (EnrichedBooking & { type: "booking" })
-  | EnrichedDirectConversation;
+  | EnrichedDirectConversation
+  | EnrichedAdminConversation;
 
 const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
   awaiting_payment: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Awaiting Payment" },
@@ -154,7 +166,8 @@ function ConversationList({
     <div className="divide-y divide-gray-100" data-testid="conversation-list">
       {conversations.map((c) => {
         const isDirect = c.type === "direct";
-        const status = isDirect ? null : (statusConfig[(c as EnrichedBooking).status || "pending"] || statusConfig.pending);
+        const isAdmin = c.type === "admin";
+        const status = isDirect || isAdmin ? null : (statusConfig[(c as EnrichedBooking).status || "pending"] || statusConfig.pending);
         const StatusIcon = status?.icon;
         return (
           <button
@@ -166,8 +179,8 @@ function ConversationList({
             data-testid={`conversation-item-${(c as any)._key || c.id}`}
           >
             <div className="flex items-start gap-3">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isDirect ? "bg-amber-50" : "bg-gray-100"}`}>
-                {isDirect ? <MessageCircle className="w-4 h-4 text-amber-600" /> : <Building2 className="w-4 h-4 text-gray-500" />}
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${isAdmin ? "bg-stone-900" : isDirect ? "bg-amber-50" : "bg-gray-100"}`}>
+                {isAdmin ? <Star className="w-4 h-4 text-[#c9a96e]" /> : isDirect ? <MessageCircle className="w-4 h-4 text-amber-600" /> : <Building2 className="w-4 h-4 text-gray-500" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
@@ -176,20 +189,22 @@ function ConversationList({
                       {c.otherPartyName}
                     </span>
                     <span className={`inline-flex items-center text-[9px] font-semibold px-1.5 py-0 rounded-full border flex-shrink-0 ${
-                      isDirect
-                        ? "bg-amber-50 text-amber-600 border-amber-200"
-                        : c.role === "host"
-                          ? "bg-violet-50 text-violet-600 border-violet-200"
-                          : "bg-sky-50 text-sky-600 border-sky-200"
+                      isAdmin
+                        ? "bg-stone-50 text-stone-600 border-stone-200"
+                        : isDirect
+                          ? "bg-amber-50 text-amber-600 border-amber-200"
+                          : c.role === "host"
+                            ? "bg-violet-50 text-violet-600 border-violet-200"
+                            : "bg-sky-50 text-sky-600 border-sky-200"
                     }`}>
-                      {isDirect ? "Inquiry" : c.role === "host" ? "Hosting" : "Renting"}
+                      {isAdmin ? "Align" : isDirect ? "Inquiry" : c.role === "host" ? "Hosting" : "Renting"}
                     </span>
                   </div>
                   <span className="text-[10px] text-gray-400 flex-shrink-0">
                     {c.latestMessage ? formatRelativeTime(c.latestMessage.createdAt) : ""}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-400 truncate mt-0.5">{c.spaceName}</p>
+                {!isAdmin && <p className="text-[11px] text-gray-400 truncate mt-0.5">{(c as any).spaceName}</p>}
                 <div className="flex items-center justify-between mt-1 gap-2">
                   <p className={`text-xs truncate ${c.unreadCount > 0 ? "text-gray-700 font-medium" : "text-gray-400"}`}>
                     {getMessagePreview(c.latestMessage)}
@@ -1220,6 +1235,131 @@ function DirectConversationView({
   );
 }
 
+function AdminConversationView({
+  conversation,
+  userId,
+  onBack,
+}: {
+  conversation: EnrichedAdminConversation;
+  userId: string;
+  onBack: () => void;
+}) {
+  const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { data: messages = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin-conversations", conversation.id, "messages"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin-conversations/${conversation.id}/messages`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    fetch(`/api/admin-conversations/${conversation.id}/read`, { method: "POST", credentials: "include" }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["/api/admin-conversations/mine"] });
+  }, [conversation.id, messages.length]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  const sendMutation = useMutation({
+    mutationFn: async (text: string) => {
+      await apiRequest("POST", `/api/admin-conversations/${conversation.id}/messages`, { message: text });
+    },
+    onSuccess: () => {
+      setNewMessage("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin-conversations", conversation.id, "messages"] });
+    },
+  });
+
+  const handleSend = () => {
+    const text = newMessage.trim();
+    if (!text) return;
+    sendMutation.mutate(text);
+  };
+
+  return (
+    <div className="flex flex-col h-full" data-testid={`admin-convo-view-${conversation.id}`}>
+      <div className="border-b border-gray-100 px-4 py-3 bg-white flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="lg:hidden text-gray-500 hover:text-gray-700" data-testid="button-back-to-inbox">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="w-9 h-9 rounded-full bg-stone-900 flex items-center justify-center flex-shrink-0">
+            <Star className="w-4 h-4 text-[#c9a96e]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-gray-900">Align</h3>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-stone-50 text-stone-600 border-stone-200">
+                Support
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-500">Align Workspaces team</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#faf9f7]">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm">No messages yet</div>
+        ) : (
+          messages.map((msg: any) => {
+            const isOwn = msg.senderId === userId;
+            return (
+              <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
+                <div className={`max-w-[75%] ${isOwn
+                  ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
+                  : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
+                } px-4 py-2.5 shadow-sm`}>
+                  {!isOwn && (
+                    <p className="text-[10px] font-medium text-[#c9a96e] mb-0.5">{msg.senderName}</p>
+                  )}
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                  <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
+                    {new Date(msg.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="border-t border-gray-100 px-4 py-3 bg-white flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Type a message..."
+            className="flex-1 bg-gray-50 border-gray-200 text-sm"
+            data-testid="input-admin-message"
+          />
+          <Button
+            onClick={handleSend}
+            disabled={!newMessage.trim() || sendMutation.isPending}
+            size="sm"
+            className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
+            data-testid="button-send-admin-message"
+          >
+            {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PortalMessagesSection({ userId }: { userId: string }) {
   const [activeConversation, setActiveConversation] = useState<UnifiedConversation | null>(null);
   const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("client");
@@ -1238,7 +1378,18 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
     refetchInterval: 10000,
   });
 
+  const { data: adminConvo } = useQuery<EnrichedAdminConversation | null>({
+    queryKey: ["/api/admin-conversations/mine"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin-conversations/mine", { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    refetchInterval: 10000,
+  });
+
   const allConversations: UnifiedConversation[] = [
+    ...(adminConvo ? [{ ...adminConvo, _key: `admin-${adminConvo.id}` }] : []),
     ...(bookingsData?.guestBookings || []).map((b) => ({ ...b, type: "booking" as const, _key: `${b.id}-guest` })),
     ...(bookingsData?.hostBookings || []).map((b) => ({ ...b, type: "booking" as const, _key: `${b.id}-host` })),
     ...(bookingsData?.directConversations || []).map((c) => ({ ...c, _key: c.id })),
@@ -1299,7 +1450,13 @@ export default function PortalMessagesSection({ userId }: { userId: string }) {
 
         <div className={`flex-1 flex flex-col ${!activeConversation ? "hidden lg:flex" : ""}`}>
           {currentConversation ? (
-            currentConversation.type === "direct" ? (
+            currentConversation.type === "admin" ? (
+              <AdminConversationView
+                conversation={currentConversation}
+                userId={userId}
+                onBack={() => setActiveConversation(null)}
+              />
+            ) : currentConversation.type === "direct" ? (
               <DirectConversationView
                 conversation={currentConversation}
                 userId={userId}
@@ -1344,10 +1501,21 @@ export function useUnreadCount() {
     refetchInterval: 15000,
   });
 
+  const { data: adminConvo } = useQuery<EnrichedAdminConversation | null>({
+    queryKey: ["/api/admin-conversations/mine"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin-conversations/mine", { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    refetchInterval: 15000,
+  });
+
   const all = [
     ...(data?.guestBookings || []),
     ...(data?.hostBookings || []),
     ...(data?.directConversations || []),
+    ...(adminConvo ? [adminConvo] : []),
   ];
   return all.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 }

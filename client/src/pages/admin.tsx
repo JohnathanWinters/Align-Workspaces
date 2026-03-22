@@ -66,6 +66,7 @@ import {
   ToggleLeft,
   ToggleRight,
   DollarSign,
+  ArrowLeft,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -7001,7 +7002,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -7030,10 +7031,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [debugOpen, setDebugOpen] = useState(false);
   const [debugPreviewRole, setDebugPreviewRole] = useState<"new" | "photo" | "host" | "both">("new");
   const [debugPreviewOpen, setDebugPreviewOpen] = useState(false);
-  const [messageUser, setMessageUser] = useState<UserType | null>(null);
-  const [messageSubject, setMessageSubject] = useState("");
-  const [messageBody, setMessageBody] = useState("");
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const [initialMessageClientId, setInitialMessageClientId] = useState<string | null>(null);
 
   const sidebarNav = useMemo(() => [
     {
@@ -7041,6 +7039,7 @@ function AdminDashboard({ token }: { token: string }) {
       items: [
         { id: "clients" as const, label: "Clients", icon: Users },
         { id: "shoots" as const, label: "Shoots", icon: Camera },
+        { id: "messages" as const, label: "Messages", icon: MessageCircle },
         { id: "pipeline" as const, label: "Book of Business", icon: FileSpreadsheet },
       ],
     },
@@ -7252,29 +7251,6 @@ function AdminDashboard({ token }: { token: string }) {
     setView("gallery");
   };
 
-  const handleSendDirectMessage = async () => {
-    if (!messageUser || !messageSubject.trim() || !messageBody.trim()) return;
-    setSendingMessage(true);
-    try {
-      const res = await adminFetch(`/api/admin/users/${messageUser.id}/message`, token, {
-        method: "POST",
-        body: JSON.stringify({ subject: messageSubject.trim(), message: messageBody.trim() }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to send");
-      }
-      toast({ title: "Message sent", description: `Email delivered to ${messageUser.email}` });
-      setMessageUser(null);
-      setMessageSubject("");
-      setMessageBody("");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-
   const startEditUser = (user: UserType) => {
     setEditingUser(user.id);
     setEditUserForm({
@@ -7428,6 +7404,17 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "pipeline") {
       return <PipelineManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "messages") {
+      return (
+        <AdminMessagesManager
+          token={token}
+          onBack={() => setView("clients")}
+          initialClientId={initialMessageClientId}
+          onClearInitialClient={() => setInitialMessageClientId(null)}
+        />
+      );
     }
 
     if (view === "shoots") {
@@ -7907,11 +7894,9 @@ function AdminDashboard({ token }: { token: string }) {
                                       variant="outline"
                                       size="sm"
                                       onClick={() => {
-                                        setMessageUser(user);
-                                        setMessageSubject("");
-                                        setMessageBody("");
+                                        setInitialMessageClientId(user.id);
+                                        setView("messages");
                                       }}
-                                      disabled={!user.email}
                                       data-testid={`button-message-user-${user.id}`}
                                       className="h-7 text-xs px-2 text-gray-600 border-gray-200"
                                     >
@@ -8580,81 +8565,285 @@ function AdminDashboard({ token }: { token: string }) {
         </div>
       )}
 
-      <Dialog open={!!messageUser} onOpenChange={(open) => { if (!open) setMessageUser(null); }}>
-        <DialogContent className="max-w-md p-0 gap-0" aria-describedby={undefined}>
-          {messageUser && (() => {
-            const clientName = [messageUser.firstName, messageUser.lastName].filter(Boolean).join(" ") || "Client";
-            return (
-              <>
-                <div className="px-5 py-4 border-b border-gray-100">
-                  <DialogTitle className="font-serif text-lg mb-2">Send Message</DialogTitle>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-7 h-7">
-                      {messageUser.profileImageUrl && <AvatarImage src={messageUser.profileImageUrl} />}
-                      <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3 h-3" /></AvatarFallback>
+    </div>
+  );
+}
+
+function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialClient }: { token: string; onBack: () => void; initialClientId: string | null; onClearInitialClient: () => void }) {
+  const { toast } = useToast();
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [selectedConvo, setSelectedConvo] = useState<any | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const loadConversations = async () => {
+    try {
+      const res = await adminFetch("/api/admin/conversations", token);
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data);
+        return data;
+      }
+    } catch {}
+    return [];
+  };
+
+  const loadMessages = async (convoId: string) => {
+    setLoadingMessages(true);
+    try {
+      const res = await adminFetch(`/api/admin/conversations/${convoId}/messages`, token);
+      if (res.ok) {
+        const msgs = await res.json();
+        setChatMessages(msgs);
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      }
+    } catch {}
+    setLoadingMessages(false);
+  };
+
+  const selectConversation = async (convo: any) => {
+    setSelectedConvo(convo);
+    await loadMessages(convo.id);
+    // Mark as read
+    adminFetch(`/api/admin/conversations/${convo.id}/read`, token, { method: "POST" }).catch(() => {});
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      const convos = await loadConversations();
+      // If opened from a client card, auto-select or create that conversation
+      if (initialClientId) {
+        const existing = convos.find((c: any) => c.clientId === initialClientId);
+        if (existing) {
+          await selectConversation(existing);
+        } else {
+          // Send an empty init message to create the conversation, then refresh
+          // Actually, just select and let the admin type the first message
+          // We need to create the conversation first
+          try {
+            const res = await adminFetch(`/api/admin/conversations/${initialClientId}/messages`, token, {
+              method: "POST",
+              body: JSON.stringify({ message: "👋" }),
+            });
+            if (res.ok) {
+              const freshConvos = await loadConversations();
+              const newConvo = freshConvos.find((c: any) => c.clientId === initialClientId);
+              if (newConvo) await selectConversation(newConvo);
+            }
+          } catch {}
+        }
+        onClearInitialClient();
+      }
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  // Poll for new conversations/messages
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      await loadConversations();
+      if (selectedConvo) {
+        const res = await adminFetch(`/api/admin/conversations/${selectedConvo.id}/messages`, token);
+        if (res.ok) {
+          const msgs = await res.json();
+          if (msgs.length !== chatMessages.length) {
+            setChatMessages(msgs);
+            setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+          }
+        }
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedConvo?.id, chatMessages.length]);
+
+  const handleSend = async () => {
+    if (!selectedConvo || !chatInput.trim()) return;
+    setSending(true);
+    try {
+      const res = await adminFetch(`/api/admin/conversations/${selectedConvo.clientId}/messages`, token, {
+        method: "POST",
+        body: JSON.stringify({ message: chatInput.trim() }),
+      });
+      if (res.ok) {
+        const msg = await res.json();
+        setChatMessages((prev) => [...prev, msg]);
+        setChatInput("");
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+        loadConversations();
+      } else {
+        const err = await res.json();
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex items-baseline gap-2 mb-6">
+            <h2 className="font-serif text-2xl text-gray-900">Messages</h2>
+            <span className="text-sm text-gray-400 font-medium">({conversations.length})</span>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex" style={{ minHeight: "65vh" }}>
+            {/* Conversation List */}
+            <div className={`w-full sm:w-80 border-r border-gray-100 flex-shrink-0 overflow-y-auto ${selectedConvo ? "hidden sm:block" : ""}`}>
+              {conversations.length === 0 ? (
+                <div className="text-center py-12 px-4">
+                  <MessageCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-400">No conversations yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Message a client to start</p>
+                </div>
+              ) : (
+                conversations.map((c: any) => (
+                  <button
+                    key={c.id}
+                    onClick={() => selectConversation(c)}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 ${selectedConvo?.id === c.id ? "bg-stone-50 border-l-2 border-l-gray-900" : ""}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Avatar className="w-9 h-9 flex-shrink-0 mt-0.5">
+                        {c.clientPhoto && <AvatarImage src={c.clientPhoto} />}
+                        <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3.5 h-3.5" /></AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`text-sm truncate ${c.unreadCount > 0 ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
+                            {c.clientName}
+                          </span>
+                          <span className="text-[10px] text-gray-400 flex-shrink-0">
+                            {c.latestMessage ? new Date(c.latestMessage.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{c.clientEmail}</p>
+                        <div className="flex items-center justify-between mt-1 gap-2">
+                          <p className={`text-xs truncate ${c.unreadCount > 0 ? "text-gray-700 font-medium" : "text-gray-400"}`}>
+                            {c.latestMessage ? (c.latestMessage.senderRole === "admin" ? "You: " : "") + c.latestMessage.message : "No messages"}
+                          </p>
+                          {c.unreadCount > 0 && (
+                            <span className="min-w-[18px] h-[18px] rounded-full bg-gray-900 text-white text-[9px] flex items-center justify-center font-bold flex-shrink-0">
+                              {c.unreadCount > 9 ? "9+" : c.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Chat Thread */}
+            <div className={`flex-1 flex flex-col ${!selectedConvo ? "hidden sm:flex" : ""}`}>
+              {selectedConvo ? (
+                <>
+                  {/* Header */}
+                  <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+                    <button onClick={() => setSelectedConvo(null)} className="sm:hidden text-gray-500 hover:text-gray-700">
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <Avatar className="w-8 h-8">
+                      {selectedConvo.clientPhoto && <AvatarImage src={selectedConvo.clientPhoto} />}
+                      <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3.5 h-3.5" /></AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{clientName}</p>
-                      <p className="text-xs text-gray-500">{messageUser.email}</p>
+                      <p className="text-sm font-medium text-gray-900">{selectedConvo.clientName}</p>
+                      <p className="text-xs text-gray-500">{selectedConvo.clientEmail}</p>
                     </div>
                   </div>
-                </div>
-                <div className="px-5 py-4 space-y-3">
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/50" style={{ maxHeight: "calc(65vh - 130px)" }}>
+                    {loadingMessages ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                      </div>
+                    ) : chatMessages.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Send className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400">No messages yet</p>
+                      </div>
+                    ) : (
+                      chatMessages.map((msg: any) => (
+                        <div key={msg.id} className={`flex ${msg.senderRole === "admin" ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                            msg.senderRole === "admin"
+                              ? "bg-[#1a1a1a] text-white rounded-br-md"
+                              : "bg-white border border-gray-200 text-gray-900 rounded-bl-md"
+                          }`}>
+                            {msg.senderRole !== "admin" && (
+                              <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
+                            )}
+                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                            <p className={`text-[10px] mt-1 ${msg.senderRole === "admin" ? "text-gray-400" : "text-gray-300"}`}>
+                              {msg.senderName} · {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Input */}
+                  <div className="px-4 py-3 border-t border-gray-100">
+                    <div className="flex gap-2">
+                      <Textarea
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Type a message..."
+                        rows={2}
+                        className="resize-none flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSend();
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={handleSend}
+                        disabled={sending || !chatInput.trim()}
+                        className="bg-[#1a1a1a] text-white self-end h-10 w-10 p-0 shrink-0"
+                      >
+                        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">Messages sent as Align. Press Enter to send.</p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-center px-6">
                   <div>
-                    <Label className="text-xs text-gray-500 mb-1 block">Subject</Label>
-                    <Input
-                      value={messageSubject}
-                      onChange={(e) => setMessageSubject(e.target.value)}
-                      placeholder="e.g. Your upcoming session"
-                      data-testid="input-message-subject"
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500 mb-1 block">Message</Label>
-                    <Textarea
-                      value={messageBody}
-                      onChange={(e) => setMessageBody(e.target.value)}
-                      placeholder="Write your message..."
-                      rows={4}
-                      className="resize-none"
-                      data-testid="input-message-body"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                          e.preventDefault();
-                          handleSendDirectMessage();
-                        }
-                      }}
-                    />
+                    <MessageCircle className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                    <p className="text-sm text-gray-400">Select a conversation</p>
+                    <p className="text-xs text-gray-400 mt-1">Or message a client from the Clients tab</p>
                   </div>
                 </div>
-                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                  <p className="text-[10px] text-gray-400">Sent as email. Cmd+Enter to send.</p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setMessageUser(null)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSendDirectMessage}
-                      disabled={sendingMessage || !messageSubject.trim() || !messageBody.trim()}
-                      className="bg-[#1a1a1a] text-white"
-                      data-testid="button-send-message"
-                    >
-                      {sendingMessage ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
-                      Send
-                    </Button>
-                  </div>
-                </div>
-              </>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </main>
     </div>
   );
 }
