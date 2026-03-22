@@ -1010,10 +1010,13 @@ export async function registerRoutes(
     }
   });
 
+  // Test client email to exclude from admin views
+  const TEST_CLIENT_EMAIL = "nomad.ar89@yahoo.com";
+
   app.get("/api/admin/users", isAdminOrEmployee, requirePermission("view_users"), async (_req, res) => {
     try {
       const allUsers = await storage.getAllUsers();
-      res.json(allUsers);
+      res.json(allUsers.filter(u => u.email !== TEST_CLIENT_EMAIL));
     } catch {
       res.status(500).json({ message: "Failed to fetch users" });
     }
@@ -1081,7 +1084,7 @@ export async function registerRoutes(
   // Admin: get all admin conversations
   app.get("/api/admin/conversations", isAdmin, async (_req, res) => {
     try {
-      const conversations = await storage.getAllAdminConversations();
+      const conversations = (await storage.getAllAdminConversations()).filter(c => !c.id.startsWith("test-"));
       const allUsers = await storage.getAllUsers();
       const enriched = await Promise.all(conversations.map(async (c) => {
         const user = allUsers.find((u) => u.id === c.clientId);
@@ -1192,7 +1195,7 @@ export async function registerRoutes(
   app.get("/api/admin/shoots", isAdminOrEmployee, requirePermission("view_shoots"), async (_req, res) => {
     try {
       const allShoots = await storage.getAllShoots();
-      res.json(allShoots);
+      res.json(allShoots.filter(s => !s.id.startsWith("test-")));
     } catch {
       res.status(500).json({ message: "Failed to fetch shoots" });
     }
@@ -1948,7 +1951,7 @@ export async function registerRoutes(
   app.get("/api/admin/all-edit-tokens", isAdminOrEmployee, requirePermission("view_edit_tokens"), async (_req: any, res) => {
     try {
       const tokens = await storage.getAllEditTokens();
-      res.json(tokens);
+      res.json(tokens.filter(t => !t.id.startsWith("test-")));
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -4702,7 +4705,7 @@ export async function registerRoutes(
   app.get("/api/admin/reviews", isAdmin, async (req: any, res) => {
     try {
       const reviews = await storage.getAllReviews();
-      res.json(reviews);
+      res.json(reviews.filter((r: any) => !r.id?.startsWith("test-")));
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -4787,7 +4790,7 @@ export async function registerRoutes(
       const reviews = await storage.getAllShootReviews();
       const allShoots = await storage.getAllShoots();
       const shootMap = new Map(allShoots.map((s) => [s.id, s.title]));
-      const enriched = reviews.map((r) => ({ ...r, shootTitle: shootMap.get(r.shootId) || "Unknown Shoot" }));
+      const enriched = reviews.filter(r => !r.id.startsWith("test-")).map((r) => ({ ...r, shootTitle: shootMap.get(r.shootId) || "Unknown Shoot" }));
       res.json(enriched);
     } catch {
       res.status(500).json({ message: "Failed to fetch shoot reviews" });
