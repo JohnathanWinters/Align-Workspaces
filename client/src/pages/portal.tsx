@@ -108,16 +108,19 @@ type EditRequestMessage = {
   createdAt: string;
 };
 
-const environmentCoverImages: Record<string, string> = {
-  office: "/images/portfolio-office-assured-cozy.webp",
-  urban: "/images/portfolio-urban-assured-bright.webp",
-  nature: "/images/portfolio-1.webp",
-  suburban: "/images/portfolio-2.webp",
-  kitchen: "/images/portfolio-office-assured-bright-2.webp",
-  restaurant: "/images/portfolio-office-assured-bright-3.webp",
-  gym: "/images/portfolio-urban-confidence-bright.webp",
-  workvan: "/images/portfolio-urban-assured-bright-2.webp",
+// Maps emotional impact values to the env image suffix
+const moodToSuffix: Record<string, string> = {
+  cozy: "cozy",
+  bright: "bright",
+  powerful: "powerful",
 };
+
+function getEnvironmentCoverImage(environment: string | null, emotionalImpact: string | null): string | null {
+  if (!environment || environment === "other") return null;
+  const suffix = emotionalImpact ? moodToSuffix[emotionalImpact] : null;
+  if (suffix) return `/images/env-${environment}-${suffix}.webp`;
+  return `/images/env-${environment}.webp`;
+}
 
 function getStatusColor(status: string | null) {
   switch (status) {
@@ -2453,7 +2456,7 @@ function PortalContent() {
                       {(shoot.coverImageUrl || shoot.environment) && (
                         <div className="aspect-[16/9] overflow-hidden">
                           <img
-                            src={shoot.coverImageUrl || environmentCoverImages[shoot.environment || ""] || "/images/portfolio-1.webp"}
+                            src={shoot.coverImageUrl || getEnvironmentCoverImage(shoot.environment, shoot.emotionalImpact) || "/images/env-office.webp"}
                             alt={shoot.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
