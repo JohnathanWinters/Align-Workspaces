@@ -5593,10 +5593,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
 function RevenueDashboard({ token, onBack }: { token: string; onBack: () => void }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<"all" | "bookings" | "invoices">("all");
 
   useEffect(() => {
-    adminFetch("/api/admin/revenue", token).then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
-  }, [token]);
+    setLoading(true);
+    adminFetch(`/api/admin/revenue?source=${source}`, token).then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [token, source]);
 
   if (loading) {
     return (
@@ -5625,6 +5627,17 @@ function RevenueDashboard({ token, onBack }: { token: string; onBack: () => void
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
             <p className="font-serif text-lg text-gray-900">Revenue Dashboard</p>
+          </div>
+          <div className="inline-flex bg-stone-100 rounded-full p-0.5 gap-0.5 text-xs">
+            {(["all", "bookings", "invoices"] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => setSource(s)}
+                className={`px-3 py-1 rounded-full transition-colors font-medium ${source === s ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                {s === "all" ? "All" : s === "bookings" ? `Bookings${data?.counts?.bookings ? ` (${data.counts.bookings})` : ""}` : `Invoices${data?.counts?.invoices ? ` (${data.counts.invoices})` : ""}`}
+              </button>
+            ))}
           </div>
         </div>
       </header>

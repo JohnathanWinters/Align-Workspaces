@@ -856,3 +856,19 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
 
 export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
 export type TeamMember = typeof teamMembers.$inferSelect;
+
+// ── Invoice Payments (synced from Stripe) ──────────────────────────
+export const invoicePayments = pgTable("invoice_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id").unique(),
+  stripeInvoiceId: varchar("stripe_invoice_id"),
+  customerEmail: varchar("customer_email"),
+  customerName: varchar("customer_name"),
+  amount: integer("amount").notNull(), // cents
+  description: text("description"),
+  shootId: varchar("shoot_id"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type InvoicePayment = typeof invoicePayments.$inferSelect;

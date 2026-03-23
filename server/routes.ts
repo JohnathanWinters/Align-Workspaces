@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -5729,13 +5729,37 @@ ${featuredSection}
 
   // --- Tax & Revenue Reporting ---
 
-  app.get("/api/admin/revenue", isAdmin, async (_req, res) => {
+  app.get("/api/admin/revenue", isAdmin, async (req, res) => {
     try {
+      const source = (req.query.source as string) || "all"; // "all" | "bookings" | "invoices"
+
       // All paid bookings (exclude test seed data)
       const allBookingsRaw = await db.select().from(spaceBookings)
         .where(eq(spaceBookings.paymentStatus, "paid"))
         .orderBy(desc(spaceBookings.createdAt));
       const allBookings = allBookingsRaw.filter(b => !b.id.startsWith("test-"));
+
+      // All invoice payments
+      const allInvoices = await db.select().from(invoicePayments).orderBy(desc(invoicePayments.paidAt));
+
+      // Build unified revenue entries based on filter
+      type RevenueEntry = { date: string; amount: number; source: "booking" | "invoice" };
+      const entries: RevenueEntry[] = [];
+
+      if (source === "all" || source === "bookings") {
+        for (const b of allBookings) {
+          const rev = b.platformRevenue || ((b.guestFeeAmount || b.renterFeeAmount || 0) + (b.hostFeeAmount || 0));
+          const date = b.bookingDate || b.createdAt?.toISOString().split("T")[0] || "";
+          entries.push({ date, amount: rev, source: "booking" });
+        }
+      }
+
+      if (source === "all" || source === "invoices") {
+        for (const inv of allInvoices) {
+          const date = inv.paidAt?.toISOString().split("T")[0] || inv.createdAt?.toISOString().split("T")[0] || "";
+          entries.push({ date, amount: inv.amount, source: "invoice" });
+        }
+      }
 
       const now = new Date();
       const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -5743,12 +5767,10 @@ ${featuredSection}
       thisWeekStart.setDate(now.getDate() - now.getDay());
       thisWeekStart.setHours(0, 0, 0, 0);
 
-      // Revenue by period
       let todayRevenue = 0, weekRevenue = 0, monthRevenue = 0, allTimeRevenue = 0;
       let todayBookings = 0, weekBookings = 0, monthBookings = 0;
       const todayStr = now.toISOString().split("T")[0];
 
-      // Daily revenue for chart (last 30 days)
       const dailyRevenue: Record<string, { date: string; revenue: number; bookings: number }> = {};
       for (let i = 29; i >= 0; i--) {
         const d = new Date(now);
@@ -5757,18 +5779,16 @@ ${featuredSection}
         dailyRevenue[key] = { date: key, revenue: 0, bookings: 0 };
       }
 
-      for (const b of allBookings) {
-        const rev = b.platformRevenue || ((b.guestFeeAmount || b.renterFeeAmount || 0) + (b.hostFeeAmount || 0));
-        const bookingDate = b.bookingDate || b.createdAt?.toISOString().split("T")[0] || "";
-        allTimeRevenue += rev;
+      for (const e of entries) {
+        allTimeRevenue += e.amount;
 
-        if (bookingDate === todayStr) { todayRevenue += rev; todayBookings++; }
-        if (bookingDate >= thisWeekStart.toISOString().split("T")[0]) { weekRevenue += rev; weekBookings++; }
-        if (bookingDate.startsWith(thisMonth)) { monthRevenue += rev; monthBookings++; }
+        if (e.date === todayStr) { todayRevenue += e.amount; todayBookings++; }
+        if (e.date >= thisWeekStart.toISOString().split("T")[0]) { weekRevenue += e.amount; weekBookings++; }
+        if (e.date.startsWith(thisMonth)) { monthRevenue += e.amount; monthBookings++; }
 
-        if (dailyRevenue[bookingDate]) {
-          dailyRevenue[bookingDate].revenue += rev;
-          dailyRevenue[bookingDate].bookings++;
+        if (dailyRevenue[e.date]) {
+          dailyRevenue[e.date].revenue += e.amount;
+          dailyRevenue[e.date].bookings++;
         }
       }
 
@@ -5826,6 +5846,7 @@ ${featuredSection}
       }
 
       res.json({
+        source,
         revenue: {
           today: todayRevenue,
           week: weekRevenue,
@@ -5836,8 +5857,12 @@ ${featuredSection}
           today: todayBookings,
           week: weekBookings,
           month: monthBookings,
-          allTime: allBookings.length,
+          allTime: entries.length,
           perDay: bookingsPerDay,
+        },
+        counts: {
+          bookings: allBookings.length,
+          invoices: allInvoices.length,
         },
         target: {
           monthly: monthlyTarget,
