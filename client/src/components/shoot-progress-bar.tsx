@@ -57,7 +57,14 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
         {shoot.location && (
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
-            <span className="truncate">{shoot.location}</span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline truncate"
+            >
+              {shoot.location}
+            </a>
           </div>
         )}
       </div>
