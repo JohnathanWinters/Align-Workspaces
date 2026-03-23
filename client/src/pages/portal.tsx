@@ -1595,10 +1595,21 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
           </div>
         ) : images.length === 0 ? (
           <Card className="border-dashed border-2 border-gray-200 bg-white/50">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <Image className="w-10 h-10 text-gray-300 mb-3" />
-              <h3 className="font-serif text-lg text-gray-900 mb-1">No photos yet</h3>
-              <p className="text-gray-500 text-sm">Photos will appear here once they've been uploaded.</p>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              {getShootProgressStage(shoot) >= 0 && shoot.status !== "completed" ? (
+                <>
+                  <div className="w-full max-w-md mb-6">
+                    <ShootProgressBar shoot={shoot} />
+                  </div>
+                  <p className="text-gray-400 text-xs">Photos will appear here as they're uploaded.</p>
+                </>
+              ) : (
+                <>
+                  <Image className="w-10 h-10 text-gray-300 mb-3" />
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No photos yet</h3>
+                  <p className="text-gray-500 text-sm">Photos will appear here once they've been uploaded.</p>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -2454,45 +2465,48 @@ function PortalContent() {
                         )}
                       </CardHeader>
                       <CardContent className="pt-0 flex-1 flex flex-col">
-                        <div className="space-y-2 text-sm text-gray-500">
-                          {shoot.environment && (
-                            <div className="flex items-center gap-2">
-                              <Camera className="w-3.5 h-3.5" />
-                              <span className="capitalize">{shoot.environment}</span>
-                            </div>
-                          )}
-                          {shoot.shootDate && (
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-3.5 h-3.5" />
-                              <span>
-                                {formatDate(shoot.shootDate)}
-                                {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
-                              </span>
-                            </div>
-                          )}
-                          {shoot.location && (
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-3.5 h-3.5 shrink-0" />
-                              <a
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                data-testid={`link-location-${shoot.id}`}
-                                className="text-blue-600 hover:underline truncate flex items-center gap-1"
-                              >
-                                {shoot.location}
-                                <ExternalLink className="w-3 h-3 shrink-0" />
-                              </a>
-                            </div>
-                          )}
-                          {shoot.emotionalImpact && (
-                            <div className="flex items-center gap-2">
-                              <Image className="w-3.5 h-3.5" />
-                              <span className="capitalize">{shoot.emotionalImpact} mood</span>
-                            </div>
-                          )}
-                        </div>
+                        {/* Only show details when progress bar is NOT showing (draft status) */}
+                        {getShootProgressStage(shoot) < 0 && (
+                          <div className="space-y-2 text-sm text-gray-500">
+                            {shoot.environment && (
+                              <div className="flex items-center gap-2">
+                                <Camera className="w-3.5 h-3.5" />
+                                <span className="capitalize">{shoot.environment}</span>
+                              </div>
+                            )}
+                            {shoot.shootDate && (
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>
+                                  {formatDate(shoot.shootDate)}
+                                  {shoot.shootTime && ` at ${new Date("2000-01-01T" + shoot.shootTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
+                                </span>
+                              </div>
+                            )}
+                            {shoot.location && (
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <a
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  data-testid={`link-location-${shoot.id}`}
+                                  className="text-blue-600 hover:underline truncate flex items-center gap-1"
+                                >
+                                  {shoot.location}
+                                  <ExternalLink className="w-3 h-3 shrink-0" />
+                                </a>
+                              </div>
+                            )}
+                            {shoot.emotionalImpact && (
+                              <div className="flex items-center gap-2">
+                                <Image className="w-3.5 h-3.5" />
+                                <span className="capitalize">{shoot.emotionalImpact} mood</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className="flex flex-col gap-2.5 mt-auto pt-3">
                           {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
                             <div className="flex gap-2">
