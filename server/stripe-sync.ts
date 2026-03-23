@@ -25,6 +25,44 @@ async function syncBookings(stripe: any): Promise<{ synced: number; skipped: num
 
     for (const session of sessions.data) {
       const meta = session.metadata || {};
+
+      // Handle portrait session downpayments (checkout with leadId, no type)
+      if (meta.leadId && !meta.type) {
+        try {
+          const piId = typeof session.payment_intent === "object"
+            ? session.payment_intent?.id
+            : session.payment_intent || null;
+
+          if (piId) {
+            const [existing] = await db.select({ id: invoicePayments.id })
+              .from(invoicePayments)
+              .where(eq(invoicePayments.stripePaymentIntentId, piId));
+            if (existing) { skipped++; continue; }
+          }
+
+          const amount = session.amount_total || 0;
+          const email = session.customer_email || "";
+          const paidAt = session.created ? new Date(session.created * 1000) : new Date();
+
+          await db.insert(invoicePayments).values({
+            stripePaymentIntentId: piId,
+            stripeInvoiceId: null,
+            customerEmail: email,
+            customerName: email.split("@")[0] || "Client",
+            amount,
+            description: `Portrait session downpayment (50%)`,
+            shootId: null,
+            paidAt,
+          });
+
+          synced++;
+          log(`Synced portrait downpayment: ${email} - $${(amount / 100).toFixed(2)}`, "stripe-sync");
+        } catch (err: any) {
+          errors.push(`portrait downpayment ${meta.leadId}: ${err.message}`);
+        }
+        continue;
+      }
+
       if (meta.type !== "space_booking" || !meta.bookingId) continue;
 
       try {
