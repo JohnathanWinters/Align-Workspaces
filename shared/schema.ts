@@ -790,3 +790,41 @@ export const insertRecurringBookingSchema = createInsertSchema(recurringBookings
 
 export type InsertRecurringBooking = z.infer<typeof insertRecurringBookingSchema>;
 export type RecurringBooking = typeof recurringBookings.$inferSelect;
+
+// ── Arrival Guides ────────────────────────────────────────────────
+export const arrivalGuides = pgTable("arrival_guides", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  wifiName: text("wifi_name"),
+  wifiPassword: text("wifi_password"),
+  doorCode: text("door_code"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertArrivalGuideSchema = createInsertSchema(arrivalGuides).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertArrivalGuide = z.infer<typeof insertArrivalGuideSchema>;
+export type ArrivalGuide = typeof arrivalGuides.$inferSelect;
+
+export const arrivalGuideSteps = pgTable("arrival_guide_steps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  guideId: varchar("guide_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertArrivalGuideStepSchema = createInsertSchema(arrivalGuideSteps).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertArrivalGuideStep = z.infer<typeof insertArrivalGuideStepSchema>;
+export type ArrivalGuideStep = typeof arrivalGuideSteps.$inferSelect;

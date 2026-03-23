@@ -30,6 +30,7 @@ import {
   Star,
   MapPin,
 } from "lucide-react";
+import { ArrivalGuideViewer } from "./arrival-guide";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { ImageAttachButton, MessageImage } from "@/components/image-attach-button";
@@ -590,6 +591,7 @@ function ConversationView({
                     Google Maps
                   </a>
                 )}
+                {!isHost && <ArrivalGuideViewer bookingId={booking.id} />}
               </div>
             )}
 

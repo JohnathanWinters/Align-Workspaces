@@ -46,6 +46,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
+import { ArrivalGuideEditor } from "./arrival-guide";
 
 const SPACE_TYPES = [
   { value: "therapy", label: "Therapy & Counseling" },
@@ -264,7 +265,10 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
   return (
     <Card className="bg-white" data-testid={`my-space-${space.id}`}>
       <CardContent className="p-4">
-        <div className="flex items-start justify-between">
+        <div
+          className="flex items-start justify-between cursor-pointer"
+          onClick={() => setEditing(!editing)}
+        >
           <div>
             <h3 className="font-medium text-gray-900 text-sm">{space.name}</h3>
             <div className="flex items-center gap-2 mt-1">
@@ -276,7 +280,7 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
               {space.capacity && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{space.capacity} people</span>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {!editing && (
               <button
                 onClick={() => setEditing(true)}
@@ -295,6 +299,7 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
           {editing && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
               <EditSpaceForm space={space} onClose={() => setEditing(false)} />
+              <ArrivalGuideEditor spaceId={space.id} />
             </motion.div>
           )}
         </AnimatePresence>

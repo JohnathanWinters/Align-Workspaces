@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -6230,6 +6230,95 @@ ${featuredSection}
         imported++;
       }
       res.json({ imported });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ── Arrival Guides ─────────────────────────────────────────────────
+
+  // Host: get arrival guide for a space
+  app.get("/api/spaces/:id/arrival-guide", isAuthenticated, async (req: any, res) => {
+    try {
+      const [guide] = await db.select().from(arrivalGuides).where(eq(arrivalGuides.spaceId, req.params.id));
+      if (!guide) return res.json(null);
+      const steps = await db.select().from(arrivalGuideSteps).where(eq(arrivalGuideSteps.guideId, guide.id)).orderBy(arrivalGuideSteps.sortOrder);
+      res.json({ ...guide, steps });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Host: create or update arrival guide
+  app.put("/api/spaces/:id/arrival-guide", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.userId !== userId) return res.status(403).json({ message: "Not your space" });
+
+      const { wifiName, wifiPassword, doorCode, notes, steps } = req.body;
+
+      // Upsert guide
+      let [guide] = await db.select().from(arrivalGuides).where(eq(arrivalGuides.spaceId, req.params.id));
+      if (guide) {
+        await db.update(arrivalGuides).set({ wifiName, wifiPassword, doorCode, notes, updatedAt: new Date() }).where(eq(arrivalGuides.id, guide.id));
+      } else {
+        const [newGuide] = await db.insert(arrivalGuides).values({ spaceId: req.params.id, wifiName, wifiPassword, doorCode, notes }).returning();
+        guide = newGuide;
+      }
+
+      // Replace steps
+      await db.delete(arrivalGuideSteps).where(eq(arrivalGuideSteps.guideId, guide.id));
+      if (steps && Array.isArray(steps) && steps.length > 0) {
+        await db.insert(arrivalGuideSteps).values(
+          steps.map((s: any, i: number) => ({
+            guideId: guide.id,
+            imageUrl: s.imageUrl,
+            caption: s.caption || null,
+            sortOrder: i,
+          }))
+        );
+      }
+
+      const updatedSteps = await db.select().from(arrivalGuideSteps).where(eq(arrivalGuideSteps.guideId, guide.id)).orderBy(arrivalGuideSteps.sortOrder);
+      res.json({ ...guide, steps: updatedSteps });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Host: upload arrival guide step image
+  app.post("/api/spaces/:id/arrival-guide/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.userId !== userId) return res.status(403).json({ message: "Not your space" });
+      if (!req.file) return res.status(400).json({ message: "No image provided" });
+
+      const buffer = await sharp(req.file.buffer).resize(1200, 900, { fit: "cover" }).webp({ quality: 80 }).toBuffer();
+      const key = `arrival-guides/${req.params.id}/${randomUUID()}.webp`;
+      await uploadBuffer(buffer, key, "image/webp");
+      res.json({ imageUrl: key });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Guest: get arrival guide for a confirmed booking
+  app.get("/api/space-bookings/:id/arrival-guide", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      if (booking.userId !== userId) return res.status(403).json({ message: "Not your booking" });
+      if (!["approved", "confirmed", "checked_in"].includes(booking.status || "")) {
+        return res.json(null); // Only show after confirmation
+      }
+
+      const [guide] = await db.select().from(arrivalGuides).where(eq(arrivalGuides.spaceId, booking.spaceId));
+      if (!guide) return res.json(null);
+      const steps = await db.select().from(arrivalGuideSteps).where(eq(arrivalGuideSteps.guideId, guide.id)).orderBy(arrivalGuideSteps.sortOrder);
+      res.json({ ...guide, steps });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
