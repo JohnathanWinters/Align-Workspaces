@@ -53,6 +53,12 @@ const IMG_IDS = [
   "test-gallery-img-010", "test-gallery-img-011", "test-gallery-img-012",
 ];
 
+// Gallery images for the in-progress shoot
+const LIFESTYLE_IMG_IDS = [
+  "test-lifestyle-img-001", "test-lifestyle-img-002", "test-lifestyle-img-003",
+  "test-lifestyle-img-004", "test-lifestyle-img-005",
+];
+
 const IMAGES = {
   portrait1: "/images/portfolio-1.webp",
   portrait2: "/images/portfolio-2.webp",
@@ -169,6 +175,15 @@ export async function seedTestClient() {
     { id: IMG_IDS[9], shootId: TEST_SHOOT_COMPLETED, folderId: null, imageUrl: IMAGES.portrait2, thumbnailUrl: IMAGES.portrait2, originalFilename: "Extra_002.jpg", sortOrder: 1 },
     { id: IMG_IDS[10], shootId: TEST_SHOOT_COMPLETED, folderId: null, imageUrl: IMAGES.urbanAssuredBright, thumbnailUrl: IMAGES.urbanAssuredBright, originalFilename: "Extra_003.jpg", sortOrder: 2 },
     { id: IMG_IDS[11], shootId: TEST_SHOOT_COMPLETED, folderId: null, imageUrl: IMAGES.urbanConfidenceBright, thumbnailUrl: IMAGES.urbanConfidenceBright, originalFilename: "Extra_004.jpg", sortOrder: 3 },
+  ]);
+
+  // 3b. Gallery images for in-progress shoot (lifestyle)
+  await db.insert(galleryImages).values([
+    { id: LIFESTYLE_IMG_IDS[0], shootId: TEST_SHOOT_INPROGRESS, folderId: null, imageUrl: IMAGES.urbanAssuredBright, thumbnailUrl: IMAGES.urbanAssuredBright, originalFilename: "Lifestyle_Wynwood_001.jpg", sortOrder: 0 },
+    { id: LIFESTYLE_IMG_IDS[1], shootId: TEST_SHOOT_INPROGRESS, folderId: null, imageUrl: IMAGES.urbanAssuredBright2, thumbnailUrl: IMAGES.urbanAssuredBright2, originalFilename: "Lifestyle_Wynwood_002.jpg", sortOrder: 1 },
+    { id: LIFESTYLE_IMG_IDS[2], shootId: TEST_SHOOT_INPROGRESS, folderId: null, imageUrl: IMAGES.urbanConfidenceBright, thumbnailUrl: IMAGES.urbanConfidenceBright, originalFilename: "Lifestyle_Wynwood_003.jpg", sortOrder: 2 },
+    { id: LIFESTYLE_IMG_IDS[3], shootId: TEST_SHOOT_INPROGRESS, folderId: null, imageUrl: IMAGES.portrait1, thumbnailUrl: IMAGES.portrait1, originalFilename: "Lifestyle_Wynwood_004.jpg", sortOrder: 3 },
+    { id: LIFESTYLE_IMG_IDS[4], shootId: TEST_SHOOT_INPROGRESS, folderId: null, imageUrl: IMAGES.portrait2, thumbnailUrl: IMAGES.portrait2, originalFilename: "Lifestyle_Wynwood_005.jpg", sortOrder: 4 },
   ]);
 
   // 4. Image favorites
@@ -408,7 +423,7 @@ export async function reseedTestClient() {
   await db.delete(imageFavorites).where(eq(imageFavorites.id, "test-fav-1"));
   await db.delete(imageFavorites).where(eq(imageFavorites.id, "test-fav-2"));
   await db.delete(imageFavorites).where(eq(imageFavorites.id, "test-fav-3"));
-  for (const id of IMG_IDS) { await db.delete(galleryImages).where(eq(galleryImages.id, id)); }
+  for (const id of [...IMG_IDS, ...LIFESTYLE_IMG_IDS]) { await db.delete(galleryImages).where(eq(galleryImages.id, id)); }
   await db.delete(galleryFolders).where(eq(galleryFolders.id, TEST_FOLDER_FAVORITES));
   await db.delete(galleryFolders).where(eq(galleryFolders.id, TEST_FOLDER_OUTDOOR));
   await db.delete(shoots).where(eq(shoots.id, TEST_SHOOT_COMPLETED));
