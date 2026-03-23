@@ -44,9 +44,9 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
   if (stage === 0) {
     // Booked — show date, time, location
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {shoot.shootDate && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600 px-2.5 py-1.5 rounded-full border border-gray-200">
             <Clock className="w-3 h-3 text-amber-500 shrink-0" />
             <span>
               {formatShootDate(shoot.shootDate)}
@@ -59,11 +59,11 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-gray-600 px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-colors mt-1 max-w-full"
+            className="flex items-center gap-1.5 text-xs text-gray-600 px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-colors"
           >
             <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
             <span className="truncate">{shoot.location}</span>
-            <ChevronRight className="w-3 h-3 text-gray-400 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-gray-400 shrink-0 ml-auto" />
           </a>
         )}
       </div>
