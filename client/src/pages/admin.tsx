@@ -7008,7 +7008,17 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members">("clients");
+  type AdminView = "clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members";
+  const validViews: AdminView[] = ["clients", "create", "edit", "gallery", "tokens", "shoots", "employees", "featured", "nominations", "portfolio", "spaces", "analytics", "pipeline", "tax", "revenue", "reviews", "messages", "team-members"];
+  const getInitialView = (): AdminView => {
+    const hash = window.location.hash.replace("#", "");
+    return validViews.includes(hash as AdminView) ? (hash as AdminView) : "clients";
+  };
+  const [view, setViewState] = useState<AdminView>(getInitialView);
+  const setView = useCallback((v: AdminView) => {
+    setViewState(v);
+    window.location.hash = v === "clients" ? "" : v;
+  }, []);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
