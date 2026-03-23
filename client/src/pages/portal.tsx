@@ -108,6 +108,17 @@ type EditRequestMessage = {
   createdAt: string;
 };
 
+const environmentCoverImages: Record<string, string> = {
+  office: "/images/portfolio-office-assured-cozy.webp",
+  urban: "/images/portfolio-urban-assured-bright.webp",
+  nature: "/images/portfolio-1.webp",
+  suburban: "/images/portfolio-2.webp",
+  kitchen: "/images/portfolio-office-assured-bright-2.webp",
+  restaurant: "/images/portfolio-office-assured-bright-3.webp",
+  gym: "/images/portfolio-urban-confidence-bright.webp",
+  workvan: "/images/portfolio-urban-assured-bright-2.webp",
+};
+
 function getStatusColor(status: string | null) {
   switch (status) {
     case "completed":
@@ -2439,10 +2450,10 @@ function PortalContent() {
                       data-testid={`card-shoot-${shoot.id}`}
                       onClick={() => setSelectedShoot(shoot)}
                     >
-                      {shoot.coverImageUrl && (
+                      {(shoot.coverImageUrl || shoot.environment) && (
                         <div className="aspect-[16/9] overflow-hidden">
                           <img
-                            src={shoot.coverImageUrl}
+                            src={shoot.coverImageUrl || environmentCoverImages[shoot.environment || ""] || "/images/portfolio-1.webp"}
                             alt={shoot.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
