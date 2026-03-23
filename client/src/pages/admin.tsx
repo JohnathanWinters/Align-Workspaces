@@ -8434,6 +8434,20 @@ function AdminDashboard({ token }: { token: string }) {
                         <RefreshCw className="w-3 h-3" />
                         Re-seed Test Client
                       </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            toast({ title: "Syncing Stripe bookings..." });
+                            const res = await adminFetch("/api/admin/stripe-sync", token, { method: "POST" });
+                            const data = await res.json();
+                            toast({ title: `Stripe sync: ${data.synced} synced, ${data.skipped} skipped${data.errors?.length ? `, ${data.errors.length} errors` : ""}` });
+                          } catch { toast({ title: "Stripe sync failed", variant: "destructive" }); }
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Sync Stripe Bookings
+                      </button>
                     </div>
                   </div>
 
