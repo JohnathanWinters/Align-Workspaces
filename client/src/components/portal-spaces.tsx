@@ -1793,7 +1793,10 @@ function WishlistsTab() {
           {wishlists.map((wl) => (
             <Card key={wl.id} className="bg-white overflow-hidden" data-testid={`card-wishlist-${wl.id}`}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => { if (renamingId !== wl.id) setExpandedId(expandedId === wl.id ? null : wl.id); }}
+                >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     {renamingId === wl.id ? (
                       <div className="flex items-center gap-2 flex-1">
@@ -1829,21 +1832,21 @@ function WishlistsTab() {
                   {renamingId !== wl.id && (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => { setRenamingId(wl.id); setRenameValue(wl.name); }}
+                        onClick={(e) => { e.stopPropagation(); setRenamingId(wl.id); setRenameValue(wl.name); }}
                         className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                         data-testid={`button-rename-${wl.id}`}
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => deleteMutation.mutate(wl.id)}
+                        onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(wl.id); }}
                         className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
                         data-testid={`button-delete-collection-${wl.id}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => setExpandedId(expandedId === wl.id ? null : wl.id)}
+                        onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === wl.id ? null : wl.id); }}
                         className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                         data-testid={`button-expand-${wl.id}`}
                       >
