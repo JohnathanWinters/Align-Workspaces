@@ -2453,15 +2453,24 @@ function PortalContent() {
                       data-testid={`card-shoot-${shoot.id}`}
                       onClick={() => setSelectedShoot(shoot)}
                     >
-                      {(shoot.coverImageUrl || shoot.environment) && (
-                        <div className="aspect-[16/9] overflow-hidden">
-                          <img
-                            src={shoot.coverImageUrl || getEnvironmentCoverImage(shoot.environment, shoot.emotionalImpact) || "/images/env-office.webp"}
-                            alt={shoot.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                      )}
+                      {(() => {
+                        const envImage = shoot.coverImageUrl || getEnvironmentCoverImage(shoot.environment, shoot.emotionalImpact);
+                        if (envImage) return (
+                          <div className="aspect-[16/9] overflow-hidden">
+                            <img src={envImage} alt={shoot.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          </div>
+                        );
+                        // "Other" or no environment — show a collage of environments
+                        return (
+                          <div className="aspect-[16/9] overflow-hidden grid grid-cols-3 grid-rows-2">
+                            <img src="/images/env-office.webp" alt="" className="w-full h-full object-cover" />
+                            <img src="/images/env-nature.webp" alt="" className="w-full h-full object-cover" />
+                            <img src="/images/env-urban.webp" alt="" className="w-full h-full object-cover row-span-2" />
+                            <img src="/images/env-restaurant.webp" alt="" className="w-full h-full object-cover" />
+                            <img src="/images/env-kitchen.webp" alt="" className="w-full h-full object-cover" />
+                          </div>
+                        );
+                      })()}
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="font-serif text-lg text-gray-900 group-hover:text-black transition-colors">
