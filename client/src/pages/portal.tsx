@@ -2533,33 +2533,18 @@ function PortalContent() {
                               </button>
                             </div>
                           )}
-                          <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
-                            {shoot.status === "completed" && (shoot.galleryCount ?? 0) > 0 ? (
-                              <>
-                                <Images className="w-3 h-3" />
-                                View {shoot.galleryCount} photos
-                              </>
-                            ) : shoot.status === "in-progress" && (shoot.galleryCount ?? 0) > 0 ? (
-                              <>
-                                <Images className="w-3 h-3" />
-                                Preview {shoot.galleryCount} photos
-                              </>
-                            ) : shoot.status === "in-progress" ? (
-                              <>
-                                <Clock className="w-3 h-3" />
-                                Photos are being edited
-                              </>
-                            ) : shoot.status === "scheduled" ? (
-                              <>
-                                <Calendar className="w-3 h-3" />
-                                Session coming up
-                              </>
-                            ) : (shoot.galleryCount ?? 0) > 0 ? (
-                              <>
-                                <Images className="w-3 h-3" />
-                                View {shoot.galleryCount} photos
-                              </>
-                            ) : null}
+                          <p className="text-xs text-gray-400 text-center">
+                            {shoot.status === "completed" && (shoot.galleryCount ?? 0) > 0
+                              ? `View ${shoot.galleryCount} photos`
+                              : shoot.status === "in-progress" && (shoot.galleryCount ?? 0) > 0
+                              ? `Preview ${shoot.galleryCount} photos`
+                              : shoot.status === "in-progress"
+                              ? "Photos are being edited"
+                              : shoot.status === "scheduled"
+                              ? "Session coming up"
+                              : (shoot.galleryCount ?? 0) > 0
+                              ? `View ${shoot.galleryCount} photos`
+                              : null}
                           </p>
                         </div>
                       </CardContent>
