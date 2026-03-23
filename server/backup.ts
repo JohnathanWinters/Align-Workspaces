@@ -1,7 +1,7 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
-import { gzipSync } from "zlib";
+import { gzipSync, gunzipSync } from "zlib";
 import { log } from "./index";
 
 const BACKUP_PREFIX = "backups/";
@@ -136,4 +136,116 @@ export function stopBackupSchedule(): void {
     clearInterval(backupInterval);
     backupInterval = null;
   }
+}
+
+// Table ordering for restore: parents before children to respect foreign keys
+const RESTORE_ORDER = [
+  "session", "users", "employees",
+  "spaces", "shoots", "gallery_folders",
+  "gallery_images", "image_favorites",
+  "portfolio_photos", "featured_professionals", "team_members",
+  "space_bookings", "space_reviews", "space_favorites",
+  "space_messages", "shoot_messages", "shoot_reviews",
+  "edit_tokens", "token_transactions", "edit_requests", "edit_request_photos", "edit_request_messages",
+  "admin_conversations", "admin_messages",
+  "direct_conversations", "direct_messages",
+  "nominations", "newsletter_subscribers", "leads",
+  "page_views", "analytics_events",
+  "referral_links", "fee_audit_log",
+  "arrival_guides", "arrival_guide_sections",
+  "wishlist_collections", "wishlist_items",
+  "push_subscriptions",
+];
+
+function getRestoreOrder(tables: string[]): string[] {
+  const ordered: string[] = [];
+  // Add known tables in dependency order
+  for (const t of RESTORE_ORDER) {
+    if (tables.includes(t)) ordered.push(t);
+  }
+  // Add any remaining tables not in the known list
+  for (const t of tables) {
+    if (!ordered.includes(t)) ordered.push(t);
+  }
+  return ordered;
+}
+
+export async function restoreBackup(backupKey: string): Promise<{ tables: number; rows: number; errors: string[] }> {
+  log(`Starting restore from: ${backupKey}`, "backup");
+
+  const s3 = getS3Client();
+  const obj = await s3.send(new GetObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME!,
+    Key: backupKey,
+  }));
+
+  const chunks: Buffer[] = [];
+  const stream = obj.Body as any;
+  for await (const chunk of stream) {
+    chunks.push(Buffer.from(chunk));
+  }
+  const compressed = Buffer.concat(chunks);
+  const json = gunzipSync(compressed).toString("utf-8");
+  const backup = JSON.parse(json);
+
+  if (!backup.data || typeof backup.data !== "object") {
+    throw new Error("Invalid backup format: missing data field");
+  }
+
+  const tableNames = Object.keys(backup.data);
+  const ordered = getRestoreOrder(tableNames);
+  let totalRows = 0;
+  const errors: string[] = [];
+
+  // Disable triggers during restore for speed and to avoid side effects
+  await db.execute(sql`SET session_replication_role = 'replica'`);
+
+  try {
+    // Clear existing data in reverse order (children first)
+    for (const table of [...ordered].reverse()) {
+      try {
+        await db.execute(sql.raw(`DELETE FROM "${table}"`));
+      } catch (err: any) {
+        errors.push(`Clear ${table}: ${err.message}`);
+      }
+    }
+
+    // Insert data in dependency order
+    for (const table of ordered) {
+      const rows = backup.data[table];
+      if (!rows || rows.length === 0) continue;
+
+      try {
+        // Insert in batches of 100
+        for (let i = 0; i < rows.length; i += 100) {
+          const batch = rows.slice(i, i + 100);
+          const columns = Object.keys(batch[0]);
+          const colList = columns.map((c) => `"${c}"`).join(", ");
+
+          for (const row of batch) {
+            const values = columns.map((c) => {
+              const v = row[c];
+              if (v === null || v === undefined) return "NULL";
+              if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
+              if (typeof v === "number") return String(v);
+              if (typeof v === "object") return `'${JSON.stringify(v).replace(/'/g, "''")}'::jsonb`;
+              return `'${String(v).replace(/'/g, "''")}'`;
+            });
+            await db.execute(sql.raw(`INSERT INTO "${table}" (${colList}) VALUES (${values.join(", ")}) ON CONFLICT DO NOTHING`));
+            totalRows++;
+          }
+        }
+        log(`Restored ${rows.length} rows to "${table}"`, "backup");
+      } catch (err: any) {
+        errors.push(`Restore ${table}: ${err.message}`);
+        log(`Error restoring "${table}": ${err.message}`, "backup");
+      }
+    }
+  } finally {
+    // Re-enable triggers
+    await db.execute(sql`SET session_replication_role = 'origin'`);
+  }
+
+  log(`Restore complete: ${ordered.length} tables, ${totalRows} rows, ${errors.length} errors`, "backup");
+  return { tables: ordered.length, rows: totalRows, errors };
 }

@@ -2393,6 +2393,20 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/backup/restore", isAdmin, async (req, res) => {
+    try {
+      const { key } = req.body;
+      if (!key || typeof key !== "string" || !key.startsWith("backups/")) {
+        return res.status(400).json({ message: "Invalid backup key" });
+      }
+      const { restoreBackup } = await import("./backup");
+      const result = await restoreBackup(key);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/admin/featured/seed", isAdmin, async (_req, res) => {
     try {
       const { seedFeaturedProfessionals } = await import("./seed-featured");
