@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -6319,6 +6319,72 @@ ${featuredSection}
       if (!guide) return res.json(null);
       const steps = await db.select().from(arrivalGuideSteps).where(eq(arrivalGuideSteps.guideId, guide.id)).orderBy(arrivalGuideSteps.sortOrder);
       res.json({ ...guide, steps });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ── Team Members (Our Vision) ──────────────────────────────────────
+
+  // Public: get all active team members
+  app.get("/api/team-members", async (_req, res) => {
+    try {
+      const members = await db.select().from(teamMembers).where(eq(teamMembers.isActive, 1)).orderBy(teamMembers.sortOrder);
+      res.json(members);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: get all team members (including inactive)
+  app.get("/api/admin/team-members", isAdmin, async (_req, res) => {
+    try {
+      const members = await db.select().from(teamMembers).orderBy(teamMembers.sortOrder);
+      res.json(members);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: create team member
+  app.post("/api/admin/team-members", isAdmin, async (req, res) => {
+    try {
+      const [member] = await db.insert(teamMembers).values(req.body).returning();
+      res.json(member);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: update team member
+  app.patch("/api/admin/team-members/:id", isAdmin, async (req, res) => {
+    try {
+      const [updated] = await db.update(teamMembers).set(req.body).where(eq(teamMembers.id, req.params.id)).returning();
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: delete team member
+  app.delete("/api/admin/team-members/:id", isAdmin, async (req, res) => {
+    try {
+      await db.delete(teamMembers).where(eq(teamMembers.id, req.params.id));
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin: upload team member photo
+  app.post("/api/admin/team-members/:id/photo", isAdmin, upload.single("photo"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No photo" });
+      const buffer = await sharp(req.file.buffer).resize(1024, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+      const key = `team-members/${req.params.id}-${randomUUID()}.webp`;
+      await uploadBuffer(buffer, key, "image/webp");
+      const [updated] = await db.update(teamMembers).set({ photoUrl: key }).where(eq(teamMembers.id, req.params.id)).returning();
+      res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

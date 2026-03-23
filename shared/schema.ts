@@ -828,3 +828,25 @@ export const insertArrivalGuideStepSchema = createInsertSchema(arrivalGuideSteps
 
 export type InsertArrivalGuideStep = z.infer<typeof insertArrivalGuideStepSchema>;
 export type ArrivalGuideStep = typeof arrivalGuideSteps.$inferSelect;
+
+// ── Team Members (Our Vision page) ───────────────────────────────
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  location: text("location"),
+  bio: text("bio"),
+  photoUrl: text("photo_url"),
+  cropPosition: jsonb("crop_position").$type<{ x: number; y: number; zoom: number }>().default({ x: 50, y: 50, zoom: 1 }),
+  sortOrder: integer("sort_order").default(0),
+  isActive: integer("is_active").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTeamMemberSchema = createInsertSchema(teamMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTeamMember = z.infer<typeof insertTeamMemberSchema>;
+export type TeamMember = typeof teamMembers.$inferSelect;

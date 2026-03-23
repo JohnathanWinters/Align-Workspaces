@@ -11,6 +11,7 @@ import { seedPortfolioIfEmpty } from "./seed-portfolio";
 import { fixPortfolioImageExtensions } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
 import { seedTestClient } from "./seed-test-client";
+import { seedTeamMembersIfEmpty } from "./seed-team-members";
 import { startPayoutProcessing } from "./payouts";
 import { WebhookHandlers } from "./webhookHandlers";
 
@@ -251,6 +252,7 @@ app.post("/api/stripe/webhook", async (req, res) => {
       Promise.all([
         seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
         seedTestClient().catch(err => console.warn('Test client seed error (non-fatal):', err.message)),
+        seedTeamMembersIfEmpty().catch(err => console.warn('Team members seed error (non-fatal):', err.message)),
         fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
       ]).then(() => {
         log('Background initialization complete');

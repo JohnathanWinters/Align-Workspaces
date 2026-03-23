@@ -1,17 +1,31 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images } from "lucide-react";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images, Loader2 } from "lucide-react";
 import { Link } from "wouter";
-const armandoPhoto = "/images/cofounder-armando.webp";
-const edithPhoto = "/images/cofounder-edith.webp";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  location: string | null;
+  bio: string | null;
+  photoUrl: string | null;
+  cropPosition: { x: number; y: number; zoom: number } | null;
+  sortOrder: number;
+}
 
 export default function PhotographersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     document.title = "Our Vision | Align Workspaces";
   }, []);
+
+  const { data: members = [], isLoading: membersLoading } = useQuery<TeamMember[]>({
+    queryKey: ["/api/team-members"],
+  });
 
   return (
     <div className="min-h-screen bg-[#faf8f5]">
@@ -173,67 +187,57 @@ export default function PhotographersPage() {
             className="max-w-3xl mx-auto"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid="card-photographer-page-0">
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={armandoPhoto}
-                    alt="Armando Ramirez Romero"
-                    className="w-full h-full object-cover object-[center_20%]"
-                    loading="lazy"
-                    decoding="async"
-                    data-testid="img-photographer-page-0"
-                  />
+              {membersLoading ? (
+                <div className="col-span-full flex justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
                 </div>
-                <div className="p-6 sm:p-8">
-                  <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid="text-photographer-page-name-0">
-                    Armando Ramirez Romero
-                  </h3>
-                  <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid="text-photographer-page-role-0">Co-Founder, Align</p>
-                  <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    Miami, FL
-                  </p>
-                  <div className="space-y-3" data-testid="text-photographer-page-bio-0">
-                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      Armando Ramirez is the tech, photographer, and visionary behind Align. With a background in media design, photography, law enforcement, and educational content creation, he brings both vision and structure to the spaces he helps create. Ensuring that they are functional, seamless, and thoughtfully executed.
-                    </p>
-                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      Armando recognized a gap between the meaningful, therapeutic work professionals offer and the spaces available to support them. Many of these environments are temporary, impersonal, or not designed with their work in mind. At the same time, he saw that many small practice owners had high-quality, thoughtfully curated office spaces sitting unused. This led him to intentionally connect the right clinicians with the right environments where the space reflects the care being offered.
-                    </p>
+              ) : members.map((member, i) => {
+                const crop = member.cropPosition || { x: 50, y: 50, zoom: 1 };
+                const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
+                  ? member.photoUrl
+                  : member.photoUrl ? `/objects/${member.photoUrl}` : null;
+                return (
+                  <div key={member.id} className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid={`card-photographer-page-${i}`}>
+                    {photoSrc && (
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img
+                          src={photoSrc}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                          style={{
+                            objectPosition: `${crop.x}% ${crop.y}%`,
+                            ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}),
+                          }}
+                          loading="lazy"
+                          decoding="async"
+                          data-testid={`img-photographer-page-${i}`}
+                        />
+                      </div>
+                    )}
+                    <div className="p-6 sm:p-8">
+                      <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid={`text-photographer-page-name-${i}`}>
+                        {member.name}
+                      </h3>
+                      <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid={`text-photographer-page-role-${i}`}>{member.role}</p>
+                      {member.location && (
+                        <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {member.location}
+                        </p>
+                      )}
+                      {member.bio && (
+                        <div className="space-y-3" data-testid={`text-photographer-page-bio-${i}`}>
+                          {member.bio.split("\n").filter(Boolean).map((para, j) => (
+                            <p key={j} className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
+                              {para}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid="card-photographer-page-1">
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={edithPhoto}
-                    alt="Edith Caballero"
-                    className="w-full h-full object-cover object-[center_20%]"
-                    loading="lazy"
-                    decoding="async"
-                    data-testid="img-photographer-page-1"
-                  />
-                </div>
-                <div className="p-6 sm:p-8">
-                  <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid="text-photographer-page-name-1">
-                    Edith Caballero
-                  </h3>
-                  <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid="text-photographer-page-role-1">Co-Founder, Align</p>
-                  <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    Miami, FL
-                  </p>
-                  <div className="space-y-3" data-testid="text-photographer-page-bio-1">
-                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      Edith Caballero (she/her), LCSW, MCAP, CCTP, RYT is an award-winning social worker, EMDR Certified Therapist™, mentor–coach, and South Florida peer community holder who creates restorative spaces for social workers, therapists, and healers to cultivate meaningful connection, restore their energy, deepen professional clarity, and embody a more sustainable way of working and living.
-                    </p>
-                    <p className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">
-                      Her work is rooted in helping professionals build sustainable practices that prioritize both impact and balance, offering therapy, clinical supervision, consultation, and workshops. She understands the importance of access to supportive, accessible, and functional office environments that align with the therapeutic experiences clinicians intend to create.
-                    </p>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </motion.div>
         </div>

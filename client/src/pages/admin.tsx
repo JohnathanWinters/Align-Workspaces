@@ -76,6 +76,7 @@ import { ImageAttachButton, MessageImage } from "@/components/image-attach-butto
 import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
+import AdminTeamMembers from "@/components/admin-team-members";
 
 interface EditToken {
   id: string;
@@ -7007,7 +7008,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages">("clients");
+  const [view, setView] = useState<"clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members">("clients");
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [editingShoot, setEditingShoot] = useState<Shoot | null>(null);
   const [galleryShoot, setGalleryShoot] = useState<Shoot | null>(null);
@@ -7054,6 +7055,7 @@ function AdminDashboard({ token }: { token: string }) {
         { id: "portfolio" as const, label: "Portfolio", icon: Images },
         { id: "featured" as const, label: "Featured", icon: Star },
         { id: "nominations" as const, label: "Nominations", icon: Heart },
+        { id: "team-members" as const, label: "Our Vision", icon: Users },
       ],
     },
     {
@@ -7373,6 +7375,10 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "employees") {
       return <EmployeeManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "team-members") {
+      return <AdminTeamMembers token={token} onBack={() => setView("clients")} />;
     }
 
     if (view === "portfolio") {
@@ -8491,6 +8497,7 @@ function AdminDashboard({ token }: { token: string }) {
             {view === "edit" && "Shoot Details"}
             {view === "gallery" && "Gallery"}
             {view === "tokens" && "Edit Tokens"}
+            {view === "team-members" && "Our Vision"}
           </p>
         </header>
 
