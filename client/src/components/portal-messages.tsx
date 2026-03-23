@@ -28,6 +28,7 @@ import {
   Bell,
   BellRing,
   Star,
+  MapPin,
 } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
@@ -560,22 +561,36 @@ function ConversationView({
             </div>
 
             {booking.status === "approved" && (
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await apiRequest("GET", `/api/space-bookings/${booking.id}/calendar-url`);
-                    const data = await res.json();
-                    if (data.url) window.open(data.url, "_blank");
-                  } catch {
-                    toast({ title: "Could not generate calendar link", variant: "destructive" });
-                  }
-                }}
-                className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
-                data-testid="button-add-to-calendar"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-                Add to Google Calendar
-              </button>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await apiRequest("GET", `/api/space-bookings/${booking.id}/calendar-url`);
+                      const data = await res.json();
+                      if (data.url) window.open(data.url, "_blank");
+                    } catch {
+                      toast({ title: "Could not generate calendar link", variant: "destructive" });
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                  data-testid="button-add-to-calendar"
+                >
+                  <CalendarPlus className="w-3.5 h-3.5" />
+                  Google Calendar
+                </button>
+                {!isHost && booking.spaceAddress && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.spaceAddress)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                    data-testid="button-google-maps"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    Google Maps
+                  </a>
+                )}
+              </div>
             )}
 
             {showCancelConfirm && (booking.status === "approved" || booking.status === "checked_in") && (

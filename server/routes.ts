@@ -3731,6 +3731,7 @@ export async function registerRoutes(
           ...b,
           spaceName: space?.name || b.spaceName || "Unknown Space",
           spaceType: space?.type,
+          spaceAddress: space?.address || null,
           spaceSchedule: space?.availabilitySchedule || null,
           spaceBufferMinutes: space?.bufferMinutes ?? 15,
           otherPartyName: role === "guest" ? (space?.hostName || "Host") : (b.userName || "Guest"),
