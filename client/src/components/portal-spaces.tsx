@@ -1043,18 +1043,19 @@ function MyBookingsTab() {
   }
 
   const now = new Date();
-  const approvedStatuses = ["confirmed", "completed", "approved"];
+  const activeStatuses = ["confirmed", "approved", "checked_in"];
+  const pastStatuses = ["confirmed", "completed", "approved", "checked_in"];
 
   const upcomingBookings = bookings.filter((b: any) => {
     if (!b.bookingDate) return false;
-    const bookingDate = new Date(b.bookingDate);
-    return bookingDate >= now && (b.status === "approved" || b.status === "checked_in");
+    const bookingDate = new Date(b.bookingDate + "T23:59:59");
+    return bookingDate >= now && activeStatuses.includes(b.status);
   });
 
   const pastBookings = bookings.filter((b: any) => {
     if (!b.bookingDate) return false;
-    const bookingDate = new Date(b.bookingDate);
-    return bookingDate < now && [...approvedStatuses, "checked_in"].includes(b.status);
+    const bookingDate = new Date(b.bookingDate + "T23:59:59");
+    return bookingDate < now && pastStatuses.includes(b.status);
   });
 
   if (upcomingBookings.length === 0 && pastBookings.length === 0) {
