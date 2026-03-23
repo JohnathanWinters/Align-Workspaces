@@ -2533,7 +2533,7 @@ function PortalContent() {
                             )}
                           </div>
                         )}
-                        <div className="flex flex-col gap-2 pt-2">
+                        <div className="flex flex-col gap-2 pt-2 mt-auto">
                           {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
                             <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                               <a
