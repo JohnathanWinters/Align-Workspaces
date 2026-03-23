@@ -16,7 +16,7 @@ const sampleProfessionals = [
     },
     socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "instagram", url: "https://instagram.com/example" }],
     isFeaturedOfWeek: 1,
-    isSample: 1,
+    isSample: 0,
     seoTitle: "Why Maria Gonzalez Became a Therapist | Align",
     metaDescription: "Meet Maria Gonzalez, a licensed therapist in Coral Gables helping people heal through conversation. Read her story on Align.",
   },
@@ -35,7 +35,7 @@ const sampleProfessionals = [
     },
     socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }],
     isFeaturedOfWeek: 0,
-    isSample: 1,
+    isSample: 0,
     seoTitle: "Why Daniel Reyes Became a Family Therapist | Align",
     metaDescription: "Meet Daniel Reyes, a family therapist in Kendall strengthening families one session at a time. Read his story on Align.",
   },
@@ -54,7 +54,7 @@ const sampleProfessionals = [
     },
     socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "instagram", url: "https://instagram.com/example" }, { platform: "facebook", url: "https://facebook.com/example" }],
     isFeaturedOfWeek: 0,
-    isSample: 1,
+    isSample: 0,
     seoTitle: "Why Carlos Medina Became a Chef | Align",
     metaDescription: "Meet Carlos Medina, an executive chef in Wynwood telling Miami's story through food. Read his story on Align.",
   },
@@ -73,7 +73,7 @@ const sampleProfessionals = [
     },
     socialLinks: [{ platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "tiktok", url: "https://tiktok.com/@example" }],
     isFeaturedOfWeek: 0,
-    isSample: 1,
+    isSample: 0,
     seoTitle: "Why Isabella Santos Became a Pastry Chef | Align",
     metaDescription: "Meet Isabella Santos, a pastry chef in South Beach creating edible art that brings people together. Read her story on Align.",
   },
@@ -92,7 +92,7 @@ const sampleProfessionals = [
     },
     socialLinks: [{ platform: "instagram", url: "https://instagram.com/example" }, { platform: "youtube", url: "https://youtube.com/@example" }],
     isFeaturedOfWeek: 0,
-    isSample: 1,
+    isSample: 0,
     seoTitle: "Why Marcus Johnson Became a Personal Trainer | Align",
     metaDescription: "Meet Marcus Johnson, a personal trainer in South Beach building strength that goes beyond the gym. Read his story on Align.",
   },
@@ -111,7 +111,7 @@ const sampleProfessionals = [
     },
     socialLinks: [{ platform: "instagram", url: "https://instagram.com/example" }, { platform: "linkedin", url: "https://linkedin.com/in/example" }, { platform: "x", url: "https://x.com/example" }],
     isFeaturedOfWeek: 0,
-    isSample: 1,
+    isSample: 0,
     seoTitle: "Why Adriana Vega Became a Fitness Coach | Align",
     metaDescription: "Meet Adriana Vega, a fitness coach in Brickell empowering women to feel strong in their own skin. Read her story on Align.",
   },
@@ -121,12 +121,21 @@ export async function seedFeaturedProfessionals() {
   const existing = await storage.getFeaturedProfessionals({ includeSamples: true });
   const existingSlugs = new Set(existing.map((p) => p.slug));
   let created = 0;
+  let updated = 0;
 
   for (const pro of sampleProfessionals) {
-    if (existingSlugs.has(pro.slug)) continue;
+    if (existingSlugs.has(pro.slug)) {
+      // Fix any that were incorrectly marked as samples
+      const match = existing.find((p) => p.slug === pro.slug);
+      if (match && match.isSample === 1) {
+        await storage.updateFeaturedProfessional(match.id, { isSample: 0 });
+        updated++;
+      }
+      continue;
+    }
     await storage.createFeaturedProfessional(pro);
     created++;
   }
 
-  return { created, total: sampleProfessionals.length };
+  return { created, updated, total: sampleProfessionals.length };
 }
