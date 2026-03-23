@@ -1636,8 +1636,18 @@ interface FeaturedProfessional {
   heroCropPosition: { x: number; y: number; zoom?: number } | null;
   headline: string;
   quote: string;
-  storySections: { whyStarted: string; whatTheyLove: string; misunderstanding: string };
+  storySections: {
+    narrativeHook?: string;
+    qaSections?: Array<{ question: string; answer: string }>;
+    whyStarted?: string;
+    whatTheyLove?: string;
+    misunderstanding?: string;
+  };
   socialLinks: Array<{ platform: string; url: string }> | null;
+  credentials: string[] | null;
+  yearsInPractice: number | null;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
   isFeaturedOfWeek: number;
   isSample: number;
   seoTitle: string | null;
@@ -1648,7 +1658,12 @@ interface FeaturedProfessional {
 const defaultFeaturedForm = {
   name: "", profession: "", location: "", category: "",
   headline: "", quote: "",
+  narrativeHook: "",
+  qaSections: [{ question: "", answer: "" }] as Array<{ question: string; answer: string }>,
   whyStarted: "", whatTheyLove: "", misunderstanding: "",
+  credentials: [""] as string[],
+  yearsInPractice: "",
+  ctaLabel: "", ctaUrl: "",
   socialLinks: [] as Array<{ platform: string; url: string }>,
   isFeaturedOfWeek: false,
   seoTitle: "", metaDescription: "",
@@ -3961,8 +3976,18 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         quote: form.quote,
         portraitCropPosition: cropPosition,
         heroCropPosition: heroCropPosition,
-        storySections: { whyStarted: form.whyStarted, whatTheyLove: form.whatTheyLove, misunderstanding: form.misunderstanding },
+        storySections: {
+          narrativeHook: form.narrativeHook || undefined,
+          qaSections: form.qaSections.filter(qa => qa.question.trim() && qa.answer.trim()),
+          ...(form.whyStarted ? { whyStarted: form.whyStarted } : {}),
+          ...(form.whatTheyLove ? { whatTheyLove: form.whatTheyLove } : {}),
+          ...(form.misunderstanding ? { misunderstanding: form.misunderstanding } : {}),
+        },
         socialLinks: form.socialLinks.filter(s => s.platform && s.url.trim()),
+        credentials: form.credentials.filter(c => c.trim()),
+        yearsInPractice: form.yearsInPractice ? parseInt(form.yearsInPractice) : null,
+        ctaLabel: form.ctaLabel.trim() || null,
+        ctaUrl: form.ctaUrl.trim() || null,
         isFeaturedOfWeek: form.isFeaturedOfWeek ? 1 : 0,
         yearsHosting: form.yearsHosting ? parseInt(form.yearsHosting) : null,
         locationCount: form.locationCount ? parseInt(form.locationCount) : null,
@@ -4043,13 +4068,21 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     setForm({
       name: pro.name, profession: pro.profession, location: pro.location,
       category: pro.category, headline: pro.headline, quote: pro.quote,
-      whyStarted: pro.storySections.whyStarted,
-      whatTheyLove: pro.storySections.whatTheyLove,
-      misunderstanding: pro.storySections.misunderstanding,
+      narrativeHook: pro.storySections.narrativeHook || "",
+      qaSections: pro.storySections.qaSections?.length ? pro.storySections.qaSections : [{ question: "", answer: "" }],
+      whyStarted: pro.storySections.whyStarted || "",
+      whatTheyLove: pro.storySections.whatTheyLove || "",
+      misunderstanding: pro.storySections.misunderstanding || "",
+      credentials: pro.credentials?.length ? [...pro.credentials] : [""],
+      yearsInPractice: pro.yearsInPractice?.toString() || "",
+      ctaLabel: pro.ctaLabel || "",
+      ctaUrl: pro.ctaUrl || "",
       socialLinks: normalizeSocialLinksAdmin(pro.socialLinks),
       isFeaturedOfWeek: pro.isFeaturedOfWeek === 1,
       seoTitle: pro.seoTitle || "",
       metaDescription: pro.metaDescription || "",
+      yearsHosting: "",
+      locationCount: "",
     });
     setFormPortraitPreview(pro.portraitImageUrl || null);
     setFormPortraitFile(null);
@@ -4412,10 +4445,73 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
           <div><Label>Personal Quote *</Label><Textarea value={form.quote} onChange={e => setForm({ ...form, quote: e.target.value })} placeholder="A short statement that captures how they see their work..." data-testid="input-featured-quote" rows={2} /></div>
 
           <div className="space-y-4">
-            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Story Sections</h3>
-            <div><Label>Why They Do This Work</Label><Textarea value={form.whyStarted} onChange={e => setForm({ ...form, whyStarted: e.target.value })} placeholder="The deeper reason they chose this path..." rows={4} data-testid="input-featured-why" /></div>
-            <div><Label>What Makes It Meaningful</Label><Textarea value={form.whatTheyLove} onChange={e => setForm({ ...form, whatTheyLove: e.target.value })} placeholder="The part of the work that matters most to them..." rows={4} data-testid="input-featured-love" /></div>
-            <div><Label>A Common Misconception (optional)</Label><Textarea value={form.misunderstanding} onChange={e => setForm({ ...form, misunderstanding: e.target.value })} placeholder="Something people often misunderstand about their profession..." rows={4} data-testid="input-featured-misunderstand" /></div>
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Trust Signals</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div><Label>Years in Practice</Label><Input type="number" value={form.yearsInPractice} onChange={e => setForm({ ...form, yearsInPractice: e.target.value })} placeholder="e.g. 8" /></div>
+              <div><Label>CTA Button Label</Label><Input value={form.ctaLabel} onChange={e => setForm({ ...form, ctaLabel: e.target.value })} placeholder="e.g. Visit Their Practice" /></div>
+            </div>
+            <div><Label>CTA URL</Label><Input value={form.ctaUrl} onChange={e => setForm({ ...form, ctaUrl: e.target.value })} placeholder="https://... (falls back to website social link)" /></div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Credentials (max 3)</Label>
+                {form.credentials.length < 3 && (
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm({ ...form, credentials: [...form.credentials, ""] })}>
+                    <Plus className="w-3.5 h-3.5 mr-1" />Add
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {form.credentials.map((cred, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Input value={cred} onChange={e => { const updated = [...form.credentials]; updated[i] = e.target.value; setForm({ ...form, credentials: updated }); }} placeholder="e.g. LCSW, NCC, RYT" />
+                    <Button type="button" variant="ghost" size="sm" className="text-red-400 hover:text-red-600 px-2" onClick={() => setForm({ ...form, credentials: form.credentials.filter((_, j) => j !== i) })}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Story</h3>
+            <div><Label>Opening Hook (first-person, 2-3 sentences)</Label><Textarea value={form.narrativeHook} onChange={e => setForm({ ...form, narrativeHook: e.target.value })} placeholder="I became a therapist because..." rows={3} data-testid="input-featured-hook" /></div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Q&A Sections</Label>
+                {form.qaSections.length < 5 && (
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm({ ...form, qaSections: [...form.qaSections, { question: "", answer: "" }] })}>
+                    <Plus className="w-3.5 h-3.5 mr-1" />Add Question
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-4">
+                {form.qaSections.map((qa, i) => (
+                  <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400 font-medium">Q&A {i + 1}</span>
+                      {form.qaSections.length > 1 && (
+                        <Button type="button" variant="ghost" size="sm" className="text-red-400 hover:text-red-600 px-2 h-6" onClick={() => setForm({ ...form, qaSections: form.qaSections.filter((_, j) => j !== i) })}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    <Input value={qa.question} onChange={e => { const updated = [...form.qaSections]; updated[i] = { ...updated[i], question: e.target.value }; setForm({ ...form, qaSections: updated }); }} placeholder="What drew you to this work?" />
+                    <Textarea value={qa.answer} onChange={e => { const updated = [...form.qaSections]; updated[i] = { ...updated[i], answer: e.target.value }; setForm({ ...form, qaSections: updated }); }} placeholder="Their answer in first person..." rows={3} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {(form.whyStarted || form.whatTheyLove || form.misunderstanding) && (
+              <details className="text-sm text-gray-500">
+                <summary className="cursor-pointer hover:text-gray-700">Legacy story sections (old format)</summary>
+                <div className="mt-3 space-y-3">
+                  <div><Label>Why They Do This Work</Label><Textarea value={form.whyStarted} onChange={e => setForm({ ...form, whyStarted: e.target.value })} rows={3} /></div>
+                  <div><Label>What Makes It Meaningful</Label><Textarea value={form.whatTheyLove} onChange={e => setForm({ ...form, whatTheyLove: e.target.value })} rows={3} /></div>
+                  <div><Label>A Common Misconception</Label><Textarea value={form.misunderstanding} onChange={e => setForm({ ...form, misunderstanding: e.target.value })} rows={3} /></div>
+                </div>
+              </details>
+            )}
           </div>
 
           <div className="space-y-4">

@@ -304,11 +304,17 @@ export const featuredProfessionals = pgTable("featured_professionals", {
   headline: text("headline").notNull(),
   quote: text("quote").notNull(),
   storySections: jsonb("story_sections").notNull().$type<{
-    whyStarted: string;
-    whatTheyLove: string;
-    misunderstanding: string;
+    narrativeHook?: string;
+    qaSections?: Array<{ question: string; answer: string }>;
+    whyStarted?: string;
+    whatTheyLove?: string;
+    misunderstanding?: string;
   }>(),
   socialLinks: jsonb("social_links").$type<Array<{ platform: string; url: string }>>(),
+  credentials: jsonb("credentials").$type<string[]>(),
+  yearsInPractice: integer("years_in_practice"),
+  ctaLabel: text("cta_label"),
+  ctaUrl: text("cta_url"),
   yearsHosting: integer("years_hosting"),
   locationCount: integer("location_count"),
   isFeaturedOfWeek: integer("is_featured_of_week").notNull().default(0),
