@@ -4,30 +4,6 @@ import { eq } from "drizzle-orm";
 
 const defaultSpaces = [
   {
-    id: "sample-space-maria-host",
-    name: "Coral Gables Therapy Suite",
-    slug: "coral-gables-therapy-suite",
-    type: "therapy",
-    description: "A warm, calming therapy office designed for counselors and therapists. Features soft lighting, comfortable seating, and complete sound insulation for private sessions. Located in the heart of Coral Gables with easy parking.",
-    shortDescription: "Private therapy office with calming atmosphere in Coral Gables",
-    address: "245 Miracle Mile, Coral Gables, FL 33134",
-    neighborhood: "Coral Gables",
-    latitude: "25.7496",
-    longitude: "-80.2584",
-    pricePerHour: 35,
-    pricePerDay: 200,
-    capacity: 4,
-    amenities: ["Sound insulated", "Comfortable seating", "Soft lighting", "Wi-Fi", "Waiting area", "Private restroom", "Climate control", "Street parking"],
-    imageUrls: ["/images/spaces/space-8d155dd6-8bfc-4515-a32a-01dd72bcfbfa.webp", "/images/spaces/space-c401b806-3712-4b45-8617-e3d30701873f.webp", "/images/spaces/space-38729c2c-2978-452b-ac57-e8fede8559b1.webp"],
-    colorPalette: JSON.stringify({ colors: [{ hex: "#D4C5B0", name: "Warm Sand" }, { hex: "#8B9E8B", name: "Sage Moss" }, { hex: "#F5EDE3", name: "Soft Linen" }], feel: "This palette wraps the room in quiet comfort — sandy neutrals ground and reassure, sage green whispers of natural healing, and soft linen opens space for honest conversation.", explanation: "Together, they create an environment where clients can exhale and feel held without saying a word. Warm Sand anchors the room with stability, Sage Moss connects to nature and growth, and Soft Linen keeps the space open and breathable." }),
-    targetProfession: "Therapists & Counselors",
-    availableHours: "Mon-Sat 8:00 AM - 8:00 PM",
-    hostName: "Dr. Maria Santos",
-    approvalStatus: "approved" as const,
-    isSample: 0,
-    isActive: 1,
-  },
-  {
     id: "sample-space-armando-host",
     name: "Align Creative Studio",
     slug: "align-creative-studio",
@@ -88,6 +64,13 @@ const peacemakerPalette = JSON.stringify({
 });
 
 export async function seedSpacesIfEmpty() {
+  // Remove deprecated sample space (replaced by test-host-space-coaching)
+  const [oldMaria] = await db.select().from(spaces).where(eq(spaces.id, "sample-space-maria-host"));
+  if (oldMaria) {
+    console.log("Removing deprecated sample space: Coral Gables Therapy Suite (sample-space-maria-host)");
+    await db.delete(spaces).where(eq(spaces.id, "sample-space-maria-host"));
+  }
+
   for (const space of defaultSpaces) {
     const [existing] = await db.select().from(spaces).where(eq(spaces.id, space.id));
     if (!existing) {

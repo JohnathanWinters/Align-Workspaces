@@ -265,7 +265,7 @@ export async function seedTestClient() {
   // 13. Space bookings
   await db.insert(spaceBookings).values([
     {
-      id: TEST_BOOKING_UPCOMING, spaceId: "sample-space-maria-host", userId, userName: user.firstName || "Client", userEmail: TEST_EMAIL,
+      id: TEST_BOOKING_UPCOMING, spaceId: TEST_HOST_SPACE, userId, userName: user.firstName || "Client", userEmail: TEST_EMAIL,
       status: "approved", bookingDate: futureDate(10), bookingStartTime: "10:00", bookingHours: 2,
       paymentStatus: "paid", paymentAmount: 7000, feeTier: "standard",
       guestFeeAmount: 490, taxAmount: 490, totalGuestCharged: 7980, hostPayoutAmount: 6125, platformRevenue: 1365,
@@ -288,7 +288,7 @@ export async function seedTestClient() {
       message: "Yoga and meditation pop-up event", createdAt: pastTimestamp(5),
     },
     {
-      id: TEST_BOOKING_CANCELLED, spaceId: "sample-space-maria-host", userId, userName: user.firstName || "Client", userEmail: TEST_EMAIL,
+      id: TEST_BOOKING_CANCELLED, spaceId: TEST_HOST_SPACE, userId, userName: user.firstName || "Client", userEmail: TEST_EMAIL,
       status: "cancelled", bookingDate: pastDate(10), bookingStartTime: "14:00", bookingHours: 1,
       paymentStatus: "refunded", paymentAmount: 3500, refundStatus: "full", refundAmount: 3500,
       message: "Need to reschedule — something came up.", createdAt: pastTimestamp(15),
@@ -316,23 +316,23 @@ export async function seedTestClient() {
   // 16. Host-owned space (My Spaces)
   await db.insert(spaces).values({
     id: TEST_HOST_SPACE,
-    name: "Nomad Coaching Studio",
-    slug: "test-nomad-coaching-studio",
-    type: "coaching",
-    description: "A private, modern coaching and consulting studio designed for one-on-one sessions. Features comfortable seating, a whiteboard wall, natural light, and a calming neutral palette. Perfect for life coaches, business consultants, and therapists seeking a professional yet warm environment.",
-    shortDescription: "Private coaching studio with natural light in Brickell",
-    address: "1200 Brickell Ave, Miami, FL 33131",
-    neighborhood: "Brickell",
-    latitude: "25.7617",
-    longitude: "-80.1918",
-    pricePerHour: 45,
-    pricePerDay: 280,
+    name: "Coral Gables Therapy Suite",
+    slug: "test-coral-gables-therapy-suite",
+    type: "therapy",
+    description: "A warm, calming therapy office designed for counselors and therapists. Features soft lighting, comfortable seating, and complete sound insulation for private sessions. Located in the heart of Coral Gables with easy parking.",
+    shortDescription: "Private therapy office with calming atmosphere in Coral Gables",
+    address: "245 Miracle Mile, Coral Gables, FL 33134",
+    neighborhood: "Coral Gables",
+    latitude: "25.7496",
+    longitude: "-80.2584",
+    pricePerHour: 35,
+    pricePerDay: 200,
     capacity: 4,
-    amenities: ["Wi-Fi", "Whiteboard", "Comfortable seating", "Natural light", "Climate control", "Coffee & tea", "Private restroom", "Street parking"],
-    imageUrls: ["/images/spaces/space-8d155dd6-8bfc-4515-a32a-01dd72bcfbfa.webp", "/images/spaces/space-c401b806-3712-4b45-8617-e3d30701873f.webp"],
-    colorPalette: JSON.stringify({ colors: [{ hex: "#E8E0D4", name: "Warm Linen" }, { hex: "#7A8B7A", name: "Sage" }, { hex: "#2C2C2C", name: "Charcoal" }], feel: "Grounded warmth — professional yet calming", explanation: "Warm Linen provides an inviting base, Sage introduces a natural, restorative quality, and Charcoal adds modern sophistication." }),
-    targetProfession: "Coaches & Consultants",
-    availableHours: "Mon-Fri 8:00 AM - 7:00 PM, Sat 9:00 AM - 3:00 PM",
+    amenities: ["Sound insulated", "Comfortable seating", "Soft lighting", "Wi-Fi", "Waiting area", "Private restroom", "Climate control", "Street parking"],
+    imageUrls: ["/images/spaces/space-8d155dd6-8bfc-4515-a32a-01dd72bcfbfa.webp", "/images/spaces/space-c401b806-3712-4b45-8617-e3d30701873f.webp", "/images/spaces/space-38729c2c-2978-452b-ac57-e8fede8559b1.webp"],
+    colorPalette: JSON.stringify({ colors: [{ hex: "#D4C5B0", name: "Warm Sand" }, { hex: "#8B9E8B", name: "Sage Moss" }, { hex: "#F5EDE3", name: "Soft Linen" }], feel: "This palette wraps the room in quiet comfort — sandy neutrals ground and reassure, sage green whispers of natural healing, and soft linen opens space for honest conversation.", explanation: "Together, they create an environment where clients can exhale and feel held without saying a word. Warm Sand anchors the room with stability, Sage Moss connects to nature and growth, and Soft Linen keeps the space open and breathable." }),
+    targetProfession: "Therapists & Counselors",
+    availableHours: "Mon-Sat 8:00 AM - 8:00 PM",
     hostName: user.firstName || "Host",
     userId,
     approvalStatus: "approved",
@@ -361,7 +361,7 @@ export async function seedTestClient() {
 
   // 18. Space favorites
   await db.insert(spaceFavorites).values([
-    { id: "test-space-fav-1", userId, spaceId: "sample-space-maria-host" },
+    { id: "test-space-fav-1", userId, spaceId: TEST_HOST_SPACE },
     { id: "test-space-fav-2", userId, spaceId: "sample-space-armando-host" },
     { id: "test-space-fav-3", userId, spaceId: "0ea55148-29d6-41dd-8428-2540b89c34ae" },
   ]);
@@ -372,7 +372,7 @@ export async function seedTestClient() {
     { id: TEST_WISHLIST_2, userId, name: "Creative Studios", createdAt: pastTimestamp(25) },
   ]);
   await db.insert(wishlistItems).values([
-    { id: "test-wl-item-1", collectionId: TEST_WISHLIST_1, spaceId: "sample-space-maria-host" },
+    { id: "test-wl-item-1", collectionId: TEST_WISHLIST_1, spaceId: TEST_HOST_SPACE },
     { id: "test-wl-item-2", collectionId: TEST_WISHLIST_1, spaceId: "0ea55148-29d6-41dd-8428-2540b89c34ae" },
     { id: "test-wl-item-3", collectionId: TEST_WISHLIST_2, spaceId: "sample-space-armando-host" },
   ]);
@@ -381,7 +381,7 @@ export async function seedTestClient() {
   await db.insert(spaceMessages).values([
     // Upcoming booking thread
     { id: "test-spm-1", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: userId, senderName: user.firstName || "Client", senderRole: "guest", message: "Hi! I booked your space for Saturday morning. Is there parking available nearby?", createdAt: pastTimestamp(6) },
-    { id: "test-spm-2", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: "host", senderName: "Dr. Maria Santos", senderRole: "host", message: "Yes! There's free street parking on Miracle Mile, and a garage one block east. I'll leave the door unlocked for you at 10.", createdAt: pastTimestamp(5) },
+    { id: "test-spm-2", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: userId, senderName: user.firstName || "Host", senderRole: "host", message: "Yes! There's free street parking on Miracle Mile, and a garage one block east. I'll leave the door unlocked for you at 10.", createdAt: pastTimestamp(5) },
     { id: "test-spm-3", spaceBookingId: TEST_BOOKING_UPCOMING, senderId: userId, senderName: user.firstName || "Client", senderRole: "guest", message: "Perfect, thank you so much!", createdAt: pastTimestamp(5) },
     // Completed booking thread
     { id: "test-spm-4", spaceBookingId: TEST_BOOKING_COMPLETED, senderId: userId, senderName: user.firstName || "Client", senderRole: "guest", message: "The studio was amazing! Everything was set up perfectly. Thank you!", createdAt: pastTimestamp(19) },
