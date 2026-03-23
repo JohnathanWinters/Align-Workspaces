@@ -250,6 +250,7 @@ app.post("/api/stripe/webhook", async (req, res) => {
       log(`serving on port ${port}`);
 
       Promise.all([
+        seedPortfolioIfEmpty().catch(err => console.warn('Portfolio seed error (non-fatal):', err.message)),
         seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
         seedTestClient().catch(err => console.warn('Test client seed error (non-fatal):', err.message)),
         seedTeamMembersIfEmpty().catch(err => console.warn('Team members seed error (non-fatal):', err.message)),
