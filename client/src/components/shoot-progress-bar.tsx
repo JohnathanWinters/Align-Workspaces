@@ -1,4 +1,4 @@
-import { Camera, Scissors, CheckCircle2, CalendarCheck, MapPin, Clock } from "lucide-react";
+import { Camera, Scissors, CheckCircle2, CalendarCheck, MapPin, Clock, ChevronRight } from "lucide-react";
 
 interface ShootWithGallery {
   status: string | null;
@@ -55,17 +55,16 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
           </div>
         )}
         {shoot.location && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-600 px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-amber-300 hover:bg-amber-50/50 transition-colors mt-1 max-w-full"
+          >
             <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline truncate"
-            >
-              {shoot.location}
-            </a>
-          </div>
+            <span className="truncate">{shoot.location}</span>
+            <ChevronRight className="w-3 h-3 text-gray-400 shrink-0" />
+          </a>
         )}
       </div>
     );
