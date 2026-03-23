@@ -1427,7 +1427,9 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
         ? images.filter((img) => !img.folderId)
         : images;
 
-  const displayedImages = folderFilteredImages;
+  const displayedImages = [...folderFilteredImages].sort((a, b) =>
+    (a.originalFilename || "").localeCompare(b.originalFilename || "")
+  );
 
   const favoritesCount = favoriteIds.length;
 
