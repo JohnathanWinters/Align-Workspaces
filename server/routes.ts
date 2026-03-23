@@ -5667,10 +5667,11 @@ ${featuredSection}
 
   app.get("/api/admin/revenue", isAdmin, async (_req, res) => {
     try {
-      // All paid bookings
-      const allBookings = await db.select().from(spaceBookings)
+      // All paid bookings (exclude test seed data)
+      const allBookingsRaw = await db.select().from(spaceBookings)
         .where(eq(spaceBookings.paymentStatus, "paid"))
         .orderBy(desc(spaceBookings.createdAt));
+      const allBookings = allBookingsRaw.filter(b => !b.id.startsWith("test-"));
 
       const now = new Date();
       const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -5797,13 +5798,14 @@ ${featuredSection}
 
   app.get("/api/admin/tax-report", isAdmin, async (req, res) => {
     try {
-      // Fetch all paid bookings with tax data
-      const allBookings = await db.select().from(spaceBookings)
+      // Fetch all paid bookings with tax data (exclude test seed data)
+      const allBookingsRaw = await db.select().from(spaceBookings)
         .where(and(
           eq(spaceBookings.paymentStatus, "paid"),
           sql`${spaceBookings.taxAmount} IS NOT NULL AND ${spaceBookings.taxAmount} > 0`,
         ))
         .orderBy(desc(spaceBookings.createdAt));
+      const allBookings = allBookingsRaw.filter(b => !b.id.startsWith("test-"));
 
       // Group by month
       const monthlyData: Record<string, {
@@ -5944,13 +5946,18 @@ ${featuredSection}
 
       const { sql: sqlTag } = await import("drizzle-orm");
 
-      const allViews = await db.select().from(pageViews)
+      // Filter out bots/AI crawlers by user agent
+      const botPatterns = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegram|semrush|ahref|mj12|dotbot|bytespider|gptbot|claudebot|anthropic|chatgpt|google-inspectiontool|petalbot|yandex|baidu|sogou|headlesschrome|puppeteer|phantom|selenium/i;
+
+      const allViewsRaw = await db.select().from(pageViews)
         .where(sqlTag`${pageViews.createdAt} >= ${since}`)
         .orderBy(pageViews.createdAt);
+      const allViews = allViewsRaw.filter(v => !v.userAgent || !botPatterns.test(v.userAgent));
 
-      const allEvents = await db.select().from(analyticsEvents)
+      const allEventsRaw = await db.select().from(analyticsEvents)
         .where(sqlTag`${analyticsEvents.createdAt} >= ${since}`)
         .orderBy(analyticsEvents.createdAt);
+      const allEvents = allEventsRaw.filter(e => !e.userId || !e.userId.startsWith("test-"));
 
       const totalViews = allViews.length;
       const uniqueSessions = new Set(allViews.map(v => v.sessionId)).size;

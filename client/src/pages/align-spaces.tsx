@@ -306,7 +306,7 @@ export default function AlignSpacesPage() {
             />
             <span
               className="uppercase hidden sm:block"
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: "7px", letterSpacing: "3.5px", color: "#f0e6d0" }}
+              style={{ fontFamily: "'Playfair Display', serif", fontSize: "7px", letterSpacing: "3.5px", paddingLeft: "3.5px", color: "#f0e6d0" }}
             >
               Align
             </span>

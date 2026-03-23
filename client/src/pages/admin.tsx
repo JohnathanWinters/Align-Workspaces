@@ -5915,28 +5915,28 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
           <div className="space-y-6">
             {/* ── Key Metrics ── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-white border-gray-100">
+              <Card className="bg-white border-gray-100 cursor-help" title="Total number of pages loaded by real visitors. Bots and crawlers are excluded.">
                 <CardContent className="pt-5 pb-4">
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Page Views</p>
                   <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-total-views">{data.totalViews.toLocaleString()}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">Last {days} days</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border-gray-100">
+              <Card className="bg-white border-gray-100 cursor-help" title="Unique browser sessions. One person visiting multiple pages counts as one visitor.">
                 <CardContent className="pt-5 pb-4">
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Unique Visitors</p>
                   <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-unique-visitors">{data.uniqueVisitors.toLocaleString()}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">Last {days} days</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border-gray-100">
+              <Card className="bg-white border-gray-100 cursor-help" title="Average time a visitor spends on each page before navigating away. Longer = more engaged.">
                 <CardContent className="pt-5 pb-4">
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Avg. Time on Page</p>
                   <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-avg-duration">{formatDuration(data.avgDuration)}</p>
                   <p className="text-[10px] text-gray-400 mt-0.5">Per page view</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border-gray-100">
+              <Card className="bg-white border-gray-100 cursor-help" title="Percentage of visitors who leave after viewing only one page. Lower is better — means people are exploring.">
                 <CardContent className="pt-5 pb-4">
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Bounce Rate</p>
                   <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-bounce-rate">{data.bounceRate}%</p>
@@ -5947,7 +5947,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
 
             {/* ── Conversion Funnels ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-white border-gray-100">
+              <Card className="bg-white border-gray-100 cursor-help" title="How many visitors start the Portrait Builder vs. how many complete a booking. Higher conversion = better funnel.">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-700">Shoot Funnel</CardTitle>
                 </CardHeader>
@@ -5980,7 +5980,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border-gray-100">
+              <Card className="bg-white border-gray-100 cursor-help" title="How many visitors view a space listing vs. how many book it. Tracks the full journey from browsing to booking.">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-700">Space Funnel</CardTitle>
                 </CardHeader>
