@@ -2393,6 +2393,16 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/stripe-sync", isAdmin, async (_req, res) => {
+    try {
+      const { syncStripeBookings } = await import("./stripe-sync");
+      const result = await syncStripeBookings();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/admin/backup/restore", isAdmin, async (req, res) => {
     try {
       const { key } = req.body;
