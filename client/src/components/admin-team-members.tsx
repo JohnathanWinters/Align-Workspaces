@@ -71,18 +71,25 @@ function CropEditor({ member, token, onUpdate }: { member: TeamMember; token: st
 
   return (
     <div className="space-y-3 mt-3 pt-3 border-t border-gray-100">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Photo Crop</p>
-      <div className="flex gap-4">
-        <div className="w-32 aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-          <img
-            src={photoSrc}
-            alt={member.name}
-            className="w-full h-full object-cover"
-            style={{
-              objectPosition: `${x}% ${y}%`,
-              ...(zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: `${x}% ${y}%` } : {}),
-            }}
-          />
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Photo Crop Preview</p>
+      <div className="flex gap-4 items-start">
+        {/* Preview matches Our Vision card exactly: rounded-xl, border, aspect-[4/3] */}
+        <div className="w-48 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-stone-200/80 shadow-sm">
+          <div className="aspect-[4/3] overflow-hidden">
+            <img
+              src={photoSrc}
+              alt={member.name}
+              className="w-full h-full object-cover"
+              style={{
+                objectPosition: `${x}% ${y}%`,
+                ...(zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: `${x}% ${y}%` } : {}),
+              }}
+            />
+          </div>
+          <div className="px-3 py-2">
+            <p className="font-serif text-xs text-[#2a2a2a] truncate">{member.name}</p>
+            <p className="text-[10px] text-[#c4956a]">{member.role}</p>
+          </div>
         </div>
         <div className="flex-1 space-y-2">
           <div>
