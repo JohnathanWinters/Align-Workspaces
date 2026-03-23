@@ -2533,35 +2533,33 @@ function PortalContent() {
                             )}
                           </div>
                         )}
-                        <div className="flex flex-col gap-2 pt-2 mt-auto">
-                          {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <a
-                                href={buildGoogleCalendarUrl(shoot)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-testid={`button-calendar-sync-${shoot.id}`}
-                                className="w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
-                              >
-                                <CalendarPlus className="w-3.5 h-3.5" />
-                                Google Calendar
-                              </a>
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-400 text-center">
-                            {shoot.status === "completed" && (shoot.galleryCount ?? 0) > 0
-                              ? `View ${shoot.galleryCount} photos`
-                              : shoot.status === "in-progress" && (shoot.galleryCount ?? 0) > 0
-                              ? `Preview ${shoot.galleryCount} photos`
-                              : shoot.status === "in-progress"
-                              ? "Photos are being edited"
-                              : shoot.status === "scheduled"
-                              ? "Session coming up"
-                              : (shoot.galleryCount ?? 0) > 0
-                              ? `View ${shoot.galleryCount} photos`
-                              : null}
-                          </p>
-                        </div>
+                        {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
+                          <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                            <a
+                              href={buildGoogleCalendarUrl(shoot)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-testid={`button-calendar-sync-${shoot.id}`}
+                              className="w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
+                            >
+                              <CalendarPlus className="w-3.5 h-3.5" />
+                              Google Calendar
+                            </a>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 text-center mt-auto pt-3 pb-1">
+                          {shoot.status === "completed" && (shoot.galleryCount ?? 0) > 0
+                            ? `View ${shoot.galleryCount} photos`
+                            : shoot.status === "in-progress" && (shoot.galleryCount ?? 0) > 0
+                            ? `Preview ${shoot.galleryCount} photos`
+                            : shoot.status === "in-progress"
+                            ? "Photos are being edited"
+                            : shoot.status === "scheduled"
+                            ? "Session coming up"
+                            : (shoot.galleryCount ?? 0) > 0
+                            ? `View ${shoot.galleryCount} photos`
+                            : null}
+                        </p>
                       </CardContent>
                     </Card>
                   </motion.div>
