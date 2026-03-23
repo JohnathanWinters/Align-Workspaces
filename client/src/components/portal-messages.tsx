@@ -560,7 +560,7 @@ function ConversationView({
               </div>
             </div>
 
-            {booking.status === "approved" && (
+            {(booking.status === "approved" || booking.status === "confirmed" || booking.status === "checked_in") && (
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={async () => {
