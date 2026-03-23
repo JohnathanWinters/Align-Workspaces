@@ -2535,25 +2535,17 @@ function PortalContent() {
                         )}
                         <div className="flex flex-col gap-2 pt-2 mt-auto">
                           {shoot.shootDate && new Date(shoot.shootDate + "T23:59:59") >= new Date() && (
-                            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div onClick={(e) => e.stopPropagation()}>
                               <a
                                 href={buildGoogleCalendarUrl(shoot)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 data-testid={`button-calendar-sync-${shoot.id}`}
-                                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
+                                className="w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white text-xs font-medium hover:bg-[#333] transition-colors"
                               >
                                 <CalendarPlus className="w-3.5 h-3.5" />
                                 Google Calendar
                               </a>
-                              <button
-                                onClick={() => downloadIcsFile(shoot)}
-                                data-testid={`button-ics-download-${shoot.id}`}
-                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors"
-                              >
-                                <Download className="w-3 h-3" />
-                                .ics
-                              </button>
                             </div>
                           )}
                           <p className="text-xs text-gray-400 text-center">
