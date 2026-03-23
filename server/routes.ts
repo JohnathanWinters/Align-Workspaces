@@ -2353,6 +2353,46 @@ export async function registerRoutes(
     }
   });
 
+  // ══════════════════════════════════════════════════════════════════
+  // DATABASE BACKUPS
+  // ══════════════════════════════════════════════════════════════════
+
+  app.post("/api/admin/backup", isAdmin, async (_req, res) => {
+    try {
+      const { createBackup } = await import("./backup");
+      const result = await createBackup();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/admin/backups", isAdmin, async (_req, res) => {
+    try {
+      const { S3Client, ListObjectsV2Command } = await import("@aws-sdk/client-s3");
+      const s3 = new S3Client({
+        region: "auto",
+        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+          accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+        },
+      });
+      const listed = await s3.send(new ListObjectsV2Command({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Prefix: "backups/",
+      }));
+      const backups = (listed.Contents || []).map(obj => ({
+        key: obj.Key,
+        size: obj.Size,
+        lastModified: obj.LastModified,
+      })).sort((a, b) => (b.lastModified?.getTime() || 0) - (a.lastModified?.getTime() || 0));
+      res.json(backups);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/admin/featured/seed", isAdmin, async (_req, res) => {
     try {
       const { seedFeaturedProfessionals } = await import("./seed-featured");

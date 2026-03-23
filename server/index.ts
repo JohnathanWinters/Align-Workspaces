@@ -14,6 +14,7 @@ import { seedTestClient } from "./seed-test-client";
 import { seedTeamMembersIfEmpty } from "./seed-team-members";
 import { seedFeaturedProfessionals } from "./seed-featured";
 import { startPayoutProcessing } from "./payouts";
+import { startBackupSchedule } from "./backup";
 import { WebhookHandlers } from "./webhookHandlers";
 
 const app = express();
@@ -263,6 +264,9 @@ app.post("/api/stripe/webhook", async (req, res) => {
 
       // Start automatic payout processing (runs every hour)
       startPayoutProcessing();
+
+      // Start automatic database backups (daily to R2)
+      startBackupSchedule();
     },
   );
 })();
