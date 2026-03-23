@@ -137,6 +137,61 @@ const portfolioData = [
   },
 ];
 
+const spacePortfolioData = [
+  {
+    imageUrl: "/images/spaces/space-1a6691c3-64dc-4fcc-ad25-ecf6c5acf9a4.webp",
+    category: "spaces" as const,
+    environments: ["creative"],
+    brandMessages: ["confidence"],
+    emotionalImpacts: ["bright"],
+    colorPalette: [
+      { hex: "#F8F8F8", keyword: "Studio White" },
+      { hex: "#1C1C1C", keyword: "Shadow Black" },
+      { hex: "#B8A08A", keyword: "Warm Neutral" },
+    ],
+    locationSpaceId: "sample-space-armando-host",
+  },
+  {
+    imageUrl: "/images/spaces/space-72ca8bac-1570-422f-a1c5-ce37b7db06ed.webp",
+    category: "spaces" as const,
+    environments: ["creative"],
+    brandMessages: ["assured"],
+    emotionalImpacts: ["powerful"],
+    colorPalette: [
+      { hex: "#F8F8F8", keyword: "Studio White" },
+      { hex: "#1C1C1C", keyword: "Shadow Black" },
+      { hex: "#B8A08A", keyword: "Warm Neutral" },
+    ],
+    locationSpaceId: "sample-space-armando-host",
+  },
+  {
+    imageUrl: "/images/spaces/space-7fae5817-d983-4e10-95bc-6d7ea4319dcb.webp",
+    category: "spaces" as const,
+    environments: ["wellness", "workshop"],
+    brandMessages: ["empathy"],
+    emotionalImpacts: ["cozy"],
+    colorPalette: [
+      { hex: "#E8DDD0", keyword: "Warm Cream" },
+      { hex: "#A8B0A0", keyword: "Sage Green" },
+      { hex: "#3E3A3A", keyword: "Espresso" },
+    ],
+    locationSpaceId: "0ea55148-29d6-41dd-8428-2540b89c34ae",
+  },
+  {
+    imageUrl: "/images/spaces/space-4bee724a-5e0c-4b9b-944b-c9eeddedcd8f.webp",
+    category: "spaces" as const,
+    environments: ["wellness", "workshop"],
+    brandMessages: ["assured"],
+    emotionalImpacts: ["bright"],
+    colorPalette: [
+      { hex: "#E8DDD0", keyword: "Warm Cream" },
+      { hex: "#A8B0A0", keyword: "Sage Green" },
+      { hex: "#3E3A3A", keyword: "Espresso" },
+    ],
+    locationSpaceId: "0ea55148-29d6-41dd-8428-2540b89c34ae",
+  },
+];
+
 export async function seedPortfolioIfEmpty() {
   try {
     const [{ count }] = await db
@@ -145,8 +200,8 @@ export async function seedPortfolioIfEmpty() {
 
     if (count === 0) {
       console.log("Seeding portfolio photos...");
-      await db.insert(portfolioPhotos).values(portfolioData);
-      console.log(`Seeded ${portfolioData.length} portfolio photos`);
+      await db.insert(portfolioPhotos).values([...portfolioData, ...spacePortfolioData]);
+      console.log(`Seeded ${portfolioData.length + spacePortfolioData.length} portfolio photos`);
     } else {
       // Backfill subject names on existing photos that are missing them
       let updated = 0;
@@ -164,6 +219,20 @@ export async function seedPortfolioIfEmpty() {
         if (result.rowCount && result.rowCount > 0) updated++;
       }
       if (updated > 0) console.log(`Backfilled subject data on ${updated} portfolio photos`);
+
+      // Add missing space portfolio photos
+      let spacesAdded = 0;
+      for (const spacePhoto of spacePortfolioData) {
+        const [existing] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(portfolioPhotos)
+          .where(sql`${portfolioPhotos.imageUrl} = ${spacePhoto.imageUrl}`);
+        if (existing.count === 0) {
+          await db.insert(portfolioPhotos).values(spacePhoto);
+          spacesAdded++;
+        }
+      }
+      if (spacesAdded > 0) console.log(`Added ${spacesAdded} space portfolio photos`);
     }
   } catch (error) {
     console.error("Failed to seed portfolio photos (non-fatal):", error);

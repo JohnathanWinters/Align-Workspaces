@@ -124,6 +124,19 @@ function PortfolioCard({ photo, index, onPhotoClick, linkedSpace }: { photo: Por
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8 md:hidden" data-testid={`name-mobile-${index}`}>
           <p className="text-white/90 text-[13px] font-medium leading-tight">{isSpaces && linkedSpace ? linkedSpace.name : subjectName}</p>
           <p className="text-white/50 text-[11px] mt-0.5">{isSpaces && linkedSpace ? linkedSpace.neighborhood : subjectProfession}</p>
+          {(photo.environments?.length || photo.brandMessages?.length || photo.emotionalImpacts?.length) ? (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {(photo.environments || []).map((v, i) => (
+                <span key={`e-${i}`} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm">{v}</span>
+              ))}
+              {(photo.brandMessages || []).map((v, i) => (
+                <span key={`b-${i}`} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm">{v}</span>
+              ))}
+              {(photo.emotionalImpacts || []).map((v, i) => (
+                <span key={`i-${i}`} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm">{v}</span>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -149,6 +162,19 @@ function PortfolioCard({ photo, index, onPhotoClick, linkedSpace }: { photo: Por
           <div>
             <p className="text-white/90 text-[13px] font-medium leading-tight">{isSpaces && linkedSpace ? linkedSpace.name : subjectName}</p>
             <p className="text-white/50 text-[11px] mt-0.5">{isSpaces && linkedSpace ? linkedSpace.neighborhood : subjectProfession}</p>
+            {(photo.environments?.length || photo.brandMessages?.length || photo.emotionalImpacts?.length) ? (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {(photo.environments || []).map((v, i) => (
+                  <span key={`e-${i}`} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm">{v}</span>
+                ))}
+                {(photo.brandMessages || []).map((v, i) => (
+                  <span key={`b-${i}`} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm">{v}</span>
+                ))}
+                {(photo.emotionalImpacts || []).map((v, i) => (
+                  <span key={`i-${i}`} className="text-[10px] bg-white/20 text-white/90 px-1.5 py-0.5 rounded-sm">{v}</span>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : palette.length > 0 ? (
           <div className="flex items-center gap-1.5">
