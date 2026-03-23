@@ -53,6 +53,7 @@ import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
 import PortalMessagesSection, { useUnreadCount } from "@/components/portal-messages";
 import PortalSettings from "@/components/portal-settings";
+import ShootProgressBar, { getShootProgressStage } from "@/components/shoot-progress-bar";
 import { useToast } from "@/hooks/use-toast";
 
 import { playNotificationSound } from "@/lib/notification-sound";
@@ -1509,6 +1510,18 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
         </div>
       </header>
 
+      {/* In-progress banner */}
+      {shoot.status === "in-progress" && (
+        <div className="bg-amber-50 border-b border-amber-200/60">
+          <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <p className="text-sm text-amber-700">
+              Your photos are being edited. This gallery may update as new edits are completed.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Chat panel */}
       {showChat && (
         <div className="border-b border-gray-200 bg-white">
@@ -2426,14 +2439,19 @@ function PortalContent() {
                           <CardTitle className="font-serif text-lg text-gray-900 group-hover:text-black transition-colors">
                             {shoot.title}
                           </CardTitle>
-                          <span
-                            className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(shoot.status)}`}
-                            data-testid={`badge-status-${shoot.id}`}
-                          >
-                            {getStatusIcon(shoot.status)}
-                            {getStatusLabel(shoot.status)}
-                          </span>
+                          {getShootProgressStage(shoot) < 0 && (
+                            <span
+                              className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(shoot.status)}`}
+                              data-testid={`badge-status-${shoot.id}`}
+                            >
+                              {getStatusIcon(shoot.status)}
+                              {getStatusLabel(shoot.status)}
+                            </span>
+                          )}
                         </div>
+                        {getShootProgressStage(shoot) >= 0 && (
+                          <ShootProgressBar shoot={shoot} />
+                        )}
                       </CardHeader>
                       <CardContent className="pt-0 flex-1 flex flex-col">
                         <div className="space-y-2 text-sm text-gray-500">
@@ -2504,6 +2522,11 @@ function PortalContent() {
                               <>
                                 <Images className="w-3 h-3" />
                                 View {shoot.galleryCount} photos
+                              </>
+                            ) : shoot.status === "in-progress" && (shoot.galleryCount ?? 0) > 0 ? (
+                              <>
+                                <Images className="w-3 h-3" />
+                                Preview {shoot.galleryCount} photos
                               </>
                             ) : shoot.status === "in-progress" ? (
                               <>
