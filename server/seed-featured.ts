@@ -127,24 +127,12 @@ const professionals = [
 ];
 
 export async function seedFeaturedProfessionals() {
-  // Remove old placeholder professionals that no longer belong
-  const oldSlugs = [
-    "maria-gonzalez-therapist", "daniel-reyes-therapist", "carlos-medina-chef",
-    "isabella-santos-chef", "marcus-johnson-trainer", "adriana-vega-trainer",
-  ];
-  for (const slug of oldSlugs) {
-    const old = await storage.getFeaturedProfessionalBySlug(slug);
-    if (old) {
-      await storage.deleteFeaturedProfessional(old.id);
-    }
-  }
-
+  // Only seed if the table is completely empty — never overwrite admin edits
   const existing = await storage.getFeaturedProfessionals({ includeSamples: true });
-  const existingSlugs = new Set(existing.map((p) => p.slug));
-  let created = 0;
+  if (existing.length > 0) return { created: 0, total: professionals.length };
 
+  let created = 0;
   for (const pro of professionals) {
-    if (existingSlugs.has(pro.slug)) continue;
     await storage.createFeaturedProfessional(pro);
     created++;
   }
