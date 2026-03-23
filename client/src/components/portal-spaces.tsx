@@ -1012,7 +1012,7 @@ function RecurringBookingsSection() {
 }
 
 function MyBookingsTab() {
-  const { data: bookingsData, isLoading } = useQuery<{ guest: any[]; host: any[] }>({
+  const { data: bookingsData, isLoading } = useQuery<{ guestBookings: any[]; hostBookings: any[] }>({
     queryKey: ["/api/space-bookings"],
     queryFn: async () => {
       const res = await fetch("/api/space-bookings", { credentials: "include" });
@@ -1021,8 +1021,8 @@ function MyBookingsTab() {
     },
   });
 
-  const guestBookings = (bookingsData?.guest || []).map((b: any) => ({ ...b, _role: "guest" }));
-  const hostBookings = (bookingsData?.host || []).map((b: any) => ({ ...b, _role: "host" }));
+  const guestBookings = (bookingsData?.guestBookings || []).map((b: any) => ({ ...b, _role: "guest" }));
+  const hostBookings = (bookingsData?.hostBookings || []).map((b: any) => ({ ...b, _role: "host" }));
   const bookings = [...guestBookings, ...hostBookings];
 
   const { data: allSpaces = [] } = useQuery<Space[]>({
@@ -2381,7 +2381,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
     },
   });
 
-  const { data: bookingsData, isLoading: bookingsLoading } = useQuery<{ guest: any[]; host: any[] }>({
+  const { data: bookingsData, isLoading: bookingsLoading } = useQuery<{ guestBookings: any[]; hostBookings: any[] }>({
     queryKey: ["/api/space-bookings"],
     queryFn: async () => {
       const res = await fetch("/api/space-bookings", { credentials: "include" });
@@ -2397,7 +2397,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
     const hasFavorites = favorites.length > 0;
     const hasMySpaces = mySpaces.length > 0;
-    const allBookings = [...(bookingsData?.guest || []), ...(bookingsData?.host || [])];
+    const allBookings = [...(bookingsData?.guestBookings || []), ...(bookingsData?.hostBookings || [])];
     const hasBookings = allBookings.length > 0;
 
     const tabs = [

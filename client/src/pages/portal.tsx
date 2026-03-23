@@ -2013,7 +2013,7 @@ function PortalContent() {
     },
   });
 
-  const { data: spaceBookings } = useQuery<{ guest: any[]; host: any[] }>({
+  const { data: spaceBookings } = useQuery<{ guestBookings: any[]; hostBookings: any[] }>({
     queryKey: ["/api/space-bookings"],
     queryFn: async () => {
       const res = await fetch("/api/space-bookings", { credentials: "include" });
@@ -2070,7 +2070,7 @@ function PortalContent() {
     const latestEdit = editRequests.length > 0
       ? Math.max(...editRequests.map(e => new Date(e.createdAt || 0).getTime()))
       : 0;
-    const allSpaceBookings = [...(spaceBookings?.guest || []), ...(spaceBookings?.host || [])];
+    const allSpaceBookings = [...(spaceBookings?.guestBookings || []), ...(spaceBookings?.hostBookings || [])];
     const latestSpace = allSpaceBookings.length > 0
       ? Math.max(...allSpaceBookings.map(b => new Date(b.createdAt || b.bookingDate || 0).getTime()))
       : 0;
