@@ -178,7 +178,7 @@ export default function PhotographersPage() {
                   <img
                     src={armandoPhoto}
                     alt="Armando Ramirez Romero"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-[center_20%]"
                     loading="lazy"
                     decoding="async"
                     data-testid="img-photographer-page-0"
@@ -209,7 +209,7 @@ export default function PhotographersPage() {
                   <img
                     src={edithPhoto}
                     alt="Edith Caballero"
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-[center_20%]"
                     loading="lazy"
                     decoding="async"
                     data-testid="img-photographer-page-1"
