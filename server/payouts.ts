@@ -3,8 +3,9 @@ import { getUncachableStripeClient } from "./stripeClient";
 import { sendPushToUser } from "./pushNotifications";
 import { sendArrivalGuideEmail } from "./gmail";
 import { db } from "./db";
-import { arrivalGuides, arrivalGuideSteps, spaceBookings } from "@shared/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { arrivalGuides, arrivalGuideSteps, spaceBookings, recurringBookings } from "@shared/schema";
+import { eq, and, isNull, or } from "drizzle-orm";
+import { calculateSpaceBookingFees, resolveFeeTier } from "@shared/pricing";
 
 /**
  * Mark bookings as "completed" when their booking date has passed.
@@ -484,6 +485,162 @@ let notificationInterval: ReturnType<typeof setInterval> | null = null;
  * Runs every hour: completes past bookings, then processes pending payouts.
  * Also starts a 15-minute notification loop for booking reminders.
  */
+/**
+ * Auto-generate individual space bookings from confirmed recurring bookings.
+ * Creates bookings for the next 2 weeks, checking for conflicts.
+ */
+export async function processRecurringBookings(): Promise<number> {
+  const activeRecurring = await storage.getActiveRecurringBookings();
+  const todayStr = new Date().toISOString().split("T")[0];
+  let created = 0;
+
+  for (const rec of activeRecurring) {
+    try {
+      const space = await storage.getSpaceById(rec.spaceId);
+      if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) continue;
+
+      // Calculate the next 2 weeks of occurrence dates
+      const occurrenceDates = getUpcomingOccurrences(rec.dayOfWeek, rec.startDate, rec.endDate, 14);
+
+      // Get existing bookings for this recurring
+      const existingBookings = await storage.getSpaceBookingsByRecurringId(rec.id);
+      const existingDates = new Set(existingBookings.map(b => b.bookingDate));
+
+      for (const date of occurrenceDates) {
+        if (date < todayStr) continue; // Skip past dates
+        if (existingDates.has(date)) continue; // Already created
+
+        // Check for time slot conflicts
+        const spaceBookingsOnDate = await storage.getSpaceBookingsBySpaceAndDate(rec.spaceId, date);
+        const startMin = timeToMinutes(rec.startTime);
+        const endMin = startMin + rec.hours * 60;
+        const hasConflict = spaceBookingsOnDate.some((b: any) => {
+          if (b.status === "cancelled" || b.status === "rejected") return false;
+          const bStart = timeToMinutes(b.bookingStartTime || "00:00");
+          const bEnd = bStart + (b.bookingHours || 1) * 60;
+          return startMin < bEnd && endMin > bStart;
+        });
+
+        if (hasConflict) {
+          console.log(`[recurring] Conflict for ${rec.id} on ${date}, skipping`);
+          continue;
+        }
+
+        // Calculate fees
+        const guestBookings = await storage.getSpaceBookingsByUser(rec.userId);
+        const completedBookings = guestBookings.filter(b => b.status === "completed");
+        const isRepeatGuest = completedBookings.length > 0;
+        const feeTier = resolveFeeTier({ isRepeatGuest, isHostReferred: false });
+        const basePriceCents = (space.pricePerHour || 0) * 100 * rec.hours;
+        const fees = calculateSpaceBookingFees(basePriceCents, feeTier);
+
+        // Create individual booking
+        await storage.createSpaceBooking({
+          spaceId: rec.spaceId,
+          userId: rec.userId,
+          userName: rec.userName || "Guest",
+          userEmail: rec.userEmail || "",
+          status: "awaiting_payment",
+          bookingDate: date,
+          bookingStartTime: rec.startTime,
+          bookingHours: rec.hours,
+          paymentAmount: fees.totalGuestCharged,
+          feeTier: fees.feeTier,
+          hostFeePercent: String(fees.hostFeePercent),
+          guestFeePercent: String(fees.guestFeePercent),
+          guestFeeAmount: fees.guestFeeAmount,
+          hostFeeAmount: fees.hostFeeAmount,
+          hostEarnings: fees.hostPayoutAmount,
+          taxRate: String(fees.taxRate),
+          taxAmount: fees.taxAmount,
+          totalGuestCharged: fees.totalGuestCharged,
+          hostPayoutAmount: fees.hostPayoutAmount,
+          platformRevenue: fees.platformRevenue,
+          renterFeeAmount: fees.guestFeeAmount,
+          paymentStatus: "pending",
+          payoutStatus: "pending",
+          recurringBookingId: rec.id,
+        });
+
+        // Notify the guest
+        sendPushToUser(rec.userId, {
+          title: `Weekly booking at ${space.name}`,
+          body: `Your booking for ${date} is ready — tap to pay`,
+          url: "/portal?tab=spaces",
+        }, "booking").catch(() => {});
+
+        created++;
+        console.log(`[recurring] Created booking for ${rec.id} on ${date}`);
+      }
+
+      // Check for expired recurring bookings
+      if (rec.endDate && rec.endDate < todayStr) {
+        await storage.updateRecurringBooking(rec.id, { status: "cancelled" });
+        console.log(`[recurring] Auto-cancelled expired recurring ${rec.id}`);
+      }
+
+      // Check for 3 consecutive unpaid bookings → auto-pause
+      const recentBookings = existingBookings
+        .filter(b => b.bookingDate && b.bookingDate >= todayStr)
+        .sort((a, b) => (a.bookingDate || "").localeCompare(b.bookingDate || ""))
+        .slice(-3);
+      if (recentBookings.length >= 3 && recentBookings.every(b => b.status === "awaiting_payment" || b.paymentStatus === "pending")) {
+        await storage.updateRecurringBooking(rec.id, { status: "paused" });
+        sendPushToUser(rec.userId, {
+          title: "Recurring booking paused",
+          body: `Your weekly booking at ${space.name} was paused due to unpaid bookings`,
+          url: "/portal?tab=spaces",
+        }, "booking").catch(() => {});
+        if (space.userId) {
+          sendPushToUser(space.userId, {
+            title: "Recurring booking paused",
+            body: `Weekly booking at ${space.name} was auto-paused — guest has unpaid bookings`,
+            url: "/portal?tab=spaces",
+          }, "booking").catch(() => {});
+        }
+        console.log(`[recurring] Auto-paused ${rec.id} due to 3 unpaid bookings`);
+      }
+    } catch (err) {
+      console.error(`[recurring] Error processing ${rec.id}:`, (err as Error).message);
+    }
+  }
+
+  if (created > 0) console.log(`[recurring] Created ${created} bookings from recurring schedules`);
+  return created;
+}
+
+/** Get upcoming occurrence dates for a recurring booking's day of week */
+function getUpcomingOccurrences(dayOfWeek: number, startDate: string, endDate: string | null, daysAhead: number): string[] {
+  const dates: string[] = [];
+  const today = new Date();
+  const start = new Date(startDate + "T12:00:00");
+  const end = endDate ? new Date(endDate + "T12:00:00") : null;
+  const limit = new Date(today.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+
+  // Start from today or startDate, whichever is later
+  let cursor = new Date(Math.max(today.getTime(), start.getTime()));
+  cursor.setHours(12, 0, 0, 0);
+
+  // Find the first occurrence of dayOfWeek from cursor
+  while (cursor.getDay() !== dayOfWeek) {
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  while (cursor <= limit) {
+    if (end && cursor > end) break;
+    dates.push(cursor.toISOString().split("T")[0]);
+    cursor.setDate(cursor.getDate() + 7);
+  }
+
+  return dates;
+}
+
+/** Convert "HH:MM" to minutes since midnight */
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
 export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
   if (payoutInterval) return;
 
@@ -491,6 +648,7 @@ export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
     try {
       await processCompletedBookings();
       await processPendingPayouts();
+      await processRecurringBookings();
     } catch (err) {
       console.error("[payouts] Processing cycle error:", (err as Error).message);
     }

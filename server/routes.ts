@@ -3883,6 +3883,7 @@ export async function registerRoutes(
           spaceName: space?.name || b.spaceName || "Unknown Space",
           spaceType: space?.type,
           spaceAddress: space?.address || null,
+          spaceImageUrl: (space?.imageUrls as string[])?.[0] || null,
           spaceSchedule: space?.availabilitySchedule || null,
           spaceBufferMinutes: space?.bufferMinutes ?? 15,
           otherPartyName: role === "guest" ? (space?.hostName || "Host") : (b.userName || "Guest"),
@@ -5201,8 +5202,32 @@ export async function registerRoutes(
 
   app.get("/api/recurring-bookings", isAuthenticated, async (req: any, res) => {
     try {
-      const recurring = await storage.getRecurringBookingsByUser(req.user.claims.sub);
-      res.json(recurring);
+      const userId = req.user.claims.sub;
+      // Get recurring bookings where user is the guest
+      const guestRecurring = await storage.getRecurringBookingsByUser(userId);
+      // Get recurring bookings where user is the host
+      const userSpaces = await storage.getSpacesByUser(userId);
+      const hostRecurring: any[] = [];
+      for (const space of userSpaces) {
+        const spaceRecurring = await storage.getRecurringBookingsBySpace(space.id);
+        hostRecurring.push(...spaceRecurring.filter(r => r.userId !== userId));
+      }
+      // Enrich all with space name, image, role, and other party name
+      const allRecurring = [
+        ...guestRecurring.map(r => ({ ...r, _role: "guest" as const })),
+        ...hostRecurring.map(r => ({ ...r, _role: "host" as const })),
+      ];
+      const enriched = await Promise.all(allRecurring.map(async (rb) => {
+        const space = await storage.getSpaceById(rb.spaceId);
+        return {
+          ...rb,
+          spaceName: space?.name || "Unknown Space",
+          spaceImage: (space?.imageUrls as string[])?.[0] || null,
+          role: rb._role,
+          otherPartyName: rb._role === "guest" ? (space?.name || "Host") : (rb.userName || "Guest"),
+        };
+      }));
+      res.json(enriched);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -5232,9 +5257,13 @@ export async function registerRoutes(
         return res.status(400).json({ message: "startTime must be HH:MM format" });
       }
 
+      // Determine if requester is guest or host
+      const isHost = space.userId === req.user.claims.sub;
+      const requestedByRole = isHost ? "host" : "guest";
+
       const recurring = await storage.createRecurringBooking({
         spaceId,
-        userId: req.user.claims.sub,
+        userId: isHost ? req.body.guestUserId || req.user.claims.sub : req.user.claims.sub,
         userName: req.user.claims.first_name || "Guest",
         userEmail: req.user.claims.email || "",
         dayOfWeek: dow,
@@ -5242,8 +5271,125 @@ export async function registerRoutes(
         hours: numHours,
         startDate: String(startDate),
         endDate: endDate ? String(endDate) : null,
+        status: "pending_confirmation",
+        requestedBy: req.user.claims.sub,
+        requestedByRole,
       });
+
+      // Send push notification to the other party
+      const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      if (isHost) {
+        // Notify the guest
+        if (recurring.userId && recurring.userId !== req.user.claims.sub) {
+          sendPushToUser(recurring.userId, {
+            title: "Recurring Booking Request",
+            body: `${space.name} host wants to set up a weekly booking: ${DAY_NAMES[dow]}s at ${startTime}`,
+            url: "/portal?tab=spaces",
+          }, "booking").catch(() => {});
+        }
+      } else {
+        // Notify the host
+        if (space.userId) {
+          sendPushToUser(space.userId, {
+            title: "Recurring Booking Request",
+            body: `${req.user.claims.first_name || "A guest"} wants a weekly booking: ${DAY_NAMES[dow]}s at ${startTime} at ${space.name}`,
+            url: "/portal?tab=spaces",
+          }, "booking").catch(() => {});
+        }
+      }
+
       res.json(recurring);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Confirm a recurring booking request
+  app.post("/api/recurring-bookings/:id/confirm", isAuthenticated, async (req: any, res) => {
+    try {
+      const rec = await storage.getRecurringBookingById(req.params.id);
+      if (!rec) return res.status(404).json({ message: "Not found" });
+      if (rec.status !== "pending_confirmation") {
+        return res.status(400).json({ message: "Booking is not pending confirmation" });
+      }
+
+      const space = await storage.getSpaceById(rec.spaceId);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      // Validate: the confirmer must be the OTHER party
+      const userId = req.user.claims.sub;
+      const isHost = space.userId === userId;
+      const isGuest = rec.userId === userId;
+
+      if (rec.requestedByRole === "guest" && !isHost) {
+        return res.status(403).json({ message: "Only the host can confirm this request" });
+      }
+      if (rec.requestedByRole === "host" && !isGuest) {
+        return res.status(403).json({ message: "Only the guest can confirm this request" });
+      }
+
+      const updated = await storage.updateRecurringBooking(rec.id, {
+        status: "confirmed",
+        confirmedBy: userId,
+        confirmedAt: new Date(),
+      });
+
+      // Notify the requester
+      const notifyUserId = rec.requestedBy;
+      if (notifyUserId) {
+        sendPushToUser(notifyUserId, {
+          title: "Recurring Booking Confirmed",
+          body: `Your recurring booking at ${space.name} has been confirmed!`,
+          url: "/portal?tab=spaces",
+        }, "booking").catch(() => {});
+      }
+
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Decline a recurring booking request
+  app.post("/api/recurring-bookings/:id/decline", isAuthenticated, async (req: any, res) => {
+    try {
+      const rec = await storage.getRecurringBookingById(req.params.id);
+      if (!rec) return res.status(404).json({ message: "Not found" });
+      if (rec.status !== "pending_confirmation") {
+        return res.status(400).json({ message: "Booking is not pending confirmation" });
+      }
+
+      const space = await storage.getSpaceById(rec.spaceId);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+
+      const userId = req.user.claims.sub;
+      const isHost = space.userId === userId;
+      const isGuest = rec.userId === userId;
+
+      if (rec.requestedByRole === "guest" && !isHost) {
+        return res.status(403).json({ message: "Only the host can decline this request" });
+      }
+      if (rec.requestedByRole === "host" && !isGuest) {
+        return res.status(403).json({ message: "Only the guest can decline this request" });
+      }
+
+      const updated = await storage.updateRecurringBooking(rec.id, {
+        status: "declined",
+        declinedAt: new Date(),
+        declineReason: req.body.reason || null,
+      });
+
+      // Notify the requester
+      const notifyUserId = rec.requestedBy;
+      if (notifyUserId) {
+        sendPushToUser(notifyUserId, {
+          title: "Recurring Booking Declined",
+          body: `Your recurring booking request at ${space.name} was declined.`,
+          url: "/portal?tab=spaces",
+        }, "booking").catch(() => {});
+      }
+
+      res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -5251,13 +5397,19 @@ export async function registerRoutes(
 
   app.patch("/api/recurring-bookings/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const all = await storage.getRecurringBookingsByUser(req.user.claims.sub);
-      const rec = all.find(r => r.id === req.params.id);
+      const rec = await storage.getRecurringBookingById(req.params.id);
       if (!rec) return res.status(404).json({ message: "Not found" });
+
+      // Allow both guest (userId) and host (space owner) to manage
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(rec.spaceId);
+      const isGuest = rec.userId === userId;
+      const isHost = space?.userId === userId;
+      if (!isGuest && !isHost) return res.status(403).json({ message: "Not authorized" });
 
       const { status, endDate } = req.body;
       const updates: Partial<any> = {};
-      if (status && ["active", "paused", "cancelled"].includes(status)) updates.status = status;
+      if (status && ["active", "confirmed", "paused", "cancelled"].includes(status)) updates.status = status;
       if (endDate !== undefined) updates.endDate = endDate;
 
       const updated = await storage.updateRecurringBooking(req.params.id, updates);

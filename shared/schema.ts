@@ -458,6 +458,7 @@ export const spaceBookings = pgTable("space_bookings", {
   lastReadGuest: timestamp("last_read_guest"),
   lastReadHost: timestamp("last_read_host"),
   arrivalGuideSentAt: timestamp("arrival_guide_sent_at"),
+  recurringBookingId: varchar("recurring_booking_id"),     // links to parent recurring booking
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -786,7 +787,13 @@ export const recurringBookings = pgTable("recurring_bookings", {
   hours: integer("hours").notNull(),
   startDate: text("start_date").notNull(),                 // "2026-04-01"
   endDate: text("end_date"),                               // null = indefinite
-  status: text("status").default("active"),                // 'active' | 'paused' | 'cancelled'
+  status: text("status").default("pending_confirmation"),  // 'pending_confirmation' | 'confirmed' | 'declined' | 'active' | 'paused' | 'cancelled'
+  requestedBy: text("requested_by"),                       // userId of proposer
+  requestedByRole: text("requested_by_role"),              // 'guest' | 'host'
+  confirmedBy: text("confirmed_by"),                       // userId of confirmer
+  confirmedAt: timestamp("confirmed_at"),
+  declinedAt: timestamp("declined_at"),
+  declineReason: text("decline_reason"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

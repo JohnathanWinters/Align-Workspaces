@@ -1992,7 +1992,7 @@ function HelpButton() {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
-  const [spacesSubTab, setSpacesSubTab] = useState<"favorites" | "my-bookings" | "my-spaces" | "earnings" | "wishlists" | "analytics" | "host-guide" | undefined>(undefined);
+  const [spacesSubTab, setSpacesSubTab] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTabState] = useState<"shoots" | "edits" | "messages" | "spaces" | "settings">(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");

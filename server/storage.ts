@@ -97,6 +97,7 @@ export interface IStorage {
   createSpaceBooking(data: InsertSpaceBooking): Promise<SpaceBooking>;
   getSpaceBookingsByUser(userId: string): Promise<SpaceBooking[]>;
   getSpaceBookingsBySpace(spaceId: string): Promise<SpaceBooking[]>;
+  getSpaceBookingsBySpaceAndDate(spaceId: string, date: string): Promise<SpaceBooking[]>;
   getSpaceBookingById(id: string): Promise<SpaceBooking | undefined>;
   updateSpaceBookingStatus(id: string, status: string): Promise<SpaceBooking>;
   updateSpaceBooking(id: string, data: Partial<SpaceBooking>): Promise<SpaceBooking>;
@@ -189,6 +190,9 @@ export interface IStorage {
   getRecurringBookingsBySpace(spaceId: string): Promise<RecurringBooking[]>;
   updateRecurringBooking(id: string, data: Partial<RecurringBooking>): Promise<RecurringBooking>;
   deleteRecurringBooking(id: string): Promise<void>;
+  getRecurringBookingById(id: string): Promise<RecurringBooking | undefined>;
+  getActiveRecurringBookings(): Promise<RecurringBooking[]>;
+  getSpaceBookingsByRecurringId(recurringBookingId: string): Promise<SpaceBooking[]>;
 
   // Host response metrics
   getHostResponseMetrics(hostId: string): Promise<{ avgMinutes: number; responseRate: number }>;
@@ -820,6 +824,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(spaceBookings).where(eq(spaceBookings.spaceId, spaceId)).orderBy(desc(spaceBookings.createdAt));
   }
 
+  async getSpaceBookingsBySpaceAndDate(spaceId: string, date: string): Promise<SpaceBooking[]> {
+    return db.select().from(spaceBookings)
+      .where(and(eq(spaceBookings.spaceId, spaceId), eq(spaceBookings.bookingDate, date)))
+      .orderBy(desc(spaceBookings.createdAt));
+  }
+
   async getSpaceBookingById(id: string): Promise<SpaceBooking | undefined> {
     const [result] = await db.select().from(spaceBookings).where(eq(spaceBookings.id, id));
     return result;
@@ -1293,6 +1303,26 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRecurringBooking(id: string): Promise<void> {
     await db.delete(recurringBookings).where(eq(recurringBookings.id, id));
+  }
+
+  async getRecurringBookingById(id: string): Promise<RecurringBooking | undefined> {
+    const [result] = await db.select().from(recurringBookings).where(eq(recurringBookings.id, id));
+    return result;
+  }
+
+  async getActiveRecurringBookings(): Promise<RecurringBooking[]> {
+    return db.select().from(recurringBookings)
+      .where(or(
+        eq(recurringBookings.status, "confirmed"),
+        eq(recurringBookings.status, "active"),
+      ))
+      .orderBy(desc(recurringBookings.createdAt));
+  }
+
+  async getSpaceBookingsByRecurringId(recurringBookingId: string): Promise<SpaceBooking[]> {
+    return db.select().from(spaceBookings)
+      .where(eq(spaceBookings.recurringBookingId, recurringBookingId))
+      .orderBy(desc(spaceBookings.bookingDate));
   }
 
   // ── Host Response Metrics ───────────────────────────────────────

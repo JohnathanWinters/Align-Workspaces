@@ -40,6 +40,7 @@ import {
   ExternalLink,
   Copy,
   Award,
+  Repeat,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -438,6 +439,23 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
   const [bookingStartTime, setBookingStartTime] = useState("");
   const [bookingHours, setBookingHours] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [makeRecurring, setMakeRecurring] = useState(false);
+  const [recurringEndDate, setRecurringEndDate] = useState("");
+  const { toast } = useToast();
+
+  const recurringMutation = useMutation({
+    mutationFn: async (data: { spaceId: string; dayOfWeek: number; startTime: string; hours: number; startDate: string; endDate?: string }) => {
+      const res = await apiRequest("POST", "/api/recurring-bookings", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Recurring booking requested!", description: "The other party will need to confirm." });
+      onClose();
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -736,16 +754,79 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => bookMutation.mutate({ bookingDate, bookingStartTime, bookingHours })}
-                  disabled={bookMutation.isPending}
-                  className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                  data-testid="button-confirm-booking"
-                >
-                  {bookMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                  Pay & Book
-                </button>
-                <p className="text-[10px] text-stone-400 text-center">You'll be redirected to Stripe for secure payment</p>
+                {/* Make Recurring Toggle */}
+                <div className="bg-stone-50 rounded-xl p-4 space-y-3">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-stone-500" />
+                      <span className="text-sm font-medium text-stone-700">Make this a weekly booking</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMakeRecurring(!makeRecurring)}
+                      className={`relative w-10 h-5 rounded-full transition-colors ${makeRecurring ? "bg-[#c4956a]" : "bg-stone-300"}`}
+                      data-testid="toggle-recurring"
+                    >
+                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${makeRecurring ? "translate-x-5" : "translate-x-0.5"}`} />
+                    </button>
+                  </label>
+                  {makeRecurring && (
+                    <div className="space-y-2 pt-1">
+                      <p className="text-xs text-stone-500">
+                        Every <strong>{new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" })}</strong> at <strong>{formatTime(bookingStartTime)}</strong> for <strong>{bookingHours}hr{bookingHours > 1 ? "s" : ""}</strong>
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-stone-500 whitespace-nowrap">End date</span>
+                        <input
+                          type="date"
+                          value={recurringEndDate}
+                          onChange={(e) => setRecurringEndDate(e.target.value)}
+                          min={bookingDate}
+                          className="flex-1 text-xs border border-stone-200 rounded-lg px-2 py-1.5 text-stone-700"
+                          placeholder="Optional"
+                          data-testid="input-recurring-end-date"
+                        />
+                        <span className="text-[10px] text-stone-400">(optional)</span>
+                      </div>
+                      <p className="text-[10px] text-stone-400">The other party will need to confirm. Individual bookings are created and charged weekly.</p>
+                    </div>
+                  )}
+                </div>
+
+                {makeRecurring ? (
+                  <button
+                    onClick={() => {
+                      const selectedDate = new Date(bookingDate + "T12:00:00");
+                      recurringMutation.mutate({
+                        spaceId: space.id,
+                        dayOfWeek: selectedDate.getDay(),
+                        startTime: bookingStartTime,
+                        hours: bookingHours,
+                        startDate: bookingDate,
+                        ...(recurringEndDate ? { endDate: recurringEndDate } : {}),
+                      });
+                    }}
+                    disabled={recurringMutation.isPending}
+                    className="w-full py-3 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b3845c] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                    data-testid="button-request-recurring"
+                  >
+                    {recurringMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Repeat className="w-4 h-4" />}
+                    Request Weekly Booking
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => bookMutation.mutate({ bookingDate, bookingStartTime, bookingHours })}
+                    disabled={bookMutation.isPending}
+                    className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                    data-testid="button-confirm-booking"
+                  >
+                    {bookMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                    Pay & Book
+                  </button>
+                )}
+                <p className="text-[10px] text-stone-400 text-center">
+                  {makeRecurring ? "A confirmation request will be sent to the host" : "You'll be redirected to Stripe for secure payment"}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>

@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
 import { ArrivalGuideEditor } from "./arrival-guide";
+import BookingCalendar from "./booking-calendar";
 
 const SPACE_TYPES = [
   { value: "therapy", label: "Therapy & Counseling" },
@@ -814,8 +815,11 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
   );
 }
 
-function FavoritesTab() {
-  const { data: favoriteSpaces = [], isLoading } = useQuery<Space[]>({
+function SavedTab() {
+  const { toast } = useToast();
+
+  // Favorites
+  const { data: favoriteSpaces = [], isLoading: favLoading } = useQuery<Space[]>({
     queryKey: ["/api/space-favorites"],
     queryFn: async () => {
       const res = await fetch("/api/space-favorites", { credentials: "include" });
@@ -833,7 +837,69 @@ function FavoritesTab() {
     },
   });
 
-  if (isLoading) {
+  // Wishlists
+  const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  const { data: wishlists = [], isLoading: wlLoading } = useQuery<{ id: string; name: string; items: any[]; itemCount: number }[]>({
+    queryKey: ["/api/wishlists"],
+    queryFn: async () => {
+      const res = await fetch("/api/wishlists", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (name: string) => {
+      await apiRequest("POST", "/api/wishlists", { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      setNewName("");
+      setCreating(false);
+      toast({ title: "Collection created" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/wishlists/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      toast({ title: "Collection deleted" });
+    },
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: async ({ collectionId, spaceId }: { collectionId: string; spaceId: string }) => {
+      await apiRequest("DELETE", `/api/wishlists/${collectionId}/items/${spaceId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      toast({ title: "Space removed from collection" });
+    },
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      await apiRequest("PATCH", `/api/wishlists/${id}`, { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
+      setRenamingId(null);
+      toast({ title: "Collection renamed" });
+    },
+  });
+
+  if (favLoading || wlLoading) {
     return (
       <div className="flex justify-center py-10">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -841,59 +907,258 @@ function FavoritesTab() {
     );
   }
 
-  if (favoriteSpaces.length === 0) {
+  const hasFavorites = favoriteSpaces.length > 0;
+  const hasWishlists = wishlists.length > 0;
+
+  if (!hasFavorites && !hasWishlists && !creating) {
     return (
-      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-favorites">
+      <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-saved">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <Heart className="w-7 h-7 text-gray-400" />
           </div>
-          <h3 className="font-serif text-xl text-gray-900 mb-2">No favorites yet</h3>
-          <p className="text-gray-500 text-sm max-w-sm">
-            Browse spaces and tap the heart icon to save your favorites here.
+          <h3 className="font-serif text-xl text-gray-900 mb-2">No saved spaces yet</h3>
+          <p className="text-gray-500 text-sm max-w-sm mb-4">
+            Browse spaces and tap the heart icon to save favorites, or create collections to organize them.
           </p>
+          <Button
+            onClick={() => setCreating(true)}
+            size="sm"
+            variant="outline"
+            data-testid="button-create-first-collection"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Create Collection
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="grid gap-3">
-      {favoriteSpaces.map((space) => (
-        <Card key={space.id} className="overflow-hidden border border-gray-100" data-testid={`card-favorite-${space.id}`}>
-          <div className="flex gap-4 p-4">
-            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-              {(space.imageUrls as string[])?.[0] ? (
-                <img src={(space.imageUrls as string[])[0]} alt={space.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-gray-900 text-sm truncate">{space.name}</h4>
-              {space.address && (
-                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                  <MapPin className="w-3 h-3" />
-                  {space.address}
-                </p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr · Up to {space.capacity} guests</p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <button
-                onClick={() => removeFavorite.mutate(space.id)}
-                className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
-                data-testid={`button-unfavorite-${space.id}`}
-              >
-                <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-              </button>
-              <a href={`/spaces/${space.slug}`} className="text-xs text-[#c4956a] hover:underline" data-testid={`link-view-space-${space.id}`}>
-                View
-              </a>
-            </div>
+    <div className="space-y-6">
+      {/* Favorites Section */}
+      {hasFavorites && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+            <Heart className="w-3.5 h-3.5" />
+            Favorites
+          </h3>
+          <div className="grid gap-3">
+            {favoriteSpaces.map((space) => (
+              <Card key={space.id} className="overflow-hidden border border-gray-100" data-testid={`card-favorite-${space.id}`}>
+                <div className="flex gap-4 p-4">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                    {(space.imageUrls as string[])?.[0] ? (
+                      <img src={(space.imageUrls as string[])[0]} alt={space.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 text-sm truncate">{space.name}</h4>
+                    {space.address && (
+                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        {space.address}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr · Up to {space.capacity} guests</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      onClick={() => removeFavorite.mutate(space.id)}
+                      className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                      data-testid={`button-unfavorite-${space.id}`}
+                    >
+                      <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                    </button>
+                    <a href={`/spaces/${space.slug}`} className="text-xs text-[#c4956a] hover:underline" data-testid={`link-view-space-${space.id}`}>
+                      View
+                    </a>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
-        </Card>
-      ))}
+        </div>
+      )}
+
+      {/* Collections Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+            <FolderHeart className="w-3.5 h-3.5" />
+            Collections
+          </h3>
+          {!creating && (
+            <Button
+              onClick={() => setCreating(true)}
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              data-testid="button-create-collection"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />
+              New
+            </Button>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {creating && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <Card className="bg-white">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Collection name..."
+                      className="flex-1"
+                      data-testid="input-collection-name"
+                      onKeyDown={(e) => { if (e.key === "Enter" && newName.trim()) createMutation.mutate(newName.trim()); }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => createMutation.mutate(newName.trim())}
+                      disabled={!newName.trim() || createMutation.isPending}
+                      className="bg-gray-900 text-white hover:bg-black"
+                      data-testid="button-save-collection"
+                    >
+                      {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setCreating(false); setNewName(""); }}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!hasWishlists && !creating ? (
+          <p className="text-xs text-gray-400 text-center py-4">No collections yet. Create one to organize your saved spaces.</p>
+        ) : (
+          <div className="space-y-3">
+            {wishlists.map((wl) => (
+              <Card key={wl.id} className="bg-white overflow-hidden" data-testid={`card-wishlist-${wl.id}`}>
+                <CardContent className="p-4">
+                  <div
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() => { if (renamingId !== wl.id) setExpandedId(expandedId === wl.id ? null : wl.id); }}
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {renamingId === wl.id ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            className="flex-1 h-8 text-sm"
+                            data-testid={`input-rename-${wl.id}`}
+                            onKeyDown={(e) => { if (e.key === "Enter" && renameValue.trim()) renameMutation.mutate({ id: wl.id, name: renameValue.trim() }); if (e.key === "Escape") setRenamingId(null); }}
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 px-2"
+                            onClick={() => renameMutation.mutate({ id: wl.id, name: renameValue.trim() })}
+                            disabled={!renameValue.trim() || renameMutation.isPending}
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setRenamingId(null)}>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <FolderHeart className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+                          <span className="font-medium text-gray-900 text-sm truncate">{wl.name}</span>
+                          <Badge className="bg-stone-100 text-stone-600 text-[10px]">{wl.itemCount} space{wl.itemCount !== 1 ? "s" : ""}</Badge>
+                        </>
+                      )}
+                    </div>
+                    {renamingId !== wl.id && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setRenamingId(wl.id); setRenameValue(wl.name); }}
+                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          data-testid={`button-rename-${wl.id}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(wl.id); }}
+                          className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                          data-testid={`button-delete-collection-${wl.id}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === wl.id ? null : wl.id); }}
+                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                          data-testid={`button-expand-${wl.id}`}
+                        >
+                          {expandedId === wl.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {expandedId === wl.id && wl.items && wl.items.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 pt-3 border-t border-gray-100"
+                      >
+                        <div className="space-y-2">
+                          {wl.items.map((item: any) => (
+                            <div key={item.spaceId || item.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
+                              <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
+                                {item.imageUrl ? (
+                                  <img src={item.imageUrl} alt={item.spaceName || "Space"} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center"><Building2 className="w-4 h-4 text-gray-300" /></div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{item.spaceName || "Space"}</p>
+                                {item.address && <p className="text-xs text-gray-500 truncate">{item.address}</p>}
+                              </div>
+                              <button
+                                onClick={() => removeItemMutation.mutate({ collectionId: wl.id, spaceId: item.spaceId || item.id })}
+                                className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                                data-testid={`button-remove-item-${item.spaceId || item.id}`}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                    {expandedId === wl.id && (!wl.items || wl.items.length === 0) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 pt-3 border-t border-gray-100"
+                      >
+                        <p className="text-xs text-gray-400 text-center py-3">No spaces in this collection yet.</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -924,21 +1189,62 @@ function RecurringBookingsSection() {
     },
   });
 
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("POST", `/api/recurring-bookings/${id}/confirm`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recurring-bookings"] });
+      toast({ title: "Recurring booking confirmed!" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("POST", `/api/recurring-bookings/${id}/decline`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recurring-bookings"] });
+      toast({ title: "Recurring booking declined" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   if (isLoading) return null;
   if (recurringBookings.length === 0) return null;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
+      case "confirmed": case "active":
         return <Badge className="text-[10px] bg-green-50 text-green-700 border-green-200">Active</Badge>;
+      case "pending_confirmation":
+        return <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 animate-pulse">Pending</Badge>;
       case "paused":
         return <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">Paused</Badge>;
+      case "declined":
+        return <Badge className="text-[10px] bg-red-50 text-red-700 border-red-200">Declined</Badge>;
       case "cancelled":
         return <Badge className="text-[10px] bg-stone-100 text-stone-500 border-stone-200">Cancelled</Badge>;
       default:
         return <Badge className="text-[10px] bg-gray-100 text-gray-600">{status}</Badge>;
     }
   };
+
+  // Check if user can confirm/decline (they're the other party from the requester)
+  const canConfirm = (rb: any) => {
+    if (rb.status !== "pending_confirmation") return false;
+    // If the requester was the guest, only the host can confirm (role === "host")
+    // If the requester was the host, only the guest can confirm (role === "guest")
+    return (rb.requestedByRole === "guest" && rb.role === "host") ||
+           (rb.requestedByRole === "host" && rb.role === "guest");
+  };
+
+  const isActiveStatus = (status: string) => status === "active" || status === "confirmed";
 
   return (
     <div className="space-y-3">
@@ -947,30 +1253,72 @@ function RecurringBookingsSection() {
         Recurring Bookings
       </h3>
       {recurringBookings.map((rb: any) => (
-        <Card key={rb.id} className="overflow-hidden border border-gray-100" data-testid={`card-recurring-${rb.id}`}>
+        <Card key={rb.id} className={`overflow-hidden ${rb.status === "pending_confirmation" ? "border-2 border-amber-200" : "border border-gray-100"}`} data-testid={`card-recurring-${rb.id}`}>
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-gray-900 text-sm truncate">{rb.spaceName || "Space"}</h4>
-                  {getStatusBadge(rb.status)}
-                </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-                  <span className="flex items-center gap-1">
-                    <CalendarDays className="w-3 h-3" />
-                    {DAY_NAMES[rb.dayOfWeek] || `Day ${rb.dayOfWeek}`}
-                  </span>
-                  {rb.time && (
-                    <span>{rb.time}</span>
-                  )}
-                  {rb.hours && (
-                    <span>{rb.hours}hr</span>
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                {rb.spaceImage && (
+                  <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                    <img src={rb.spaceImage} alt="" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-gray-900 text-sm truncate">{rb.spaceName || "Space"}</h4>
+                    {getStatusBadge(rb.status)}
+                    {rb.role && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        rb.role === "host" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
+                      }`}>
+                        {rb.role === "host" ? "Host" : "Guest"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="w-3 h-3" />
+                      {DAY_NAMES[rb.dayOfWeek] || `Day ${rb.dayOfWeek}`}
+                    </span>
+                    {rb.startTime && <span>{rb.startTime}</span>}
+                    {rb.hours && <span>{rb.hours}hr{rb.hours > 1 ? "s" : ""}</span>}
+                  </div>
+                  {rb.status === "pending_confirmation" && (
+                    <p className="text-xs text-amber-600 mt-1.5 font-medium">
+                      {canConfirm(rb) ? "Awaiting your confirmation" : "Waiting for other party to confirm"}
+                    </p>
                   )}
                 </div>
               </div>
-              {rb.status !== "cancelled" && (
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {rb.status === "active" ? (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Confirmation buttons */}
+                {canConfirm(rb) && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => confirmMutation.mutate(rb.id)}
+                      disabled={confirmMutation.isPending || declineMutation.isPending}
+                      data-testid={`button-confirm-${rb.id}`}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Confirm
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                      onClick={() => declineMutation.mutate(rb.id)}
+                      disabled={confirmMutation.isPending || declineMutation.isPending}
+                      data-testid={`button-decline-${rb.id}`}
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Decline
+                    </Button>
+                  </>
+                )}
+                {/* Active/confirmed management buttons */}
+                {isActiveStatus(rb.status) && (
+                  <>
                     <Button
                       size="sm"
                       variant="outline"
@@ -982,32 +1330,46 @@ function RecurringBookingsSection() {
                       <Pause className="w-3 h-3 mr-1" />
                       Pause
                     </Button>
-                  ) : rb.status === "paused" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                      onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "cancelled" })}
+                      disabled={updateStatusMutation.isPending}
+                      data-testid={`button-cancel-recurring-${rb.id}`}
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                  </>
+                )}
+                {rb.status === "paused" && (
+                  <>
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-7 text-xs"
-                      onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "active" })}
+                      onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "confirmed" })}
                       disabled={updateStatusMutation.isPending}
                       data-testid={`button-resume-${rb.id}`}
                     >
                       <Play className="w-3 h-3 mr-1" />
                       Resume
                     </Button>
-                  ) : null}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
-                    onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "cancelled" })}
-                    disabled={updateStatusMutation.isPending}
-                    data-testid={`button-cancel-recurring-${rb.id}`}
-                  >
-                    <XCircle className="w-3 h-3 mr-1" />
-                    Cancel
-                  </Button>
-                </div>
-              )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                      onClick={() => updateStatusMutation.mutate({ id: rb.id, status: "cancelled" })}
+                      disabled={updateStatusMutation.isPending}
+                      data-testid={`button-cancel-recurring-${rb.id}`}
+                    >
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1026,9 +1388,32 @@ function MyBookingsTab() {
     },
   });
 
+  const { data: recurringData = [] } = useQuery<any[]>({
+    queryKey: ["/api/recurring-bookings"],
+    queryFn: async () => {
+      const res = await fetch("/api/recurring-bookings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
   const guestBookings = (bookingsData?.guestBookings || []).map((b: any) => ({ ...b, _role: "guest" }));
   const hostBookings = (bookingsData?.hostBookings || []).map((b: any) => ({ ...b, _role: "host" }));
   const bookings = [...guestBookings, ...hostBookings];
+
+  // Map bookings for the calendar
+  const calendarBookings = bookings.map((b: any) => ({
+    id: b.id,
+    bookingDate: b.bookingDate,
+    bookingStartTime: b.bookingStartTime,
+    bookingHours: b.bookingHours,
+    spaceName: b.spaceName || "Space",
+    spaceImageUrl: b.spaceImageUrl || null,
+    status: b.status,
+    paymentStatus: b.paymentStatus,
+    role: b._role || b.role || "guest",
+    recurringBookingId: b.recurringBookingId || null,
+  }));
 
   const { data: allSpaces = [] } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -1063,7 +1448,7 @@ function MyBookingsTab() {
     return bookingDate < now && pastStatuses.includes(b.status);
   });
 
-  if (upcomingBookings.length === 0 && pastBookings.length === 0) {
+  if (upcomingBookings.length === 0 && pastBookings.length === 0 && recurringData.length === 0) {
     return (
       <div className="space-y-6">
         <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-my-bookings">
@@ -1077,7 +1462,6 @@ function MyBookingsTab() {
             </p>
           </CardContent>
         </Card>
-        <RecurringBookingsSection />
       </div>
     );
   }
@@ -1162,13 +1546,23 @@ function MyBookingsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Calendar View */}
+      <BookingCalendar
+        bookings={calendarBookings}
+        recurringBookings={recurringData}
+      />
+
+      {/* Recurring Bookings Management */}
+      <RecurringBookingsSection />
+
+      {/* Upcoming list */}
       {upcomingBookings.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Upcoming</h3>
           {upcomingBookings.map((booking: any) => renderBookingCard(booking, "upcoming"))}
         </div>
       )}
-      <RecurringBookingsSection />
+      {/* Past bookings */}
       {pastBookings.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Past</h3>
@@ -1181,6 +1575,7 @@ function MyBookingsTab() {
 
 function MySpacesTab() {
   const [showForm, setShowForm] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const { data: mySpaces = [], isLoading: spacesLoading } = useQuery<Space[]>({
     queryKey: ["/api/my-spaces"],
@@ -1250,6 +1645,34 @@ function MySpacesTab() {
           ))}
         </div>
       )}
+
+      {/* Host Guide (collapsible, merged from former tab) */}
+      {mySpaces.length > 0 && (
+        <div className="border-t border-stone-200 pt-5">
+          <button
+            onClick={() => setShowGuide(!showGuide)}
+            className="flex items-center justify-between w-full text-left"
+          >
+            <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" />
+              Host Guide
+            </h3>
+            {showGuide ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
+          </button>
+          <AnimatePresence>
+            {showGuide && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4"
+              >
+                <HostGuideContent />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
@@ -1270,6 +1693,23 @@ interface ReferralLink {
 
 function EarningsTab() {
   const { toast } = useToast();
+  const [showPerformance, setShowPerformance] = useState(false);
+
+  // Analytics data (merged from former HostAnalyticsTab)
+  const { data: analytics } = useQuery<{
+    spaces: Array<{
+      id: string; name: string; bookingCount: number; completedBookings: number;
+      revenue: number; avgRating: number | null; occupancyRate: number | null;
+    }>;
+    totals: { totalBookings: number; completedBookings: number; totalRevenue: number; avgRating: number | null };
+  }>({
+    queryKey: ["/api/host/analytics"],
+    queryFn: async () => {
+      const res = await fetch("/api/host/analytics", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
 
   // Earnings data
   const { data: earningsData, isLoading: earningsLoading } = useQuery<{
@@ -1655,381 +2095,98 @@ function EarningsTab() {
           </ul>
         </div>
       </div>
-    </div>
-  );
-}
 
-// Wishlists / Collections tab
-function WishlistsTab() {
-  const { toast } = useToast();
-  const [newName, setNewName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-
-  const { data: wishlists = [], isLoading } = useQuery<{ id: string; name: string; items: any[]; itemCount: number }[]>({
-    queryKey: ["/api/wishlists"],
-    queryFn: async () => {
-      const res = await fetch("/api/wishlists", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (name: string) => {
-      await apiRequest("POST", "/api/wishlists", { name });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
-      setNewName("");
-      setCreating(false);
-      toast({ title: "Collection created" });
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/wishlists/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
-      toast({ title: "Collection deleted" });
-    },
-  });
-
-  const removeItemMutation = useMutation({
-    mutationFn: async ({ collectionId, spaceId }: { collectionId: string; spaceId: string }) => {
-      await apiRequest("DELETE", `/api/wishlists/${collectionId}/items/${spaceId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
-      toast({ title: "Space removed from collection" });
-    },
-  });
-
-  const renameMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      await apiRequest("PATCH", `/api/wishlists/${id}`, { name });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wishlists"] });
-      setRenamingId(null);
-      toast({ title: "Collection renamed" });
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-10">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-gray-900 text-sm">Your Collections</h3>
-        {!creating && (
-          <Button
-            onClick={() => setCreating(true)}
-            size="sm"
-            className="bg-gray-900 text-white hover:bg-black"
-            data-testid="button-create-collection"
+      {/* 6. Performance (merged from Analytics tab) */}
+      {analytics?.totals && (
+        <div className="border-t border-stone-200 pt-5 mt-2">
+          <button
+            onClick={() => setShowPerformance(!showPerformance)}
+            className="flex items-center justify-between w-full text-left"
           >
-            <Plus className="w-4 h-4 mr-1" />
-            Create Collection
-          </Button>
-        )}
-      </div>
+            <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Performance
+            </h3>
+            {showPerformance ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
+          </button>
 
-      <AnimatePresence>
-        {creating && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <Card className="bg-white">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Collection name..."
-                    className="flex-1"
-                    data-testid="input-collection-name"
-                    onKeyDown={(e) => { if (e.key === "Enter" && newName.trim()) createMutation.mutate(newName.trim()); }}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => createMutation.mutate(newName.trim())}
-                    disabled={!newName.trim() || createMutation.isPending}
-                    className="bg-gray-900 text-white hover:bg-black"
-                    data-testid="button-save-collection"
-                  >
-                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => { setCreating(false); setNewName(""); }}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {wishlists.length === 0 && !creating ? (
-        <Card className="border-dashed border-2 border-gray-200 bg-white/50" data-testid="empty-wishlists">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <FolderHeart className="w-7 h-7 text-gray-400" />
-            </div>
-            <h3 className="font-serif text-xl text-gray-900 mb-2">No collections yet</h3>
-            <p className="text-gray-500 text-sm max-w-sm">
-              Create collections to organize your favorite spaces into groups.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {wishlists.map((wl) => (
-            <Card key={wl.id} className="bg-white overflow-hidden" data-testid={`card-wishlist-${wl.id}`}>
-              <CardContent className="p-4">
-                <div
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => { if (renamingId !== wl.id) setExpandedId(expandedId === wl.id ? null : wl.id); }}
-                >
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {renamingId === wl.id ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                          className="flex-1 h-8 text-sm"
-                          data-testid={`input-rename-${wl.id}`}
-                          onKeyDown={(e) => { if (e.key === "Enter" && renameValue.trim()) renameMutation.mutate({ id: wl.id, name: renameValue.trim() }); if (e.key === "Escape") setRenamingId(null); }}
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2"
-                          onClick={() => renameMutation.mutate({ id: wl.id, name: renameValue.trim() })}
-                          disabled={!renameValue.trim() || renameMutation.isPending}
-                        >
-                          <Save className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setRenamingId(null)}>
-                          <X className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <FolderHeart className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
-                        <span className="font-medium text-gray-900 text-sm truncate">{wl.name}</span>
-                        <Badge className="bg-stone-100 text-stone-600 text-[10px]">{wl.itemCount} space{wl.itemCount !== 1 ? "s" : ""}</Badge>
-                      </>
-                    )}
+          <AnimatePresence>
+            {showPerformance && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4 space-y-4"
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+                    <p className="text-xl font-semibold text-stone-900">{analytics.totals.totalBookings}</p>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-wider">Total Bookings</p>
                   </div>
-                  {renamingId !== wl.id && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setRenamingId(wl.id); setRenameValue(wl.name); }}
-                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                        data-testid={`button-rename-${wl.id}`}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(wl.id); }}
-                        className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                        data-testid={`button-delete-collection-${wl.id}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === wl.id ? null : wl.id); }}
-                        className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                        data-testid={`button-expand-${wl.id}`}
-                      >
-                        {expandedId === wl.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {expandedId === wl.id && wl.items && wl.items.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 pt-3 border-t border-gray-100"
-                    >
-                      <div className="space-y-2">
-                        {wl.items.map((item: any) => (
-                          <div key={item.spaceId || item.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50">
-                            <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
-                              {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.spaceName || "Space"} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center"><Building2 className="w-4 h-4 text-gray-300" /></div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{item.spaceName || "Space"}</p>
-                              {item.address && <p className="text-xs text-gray-500 truncate">{item.address}</p>}
-                            </div>
-                            <button
-                              onClick={() => removeItemMutation.mutate({ collectionId: wl.id, spaceId: item.spaceId || item.id })}
-                              className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                              data-testid={`button-remove-item-${item.spaceId || item.id}`}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                  {expandedId === wl.id && (!wl.items || wl.items.length === 0) && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-3 pt-3 border-t border-gray-100"
-                    >
-                      <p className="text-xs text-gray-400 text-center py-3">No spaces in this collection yet.</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Host Analytics Dashboard
-function HostAnalyticsTab() {
-  const { data: analytics, isLoading } = useQuery<{
-    spaces: Array<{
-      id: string;
-      name: string;
-      bookingCount: number;
-      completedBookings: number;
-      revenue: number;
-      avgRating: number | null;
-      occupancyRate: number | null;
-    }>;
-    totals: {
-      totalBookings: number;
-      completedBookings: number;
-      totalRevenue: number;
-      avgRating: number | null;
-    };
-  }>({
-    queryKey: ["/api/host/analytics"],
-    queryFn: async () => {
-      const res = await fetch("/api/host/analytics", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-10">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  if (!analytics || !analytics.totals) {
-    return (
-      <div className="text-center py-12 text-stone-500">
-        <TrendingUp className="w-8 h-8 mx-auto mb-3 text-stone-300" />
-        <p className="text-sm font-medium mb-1">No analytics yet</p>
-        <p className="text-xs text-stone-400">Analytics will appear here once guests start booking your spaces.</p>
-      </div>
-    );
-  }
-
-  const { totals, spaces } = analytics;
-
-  return (
-    <div className="space-y-5">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
-          <p className="text-2xl font-semibold text-stone-900">{totals.totalBookings}</p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Total Bookings</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
-          <p className="text-2xl font-semibold text-stone-900">{totals.completedBookings}</p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Completed</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
-          <p className="text-2xl font-semibold text-stone-900">${(totals.totalRevenue / 100).toFixed(2)}</p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Total Revenue</p>
-        </div>
-        <div className="bg-white rounded-xl border border-stone-200 p-4 text-center">
-          <p className="text-2xl font-semibold text-stone-900">
-            {totals.avgRating != null ? totals.avgRating.toFixed(1) : "--"}
-          </p>
-          <p className="text-[10px] text-stone-400 uppercase tracking-wider font-medium mt-1">Avg Rating</p>
-        </div>
-      </div>
-
-      {/* Per-space breakdown */}
-      {spaces.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Per-Space Breakdown</h3>
-          <div className="space-y-2">
-            {spaces.map((space) => (
-              <div key={space.id} className="bg-white rounded-xl border border-stone-200 p-4" data-testid={`analytics-space-${space.id}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-stone-800 truncate">{space.name}</h4>
-                  {space.avgRating != null && (
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-sm font-medium text-stone-700">{space.avgRating.toFixed(1)}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                  <div>
-                    <p className="text-lg font-semibold text-stone-900">{space.bookingCount}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">Bookings</p>
+                  <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+                    <p className="text-xl font-semibold text-stone-900">{analytics.totals.completedBookings}</p>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-wider">Completed</p>
                   </div>
-                  <div>
-                    <p className="text-lg font-semibold text-stone-900">{space.completedBookings}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">Completed</p>
+                  <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+                    <p className="text-xl font-semibold text-stone-900">${(analytics.totals.totalRevenue / 100).toFixed(2)}</p>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-wider">Revenue</p>
                   </div>
-                  <div>
-                    <p className="text-lg font-semibold text-stone-900">${(space.revenue / 100).toFixed(2)}</p>
-                    <p className="text-[10px] text-stone-400 uppercase">Revenue</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-stone-900">
-                      {space.occupancyRate != null ? `${Math.round(space.occupancyRate)}%` : "--"}
+                  <div className="bg-white rounded-xl border border-stone-200 p-3 text-center">
+                    <p className="text-xl font-semibold text-stone-900">
+                      {analytics.totals.avgRating != null ? analytics.totals.avgRating.toFixed(1) : "--"}
                     </p>
-                    <p className="text-[10px] text-stone-400 uppercase">Occupancy</p>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-wider">Avg Rating</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+
+                {analytics.spaces.length > 0 && (
+                  <div className="space-y-2">
+                    {analytics.spaces.map((space) => (
+                      <div key={space.id} className="bg-white rounded-xl border border-stone-200 p-4" data-testid={`analytics-space-${space.id}`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-medium text-stone-800 truncate">{space.name}</h4>
+                          {space.avgRating != null && (
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                              <span className="text-sm font-medium text-stone-700">{space.avgRating.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                          <div>
+                            <p className="text-lg font-semibold text-stone-900">{space.bookingCount}</p>
+                            <p className="text-[10px] text-stone-400 uppercase">Bookings</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-stone-900">{space.completedBookings}</p>
+                            <p className="text-[10px] text-stone-400 uppercase">Completed</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-stone-900">${(space.revenue / 100).toFixed(2)}</p>
+                            <p className="text-[10px] text-stone-400 uppercase">Revenue</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-semibold text-stone-900">
+                              {space.occupancyRate != null ? `${Math.round(space.occupancyRate)}%` : "--"}
+                            </p>
+                            <p className="text-[10px] text-stone-400 uppercase">Occupancy</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
   );
 }
+
+// WishlistsTab removed — merged into SavedTab above
+// HostAnalyticsTab removed — merged into EarningsTab above
 
 // ── Host Guide ──────────────────────────────────────────────────────
 type HostGuideSection = {
@@ -2040,7 +2197,7 @@ type HostGuideSection = {
   status?: "complete" | "action-needed";
 };
 
-function HostGuideTab() {
+function HostGuideContent() {
   const { data: mySpaces = [] } = useQuery<Space[]>({
     queryKey: ["/api/my-spaces"],
     queryFn: async () => {
@@ -2391,26 +2548,28 @@ function HostGuideCard({ section, featured }: { section: HostGuideSection; featu
   );
 }
 
-type SpacesTabKey = "favorites" | "my-bookings" | "my-spaces" | "earnings" | "wishlists" | "analytics" | "host-guide";
+type SpacesTabKey = "calendar" | "saved" | "my-spaces" | "earnings";
 
-export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: SpacesTabKey }) {
-  // Handle legacy tab values
-  const resolvedInitialTab: SpacesTabKey | undefined = initialTab === "past" as any ? "my-bookings"
-    : initialTab === "payouts" as any || initialTab === "referrals" as any ? "earnings"
-    : initialTab as SpacesTabKey | undefined;
-  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "favorites");
+// Map legacy tab values to new consolidated tabs
+function resolveLegacyTab(tab: string): SpacesTabKey {
+  switch (tab) {
+    case "favorites": case "wishlists": return "saved";
+    case "my-bookings": case "past": return "calendar";
+    case "analytics": case "host-guide": case "payouts": case "referrals": return "earnings";
+    case "my-spaces": return "my-spaces";
+    case "earnings": return "earnings";
+    case "calendar": return "calendar";
+    case "saved": return "saved";
+    default: return "calendar";
+  }
+}
+
+export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: string }) {
+  const resolvedInitialTab = initialTab ? resolveLegacyTab(initialTab) : undefined;
+  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "calendar");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
 
   // Fetch counts to auto-detect best sub-tab
-  const { data: favorites = [], isLoading: favoritesLoading } = useQuery<Space[]>({
-    queryKey: ["/api/space-favorites"],
-    queryFn: async () => {
-      const res = await fetch("/api/space-favorites", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-  });
-
   const { data: mySpaces = [], isLoading: mySpacesLoading } = useQuery<Space[]>({
     queryKey: ["/api/my-spaces"],
     queryFn: async () => {
@@ -2431,43 +2590,31 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
   useEffect(() => {
     if (tabResolved) return;
-    // Wait until all queries have finished loading before resolving
-    if (favoritesLoading || mySpacesLoading || bookingsLoading) return;
+    if (mySpacesLoading || bookingsLoading) return;
 
-    const hasFavorites = favorites.length > 0;
     const hasMySpaces = mySpaces.length > 0;
     const allBookings = [...(bookingsData?.guestBookings || []), ...(bookingsData?.hostBookings || [])];
     const hasBookings = allBookings.length > 0;
 
-    const tabs = [
-      hasFavorites && { key: "favorites" as const, time: 0 },
-      hasBookings && { key: "my-bookings" as const, time: Math.max(...allBookings.map((b: any) => new Date(b.createdAt || 0).getTime())) },
-      hasMySpaces && { key: "my-spaces" as const, time: Math.max(...mySpaces.map(s => new Date(s.createdAt || 0).getTime())) },
-    ].filter(Boolean) as { key: SpacesTabKey; time: number }[];
-
-    if (tabs.length === 1) {
-      setSpacesTab(tabs[0].key);
-    } else if (tabs.length > 1) {
-      // Pick most recently active
-      tabs.sort((a, b) => b.time - a.time);
-      setSpacesTab(tabs[0].key);
+    // Default to calendar if user has bookings, otherwise my-spaces for hosts, saved for guests
+    if (hasBookings) {
+      setSpacesTab("calendar");
+    } else if (hasMySpaces) {
+      setSpacesTab("my-spaces");
+    } else {
+      setSpacesTab("calendar");
     }
 
     setTabResolved(true);
-  }, [favorites, mySpaces, bookingsData, tabResolved, favoritesLoading, mySpacesLoading, bookingsLoading]);
+  }, [mySpaces, bookingsData, tabResolved, mySpacesLoading, bookingsLoading]);
 
   const isHost = mySpaces.length > 0;
 
-  const hasFavs = favorites.length > 0;
-
   const tabs = [
-    ...(hasFavs ? [{ key: "favorites" as const, label: "Favorites", icon: Heart }] : []),
-    { key: "wishlists" as const, label: "Wishlists", icon: FolderHeart },
-    { key: "my-bookings" as const, label: "My Bookings", icon: CalendarDays },
+    { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
+    { key: "saved" as const, label: "Saved", icon: Heart },
     { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
-    ...(isHost ? [{ key: "analytics" as const, label: "Analytics", icon: TrendingUp }] : []),
-    ...(isHost ? [{ key: "host-guide" as const, label: "Host Guide", icon: BookOpen }] : []),
   ];
 
   const { data: loyaltyData } = useQuery<{
@@ -2521,13 +2668,10 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
         ))}
       </div>
 
-      {spacesTab === "favorites" && <FavoritesTab />}
-      {spacesTab === "wishlists" && <WishlistsTab />}
-      {spacesTab === "my-bookings" && <MyBookingsTab />}
+      {spacesTab === "calendar" && <MyBookingsTab />}
+      {spacesTab === "saved" && <SavedTab />}
       {spacesTab === "my-spaces" && <MySpacesTab />}
       {spacesTab === "earnings" && <EarningsTab />}
-      {spacesTab === "analytics" && <HostAnalyticsTab />}
-      {spacesTab === "host-guide" && <HostGuideTab />}
     </div>
   );
 }
