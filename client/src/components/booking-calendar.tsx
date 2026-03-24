@@ -185,6 +185,31 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
           const hasContent = dayBookings.length > 0 || dayRecurring.length > 0;
           const isSelected = selectedDate === day.date;
 
+          // Pick the earliest booking/recurring by start time for the cover photo
+          const sorted = [...dayBookings].sort((a, b) => (a.bookingStartTime || "99:99").localeCompare(b.bookingStartTime || "99:99"));
+          const earliestBooking = sorted[0];
+          const earliestRecurring = dayRecurring.length > 0
+            ? [...dayRecurring].sort((a, b) => a.startTime.localeCompare(b.startTime))[0]
+            : null;
+
+          // Decide which image to show: earliest booking wins, then earliest recurring projection
+          let coverImage: string | null = null;
+          let coverName = "";
+          let isRecurringCover = false;
+          let isPendingCover = false;
+          if (earliestBooking?.spaceImageUrl) {
+            coverImage = earliestBooking.spaceImageUrl;
+            coverName = earliestBooking.spaceName;
+            isRecurringCover = !!earliestBooking.recurringBookingId;
+          } else if (earliestRecurring?.spaceImage) {
+            coverImage = earliestRecurring.spaceImage;
+            coverName = earliestRecurring.spaceName;
+            isRecurringCover = true;
+            isPendingCover = earliestRecurring.status === "pending_confirmation";
+          }
+
+          const totalCount = dayBookings.length + dayRecurring.length;
+
           return (
             <button
               key={day.date}
@@ -192,77 +217,48 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
                 setSelectedDate(isSelected ? null : day.date);
                 if (onDayClick && hasContent) onDayClick(day.date, dayBookings);
               }}
-              className={`relative min-h-[72px] p-1 text-left transition-colors ${
+              className={`relative aspect-square overflow-hidden transition-all ${
                 day.isCurrentMonth ? "bg-white" : "bg-stone-50"
-              } ${isSelected ? "ring-2 ring-[#c4956a] ring-inset" : ""} ${
-                hasContent ? "hover:bg-stone-50 cursor-pointer" : "cursor-default"
+              } ${isSelected ? "ring-2 ring-[#c4956a] ring-inset z-10" : ""} ${
+                hasContent ? "hover:brightness-90 cursor-pointer" : "cursor-default"
               }`}
               data-testid={`calendar-day-${day.date}`}
             >
-              {/* Day number */}
-              <span className={`text-xs font-medium block ${
+              {/* Full-cell space photo */}
+              {coverImage ? (
+                <img
+                  src={coverImage}
+                  alt={coverName}
+                  className={`absolute inset-0 w-full h-full object-cover ${
+                    isPendingCover ? "opacity-40" : day.isCurrentMonth ? "opacity-85" : "opacity-30"
+                  }`}
+                />
+              ) : null}
+
+              {/* Day number — overlaid top-left */}
+              <span className={`relative z-10 flex items-center justify-center text-[11px] font-semibold leading-none m-0.5 ${
                 day.isToday
-                  ? "w-5 h-5 rounded-full bg-stone-900 text-white flex items-center justify-center"
-                  : day.isCurrentMonth ? "text-stone-700" : "text-stone-300"
+                  ? "w-5 h-5 rounded-full bg-stone-900 text-white"
+                  : coverImage
+                    ? "w-5 h-5 rounded-full bg-white/80 text-stone-800 backdrop-blur-sm"
+                    : day.isCurrentMonth ? "text-stone-500" : "text-stone-300"
               }`}>
                 {day.day}
               </span>
 
-              {/* Booking thumbnails */}
-              <div className="mt-0.5 flex flex-wrap gap-0.5">
-                {dayBookings.slice(0, 3).map((b) => (
-                  <div key={b.id} className="relative">
-                    {b.spaceImageUrl ? (
-                      <img
-                        src={b.spaceImageUrl}
-                        alt=""
-                        className={`w-7 h-7 rounded-md object-cover border-2 ${
-                          b.role === "guest" ? "border-blue-300" : "border-green-300"
-                        }`}
-                      />
-                    ) : (
-                      <div className={`w-7 h-7 rounded-md border-2 flex items-center justify-center text-[8px] font-bold ${
-                        b.role === "guest"
-                          ? "border-blue-300 bg-blue-50 text-blue-500"
-                          : "border-green-300 bg-green-50 text-green-500"
-                      }`}>
-                        {b.spaceName?.[0] || "S"}
-                      </div>
-                    )}
-                    {b.recurringBookingId && (
-                      <Repeat className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 text-[#c4956a] bg-white rounded-full" />
-                    )}
-                  </div>
-                ))}
-                {dayBookings.length > 3 && (
-                  <div className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center text-[9px] font-medium text-stone-500">
-                    +{dayBookings.length - 3}
-                  </div>
-                )}
-                {/* Recurring projections (dotted) */}
-                {dayRecurring.map((rb) => (
-                  <div key={rb.id} className="relative">
-                    {rb.spaceImage ? (
-                      <img
-                        src={rb.spaceImage}
-                        alt=""
-                        className={`w-7 h-7 rounded-md object-cover border-2 border-dashed ${
-                          rb.status === "pending_confirmation" ? "border-amber-300 opacity-60" : "border-[#c4956a] opacity-70"
-                        }`}
-                      />
-                    ) : (
-                      <div className={`w-7 h-7 rounded-md border-2 border-dashed flex items-center justify-center text-[8px] font-bold ${
-                        rb.status === "pending_confirmation"
-                          ? "border-amber-300 bg-amber-50 text-amber-500 opacity-60"
-                          : "border-[#c4956a] bg-orange-50 text-[#c4956a] opacity-70"
-                      }`}>
-                        {rb.spaceName?.[0] || "S"}
-                      </div>
-                    )}
-                    <Repeat className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 text-[#c4956a] bg-white rounded-full" />
-                  </div>
-                ))}
-              </div>
+              {/* Bottom-right indicators */}
+              {hasContent && (
+                <div className="absolute bottom-0.5 right-0.5 z-10 flex items-center gap-0.5">
+                  {isRecurringCover && (
+                    <Repeat className="w-3 h-3 text-white drop-shadow-md" />
+                  )}
+                  {totalCount > 1 && (
+                    <span className="text-[9px] font-bold text-white bg-black/50 rounded-full w-4 h-4 flex items-center justify-center backdrop-blur-sm">
+                      {totalCount}
+                    </span>
+                  )}
+                </div>
+              )}
             </button>
           );
         })}
