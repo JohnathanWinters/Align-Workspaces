@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Repeat, Clock, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Repeat, Clock, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface BookingForCalendar {
@@ -50,28 +50,21 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
 
   const { year, month } = currentMonth;
 
-  // Build calendar grid
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startOffset = firstDay.getDay();
     const totalDays = lastDay.getDate();
-
     const days: Array<{ date: string; day: number; isCurrentMonth: boolean; isToday: boolean }> = [];
 
-    // Previous month padding
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startOffset - 1; i >= 0; i--) {
       const d = prevMonthLastDay - i;
       const pm = month === 0 ? 11 : month - 1;
       const py = month === 0 ? year - 1 : year;
-      days.push({
-        date: `${py}-${String(pm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-        day: d, isCurrentMonth: false, isToday: false,
-      });
+      days.push({ date: `${py}-${String(pm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, day: d, isCurrentMonth: false, isToday: false });
     }
 
-    // Current month
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     for (let d = 1; d <= totalDays; d++) {
@@ -79,21 +72,16 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
       days.push({ date: dateStr, day: d, isCurrentMonth: true, isToday: dateStr === todayStr });
     }
 
-    // Next month padding
     const remaining = 42 - days.length;
     for (let d = 1; d <= remaining; d++) {
       const nm = month === 11 ? 0 : month + 1;
       const ny = month === 11 ? year + 1 : year;
-      days.push({
-        date: `${ny}-${String(nm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-        day: d, isCurrentMonth: false, isToday: false,
-      });
+      days.push({ date: `${ny}-${String(nm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, day: d, isCurrentMonth: false, isToday: false });
     }
 
     return days;
   }, [year, month]);
 
-  // Map dates to bookings
   const bookingsByDate = useMemo(() => {
     const map = new Map<string, BookingForCalendar[]>();
     for (const b of bookings) {
@@ -104,7 +92,6 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
     return map;
   }, [bookings]);
 
-  // Project recurring booking dates onto visible calendar
   const recurringProjections = useMemo(() => {
     const map = new Map<string, RecurringForCalendar[]>();
     for (const rb of recurringBookings) {
@@ -125,74 +112,54 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
 
   const prevMonth = () => setCurrentMonth(p => p.month === 0 ? { year: p.year - 1, month: 11 } : { year: p.year, month: p.month - 1 });
   const nextMonth = () => setCurrentMonth(p => p.month === 11 ? { year: p.year + 1, month: 0 } : { year: p.year, month: p.month + 1 });
-  const goToToday = () => {
-    const now = new Date();
-    setCurrentMonth({ year: now.getFullYear(), month: now.getMonth() });
-  };
+  const goToToday = () => { const now = new Date(); setCurrentMonth({ year: now.getFullYear(), month: now.getMonth() }); };
 
-  const monthLabel = new Date(year, month).toLocaleDateString("en-US", { month: "long" });
-  const yearLabel = String(year);
-
+  const monthLabel = new Date(year, month).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const selectedBookings = selectedDate ? (bookingsByDate.get(selectedDate) || []) : [];
   const selectedRecurring = selectedDate ? (recurringProjections.get(selectedDate) || []) : [];
 
   return (
-    <div className="space-y-5">
+    <div>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-serif text-xl text-[#2c2420] leading-tight">{monthLabel}</h3>
-          <p className="text-xs text-stone-400 font-medium">{yearLabel}</p>
-        </div>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="font-serif text-lg text-[#2c2420]">{monthLabel}</h3>
         <div className="flex items-center gap-1">
-          <button onClick={goToToday} className="px-2.5 py-1 rounded-lg text-[11px] font-medium text-[#c4956a] hover:bg-[#c4956a]/10 transition-colors">
+          <button onClick={goToToday} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#c4956a] hover:bg-[#c4956a]/8 transition-colors mr-1">
             Today
           </button>
-          <button onClick={prevMonth} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
-            <ChevronLeft className="w-4 h-4 text-stone-500" />
+          <button onClick={prevMonth} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
+            <ChevronLeft className="w-3.5 h-3.5 text-stone-400" />
           </button>
-          <button onClick={nextMonth} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center transition-colors">
-            <ChevronRight className="w-4 h-4 text-stone-500" />
+          <button onClick={nextMonth} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
+            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
           </button>
         </div>
       </div>
 
-      {/* Day-of-week headers */}
-      <div className="grid grid-cols-7">
-        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-          <div key={i} className="text-center text-[10px] font-semibold text-stone-400 uppercase tracking-widest pb-2">
-            {d}
-          </div>
+      {/* Day headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+          <div key={d} className="text-center text-[10px] font-medium text-stone-400 py-1">{d}</div>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-[1px] bg-stone-100 rounded-xl overflow-hidden border border-stone-200">
+      {/* Grid */}
+      <div className="grid grid-cols-7 border-t border-l border-stone-200 rounded-lg overflow-hidden">
         {calendarDays.map((day) => {
           const dayBookings = bookingsByDate.get(day.date) || [];
           const dayRecurring = recurringProjections.get(day.date) || [];
-          const hasContent = dayBookings.length > 0 || dayRecurring.length > 0;
+          const hasBookings = dayBookings.length > 0;
+          const hasRecurring = dayRecurring.length > 0;
+          const hasContent = hasBookings || hasRecurring;
           const isSelected = selectedDate === day.date;
 
-          // Pick earliest booking by start time for cover photo
+          // Earliest booking for the photo badge
           const sorted = [...dayBookings].sort((a, b) => (a.bookingStartTime || "99:99").localeCompare(b.bookingStartTime || "99:99"));
           const earliest = sorted[0];
           const earliestRec = dayRecurring.length > 0
             ? [...dayRecurring].sort((a, b) => a.startTime.localeCompare(b.startTime))[0]
             : null;
-
-          let coverImage: string | null = null;
-          let isRecurring = false;
-          let isPending = false;
-          if (earliest?.spaceImageUrl) {
-            coverImage = earliest.spaceImageUrl;
-            isRecurring = !!earliest.recurringBookingId;
-          } else if (earliestRec?.spaceImage) {
-            coverImage = earliestRec.spaceImage;
-            isRecurring = true;
-            isPending = earliestRec.status === "pending_confirmation";
-          }
-
+          const photoUrl = earliest?.spaceImageUrl || earliestRec?.spaceImage || null;
           const totalCount = dayBookings.length + dayRecurring.length;
 
           return (
@@ -203,64 +170,59 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
                 if (onDayClick && hasContent) onDayClick(day.date, dayBookings);
               }}
               className={`
-                relative aspect-square overflow-hidden transition-all duration-150
-                ${day.isCurrentMonth ? "bg-white" : "bg-stone-50/80"}
-                ${isSelected ? "z-10 ring-2 ring-[#c4956a] shadow-md" : ""}
-                ${hasContent ? "cursor-pointer group" : ""}
+                relative flex flex-col items-center py-1.5 border-r border-b border-stone-200 transition-colors min-h-[60px]
+                ${day.isCurrentMonth ? "bg-white" : "bg-stone-50/60"}
+                ${isSelected ? "bg-[#c4956a]/5" : hasContent ? "hover:bg-stone-50" : ""}
               `}
               data-testid={`calendar-day-${day.date}`}
             >
-              {/* Cover photo — full bleed with gradient overlay */}
-              {coverImage && (
-                <>
-                  <img
-                    src={coverImage}
-                    alt=""
-                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${
-                      isPending ? "opacity-35 grayscale-[30%]" : day.isCurrentMonth ? "" : "opacity-25"
-                    }`}
-                  />
-                  {/* Gradient overlays for text legibility */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30" />
-                </>
-              )}
-
               {/* Day number */}
-              <div className="relative z-10 p-[3px]">
-                <span className={`
-                  flex items-center justify-center w-[22px] h-[22px] rounded-full text-[11px] font-semibold leading-none
-                  ${day.isToday
-                    ? "bg-[#c4956a] text-white shadow-sm"
-                    : coverImage
-                      ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
-                      : day.isCurrentMonth
-                        ? "text-stone-700"
-                        : "text-stone-300"
-                  }
-                `}>
-                  {day.day}
-                </span>
-              </div>
+              <span className={`
+                text-[12px] font-medium leading-none mb-1
+                ${day.isToday
+                  ? "w-6 h-6 rounded-full bg-[#c4956a] text-white flex items-center justify-center"
+                  : day.isCurrentMonth
+                    ? "text-stone-700"
+                    : "text-stone-300"
+                }
+              `}>
+                {day.day}
+              </span>
 
-              {/* Bottom indicators */}
+              {/* Space photo badge — circular, centered */}
               {hasContent && (
-                <div className="absolute bottom-[3px] right-[3px] z-10 flex items-center gap-[3px]">
-                  {isRecurring && (
-                    <span className="w-[18px] h-[18px] rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm">
-                      <Repeat className="w-[10px] h-[10px] text-[#c4956a]" />
-                    </span>
+                <div className="flex flex-col items-center gap-[3px] mt-auto">
+                  {photoUrl ? (
+                    <div className="relative">
+                      <img
+                        src={photoUrl}
+                        alt=""
+                        className={`w-8 h-8 rounded-full object-cover border-2 shadow-sm ${
+                          hasBookings
+                            ? earliest?.role === "host" ? "border-emerald-300" : "border-blue-300"
+                            : earliestRec?.status === "pending_confirmation" ? "border-amber-300 opacity-70" : "border-[#c4956a]/50"
+                        }`}
+                      />
+                      {(earliest?.recurringBookingId || hasRecurring) && (
+                        <Repeat className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 text-[#c4956a] bg-white rounded-full p-[1px]" />
+                      )}
+                    </div>
+                  ) : (
+                    <div className={`w-8 h-8 rounded-full border-2 border-dashed flex items-center justify-center text-[9px] font-bold ${
+                      earliestRec?.status === "pending_confirmation"
+                        ? "border-amber-300 text-amber-400 bg-amber-50"
+                        : "border-[#c4956a]/40 text-[#c4956a]/60 bg-[#c4956a]/5"
+                    }`}>
+                      {(earliest?.spaceName || earliestRec?.spaceName || "S")[0]}
+                    </div>
                   )}
-                  {totalCount > 1 && (
-                    <span className="w-[18px] h-[18px] rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-[9px] font-bold text-stone-700 shadow-sm">
-                      {totalCount}
-                    </span>
-                  )}
-                </div>
-              )}
 
-              {/* Empty day dot — subtle indicator for days without bookings */}
-              {!hasContent && day.isCurrentMonth && !day.isToday && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {/* Count indicator */}
+                  {totalCount > 1 && (
+                    <span className="text-[8px] font-bold text-stone-400 leading-none">
+                      +{totalCount - 1}
+                    </span>
+                  )}
                 </div>
               )}
             </button>
@@ -268,107 +230,78 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
         })}
       </div>
 
-      {/* Selected day detail panel */}
+      {/* Selected day detail */}
       {selectedDate && (selectedBookings.length > 0 || selectedRecurring.length > 0) && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-[#c4956a]" />
-            <h4 className="text-sm font-semibold text-[#2c2420]">
-              {new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </h4>
-          </div>
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-medium text-stone-500">
+            {new Date(selectedDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          </p>
 
-          <div className="space-y-2">
-            {selectedBookings.map((b) => (
-              <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-stone-200 shadow-sm hover:shadow transition-shadow">
-                {b.spaceImageUrl ? (
-                  <img src={b.spaceImageUrl} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-5 h-5 text-stone-300" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-[#2c2420] truncate">{b.spaceName}</p>
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                      b.role === "guest" ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"
-                    }`}>
-                      {b.role === "guest" ? "Guest" : "Host"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-stone-500">
-                    <Clock className="w-3 h-3 flex-shrink-0" />
-                    <span>{b.bookingStartTime ? formatTime(b.bookingStartTime) : "TBD"}</span>
-                    <span className="text-stone-300">|</span>
-                    <span>{b.bookingHours}hr{(b.bookingHours || 0) > 1 ? "s" : ""}</span>
-                    {b.recurringBookingId && (
-                      <>
-                        <span className="text-stone-300">|</span>
-                        <span className="flex items-center gap-0.5 text-[#c4956a] font-medium">
-                          <Repeat className="w-3 h-3" /> Weekly
-                        </span>
-                      </>
-                    )}
-                  </div>
+          {selectedBookings.map((b) => (
+            <div key={b.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-stone-200 shadow-sm">
+              {b.spaceImageUrl ? (
+                <img src={b.spaceImageUrl} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-4 h-4 text-stone-300" />
                 </div>
-                <Badge className={`text-[10px] font-medium flex-shrink-0 ${
-                  b.status === "approved" || b.status === "confirmed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                  b.status === "awaiting_payment" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                  b.status === "checked_in" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                  b.status === "completed" ? "bg-stone-100 text-stone-500 border-stone-200" :
-                  "bg-gray-100 text-gray-500 border-gray-200"
-                }`}>
-                  {b.status === "awaiting_payment" ? "Pay Now" :
-                   b.status === "approved" ? "Confirmed" :
-                   b.status === "checked_in" ? "In Session" :
-                   b.status || "Unknown"}
-                </Badge>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-[#2c2420] truncate">{b.spaceName}</p>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                    b.role === "guest" ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"
+                  }`}>
+                    {b.role === "guest" ? "Guest" : "Host"}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 mt-0.5 flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  {b.bookingStartTime ? formatTime(b.bookingStartTime) : "TBD"} · {b.bookingHours}hr{(b.bookingHours || 0) > 1 ? "s" : ""}
+                  {b.recurringBookingId && (
+                    <span className="text-[#c4956a] flex items-center gap-0.5 font-medium"><Repeat className="w-3 h-3" />Weekly</span>
+                  )}
+                </p>
               </div>
-            ))}
-
-            {selectedRecurring.map((rb) => (
-              <div key={rb.id} className={`flex items-center gap-3 p-3 rounded-xl border shadow-sm ${
-                rb.status === "pending_confirmation"
-                  ? "bg-amber-50/50 border-amber-200/60"
-                  : "bg-[#faf8f5] border-[#e0d5c7]/60"
+              <Badge className={`text-[10px] ${
+                b.status === "approved" || b.status === "confirmed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                b.status === "awaiting_payment" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                b.status === "checked_in" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                "bg-stone-100 text-stone-500 border-stone-200"
               }`}>
-                {rb.spaceImage ? (
-                  <img src={rb.spaceImage} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
-                    <Repeat className="w-5 h-5 text-stone-300" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-[#2c2420] truncate">{rb.spaceName}</p>
-                    <Repeat className="w-3.5 h-3.5 text-[#c4956a] flex-shrink-0" />
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-stone-500">
-                    <Clock className="w-3 h-3 flex-shrink-0" />
-                    <span>{formatTime(rb.startTime)}</span>
-                    <span className="text-stone-300">|</span>
-                    <span>{rb.hours}hr{rb.hours > 1 ? "s" : ""}</span>
-                  </div>
-                </div>
-                <Badge className={`text-[10px] font-medium flex-shrink-0 ${
-                  rb.status === "pending_confirmation"
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                    : "bg-[#c4956a]/10 text-[#c4956a] border-[#c4956a]/20"
-                }`}>
-                  {rb.status === "pending_confirmation" ? "Pending" : "Recurring"}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+                {b.status === "awaiting_payment" ? "Pay Now" :
+                 b.status === "approved" ? "Confirmed" :
+                 b.status === "checked_in" ? "In Session" :
+                 b.status === "completed" ? "Completed" : b.status || ""}
+              </Badge>
+            </div>
+          ))}
 
-      {/* Empty state when no bookings at all */}
-      {bookings.length === 0 && recurringBookings.length === 0 && (
-        <div className="text-center py-6">
-          <p className="text-xs text-stone-400">Bookings will appear on the calendar as you book spaces.</p>
+          {selectedRecurring.map((rb) => (
+            <div key={rb.id} className={`flex items-center gap-3 p-3 rounded-xl border ${
+              rb.status === "pending_confirmation" ? "bg-amber-50/40 border-amber-200" : "bg-[#faf8f5] border-[#e0d5c7]"
+            }`}>
+              {rb.spaceImage ? (
+                <img src={rb.spaceImage} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                  <Repeat className="w-4 h-4 text-stone-300" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#2c2420] truncate">{rb.spaceName}</p>
+                <p className="text-xs text-stone-500 mt-0.5 flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  {formatTime(rb.startTime)} · {rb.hours}hr{rb.hours > 1 ? "s" : ""}
+                </p>
+              </div>
+              <Badge className={`text-[10px] ${
+                rb.status === "pending_confirmation" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-[#c4956a]/10 text-[#c4956a] border-[#c4956a]/20"
+              }`}>
+                {rb.status === "pending_confirmation" ? "Pending" : "Recurring"}
+              </Badge>
+            </div>
+          ))}
         </div>
       )}
     </div>
