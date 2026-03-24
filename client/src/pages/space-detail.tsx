@@ -998,7 +998,7 @@ function BookingCard({
             className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 transition-colors"
             data-testid="button-toggle-favorite"
           >
-            <Heart className={`w-4 h-4 ${favStatus?.favorited ? "text-stone-700 fill-stone-700" : ""}`} />
+            <Heart className={`w-4 h-4 ${favStatus?.favorited ? "text-stone-600 fill-stone-600" : "text-stone-500"}`} strokeWidth={2.5} />
             Save
           </button>
         )}

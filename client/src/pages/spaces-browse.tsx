@@ -586,7 +586,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
               data-testid={`button-favorite-${space.id}`}
               title={favStatus?.favorited ? "Saved to favorites" : "Save to favorites"}
             >
-              <Heart className={`w-3.5 h-3.5 ${favStatus?.favorited ? "text-white fill-white" : "text-white/80"}`} />
+              <Heart className={`w-3.5 h-3.5 ${favStatus?.favorited ? "text-white fill-white" : "text-white/80"}`} strokeWidth={2.5} />
             </button>
           )}
           <button
