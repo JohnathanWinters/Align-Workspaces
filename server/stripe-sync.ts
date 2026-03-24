@@ -138,15 +138,21 @@ async function syncInvoices(stripe: any): Promise<{ synced: number; skipped: num
 
     for (const invoice of invoices.data) {
       try {
+        // Check for duplicate by invoice ID first
+        const [existingByInvoice] = await db.select({ id: invoicePayments.id })
+          .from(invoicePayments)
+          .where(eq(invoicePayments.stripeInvoiceId, invoice.id));
+        if (existingByInvoice) { skipped++; continue; }
+
         const piId = typeof invoice.payment_intent === "string"
           ? invoice.payment_intent
           : invoice.payment_intent?.id || null;
 
         if (piId) {
-          const [existing] = await db.select({ id: invoicePayments.id })
+          const [existingByPi] = await db.select({ id: invoicePayments.id })
             .from(invoicePayments)
             .where(eq(invoicePayments.stripePaymentIntentId, piId));
-          if (existing) { skipped++; continue; }
+          if (existingByPi) { skipped++; continue; }
         }
 
         const customerEmail = invoice.customer_email || "";
@@ -189,6 +195,22 @@ async function syncInvoices(stripe: any): Promise<{ synced: number; skipped: num
 export async function syncStripeBookings() {
   const stripe = await getUncachableStripeClient();
   log("Starting Stripe sync (bookings + invoices)...", "stripe-sync");
+
+  // Deduplicate: remove invoice_payments that share a payment_intent with another record
+  const allPayments = await db.select().from(invoicePayments);
+  const seenPIs = new Set<string>();
+  let dupsRemoved = 0;
+  for (const p of allPayments) {
+    if (p.stripePaymentIntentId) {
+      if (seenPIs.has(p.stripePaymentIntentId)) {
+        await db.delete(invoicePayments).where(eq(invoicePayments.id, p.id));
+        dupsRemoved++;
+      } else {
+        seenPIs.add(p.stripePaymentIntentId);
+      }
+    }
+  }
+  if (dupsRemoved > 0) log(`Removed ${dupsRemoved} duplicate invoice payment(s)`, "stripe-sync");
 
   const bookings = await syncBookings(stripe);
   const invoices = await syncInvoices(stripe);
