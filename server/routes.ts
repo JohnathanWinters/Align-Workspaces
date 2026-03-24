@@ -5887,6 +5887,8 @@ ${featuredSection}
 
   app.get("/api/admin/tax-report", isAdmin, async (req, res) => {
     try {
+      const FL_TAX_RATE = 0.07; // FL 6% + Miami-Dade 1%
+
       // Fetch all paid bookings with tax data (exclude test seed data)
       const allBookingsRaw = await db.select().from(spaceBookings)
         .where(and(
@@ -5896,10 +5898,14 @@ ${featuredSection}
         .orderBy(desc(spaceBookings.createdAt));
       const allBookings = allBookingsRaw.filter(b => !b.id.startsWith("test-"));
 
+      // Fetch all invoice payments
+      const allInvoices = await db.select().from(invoicePayments).orderBy(desc(invoicePayments.paidAt));
+
       // Group by month
-      const monthlyData: Record<string, {
+      type MonthData = {
         month: string;
         bookingCount: number;
+        invoiceCount: number;
         totalSubtotal: number;
         totalTaxCollected: number;
         totalGuestFees: number;
@@ -5907,28 +5913,28 @@ ${featuredSection}
         totalPlatformRevenue: number;
         totalGuestCharged: number;
         byTier: Record<string, { count: number; revenue: number }>;
-      }> = {};
+        bySource: { bookings: number; invoices: number };
+      };
+      const monthlyData: Record<string, MonthData> = {};
+
+      const ensureMonth = (month: string): MonthData => {
+        if (!monthlyData[month]) {
+          monthlyData[month] = {
+            month, bookingCount: 0, invoiceCount: 0,
+            totalSubtotal: 0, totalTaxCollected: 0, totalGuestFees: 0,
+            totalHostFees: 0, totalPlatformRevenue: 0, totalGuestCharged: 0,
+            byTier: {}, bySource: { bookings: 0, invoices: 0 },
+          };
+        }
+        return monthlyData[month];
+      };
 
       for (const b of allBookings) {
         const date = b.bookingDate || b.createdAt?.toISOString().split("T")[0] || "";
-        const month = date.slice(0, 7); // YYYY-MM
+        const month = date.slice(0, 7);
         if (!month) continue;
 
-        if (!monthlyData[month]) {
-          monthlyData[month] = {
-            month,
-            bookingCount: 0,
-            totalSubtotal: 0,
-            totalTaxCollected: 0,
-            totalGuestFees: 0,
-            totalHostFees: 0,
-            totalPlatformRevenue: 0,
-            totalGuestCharged: 0,
-            byTier: {},
-          };
-        }
-
-        const m = monthlyData[month];
+        const m = ensureMonth(month);
         const subtotal = (b.totalGuestCharged || b.paymentAmount || 0) - (b.guestFeeAmount || b.renterFeeAmount || 0) - (b.taxAmount || 0);
         m.bookingCount++;
         m.totalSubtotal += subtotal;
@@ -5937,6 +5943,7 @@ ${featuredSection}
         m.totalHostFees += b.hostFeeAmount || 0;
         m.totalPlatformRevenue += b.platformRevenue || ((b.guestFeeAmount || b.renterFeeAmount || 0) + (b.hostFeeAmount || 0));
         m.totalGuestCharged += b.totalGuestCharged || b.paymentAmount || 0;
+        m.bySource.bookings += b.totalGuestCharged || b.paymentAmount || 0;
 
         const tier = b.feeTier || "standard";
         if (!m.byTier[tier]) m.byTier[tier] = { count: 0, revenue: 0 };
@@ -5944,23 +5951,45 @@ ${featuredSection}
         m.byTier[tier].revenue += b.platformRevenue || 0;
       }
 
+      // Add invoice payments (apply FL 7% tax estimate)
+      for (const inv of allInvoices) {
+        const date = inv.paidAt?.toISOString().split("T")[0] || inv.createdAt?.toISOString().split("T")[0] || "";
+        const month = date.slice(0, 7);
+        if (!month) continue;
+
+        const m = ensureMonth(month);
+        const taxEstimate = Math.round(inv.amount * FL_TAX_RATE / (1 + FL_TAX_RATE));
+        const subtotal = inv.amount - taxEstimate;
+        m.invoiceCount++;
+        m.totalSubtotal += subtotal;
+        m.totalTaxCollected += taxEstimate;
+        m.totalPlatformRevenue += inv.amount;
+        m.totalGuestCharged += inv.amount;
+        m.bySource.invoices += inv.amount;
+
+        if (!m.byTier["invoice"]) m.byTier["invoice"] = { count: 0, revenue: 0 };
+        m.byTier["invoice"].count++;
+        m.byTier["invoice"].revenue += inv.amount;
+      }
+
       const months = Object.values(monthlyData).sort((a, b) => b.month.localeCompare(a.month));
 
       // Quarterly aggregation
-      const quarterlyData: Record<string, { quarter: string; taxCollected: number; bookingCount: number }> = {};
+      const quarterlyData: Record<string, { quarter: string; taxCollected: number; bookingCount: number; invoiceCount: number }> = {};
       for (const m of months) {
         const [year, mon] = m.month.split("-");
         const q = Math.ceil(parseInt(mon) / 3);
         const qKey = `${year}-Q${q}`;
-        if (!quarterlyData[qKey]) quarterlyData[qKey] = { quarter: qKey, taxCollected: 0, bookingCount: 0 };
+        if (!quarterlyData[qKey]) quarterlyData[qKey] = { quarter: qKey, taxCollected: 0, bookingCount: 0, invoiceCount: 0 };
         quarterlyData[qKey].taxCollected += m.totalTaxCollected;
         quarterlyData[qKey].bookingCount += m.bookingCount;
+        quarterlyData[qKey].invoiceCount += m.invoiceCount;
       }
 
       // Totals
       const totalTaxCollected = months.reduce((s, m) => s + m.totalTaxCollected, 0);
       const totalPlatformRevenue = months.reduce((s, m) => s + m.totalPlatformRevenue, 0);
-      const totalBookings = months.reduce((s, m) => s + m.bookingCount, 0);
+      const totalBookings = months.reduce((s, m) => s + m.bookingCount + m.invoiceCount, 0);
       const totalGrossBookings = months.reduce((s, m) => s + m.totalSubtotal, 0);
       const blendedTakeRate = totalGrossBookings > 0 ? (totalPlatformRevenue / totalGrossBookings * 100).toFixed(1) : "0";
 
@@ -5983,6 +6012,14 @@ ${featuredSection}
   app.get("/api/admin/tax-export", isAdmin, async (req, res) => {
     try {
       const { quarter } = req.query; // e.g. "2026-Q1"
+      const FL_TAX_RATE = 0.07;
+
+      const filterByQuarter = (date: string) => {
+        if (!quarter) return true;
+        const [year, mon] = date.split("-");
+        const q = Math.ceil(parseInt(mon) / 3);
+        return `${year}-Q${q}` === quarter;
+      };
 
       const bookings = await db.select().from(spaceBookings)
         .where(and(
@@ -5991,37 +6028,42 @@ ${featuredSection}
         ))
         .orderBy(spaceBookings.bookingDate);
 
-      // Filter by quarter if specified
-      const filtered = quarter
-        ? bookings.filter(b => {
-            const date = b.bookingDate || "";
-            const [year, mon] = date.split("-");
-            const q = Math.ceil(parseInt(mon) / 3);
-            return `${year}-Q${q}` === quarter;
-          })
-        : bookings;
+      const invoices = await db.select().from(invoicePayments).orderBy(invoicePayments.paidAt);
 
-      // Generate CSV
-      const header = "Booking ID,Booking Date,Space ID,Subtotal ($),Tax Rate,Tax Amount ($),Guest Fee ($),Total Charged ($),Fee Tier\n";
-      const rows = filtered.map(b => {
+      const header = "ID,Date,Type,Description,Subtotal ($),Tax Rate,Tax Amount ($),Total ($),Tier\n";
+      const rows: string[] = [];
+
+      for (const b of bookings) {
+        const date = b.bookingDate || "";
+        if (!filterByQuarter(date)) continue;
         const subtotal = (b.totalGuestCharged || b.paymentAmount || 0) - (b.guestFeeAmount || b.renterFeeAmount || 0) - (b.taxAmount || 0);
-        return [
-          b.id,
-          b.bookingDate || "",
-          b.spaceId,
-          (subtotal / 100).toFixed(2),
-          b.taxRate || "0.07",
+        rows.push([
+          b.id, date, "booking", `Space: ${b.spaceId}`,
+          (subtotal / 100).toFixed(2), b.taxRate || "0.07",
           ((b.taxAmount || 0) / 100).toFixed(2),
-          ((b.guestFeeAmount || b.renterFeeAmount || 0) / 100).toFixed(2),
           ((b.totalGuestCharged || b.paymentAmount || 0) / 100).toFixed(2),
           b.feeTier || "standard",
-        ].join(",");
-      }).join("\n");
+        ].join(","));
+      }
+
+      for (const inv of invoices) {
+        const date = inv.paidAt?.toISOString().split("T")[0] || inv.createdAt?.toISOString().split("T")[0] || "";
+        if (!filterByQuarter(date)) continue;
+        const taxEstimate = Math.round(inv.amount * FL_TAX_RATE / (1 + FL_TAX_RATE));
+        const subtotal = inv.amount - taxEstimate;
+        rows.push([
+          inv.id, date, "invoice", `"${(inv.description || "Invoice").replace(/"/g, '""')}"`,
+          (subtotal / 100).toFixed(2), String(FL_TAX_RATE),
+          (taxEstimate / 100).toFixed(2),
+          (inv.amount / 100).toFixed(2),
+          "invoice",
+        ].join(","));
+      }
 
       const filename = quarter ? `align-tax-report-${quarter}.csv` : "align-tax-report-all.csv";
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-      res.send(header + rows);
+      res.send(header + rows.join("\n"));
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
