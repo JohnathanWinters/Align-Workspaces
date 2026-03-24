@@ -18,14 +18,13 @@ export class WebhookHandlers {
     try {
       const stripe = await getUncachableStripeClient();
       if (!process.env.STRIPE_WEBHOOK_SECRET) {
-        console.error("STRIPE_WEBHOOK_SECRET is not configured");
-        return res.status(500).json({ message: "Webhook secret not configured" });
+        throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
       }
       const event = stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET);
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as any;
         if (session.metadata?.type === 'edit_tokens' && session.metadata?.userId) {
-          const quantity = parseInt(session.metadata.quantity) || 1;
+          const quantity = Number(session.metadata.quantity) || 1;
           await storage.addPurchasedTokens(session.metadata.userId, quantity);
           console.log(`Credited ${quantity} edit tokens to user ${session.metadata.userId}`);
         }
@@ -47,7 +46,7 @@ export class WebhookHandlers {
           const guestName = session.metadata.guestName || booking?.userName || "Guest";
           const bookingDate = session.metadata.bookingDate || booking?.bookingDate || "";
           const bookingStartTime = session.metadata.bookingStartTime || booking?.bookingStartTime || "";
-          const bookingHours = parseInt(session.metadata.bookingHours) || booking?.bookingHours || 1;
+          const bookingHours = Number(session.metadata.bookingHours) || booking?.bookingHours || 1;
 
           const formatTimeStr = (t: string) => {
             if (!t) return "";
@@ -124,7 +123,7 @@ export class WebhookHandlers {
                 body: `${guestName} booked ${dateDisplay}${timeStr}, ${bookingHours} hour${bookingHours > 1 ? "s" : ""}`,
                 url: "/portal?tab=messages",
                 tag: `booking-${bookingId}`,
-              });
+              }).catch(err => console.error("Push notification failed:", err));
             }
           } catch (pushErr) {
             console.error("Failed to send booking push:", pushErr);

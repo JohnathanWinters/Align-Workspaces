@@ -293,7 +293,7 @@ export async function processBookingNotifications(): Promise<void> {
           body: `You have a booking at ${spaceName} tomorrow.`,
           url: "/portal?tab=messages",
           tag: `booking-${booking.id}-24hr`,
-        }, "booking");
+        }, "booking").catch(() => {});
       }
     }
   }
@@ -333,7 +333,7 @@ export async function processBookingNotifications(): Promise<void> {
           body: `Your session at ${spaceName} is starting — check in now.`,
           url: "/portal?tab=messages",
           tag: `booking-${booking.id}-start`,
-        }, "booking");
+        }, "booking").catch(() => {});
       }
     }
   }
@@ -350,7 +350,7 @@ export async function processBookingNotifications(): Promise<void> {
           body: `The guest hasn't checked in for their booking at ${space.name}.`,
           url: "/portal?tab=messages",
           tag: `booking-${booking.id}-noshow`,
-        }, "booking");
+        }, "booking").catch(() => {});
       }
     }
   }
@@ -399,7 +399,7 @@ export async function processBookingNotifications(): Promise<void> {
           body: `The session at ${spaceName} has ended — please check out.`,
           url: "/portal?tab=messages",
           tag: `booking-${booking.id}-ended`,
-        }, "booking");
+        }, "booking").catch(() => {});
       }
     }
   }

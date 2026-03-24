@@ -92,6 +92,10 @@ function emailLayout(content: string): string {
 </html>`;
 }
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function infoRow(label: string, value: string): string {
   return `<tr>
     <td style="padding:6px 0;font-size:14px;color:#9a9590;width:140px;vertical-align:top;">${label}</td>
@@ -537,23 +541,23 @@ export async function sendArrivalGuideEmail(data: {
     ? data.guide.steps.map((step, i) => `
         <div style="margin-bottom:16px;">
           <img src="${resolveImageUrl(step.imageUrl)}" alt="Step ${i + 1}" width="100%" style="display:block;border-radius:8px;max-width:456px;" />
-          ${step.caption ? `<p style="margin:8px 0 0;font-size:14px;color:#1a1a1a;"><strong style="color:#c4956a;">Step ${i + 1}.</strong> ${step.caption}</p>` : ''}
+          ${step.caption ? `<p style="margin:8px 0 0;font-size:14px;color:#1a1a1a;"><strong style="color:#c4956a;">Step ${i + 1}.</strong> ${escapeHtml(step.caption)}</p>` : ''}
         </div>
       `).join('')
     : '';
 
   const detailRows = [
-    data.guide.wifiName ? infoRow('WiFi', `${data.guide.wifiName}${data.guide.wifiPassword ? ` / ${data.guide.wifiPassword}` : ''}`) : '',
-    data.guide.doorCode ? infoRow('Access Code', `<span style="font-family:monospace;font-size:15px;">${data.guide.doorCode}</span>`) : '',
+    data.guide.wifiName ? infoRow('WiFi', `${escapeHtml(data.guide.wifiName)}${data.guide.wifiPassword ? ` / ${escapeHtml(data.guide.wifiPassword)}` : ''}`) : '',
+    data.guide.doorCode ? infoRow('Access Code', `<span style="font-family:monospace;font-size:15px;">${escapeHtml(data.guide.doorCode)}</span>`) : '',
   ].filter(Boolean).join('');
 
   const html = emailLayout(`
     <h1 style="margin:0 0 4px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Your Arrival Guide</h1>
-    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;">Hi ${data.guestName}, here's everything you need to arrive at your space today.</p>
+    <p style="margin:0 0 24px;font-size:14px;color:#6b6560;">Hi ${escapeHtml(data.guestName)}, here's everything you need to arrive at your space today.</p>
 
     ${sectionHeading('Space')}
     <div style="background-color:#f5f3f0;border-radius:8px;padding:14px 16px;margin-bottom:8px;">
-      <p style="margin:0;font-size:16px;font-weight:600;color:#1a1a1a;">${data.spaceName}</p>
+      <p style="margin:0;font-size:16px;font-weight:600;color:#1a1a1a;">${escapeHtml(data.spaceName)}</p>
       <p style="margin:4px 0 0;font-size:13px;color:#9a9590;">${data.bookingDate} at ${data.bookingStartTime}</p>
     </div>
 
@@ -561,7 +565,7 @@ export async function sendArrivalGuideEmail(data: {
 
     ${detailRows ? `${sectionHeading('Access Details')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">${detailRows}</table>` : ''}
 
-    ${data.guide.notes ? `${sectionHeading('Notes')}<div style="background-color:#f5f3f0;border-radius:8px;padding:16px;"><p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.guide.notes}</p></div>` : ''}
+    ${data.guide.notes ? `${sectionHeading('Notes')}<div style="background-color:#f5f3f0;border-radius:8px;padding:16px;"><p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${escapeHtml(data.guide.notes)}</p></div>` : ''}
 
     <div style="text-align:center;margin-top:24px;">
       <a href="${SITE_URL}/portal?tab=messages" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
