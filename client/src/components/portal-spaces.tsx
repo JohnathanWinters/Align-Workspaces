@@ -1468,16 +1468,33 @@ function MyBookingsTab() {
 
   const spaceMap = new Map(allSpaces.map(s => [s.id, s]));
 
+  const formatBookingDate = (dateStr: string) => {
+    const d = new Date(dateStr + "T12:00:00");
+    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
+
+  const formatBookingTime = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hr = h % 12 || 12;
+    return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+
+  const formatPaidDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
   const renderBookingCard = (booking: any, variant: "upcoming" | "past") => {
     const space = spaceMap.get(booking.spaceId);
     return (
       <Card key={booking.id} className="overflow-hidden border border-gray-100" data-testid={`card-${variant}-booking-${booking.id}`}>
-        <div className="flex gap-4 p-4">
-          <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+        <div className="flex gap-3 p-3">
+          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
             {space && (space.imageUrls as string[])?.[0] ? (
               <img src={(space.imageUrls as string[])[0]} alt={space?.name || "Space"} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
+              <div className="w-full h-full flex items-center justify-center"><Building2 className="w-5 h-5 text-gray-300" /></div>
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -1489,30 +1506,32 @@ function MyBookingsTab() {
                 {booking._role === "host" ? "Hosting" : "Renting"}
               </span>
             </div>
-            <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-              <CalendarDays className="w-3 h-3" />
-              {booking.bookingDate} · {booking.bookingStartTime} · {booking.bookingHours}hr
-              {booking._role === "host" && booking.userName && (
-                <span className="text-gray-400">· {booking.userName}</span>
-              )}
-            </p>
-            {(booking.totalGuestCharged || booking.paymentAmount) && (
-              <p className="text-xs text-gray-500 mt-1">
-                {booking._role === "host"
-                  ? `$${((booking.hostPayoutAmount || booking.hostEarnings || 0) / 100).toFixed(2)} earned`
-                  : `$${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid`
-                }
+            <div className="mt-1 space-y-0.5">
+              <p className="text-xs text-stone-600">
+                {booking.bookingDate ? formatBookingDate(booking.bookingDate) : "TBD"}
+                {booking.bookingStartTime && <span className="text-stone-400"> at </span>}
+                {booking.bookingStartTime && formatBookingTime(booking.bookingStartTime)}
+                <span className="text-stone-400"> · </span>{booking.bookingHours}hr{(booking.bookingHours || 0) > 1 ? "s" : ""}
+                {booking._role === "host" && booking.userName && (
+                  <span className="text-stone-400"> · {booking.userName}</span>
+                )}
               </p>
-            )}
-            {booking.checkedInAt && (
-              <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-2">
-                <span>In: {new Date(booking.checkedInAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
-                {booking.checkedOutAt && <span>Out: {new Date(booking.checkedOutAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>}
-                {(booking.overtimeMinutes ?? 0) > 0 && <span className="text-amber-600">{booking.overtimeMinutes}m overtime</span>}
-              </p>
-            )}
+              <div className="flex items-center gap-2 text-[11px] text-stone-400">
+                {(booking.totalGuestCharged || booking.paymentAmount) ? (
+                  <span className="text-stone-500 font-medium">
+                    {booking._role === "host"
+                      ? `$${((booking.hostPayoutAmount || booking.hostEarnings || 0) / 100).toFixed(2)} earned`
+                      : `$${((booking.totalGuestCharged || booking.paymentAmount) / 100).toFixed(2)} paid`
+                    }
+                  </span>
+                ) : null}
+                {booking.createdAt && (
+                  <span>Booked {formatPaidDate(booking.createdAt)}</span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-1.5">
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
             {booking.status === "checked_in" ? (
               <Badge className="text-[10px] bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
                 <span className="relative flex h-1.5 w-1.5">
@@ -1530,12 +1549,7 @@ function MyBookingsTab() {
             )}
             {booking.feeTier === "repeat_guest" && (
               <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
-                <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty discount
-              </Badge>
-            )}
-            {booking.feeTier === "host_referred" && (
-              <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                Referred
+                <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty
               </Badge>
             )}
           </div>
@@ -1544,8 +1558,11 @@ function MyBookingsTab() {
     );
   };
 
+  const [showUpcoming, setShowUpcoming] = useState(false);
+  const [showPast, setShowPast] = useState(false);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Calendar View */}
       <BookingCalendar
         bookings={calendarBookings}
@@ -1555,18 +1572,59 @@ function MyBookingsTab() {
       {/* Recurring Bookings Management */}
       <RecurringBookingsSection />
 
-      {/* Upcoming list */}
+      {/* Upcoming — collapsed by default */}
       {upcomingBookings.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Upcoming</h3>
-          {upcomingBookings.map((booking: any) => renderBookingCard(booking, "upcoming"))}
+        <div>
+          <button
+            onClick={() => setShowUpcoming(!showUpcoming)}
+            className="flex items-center justify-between w-full py-2"
+          >
+            <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+              Upcoming
+              <span className="text-[10px] font-normal normal-case tracking-normal text-stone-400">({upcomingBookings.length})</span>
+            </h3>
+            {showUpcoming ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
+          </button>
+          <AnimatePresence>
+            {showUpcoming && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-2 overflow-hidden"
+              >
+                {upcomingBookings.map((booking: any) => renderBookingCard(booking, "upcoming"))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
-      {/* Past bookings */}
+
+      {/* Past — collapsed by default */}
       {pastBookings.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Past</h3>
-          {pastBookings.map((booking: any) => renderBookingCard(booking, "past"))}
+        <div>
+          <button
+            onClick={() => setShowPast(!showPast)}
+            className="flex items-center justify-between w-full py-2"
+          >
+            <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
+              Past
+              <span className="text-[10px] font-normal normal-case tracking-normal text-stone-400">({pastBookings.length})</span>
+            </h3>
+            {showPast ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
+          </button>
+          <AnimatePresence>
+            {showPast && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-2 overflow-hidden"
+              >
+                {pastBookings.map((booking: any) => renderBookingCard(booking, "past"))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
