@@ -1,11 +1,12 @@
 import { getUncachableStripeClient } from "./stripeClient";
 import { db } from "./db";
 import { spaceBookings, invoicePayments } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { log } from "./index";
 
 /**
- * Syncs completed Stripe checkout sessions back into the space_bookings table.
+ * Syncs completed Stripe checkout sessions into the space_bookings table.
+ * Only inserts bookings that don't already exist (by ID).
  */
 async function syncBookings(stripe: any): Promise<{ synced: number; skipped: number; errors: string[] }> {
   let synced = 0;
@@ -25,51 +26,12 @@ async function syncBookings(stripe: any): Promise<{ synced: number; skipped: num
 
     for (const session of sessions.data) {
       const meta = session.metadata || {};
-
-      // Handle portrait session downpayments (checkout with leadId, no type)
-      if (meta.leadId && !meta.type) {
-        try {
-          const piId = typeof session.payment_intent === "object"
-            ? session.payment_intent?.id
-            : session.payment_intent || null;
-
-          if (piId) {
-            const [existing] = await db.select({ id: invoicePayments.id })
-              .from(invoicePayments)
-              .where(eq(invoicePayments.stripePaymentIntentId, piId));
-            if (existing) { skipped++; continue; }
-          }
-
-          const amount = session.amount_total || 0;
-          const email = session.customer_email || "";
-          const paidAt = session.created ? new Date(session.created * 1000) : new Date();
-
-          await db.insert(invoicePayments).values({
-            stripePaymentIntentId: piId,
-            stripeInvoiceId: null,
-            customerEmail: email,
-            customerName: email.split("@")[0] || "Client",
-            amount,
-            description: `Portrait session downpayment (50%)`,
-            shootId: null,
-            paidAt,
-          });
-
-          synced++;
-          log(`Synced portrait downpayment: ${email} - $${(amount / 100).toFixed(2)}`, "stripe-sync");
-        } catch (err: any) {
-          errors.push(`portrait downpayment ${meta.leadId}: ${err.message}`);
-        }
-        continue;
-      }
-
       if (meta.type !== "space_booking" || !meta.bookingId) continue;
 
       try {
         const [existing] = await db.select({ id: spaceBookings.id })
           .from(spaceBookings)
           .where(eq(spaceBookings.id, meta.bookingId));
-
         if (existing) { skipped++; continue; }
 
         const bookingHours = parseInt(meta.bookingHours) || 1;
@@ -119,13 +81,26 @@ async function syncBookings(stripe: any): Promise<{ synced: number; skipped: num
 }
 
 /**
- * Syncs paid Stripe invoices into the invoice_payments table.
+ * Collects all Stripe payments (invoices + checkout downpayments) into a
+ * deduplicated list keyed by payment_intent ID, then replaces the
+ * invoice_payments table entirely. No duplicates possible.
  */
-async function syncInvoices(stripe: any): Promise<{ synced: number; skipped: number; errors: string[] }> {
-  let synced = 0;
-  let skipped = 0;
+async function syncInvoicePayments(stripe: any): Promise<{ synced: number; errors: string[] }> {
   const errors: string[] = [];
 
+  // Collect all payments keyed by payment_intent to deduplicate
+  const paymentMap = new Map<string, {
+    stripePaymentIntentId: string | null;
+    stripeInvoiceId: string | null;
+    customerEmail: string;
+    customerName: string;
+    amount: number;
+    description: string;
+    shootId: string | null;
+    paidAt: Date;
+  }>();
+
+  // 1. Fetch paid invoices
   let hasMore = true;
   let startingAfter: string | undefined;
 
@@ -138,45 +113,23 @@ async function syncInvoices(stripe: any): Promise<{ synced: number; skipped: num
 
     for (const invoice of invoices.data) {
       try {
-        // Check for duplicate by invoice ID first
-        const [existingByInvoice] = await db.select({ id: invoicePayments.id })
-          .from(invoicePayments)
-          .where(eq(invoicePayments.stripeInvoiceId, invoice.id));
-        if (existingByInvoice) { skipped++; continue; }
-
         const piId = typeof invoice.payment_intent === "string"
           ? invoice.payment_intent
           : invoice.payment_intent?.id || null;
+        const key = piId || `inv-${invoice.id}`;
 
-        if (piId) {
-          const [existingByPi] = await db.select({ id: invoicePayments.id })
-            .from(invoicePayments)
-            .where(eq(invoicePayments.stripePaymentIntentId, piId));
-          if (existingByPi) { skipped++; continue; }
-        }
-
-        const customerEmail = invoice.customer_email || "";
-        const customerName = invoice.customer_name || customerEmail.split("@")[0] || "Client";
-        const amount = invoice.amount_paid || 0;
-        const description = invoice.lines?.data?.[0]?.description || "Invoice payment";
-        const shootId = invoice.metadata?.shootId || null;
-        const paidAt = invoice.status_transitions?.paid_at
-          ? new Date(invoice.status_transitions.paid_at * 1000)
-          : new Date();
-
-        await db.insert(invoicePayments).values({
+        paymentMap.set(key, {
           stripePaymentIntentId: piId,
           stripeInvoiceId: invoice.id,
-          customerEmail,
-          customerName,
-          amount,
-          description,
-          shootId,
-          paidAt,
+          customerEmail: invoice.customer_email || "",
+          customerName: invoice.customer_name || (invoice.customer_email || "").split("@")[0] || "Client",
+          amount: invoice.amount_paid || 0,
+          description: invoice.lines?.data?.[0]?.description || "Invoice payment",
+          shootId: invoice.metadata?.shootId || null,
+          paidAt: invoice.status_transitions?.paid_at
+            ? new Date(invoice.status_transitions.paid_at * 1000)
+            : new Date(),
         });
-
-        synced++;
-        log(`Synced invoice ${invoice.id}: ${customerName} - $${(amount / 100).toFixed(2)}`, "stripe-sync");
       } catch (err: any) {
         errors.push(`invoice ${invoice.id}: ${err.message}`);
       }
@@ -186,7 +139,64 @@ async function syncInvoices(stripe: any): Promise<{ synced: number; skipped: num
     if (invoices.data.length > 0) startingAfter = invoices.data[invoices.data.length - 1].id;
   }
 
-  return { synced, skipped, errors };
+  // 2. Fetch checkout sessions for portrait downpayments
+  hasMore = true;
+  startingAfter = undefined;
+
+  while (hasMore) {
+    const sessions = await stripe.checkout.sessions.list({
+      status: "complete",
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+      expand: ["data.payment_intent"],
+    });
+
+    for (const session of sessions.data) {
+      const meta = session.metadata || {};
+      // Only portrait downpayments (has leadId, no type)
+      if (!meta.leadId || meta.type) continue;
+
+      try {
+        const piId = typeof session.payment_intent === "object"
+          ? session.payment_intent?.id
+          : session.payment_intent || null;
+        const key = piId || `session-${session.id}`;
+
+        // Don't overwrite if invoice already captured this payment
+        if (paymentMap.has(key)) continue;
+
+        paymentMap.set(key, {
+          stripePaymentIntentId: piId,
+          stripeInvoiceId: null,
+          customerEmail: session.customer_email || "",
+          customerName: (session.customer_email || "").split("@")[0] || "Client",
+          amount: session.amount_total || 0,
+          description: "Portrait session downpayment (50%)",
+          shootId: null,
+          paidAt: session.created ? new Date(session.created * 1000) : new Date(),
+        });
+      } catch (err: any) {
+        errors.push(`downpayment ${meta.leadId}: ${err.message}`);
+      }
+    }
+
+    hasMore = sessions.has_more;
+    if (sessions.data.length > 0) startingAfter = sessions.data[sessions.data.length - 1].id;
+  }
+
+  // 3. Clear existing invoice_payments and insert fresh
+  await db.delete(invoicePayments).where(sql`1=1`);
+
+  for (const payment of paymentMap.values()) {
+    try {
+      await db.insert(invoicePayments).values(payment);
+    } catch (err: any) {
+      errors.push(`insert: ${err.message}`);
+    }
+  }
+
+  log(`Synced ${paymentMap.size} invoice payments (cleared and rebuilt)`, "stripe-sync");
+  return { synced: paymentMap.size, errors };
 }
 
 /**
@@ -196,35 +206,19 @@ export async function syncStripeBookings() {
   const stripe = await getUncachableStripeClient();
   log("Starting Stripe sync (bookings + invoices)...", "stripe-sync");
 
-  // Deduplicate: remove invoice_payments that share a payment_intent with another record
-  const allPayments = await db.select().from(invoicePayments);
-  const seenPIs = new Set<string>();
-  let dupsRemoved = 0;
-  for (const p of allPayments) {
-    if (p.stripePaymentIntentId) {
-      if (seenPIs.has(p.stripePaymentIntentId)) {
-        await db.delete(invoicePayments).where(eq(invoicePayments.id, p.id));
-        dupsRemoved++;
-      } else {
-        seenPIs.add(p.stripePaymentIntentId);
-      }
-    }
-  }
-  if (dupsRemoved > 0) log(`Removed ${dupsRemoved} duplicate invoice payment(s)`, "stripe-sync");
-
   const bookings = await syncBookings(stripe);
-  const invoices = await syncInvoices(stripe);
+  const invoiceResult = await syncInvoicePayments(stripe);
 
   const result = {
-    synced: bookings.synced + invoices.synced,
-    skipped: bookings.skipped + invoices.skipped,
-    errors: [...bookings.errors, ...invoices.errors],
+    synced: bookings.synced + invoiceResult.synced,
+    skipped: bookings.skipped,
+    errors: [...bookings.errors, ...invoiceResult.errors],
     details: {
       bookings: { synced: bookings.synced, skipped: bookings.skipped },
-      invoices: { synced: invoices.synced, skipped: invoices.skipped },
+      invoices: { synced: invoiceResult.synced },
     },
   };
 
-  log(`Stripe sync complete: ${result.synced} synced (${bookings.synced} bookings, ${invoices.synced} invoices), ${result.skipped} skipped`, "stripe-sync");
+  log(`Stripe sync complete: ${bookings.synced} bookings, ${invoiceResult.synced} invoice payments`, "stripe-sync");
   return result;
 }
