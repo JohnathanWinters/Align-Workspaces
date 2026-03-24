@@ -188,18 +188,18 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
                 />
               )}
 
-              {/* Scrim — only on photo cells, just enough for day number */}
+              {/* Scrim — only on photo cells */}
               {photoUrl && (
-                <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/50 to-transparent" />
+                <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/60 to-transparent" />
               )}
 
               {/* Day number — top left */}
               <span className={`
-                relative z-10 inline-flex items-center justify-center m-[3px] text-[11px] font-bold leading-none
+                relative z-10 inline-flex items-center justify-center m-[3px] text-[12px] font-bold leading-none
                 ${day.isToday
-                  ? "w-[22px] h-[22px] rounded-full bg-[#c4956a] text-white"
+                  ? "w-[24px] h-[24px] rounded-full bg-[#c4956a] text-white"
                   : photoUrl && day.isCurrentMonth
-                    ? "text-white"
+                    ? "w-[24px] h-[24px] rounded-full bg-black/40 text-white backdrop-blur-[2px]"
                     : day.isCurrentMonth
                       ? "text-stone-600"
                       : "text-stone-300"
