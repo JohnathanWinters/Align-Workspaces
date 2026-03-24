@@ -968,10 +968,10 @@ function SavedTab() {
                   <div className="flex flex-col items-end gap-2">
                     <button
                       onClick={() => removeFavorite.mutate(space.id)}
-                      className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-full hover:bg-stone-100 transition-colors"
                       data-testid={`button-unfavorite-${space.id}`}
                     >
-                      <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                      <Heart className="w-4 h-4 text-stone-500 fill-stone-500" />
                     </button>
                     <a href={`/spaces/${space.slug}`} className="text-xs text-[#c4956a] hover:underline" data-testid={`link-view-space-${space.id}`}>
                       View
