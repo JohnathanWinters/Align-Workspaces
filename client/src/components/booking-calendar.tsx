@@ -144,22 +144,22 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 border-t border-l border-stone-200 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 gap-[2px] rounded-xl overflow-hidden bg-stone-200">
         {calendarDays.map((day) => {
           const dayBookings = bookingsByDate.get(day.date) || [];
           const dayRecurring = recurringProjections.get(day.date) || [];
-          const hasBookings = dayBookings.length > 0;
-          const hasRecurring = dayRecurring.length > 0;
-          const hasContent = hasBookings || hasRecurring;
+          const hasContent = dayBookings.length > 0 || dayRecurring.length > 0;
           const isSelected = selectedDate === day.date;
 
-          // Earliest booking for the photo badge
+          // Earliest booking by start time for cover photo
           const sorted = [...dayBookings].sort((a, b) => (a.bookingStartTime || "99:99").localeCompare(b.bookingStartTime || "99:99"));
           const earliest = sorted[0];
           const earliestRec = dayRecurring.length > 0
             ? [...dayRecurring].sort((a, b) => a.startTime.localeCompare(b.startTime))[0]
             : null;
           const photoUrl = earliest?.spaceImageUrl || earliestRec?.spaceImage || null;
+          const isPending = !earliest && earliestRec?.status === "pending_confirmation";
+          const isRecurring = !!earliest?.recurringBookingId || (dayRecurring.length > 0 && !earliest);
           const totalCount = dayBookings.length + dayRecurring.length;
 
           return (
@@ -170,57 +170,53 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
                 if (onDayClick && hasContent) onDayClick(day.date, dayBookings);
               }}
               className={`
-                relative flex flex-col items-center py-1.5 border-r border-b border-stone-200 transition-colors min-h-[60px]
-                ${day.isCurrentMonth ? "bg-white" : "bg-stone-50/60"}
-                ${isSelected ? "bg-[#c4956a]/5" : hasContent ? "hover:bg-stone-50" : ""}
+                relative aspect-square overflow-hidden group
+                ${day.isCurrentMonth ? "bg-white" : "bg-stone-50"}
+                ${isSelected ? "ring-2 ring-[#c4956a] z-10" : ""}
+                ${hasContent ? "cursor-pointer" : ""}
               `}
               data-testid={`calendar-day-${day.date}`}
             >
-              {/* Day number */}
+              {/* Full-bleed photo */}
+              {photoUrl && (
+                <img
+                  src={photoUrl}
+                  alt=""
+                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${
+                    isPending ? "opacity-40" : day.isCurrentMonth ? "" : "opacity-30"
+                  }`}
+                />
+              )}
+
+              {/* Scrim — only on photo cells, just enough for day number */}
+              {photoUrl && (
+                <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/50 to-transparent" />
+              )}
+
+              {/* Day number — top left */}
               <span className={`
-                text-[12px] font-medium leading-none mb-1
+                relative z-10 inline-flex items-center justify-center m-[3px] text-[11px] font-bold leading-none
                 ${day.isToday
-                  ? "w-6 h-6 rounded-full bg-[#c4956a] text-white flex items-center justify-center"
-                  : day.isCurrentMonth
-                    ? "text-stone-700"
-                    : "text-stone-300"
+                  ? "w-[22px] h-[22px] rounded-full bg-[#c4956a] text-white"
+                  : photoUrl && day.isCurrentMonth
+                    ? "text-white"
+                    : day.isCurrentMonth
+                      ? "text-stone-600"
+                      : "text-stone-300"
                 }
               `}>
                 {day.day}
               </span>
 
-              {/* Space photo badge — circular, centered */}
-              {hasContent && (
-                <div className="flex flex-col items-center gap-[3px] mt-auto">
-                  {photoUrl ? (
-                    <div className="relative">
-                      <img
-                        src={photoUrl}
-                        alt=""
-                        className={`w-8 h-8 rounded-full object-cover border-2 shadow-sm ${
-                          hasBookings
-                            ? earliest?.role === "host" ? "border-emerald-300" : "border-blue-300"
-                            : earliestRec?.status === "pending_confirmation" ? "border-amber-300 opacity-70" : "border-[#c4956a]/50"
-                        }`}
-                      />
-                      {(earliest?.recurringBookingId || hasRecurring) && (
-                        <Repeat className="w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 text-[#c4956a] bg-white rounded-full p-[1px]" />
-                      )}
-                    </div>
-                  ) : (
-                    <div className={`w-8 h-8 rounded-full border-2 border-dashed flex items-center justify-center text-[9px] font-bold ${
-                      earliestRec?.status === "pending_confirmation"
-                        ? "border-amber-300 text-amber-400 bg-amber-50"
-                        : "border-[#c4956a]/40 text-[#c4956a]/60 bg-[#c4956a]/5"
-                    }`}>
-                      {(earliest?.spaceName || earliestRec?.spaceName || "S")[0]}
-                    </div>
+              {/* Bottom bar — count + recurring */}
+              {hasContent && (totalCount > 1 || isRecurring) && (
+                <div className="absolute bottom-[3px] right-[3px] z-10 flex items-center gap-[2px]">
+                  {isRecurring && (
+                    <Repeat className={`w-3 h-3 ${photoUrl ? "text-white drop-shadow" : "text-[#c4956a]"}`} />
                   )}
-
-                  {/* Count indicator */}
                   {totalCount > 1 && (
-                    <span className="text-[8px] font-bold text-stone-400 leading-none">
-                      +{totalCount - 1}
+                    <span className={`text-[9px] font-bold leading-none ${photoUrl ? "text-white drop-shadow" : "text-stone-400"}`}>
+                      {totalCount}
                     </span>
                   )}
                 </div>
