@@ -41,47 +41,82 @@ function formatTime(time: string): string {
   return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
+/** Get the Sunday that starts the week containing `date` */
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+function toDateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function addDays(date: Date, n: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
 export default function BookingCalendar({ bookings, recurringBookings, onDayClick }: BookingCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(() => {
+  // Find the best initial week: closest week with a booking, or current week
+  const initialWeekStart = useMemo(() => {
     const now = new Date();
-    return { year: now.getFullYear(), month: now.getMonth() };
-  });
+    now.setHours(12, 0, 0, 0);
+    const thisWeekStart = getWeekStart(now);
+
+    if (bookings.length === 0) return thisWeekStart;
+
+    // Get all booking dates
+    const dates = bookings
+      .map(b => b.bookingDate)
+      .filter(Boolean)
+      .sort() as string[];
+
+    if (dates.length === 0) return thisWeekStart;
+
+    // Find the closest booking date to today (prefer future)
+    const todayStr = toDateStr(now);
+    const futureDate = dates.find(d => d >= todayStr);
+    const pastDate = [...dates].reverse().find(d => d < todayStr);
+
+    let targetDate: string;
+    if (futureDate) {
+      targetDate = futureDate;
+    } else if (pastDate) {
+      targetDate = pastDate;
+    } else {
+      return thisWeekStart;
+    }
+
+    return getWeekStart(new Date(targetDate + "T12:00:00"));
+  }, [bookings]);
+
+  const [weekStart, setWeekStart] = useState<Date>(initialWeekStart);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const { year, month } = currentMonth;
-
-  const calendarDays = useMemo(() => {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startOffset = firstDay.getDay();
-    const totalDays = lastDay.getDate();
-    const days: Array<{ date: string; day: number; isCurrentMonth: boolean; isToday: boolean }> = [];
-
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startOffset - 1; i >= 0; i--) {
-      const d = prevMonthLastDay - i;
-      const pm = month === 0 ? 11 : month - 1;
-      const py = month === 0 ? year - 1 : year;
-      days.push({ date: `${py}-${String(pm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, day: d, isCurrentMonth: false, isToday: false });
-    }
-
+  // Build the 7 days of the current week
+  const weekDays = useMemo(() => {
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    for (let d = 1; d <= totalDays; d++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      days.push({ date: dateStr, day: d, isCurrentMonth: true, isToday: dateStr === todayStr });
-    }
+    today.setHours(12, 0, 0, 0);
+    const todayStr = toDateStr(today);
 
-    const remaining = 42 - days.length;
-    for (let d = 1; d <= remaining; d++) {
-      const nm = month === 11 ? 0 : month + 1;
-      const ny = month === 11 ? year + 1 : year;
-      days.push({ date: `${ny}-${String(nm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`, day: d, isCurrentMonth: false, isToday: false });
-    }
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = addDays(weekStart, i);
+      const dateStr = toDateStr(d);
+      return {
+        date: dateStr,
+        day: d.getDate(),
+        dayOfWeek: d.getDay(),
+        month: d.getMonth(),
+        year: d.getFullYear(),
+        isToday: dateStr === todayStr,
+      };
+    });
+  }, [weekStart]);
 
-    return days;
-  }, [year, month]);
-
+  // Bookings indexed by date
   const bookingsByDate = useMemo(() => {
     const map = new Map<string, BookingForCalendar[]>();
     for (const b of bookings) {
@@ -92,13 +127,13 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
     return map;
   }, [bookings]);
 
+  // Project recurring bookings onto this week
   const recurringProjections = useMemo(() => {
     const map = new Map<string, RecurringForCalendar[]>();
     for (const rb of recurringBookings) {
       if (rb.status !== "confirmed" && rb.status !== "active" && rb.status !== "pending_confirmation") continue;
-      for (const day of calendarDays) {
-        const d = new Date(day.date + "T12:00:00");
-        if (d.getDay() !== rb.dayOfWeek) continue;
+      for (const day of weekDays) {
+        if (day.dayOfWeek !== rb.dayOfWeek) continue;
         if (day.date < rb.startDate) continue;
         if (rb.endDate && day.date > rb.endDate) continue;
         const existing = bookingsByDate.get(day.date) || [];
@@ -108,50 +143,51 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
       }
     }
     return map;
-  }, [recurringBookings, calendarDays, bookingsByDate]);
+  }, [recurringBookings, weekDays, bookingsByDate]);
 
-  const prevMonth = () => setCurrentMonth(p => p.month === 0 ? { year: p.year - 1, month: 11 } : { year: p.year, month: p.month - 1 });
-  const nextMonth = () => setCurrentMonth(p => p.month === 11 ? { year: p.year + 1, month: 0 } : { year: p.year, month: p.month + 1 });
-  const goToToday = () => { const now = new Date(); setCurrentMonth({ year: now.getFullYear(), month: now.getMonth() }); };
+  const prevWeek = () => setWeekStart(s => addDays(s, -7));
+  const nextWeek = () => setWeekStart(s => addDays(s, 7));
+  const goToThisWeek = () => setWeekStart(getWeekStart(new Date()));
 
-  const monthLabel = new Date(year, month).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  // Week label: "Mar 24 – 30, 2026" or "Mar 28 – Apr 3, 2026"
+  const weekEnd = addDays(weekStart, 6);
+  const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+  const weekLabel = sameMonth
+    ? `${weekStart.toLocaleDateString("en-US", { month: "short" })} ${weekStart.getDate()} – ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`
+    : `${weekStart.toLocaleDateString("en-US", { month: "short" })} ${weekStart.getDate()} – ${weekEnd.toLocaleDateString("en-US", { month: "short" })} ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+
   const selectedBookings = selectedDate ? (bookingsByDate.get(selectedDate) || []) : [];
   const selectedRecurring = selectedDate ? (recurringProjections.get(selectedDate) || []) : [];
+
+  const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="font-serif text-lg text-[#2c2420]">{monthLabel}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-serif text-lg text-[#2c2420]">{weekLabel}</h3>
         <div className="flex items-center gap-1">
-          <button onClick={goToToday} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#c4956a] hover:bg-[#c4956a]/8 transition-colors mr-1">
-            Today
+          <button onClick={goToThisWeek} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#c4956a] hover:bg-[#c4956a]/10 transition-colors mr-1">
+            This week
           </button>
-          <button onClick={prevMonth} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
+          <button onClick={prevWeek} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
             <ChevronLeft className="w-3.5 h-3.5 text-stone-400" />
           </button>
-          <button onClick={nextMonth} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
+          <button onClick={nextWeek} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
             <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
           </button>
         </div>
       </div>
 
-      {/* Day headers */}
-      <div className="grid grid-cols-7 mb-1">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-          <div key={d} className="text-center text-[10px] font-medium text-stone-400 py-1">{d}</div>
-        ))}
-      </div>
-
-      {/* Grid */}
+      {/* Week grid */}
       <div className="grid grid-cols-7 gap-[2px] rounded-xl overflow-hidden bg-stone-200">
-        {calendarDays.map((day) => {
+        {weekDays.map((day) => {
           const dayBookings = bookingsByDate.get(day.date) || [];
           const dayRecurring = recurringProjections.get(day.date) || [];
           const hasContent = dayBookings.length > 0 || dayRecurring.length > 0;
           const isSelected = selectedDate === day.date;
 
-          // Earliest booking by start time for cover photo
+          // Earliest booking for cover photo
           const sorted = [...dayBookings].sort((a, b) => (a.bookingStartTime || "99:99").localeCompare(b.bookingStartTime || "99:99"));
           const earliest = sorted[0];
           const earliestRec = dayRecurring.length > 0
@@ -170,11 +206,12 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
                 if (onDayClick && hasContent) onDayClick(day.date, dayBookings);
               }}
               className={`
-                relative aspect-square overflow-hidden group
-                ${day.isCurrentMonth ? "bg-white" : "bg-stone-50"}
+                relative overflow-hidden group flex flex-col
                 ${isSelected ? "ring-2 ring-[#c4956a] z-10" : ""}
                 ${hasContent ? "cursor-pointer" : ""}
+                ${photoUrl ? "bg-stone-900" : "bg-white"}
               `}
+              style={{ aspectRatio: "1 / 1.15" }}
               data-testid={`calendar-day-${day.date}`}
             >
               {/* Full-bleed photo */}
@@ -182,41 +219,46 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
                 <img
                   src={photoUrl}
                   alt=""
-                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${
-                    isPending ? "opacity-40" : day.isCurrentMonth ? "" : "opacity-30"
+                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                    isPending ? "opacity-40" : ""
                   }`}
                 />
               )}
 
-              {/* Scrim — only on photo cells */}
+              {/* Scrim on photo cells */}
               {photoUrl && (
-                <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/40" />
               )}
 
-              {/* Day number — top left */}
-              <span className={`
-                relative z-10 inline-flex items-center justify-center m-[3px] text-[12px] font-bold leading-none
-                ${day.isToday
-                  ? "w-[24px] h-[24px] rounded-full bg-[#c4956a] text-white"
-                  : photoUrl && day.isCurrentMonth
-                    ? "w-[24px] h-[24px] rounded-full bg-black/40 text-white backdrop-blur-[2px]"
-                    : day.isCurrentMonth
-                      ? "text-stone-600"
-                      : "text-stone-300"
-                }
-              `}>
-                {day.day}
-              </span>
+              {/* Day name + number */}
+              <div className="relative z-10 flex flex-col items-center pt-1.5 gap-0.5">
+                <span className={`text-[9px] font-medium uppercase tracking-wide ${
+                  photoUrl ? "text-white/70" : "text-stone-400"
+                }`}>
+                  {DAY_NAMES[day.dayOfWeek]}
+                </span>
+                <span className={`
+                  text-[14px] font-bold leading-none flex items-center justify-center
+                  ${day.isToday
+                    ? "w-7 h-7 rounded-full bg-[#c4956a] text-white"
+                    : photoUrl
+                      ? "text-white"
+                      : "text-stone-700"
+                  }
+                `}>
+                  {day.day}
+                </span>
+              </div>
 
-              {/* Bottom bar — count + recurring */}
+              {/* Bottom indicators */}
               {hasContent && (totalCount > 1 || isRecurring) && (
-                <div className="absolute bottom-[3px] right-[3px] z-10 flex items-center gap-[2px]">
+                <div className="absolute bottom-1.5 inset-x-0 z-10 flex items-center justify-center gap-1">
                   {isRecurring && (
-                    <Repeat className={`w-3 h-3 ${photoUrl ? "text-white drop-shadow" : "text-[#c4956a]"}`} />
+                    <Repeat className={`w-3 h-3 ${photoUrl ? "text-white/80" : "text-[#c4956a]"}`} />
                   )}
                   {totalCount > 1 && (
-                    <span className={`text-[9px] font-bold leading-none ${photoUrl ? "text-white drop-shadow" : "text-stone-400"}`}>
-                      {totalCount}
+                    <span className={`text-[9px] font-bold ${photoUrl ? "text-white/80" : "text-stone-400"}`}>
+                      +{totalCount - 1}
                     </span>
                   )}
                 </div>
