@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock,
+  Mail,
+  CheckCircle2,
   Users,
   Camera,
   Plus,
@@ -121,14 +123,17 @@ interface EditRequestMessage {
 
 function adminFetch(url: string, token: string, options: RequestInit & { isFormData?: boolean } = {}) {
   const { isFormData, ...fetchOptions } = options;
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-  };
+  const headers: Record<string, string> = {};
+  // Use Bearer token for legacy/employee auth, session cookie for magic link auth
+  if (token && token !== "__session__") {
+    headers.Authorization = `Bearer ${token}`;
+  }
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
   return fetch(url, {
     ...fetchOptions,
+    credentials: "include",
     headers: {
       ...headers,
       ...(fetchOptions.headers as Record<string, string>),
@@ -137,24 +142,47 @@ function adminFetch(url: string, token: string, options: RequestInit & { isFormD
 }
 
 function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  // Check for auth status query params from redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authStatus = params.get("auth");
+    if (authStatus === "expired") setError("Sign-in link has expired. Please request a new one.");
+    else if (authStatus === "invalid") setError("Invalid sign-in link.");
+    else if (authStatus === "unauthorized") setError("This email is not authorized for admin access.");
+    else if (authStatus === "error") setError("Something went wrong. Please try again.");
+    // Clean up URL params
+    if (authStatus) {
+      window.history.replaceState({}, "", "/admin");
+    }
+  }, []);
+
+  // Check if already authenticated via session
+  useEffect(() => {
+    fetch("/api/admin/me", { credentials: "include" })
+      .then(res => { if (res.ok) return res.json(); throw new Error(); })
+      .then(() => onLogin("__session__"))
+      .catch(() => {});
+  }, [onLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/login", {
+      const res = await fetch("/api/admin/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email: email.trim() }),
       });
       if (res.ok) {
-        onLogin(password);
+        setSent(true);
       } else {
-        setError("Invalid password");
+        setError("Failed to send sign-in link");
       }
     } catch {
       setError("Connection error");
@@ -162,6 +190,35 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
       setLoading(false);
     }
   };
+
+  if (sent) {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-sm px-6 text-center"
+        >
+          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+          </div>
+          <h1 className="font-serif text-2xl text-white mb-2">Check Your Email</h1>
+          <p className="text-white/50 text-sm mb-6">
+            We sent a sign-in link to <span className="text-white/80">{email}</span>.
+            <br />Click the link in the email to access the admin panel.
+          </p>
+          <p className="text-white/30 text-xs">The link expires in 15 minutes.</p>
+          <button
+            onClick={() => { setSent(false); setEmail(""); }}
+            className="mt-6 text-white/40 text-sm hover:text-white/60 transition-colors"
+          >
+            Use a different email
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
@@ -176,25 +233,28 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
             <Lock className="w-8 h-8 text-white/80" />
           </div>
           <h1 className="font-serif text-2xl text-white mb-2">Admin Panel</h1>
-          <p className="text-white/50 text-sm">Enter your admin password to continue</p>
+          <p className="text-white/50 text-sm">Enter your email to receive a sign-in link</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Admin password"
-            data-testid="input-admin-password"
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-          />
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              data-testid="input-admin-email"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/40 pl-10"
+            />
+          </div>
           {error && <p className="text-red-400 text-sm" data-testid="text-login-error">{error}</p>}
           <Button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading || !email.trim()}
             data-testid="button-admin-login"
             className="w-full bg-white text-black"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Sign-In Link"}
           </Button>
         </form>
       </motion.div>
@@ -9047,13 +9107,20 @@ function buildShootCalendarUrl(shoot: Shoot, clientEmail?: string) {
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(() => {
+    // Check for legacy sessionStorage token first
     return sessionStorage.getItem("admin_token");
   });
 
   const handleLogin = (t: string) => {
-    sessionStorage.setItem("admin_token", t);
-    sessionStorage.setItem("adminToken", t);
-    setToken(t);
+    if (t === "__session__") {
+      // Session-based auth (magic link) — no need to store in sessionStorage
+      setToken("__session__");
+    } else {
+      // Legacy password-based auth
+      sessionStorage.setItem("admin_token", t);
+      sessionStorage.setItem("adminToken", t);
+      setToken(t);
+    }
   };
 
   if (!token) {

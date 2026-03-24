@@ -457,6 +457,7 @@ export const spaceBookings = pgTable("space_bookings", {
   checkoutNotes: text("checkout_notes"),
   lastReadGuest: timestamp("last_read_guest"),
   lastReadHost: timestamp("last_read_host"),
+  arrivalGuideSentAt: timestamp("arrival_guide_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

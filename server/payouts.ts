@@ -1,6 +1,10 @@
 import { storage } from "./storage";
 import { getUncachableStripeClient } from "./stripeClient";
 import { sendPushToUser } from "./pushNotifications";
+import { sendArrivalGuideEmail } from "./gmail";
+import { db } from "./db";
+import { arrivalGuides, arrivalGuideSteps, spaceBookings } from "@shared/schema";
+import { eq, and, isNull } from "drizzle-orm";
 
 /**
  * Mark bookings as "completed" when their booking date has passed.
@@ -404,6 +408,74 @@ export async function processBookingNotifications(): Promise<void> {
   await processAutoCheckouts();
 }
 
+/**
+ * Send arrival guide emails to guests on the day of their booking.
+ * Only sends if the space has an arrival guide and the email hasn't been sent yet.
+ */
+export async function processArrivalGuideEmails(): Promise<void> {
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  // Get today's approved, paid bookings that haven't had the arrival guide email sent
+  const bookings = await db.select().from(spaceBookings).where(
+    and(
+      eq(spaceBookings.bookingDate, todayStr),
+      eq(spaceBookings.status, "approved"),
+      eq(spaceBookings.paymentStatus, "paid"),
+      isNull(spaceBookings.arrivalGuideSentAt),
+    )
+  );
+
+  for (const booking of bookings) {
+    try {
+      // Check if space has an arrival guide
+      const [guide] = await db.select().from(arrivalGuides).where(eq(arrivalGuides.spaceId, booking.spaceId));
+      if (!guide) continue;
+
+      // Skip if guide is completely empty
+      if (!guide.wifiName && !guide.wifiPassword && !guide.doorCode && !guide.notes) {
+        const stepCount = await db.select().from(arrivalGuideSteps).where(eq(arrivalGuideSteps.guideId, guide.id));
+        if (stepCount.length === 0) continue;
+      }
+
+      const steps = await db.select().from(arrivalGuideSteps)
+        .where(eq(arrivalGuideSteps.guideId, guide.id))
+        .orderBy(arrivalGuideSteps.sortOrder);
+
+      const space = await storage.getSpaceById(booking.spaceId);
+      const spaceName = space?.name || "your space";
+      const guestName = booking.userName || "Guest";
+      const guestEmail = booking.userEmail;
+
+      if (!guestEmail) continue;
+
+      await sendArrivalGuideEmail({
+        guestName,
+        guestEmail,
+        spaceName,
+        bookingDate: booking.bookingDate || todayStr,
+        bookingStartTime: booking.bookingStartTime || "TBD",
+        bookingId: booking.id,
+        guide: {
+          wifiName: guide.wifiName,
+          wifiPassword: guide.wifiPassword,
+          doorCode: guide.doorCode,
+          notes: guide.notes,
+          steps: steps.map((s: { imageUrl: string; caption: string | null }) => ({ imageUrl: s.imageUrl, caption: s.caption || "" })),
+        },
+      });
+
+      // Mark as sent to prevent duplicates
+      await db.update(spaceBookings)
+        .set({ arrivalGuideSentAt: new Date() })
+        .where(eq(spaceBookings.id, booking.id));
+
+      console.log(`[arrival-guide] Sent arrival guide email for booking ${booking.id}`);
+    } catch (err) {
+      console.error(`[arrival-guide] Failed to send for booking ${booking.id}:`, (err as Error).message);
+    }
+  }
+}
+
 let payoutInterval: ReturnType<typeof setInterval> | null = null;
 let notificationInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -427,6 +499,7 @@ export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
   const runNotifications = async () => {
     try {
       await processBookingNotifications();
+      await processArrivalGuideEmails();
     } catch (err) {
       console.error("[notifications] Processing cycle error:", (err as Error).message);
     }

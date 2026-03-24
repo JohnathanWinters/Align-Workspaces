@@ -2071,9 +2071,29 @@ function HostGuideTab() {
     },
   });
 
+  const { data: arrivalGuides = [] } = useQuery<{ spaceId: string }[]>({
+    queryKey: ["/api/my-spaces/arrival-guides-status"],
+    queryFn: async () => {
+      // Check each space for an arrival guide
+      const results: { spaceId: string }[] = [];
+      for (const space of mySpaces) {
+        try {
+          const res = await fetch(`/api/spaces/${space.id}/arrival-guide`, { credentials: "include" });
+          if (res.ok) {
+            const data = await res.json();
+            if (data) results.push({ spaceId: space.id });
+          }
+        } catch {}
+      }
+      return results;
+    },
+    enabled: mySpaces.length > 0,
+  });
+
   const hasListing = mySpaces.length > 0;
   const stripeConnected = connectStatus?.onboardingComplete ?? false;
   const hasReferralLink = referralLinks.length > 0;
+  const hasArrivalGuide = arrivalGuides.length > 0;
 
   // Quick start steps
   const quickStartSteps = [
@@ -2152,6 +2172,20 @@ function HostGuideTab() {
             "Stay in control of schedule changes — approve or decline reschedule requests",
             "Protect your time — mark no-shows so you have a record if a guest doesn't arrive",
             "Never miss an appointment — bookings auto-sync to your Google Calendar",
+          ],
+        },
+        {
+          icon: MapPin,
+          title: "Arrival Guide",
+          description: "Help guests find your space with step-by-step visual directions, WiFi credentials, and access codes. On the day of their booking, guests automatically receive the guide by email.",
+          status: hasArrivalGuide ? "complete" : "action-needed",
+          details: [
+            "Add up to 6 photo steps — show parking, entrance, wayfinding, and your door",
+            "Share WiFi name, password, and door/gate codes securely with confirmed guests",
+            "Include extra notes for anything guests should know before arriving",
+            "Guests receive the arrival guide by email on the morning of their booking",
+            "The guide is also accessible in the guest's portal for confirmed bookings",
+            "Edit your arrival guide anytime from the My Spaces tab when editing a space",
           ],
         },
         {

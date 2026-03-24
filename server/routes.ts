@@ -21,7 +21,8 @@ import { randomUUID, createHash, scryptSync, randomBytes } from "crypto";
 import { uploadBuffer, uploadFile, deleteObject, getObjectStream, serveObject, ObjectNotFoundError } from "./fileStorage";
 import { authStorage } from "./auth";
 import { users } from "@shared/models/auth";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, gt, sql } from "drizzle-orm";
+import { magicTokens } from "@shared/models/auth";
 
 function cleanAddressForGeocoding(address: string): string {
   let cleaned = address
@@ -155,29 +156,34 @@ function generateReferralCode(): string {
   return randomBytes(6).toString("base64url").slice(0, 8);
 }
 
+const AUTHORIZED_ADMIN_EMAILS = [
+  "armandoramirezromero89@gmail.com",
+  "armando@alignworkspaces.com",
+  "edith@alignworkspaces.com",
+  "connect@edithcaballero.com",
+];
+
 function isAdmin(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Admin authentication required" });
+  // Session-based admin auth (magic link only)
+  if ((req as any).session?.adminEmail && AUTHORIZED_ADMIN_EMAILS.includes((req as any).session.adminEmail)) {
+    (req as any).adminRole = "admin";
+    return next();
   }
-  const token = authHeader.slice(7);
-  if (token !== process.env.ADMIN_PASSWORD) {
-    return res.status(403).json({ message: "Invalid admin credentials" });
-  }
-  (req as any).adminRole = "admin";
-  next();
+  return res.status(401).json({ message: "Admin authentication required" });
 }
 
 async function isAdminOrEmployee(req: Request, res: Response, next: NextFunction) {
+  // Session-based admin auth (magic link only)
+  if ((req as any).session?.adminEmail && AUTHORIZED_ADMIN_EMAILS.includes((req as any).session.adminEmail)) {
+    (req as any).adminRole = "admin";
+    return next();
+  }
+  // Employee Bearer token auth
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Authentication required" });
   }
   const token = authHeader.slice(7);
-  if (token === process.env.ADMIN_PASSWORD) {
-    (req as any).adminRole = "admin";
-    return next();
-  }
   if (token.startsWith("emp:")) {
     const parts = token.split(":");
     const empId = parts[1];
@@ -867,15 +873,96 @@ export async function registerRoutes(
     }
   });
 
-  // Admin auth check
-  app.post("/api/admin/login", (req, res) => {
-    const { password } = req.body;
-    if (password === process.env.ADMIN_PASSWORD) {
-      res.json({ success: true });
-    } else {
-      res.status(403).json({ message: "Invalid password" });
+  // Admin auth: magic link request
+  app.post("/api/admin/magic-link", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!AUTHORIZED_ADMIN_EMAILS.includes(normalizedEmail)) {
+        // Return success even for unauthorized emails to prevent email enumeration
+        return res.json({ sent: true });
+      }
+
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      await db.insert(magicTokens).values({
+        email: normalizedEmail,
+        token,
+        expiresAt,
+      });
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const magicUrl = `${baseUrl}/api/admin/magic-verify?token=${token}`;
+
+      await sendMagicLinkEmail(normalizedEmail, magicUrl);
+      res.json({ sent: true });
+    } catch (err: any) {
+      console.error("Admin magic link error:", err);
+      res.status(500).json({ message: "Failed to send sign-in link" });
     }
   });
+
+  // Admin auth: magic link verification
+  app.get("/api/admin/magic-verify", async (req: any, res) => {
+    try {
+      const { token } = req.query;
+      if (!token || typeof token !== "string") {
+        return res.redirect("/admin?auth=invalid");
+      }
+
+      const [magicToken] = await db
+        .select()
+        .from(magicTokens)
+        .where(
+          and(
+            eq(magicTokens.token, token),
+            eq(magicTokens.used, false),
+            gt(magicTokens.expiresAt, new Date())
+          )
+        );
+
+      if (!magicToken) {
+        return res.redirect("/admin?auth=expired");
+      }
+
+      if (!AUTHORIZED_ADMIN_EMAILS.includes(magicToken.email)) {
+        return res.redirect("/admin?auth=unauthorized");
+      }
+
+      await db.update(magicTokens).set({ used: true }).where(eq(magicTokens.id, magicToken.id));
+
+      req.session.adminEmail = magicToken.email;
+      req.session.save((err: any) => {
+        if (err) console.error("Admin session save error:", err);
+        res.redirect("/admin");
+      });
+    } catch (err: any) {
+      console.error("Admin magic verify error:", err);
+      res.redirect("/admin?auth=error");
+    }
+  });
+
+  // Admin auth: check session
+  app.get("/api/admin/me", (req: any, res) => {
+    if (req.session?.adminEmail && AUTHORIZED_ADMIN_EMAILS.includes(req.session.adminEmail)) {
+      return res.json({ authenticated: true, email: req.session.adminEmail });
+    }
+    return res.status(401).json({ authenticated: false });
+  });
+
+  // Admin auth: logout
+  app.post("/api/admin/logout", (req: any, res) => {
+    delete req.session.adminEmail;
+    req.session.save((err: any) => {
+      if (err) console.error("Admin logout session save error:", err);
+      res.json({ success: true });
+    });
+  });
+
 
   app.post("/api/employee/login", async (req, res) => {
     try {
