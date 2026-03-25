@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
+import { useSmartBack } from "@/hooks/use-smart-back";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
@@ -90,14 +91,15 @@ const CATEGORY_ORDER = ["Therapists", "Counselors", "Chefs", "Personal Trainers"
 
 function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const smartBack = useSmartBack(backTo);
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-stone-200/60">
       <div className="px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
-          <Link href={backTo} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-featured">
+          <button onClick={smartBack} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="link-back-featured">
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
-          </Link>
+          </button>
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Featured Pros</span>
           <div className="flex items-center gap-3">
             <UserIndicator />

@@ -57,6 +57,7 @@ import {
 } from "@/components/availability-schedule-editor";
 import { SiteFooter } from "@/components/site-footer";
 import { trackEvent } from "@/hooks/use-analytics";
+import { useSmartBack } from "@/hooks/use-smart-back";
 
 function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string; explanation?: string } | null {
   if (!raw) return null;
@@ -1088,6 +1089,7 @@ function BookingCard({
 export default function SpaceDetailPage({ params }: { params: { slug: string } }) {
   const slug = params.slug;
   const [, navigate] = useLocation();
+  const smartBack = useSmartBack("/workspaces?type=all");
 
   /* ── state ── */
   const [carouselOpen, setCarouselOpen] = useState(false);
@@ -1377,7 +1379,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/60">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
-            onClick={() => { if (window.history.length > 1) window.history.back(); else navigate("/workspaces?type=all"); }}
+            onClick={smartBack}
             className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
             data-testid="button-back"
           >
