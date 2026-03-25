@@ -77,7 +77,7 @@ app.use((req, res, next) => {
   // Skip CSRF for push subscriptions
   if (req.path.startsWith("/api/push/")) return next();
   // Skip CSRF for login/auth endpoints (session-based auth with sameSite cookies)
-  if (req.path === "/api/admin/login" || req.path === "/api/employee/login") return next();
+  if (req.path === "/api/admin/login" || req.path === "/api/admin/magic-link" || req.path === "/api/employee/login") return next();
   if (req.path.startsWith("/api/auth/")) return next();
   // Skip CSRF for admin API calls (use Bearer token auth)
   if (req.headers.authorization?.startsWith("Bearer ")) return next();
