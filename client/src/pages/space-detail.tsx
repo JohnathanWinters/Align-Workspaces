@@ -686,7 +686,7 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                       </span>
                     </div>
                   )}
-                  <button
+                  <motion.button
                     onClick={() => {
                       setBookingStartTime("");
                       setBookingHours(1);
@@ -694,16 +694,32 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                       setStep("time");
                     }}
                     disabled={dateCount === 0}
-                    className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+                    animate={dateCount > 0
+                      ? { backgroundColor: "#c4956a", color: "#ffffff", scale: [0.97, 1.02, 1] }
+                      : { backgroundColor: "#e7e5e4", color: "#a8a29e", scale: 1 }
+                    }
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 ${
                       dateCount > 0
-                        ? "bg-[#c4956a] text-white hover:bg-[#b8845c] shadow-lg shadow-[#c4956a]/30"
-                        : "bg-stone-200 text-stone-400 cursor-not-allowed"
+                        ? "hover:bg-[#b8845c] shadow-lg shadow-[#c4956a]/30"
+                        : "cursor-not-allowed"
                     }`}
                     data-testid="button-next-to-time"
                   >
-                    Next — Pick a Time
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                    <AnimatePresence mode="wait">
+                      {dateCount === 0 ? (
+                        <motion.span key="pick" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }} className="flex items-center gap-2">
+                          Pick a Date
+                          <CalendarDays className="w-4 h-4" />
+                        </motion.span>
+                      ) : (
+                        <motion.span key="next" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }} className="flex items-center gap-2">
+                          Next — Pick a Time
+                          <ChevronRight className="w-5 h-5" />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
