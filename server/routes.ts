@@ -1308,7 +1308,19 @@ export async function registerRoutes(
   // Admin: update a shoot
   app.patch("/api/admin/shoots/:id", isAdminOrEmployee, requirePermission("edit_shoots"), async (req, res) => {
     try {
+      const before = await storage.getShootById(req.params.id as string);
       const shoot = await storage.updateShoot(req.params.id as string, req.body);
+
+      // Notify client when shoot is marked completed (gallery ready)
+      if (before && before.status !== "completed" && shoot.status === "completed" && shoot.userId) {
+        sendPushToUser(shoot.userId, {
+          title: "Your photos are ready!",
+          body: "Your gallery has been completed — view and download your photos now.",
+          url: "/portal",
+          tag: `shoot-complete-${shoot.id}`,
+        }, "booking").catch(() => {});
+      }
+
       res.json(shoot);
     } catch {
       res.status(500).json({ message: "Failed to update shoot" });
