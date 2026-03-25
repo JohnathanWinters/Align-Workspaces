@@ -1262,8 +1262,10 @@ export async function registerRoutes(
   // Admin: get messages for a conversation
   app.get("/api/admin/conversations/:id/messages", isAdmin, async (req, res) => {
     try {
+      const conversation = await storage.getAdminConversationById(req.params.id as string);
       const messages = await storage.getAdminMessages(req.params.id as string);
-      res.json(messages);
+      const otherPartyLastRead = conversation ? (conversation as any).lastReadClient : null;
+      res.json({ messages, otherPartyLastRead: otherPartyLastRead || null });
     } catch {
       res.status(500).json({ message: "Failed to fetch messages" });
     }
@@ -3964,7 +3966,8 @@ export async function registerRoutes(
       if (!booking) return res.status(404).json({ message: "Booking not found" });
 
       const userId = req.user.claims.sub;
-      if (booking.userId !== userId) {
+      const isGuest = booking.userId === userId;
+      if (!isGuest) {
         const space = await storage.getSpaceById(booking.spaceId);
         if (!space || space.userId !== userId) {
           return res.status(403).json({ message: "Not authorized" });
@@ -3972,7 +3975,11 @@ export async function registerRoutes(
       }
 
       const messages = await storage.getSpaceMessages(req.params.id);
-      res.json(messages);
+      // Return the other party's lastRead so the sender can show "Seen"
+      const otherPartyLastRead = isGuest
+        ? (booking as any).lastReadHost
+        : (booking as any).lastReadGuest;
+      res.json({ messages, otherPartyLastRead: otherPartyLastRead || null });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -4098,8 +4105,12 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Not authorized" });
       }
 
+      const isGuest = conversation.guestId === userId;
       const messages = await storage.getDirectMessages(req.params.id);
-      res.json(messages);
+      const otherPartyLastRead = isGuest
+        ? (conversation as any).lastReadHost
+        : (conversation as any).lastReadGuest;
+      res.json({ messages, otherPartyLastRead: otherPartyLastRead || null });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -4202,7 +4213,8 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Not authorized" });
       }
       const messages = await storage.getAdminMessages(conversation.id);
-      res.json(messages);
+      const otherPartyLastRead = (conversation as any).lastReadAdmin || null;
+      res.json({ messages, otherPartyLastRead });
     } catch {
       res.status(500).json({ message: "Failed to fetch messages" });
     }

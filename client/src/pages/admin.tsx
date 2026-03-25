@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock,
   Mail,
+  CheckCheck,
   CheckCircle2,
   Users,
   Camera,
@@ -8798,6 +8799,7 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [clientLastRead, setClientLastRead] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = async () => {
@@ -8817,8 +8819,11 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
     try {
       const res = await adminFetch(`/api/admin/conversations/${convoId}/messages`, token);
       if (res.ok) {
-        const msgs = await res.json();
+        const data = await res.json();
+        const msgs = Array.isArray(data) ? data : data.messages;
+        const lastRead = Array.isArray(data) ? null : data.otherPartyLastRead;
         setChatMessages(msgs);
+        setClientLastRead(lastRead);
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       }
     } catch {}
@@ -8869,9 +8874,12 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
       if (selectedConvo) {
         const res = await adminFetch(`/api/admin/conversations/${selectedConvo.id}/messages`, token);
         if (res.ok) {
-          const msgs = await res.json();
-          if (msgs.length !== chatMessages.length) {
+          const data = await res.json();
+          const msgs = Array.isArray(data) ? data : data.messages;
+          const lastRead = Array.isArray(data) ? null : data.otherPartyLastRead;
+          if (msgs.length !== chatMessages.length || lastRead !== clientLastRead) {
             setChatMessages(msgs);
+            setClientLastRead(lastRead);
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
           }
         }
@@ -9002,24 +9010,38 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
                         <p className="text-sm text-gray-400">No messages yet</p>
                       </div>
                     ) : (
-                      chatMessages.map((msg: any) => (
-                        <div key={msg.id} className={`flex ${msg.senderRole === "admin" ? "justify-end" : "justify-start"}`}>
-                          <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                            msg.senderRole === "admin"
-                              ? "bg-[#1a1a1a] text-white rounded-br-md"
-                              : "bg-white border border-gray-200 text-gray-900 rounded-bl-md"
-                          }`}>
-                            {msg.senderRole !== "admin" && (
-                              <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
+                      (() => {
+                        const clr = clientLastRead ? new Date(clientLastRead) : null;
+                        const adminMsgs = chatMessages.filter((m: any) => m.senderRole === "admin" && m.createdAt);
+                        const seenAdminMsgs = clr ? adminMsgs.filter((m: any) => new Date(m.createdAt) <= clr) : [];
+                        const lastSeenId = seenAdminMsgs.length > 0 ? seenAdminMsgs[seenAdminMsgs.length - 1].id : null;
+                        return chatMessages.map((msg: any) => (
+                          <div key={msg.id}>
+                            <div className={`flex ${msg.senderRole === "admin" ? "justify-end" : "justify-start"}`}>
+                              <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                                msg.senderRole === "admin"
+                                  ? "bg-[#1a1a1a] text-white rounded-br-md"
+                                  : "bg-white border border-gray-200 text-gray-900 rounded-bl-md"
+                              }`}>
+                                {msg.senderRole !== "admin" && (
+                                  <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
+                                )}
+                                {msg.message && <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>}
+                                {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
+                                <p className={`text-[10px] mt-1 ${msg.senderRole === "admin" ? "text-gray-400" : "text-gray-300"}`}>
+                                  {msg.senderName} · {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                                </p>
+                              </div>
+                            </div>
+                            {msg.id === lastSeenId && (
+                              <p className="text-[10px] text-gray-400 text-right mr-1 mt-0.5 flex items-center justify-end gap-1">
+                                <CheckCheck className="w-3 h-3 text-blue-400" />
+                                Seen
+                              </p>
                             )}
-                            {msg.message && <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>}
-                            {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
-                            <p className={`text-[10px] mt-1 ${msg.senderRole === "admin" ? "text-gray-400" : "text-gray-300"}`}>
-                              {msg.senderName} · {new Date(msg.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                            </p>
                           </div>
-                        </div>
-                      ))
+                        ));
+                      })()
                     )}
                     <div ref={chatEndRef} />
                   </div>

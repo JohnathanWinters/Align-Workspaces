@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Building2,
   Check,
+  CheckCheck,
   X,
   DollarSign,
   CreditCard,
@@ -312,15 +313,28 @@ function ConversationView({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [], isLoading } = useQuery<(SpaceMessage & { messageType?: string })[]>({
+  const { data: messagesData, isLoading } = useQuery<{ messages: (SpaceMessage & { messageType?: string })[]; otherPartyLastRead: string | null }>({
     queryKey: ["/api/space-bookings", booking.id, "messages"],
     queryFn: async () => {
       const res = await fetch(`/api/space-bookings/${booking.id}/messages`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const data = await res.json();
+      // Handle both old (array) and new (object) response formats
+      if (Array.isArray(data)) return { messages: data, otherPartyLastRead: null };
+      return data;
     },
     refetchInterval: 5000,
   });
+  const messages = messagesData?.messages ?? [];
+  const otherPartyLastRead = messagesData?.otherPartyLastRead ? new Date(messagesData.otherPartyLastRead) : null;
+
+  // Find the last message sent by current user that the other party has seen
+  const lastSeenMsgId = (() => {
+    if (!otherPartyLastRead) return null;
+    const ownMessages = messages.filter(m => m.senderId === userId && m.createdAt);
+    const seen = ownMessages.filter(m => new Date(m.createdAt!) <= otherPartyLastRead);
+    return seen.length > 0 ? seen[seen.length - 1].id : null;
+  })();
 
   useEffect(() => {
     fetch(`/api/space-bookings/${booking.id}/read`, {
@@ -1095,20 +1109,28 @@ function ConversationView({
             }
 
             return (
-              <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
-                <div className={`max-w-[75%] ${isOwn
-                  ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
-                  : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
-                } px-4 py-2.5 shadow-sm`}>
-                  {!isOwn && (
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
-                  )}
-                  {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
-                  {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
-                  <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
-                    {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                  </p>
+              <div key={msg.id}>
+                <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
+                  <div className={`max-w-[75%] ${isOwn
+                    ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
+                    : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
+                  } px-4 py-2.5 shadow-sm`}>
+                    {!isOwn && (
+                      <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
+                    )}
+                    {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
+                    {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
+                    <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
+                      {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  </div>
                 </div>
+                {msg.id === lastSeenMsgId && (
+                  <p className="text-[10px] text-gray-400 text-right mr-1 mt-0.5 flex items-center justify-end gap-1">
+                    <CheckCheck className="w-3 h-3 text-blue-400" />
+                    Seen
+                  </p>
+                )}
               </div>
             );
           })
@@ -1163,15 +1185,26 @@ function DirectConversationView({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [], isLoading } = useQuery<DirectMessage[]>({
+  const { data: messagesData, isLoading } = useQuery<{ messages: DirectMessage[]; otherPartyLastRead: string | null }>({
     queryKey: ["/api/direct-conversations", conversation.id, "messages"],
     queryFn: async () => {
       const res = await fetch(`/api/direct-conversations/${conversation.id}/messages`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const data = await res.json();
+      if (Array.isArray(data)) return { messages: data, otherPartyLastRead: null };
+      return data;
     },
     refetchInterval: 5000,
   });
+  const messages = messagesData?.messages ?? [];
+  const dmOtherPartyLastRead = messagesData?.otherPartyLastRead ? new Date(messagesData.otherPartyLastRead) : null;
+
+  const dmLastSeenMsgId = (() => {
+    if (!dmOtherPartyLastRead) return null;
+    const ownMessages = messages.filter(m => m.senderId === userId && m.createdAt);
+    const seen = ownMessages.filter(m => new Date(m.createdAt!) <= dmOtherPartyLastRead);
+    return seen.length > 0 ? seen[seen.length - 1].id : null;
+  })();
 
   useEffect(() => {
     fetch(`/api/direct-conversations/${conversation.id}/read`, { method: "POST", credentials: "include" }).catch(() => {});
@@ -1234,20 +1267,28 @@ function DirectConversationView({
           messages.map((msg) => {
             const isOwn = msg.senderId === userId;
             return (
-              <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
-                <div className={`max-w-[75%] ${isOwn
-                  ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
-                  : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
-                } px-4 py-2.5 shadow-sm`}>
-                  {!isOwn && (
-                    <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
-                  )}
-                  {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
-                  {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
-                  <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
-                    {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                  </p>
+              <div key={msg.id}>
+                <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
+                  <div className={`max-w-[75%] ${isOwn
+                    ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
+                    : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
+                  } px-4 py-2.5 shadow-sm`}>
+                    {!isOwn && (
+                      <p className="text-[10px] font-medium text-gray-400 mb-0.5">{msg.senderName}</p>
+                    )}
+                    {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
+                    {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
+                    <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
+                      {new Date(msg.createdAt!).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  </div>
                 </div>
+                {msg.id === dmLastSeenMsgId && (
+                  <p className="text-[10px] text-gray-400 text-right mr-1 mt-0.5 flex items-center justify-end gap-1">
+                    <CheckCheck className="w-3 h-3 text-blue-400" />
+                    Seen
+                  </p>
+                )}
               </div>
             );
           })
@@ -1295,15 +1336,26 @@ function AdminConversationView({
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [], isLoading } = useQuery<any[]>({
+  const { data: messagesData, isLoading } = useQuery<{ messages: any[]; otherPartyLastRead: string | null }>({
     queryKey: ["/api/admin-conversations", conversation.id, "messages"],
     queryFn: async () => {
       const res = await fetch(`/api/admin-conversations/${conversation.id}/messages`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      const data = await res.json();
+      if (Array.isArray(data)) return { messages: data, otherPartyLastRead: null };
+      return data;
     },
     refetchInterval: 5000,
   });
+  const messages = messagesData?.messages ?? [];
+  const adminLastRead = messagesData?.otherPartyLastRead ? new Date(messagesData.otherPartyLastRead) : null;
+
+  const adminLastSeenMsgId = (() => {
+    if (!adminLastRead) return null;
+    const ownMessages = messages.filter((m: any) => m.senderId === userId && m.createdAt);
+    const seen = ownMessages.filter((m: any) => new Date(m.createdAt) <= adminLastRead);
+    return seen.length > 0 ? seen[seen.length - 1].id : null;
+  })();
 
   useEffect(() => {
     fetch(`/api/admin-conversations/${conversation.id}/read`, { method: "POST", credentials: "include" }).catch(() => {});
@@ -1364,20 +1416,28 @@ function AdminConversationView({
           messages.map((msg: any) => {
             const isOwn = msg.senderId === userId;
             return (
-              <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
-                <div className={`max-w-[75%] ${isOwn
-                  ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
-                  : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
-                } px-4 py-2.5 shadow-sm`}>
-                  {!isOwn && (
-                    <p className="text-[10px] font-medium text-[#c9a96e] mb-0.5">{msg.senderName}</p>
-                  )}
-                  {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
-                  {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
-                  <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
-                    {new Date(msg.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                  </p>
+              <div key={msg.id}>
+                <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`} data-testid={`message-${msg.id}`}>
+                  <div className={`max-w-[75%] ${isOwn
+                    ? "bg-gray-900 text-white rounded-2xl rounded-br-md"
+                    : "bg-white text-gray-900 rounded-2xl rounded-bl-md border border-gray-100"
+                  } px-4 py-2.5 shadow-sm`}>
+                    {!isOwn && (
+                      <p className="text-[10px] font-medium text-[#c9a96e] mb-0.5">{msg.senderName}</p>
+                    )}
+                    {msg.message && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>}
+                    {msg.imageUrl && <MessageImage src={msg.imageUrl} className="mt-1" />}
+                    <p className={`text-[10px] mt-1 ${isOwn ? "text-gray-400" : "text-gray-300"}`}>
+                      {new Date(msg.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </p>
+                  </div>
                 </div>
+                {msg.id === adminLastSeenMsgId && (
+                  <p className="text-[10px] text-gray-400 text-right mr-1 mt-0.5 flex items-center justify-end gap-1">
+                    <CheckCheck className="w-3 h-3 text-blue-400" />
+                    Seen
+                  </p>
+                )}
               </div>
             );
           })
