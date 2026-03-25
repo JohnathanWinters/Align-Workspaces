@@ -48,6 +48,7 @@ import type { Space } from "@shared/schema";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
 import { ArrivalGuideEditor } from "./arrival-guide";
 import BookingCalendar from "./booking-calendar";
+import { CalendarSyncSettings } from "./calendar-sync-settings";
 
 const SPACE_TYPES = [
   { value: "therapy", label: "Therapy & Counseling" },
@@ -301,6 +302,7 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
               <EditSpaceForm space={space} onClose={() => setEditing(false)} />
               <ArrivalGuideEditor spaceId={space.id} />
+              <CalendarSyncSettings spaceId={space.id} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -2397,6 +2399,18 @@ function HostGuideContent() {
           ],
         },
         {
+          icon: CalendarDays,
+          title: "Calendar Sync",
+          description: "Connect your Google Calendar or import iCal feeds from other platforms to prevent double bookings. Your Align bookings also export as a feed for other platforms.",
+          details: [
+            "Connect your Google Calendar to automatically block times when you're busy",
+            "Import iCal feeds from Peerspace, Airbnb, or any platform that exports .ics URLs",
+            "Your Align calendar exports as a feed — paste the URL into other platforms to sync both ways",
+            "External events sync every 15 minutes — no manual updates needed",
+            "Blocked times from external calendars show as unavailable to guests booking your space",
+          ],
+        },
+        {
           icon: Star,
           title: "Reviews & Badges",
           description: "After completed bookings, guests can leave reviews. High performance earns you badges that appear on your listing.",
@@ -2662,9 +2676,9 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
   const isHost = mySpaces.length > 0;
 
   const tabs = [
-    { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
     { key: "saved" as const, label: "Saved", icon: Heart },
-    { key: "my-spaces" as const, label: "My Spaces", icon: Building2 },
+    { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
+    { key: "my-spaces" as const, label: "Workspaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
   ];
 

@@ -6,6 +6,8 @@ import { db } from "./db";
 import { arrivalGuides, arrivalGuideSteps, spaceBookings, recurringBookings } from "@shared/schema";
 import { eq, and, isNull, or } from "drizzle-orm";
 import { calculateSpaceBookingFees, resolveFeeTier } from "@shared/pricing";
+import { fetchAndParseIcalFeed } from "./icalSync";
+import { fetchHostCalendarEvents } from "./googleCalendar";
 
 /**
  * Mark bookings as "completed" when their booking date has passed.
@@ -641,6 +643,88 @@ function timeToMinutes(time: string): number {
   return (h || 0) * 60 + (m || 0);
 }
 
+/**
+ * Sync external calendars: fetch iCal feeds and Google Calendar events,
+ * then cache blocked time slots in external_calendar_blocks.
+ */
+export async function processCalendarSync(): Promise<void> {
+  // 1. iCal feed sync
+  const feeds = await storage.getActiveIcalFeeds();
+  for (const feed of feeds) {
+    try {
+      const blocks = await fetchAndParseIcalFeed(feed.feedUrl);
+      await storage.upsertExternalCalendarBlocks(feed.id, blocks.map(b => ({
+        spaceId: feed.spaceId,
+        source: "ical_feed",
+        sourceId: feed.id,
+        externalEventId: b.externalEventId,
+        title: b.title,
+        blockDate: b.blockDate,
+        blockStartTime: b.blockStartTime,
+        blockEndTime: b.blockEndTime,
+        allDay: b.allDay ? 1 : 0,
+      })));
+      await storage.updateIcalFeed(feed.id, { lastFetchAt: new Date(), lastFetchError: null });
+    } catch (err) {
+      const msg = (err as Error).message;
+      console.error(`[calendar-sync] iCal feed ${feed.id} error:`, msg);
+      await storage.updateIcalFeed(feed.id, { lastFetchError: msg }).catch(() => {});
+    }
+  }
+
+  // 2. Google Calendar sync
+  const connections = await storage.getActiveHostCalendarConnections();
+  for (const conn of connections) {
+    try {
+      const now = new Date();
+      const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const result = await fetchHostCalendarEvents(conn, now, futureDate);
+
+      // Update tokens if refreshed
+      if (result.newAccessToken) {
+        await storage.updateHostCalendarConnection(conn.id, {
+          accessToken: result.newAccessToken,
+          tokenExpiresAt: result.newExpiresAt || null,
+        });
+      }
+
+      // Get all host's spaces and apply blocks to each
+      const hostSpaces = await storage.getSpacesByUser(conn.userId);
+      for (const space of hostSpaces) {
+        await storage.upsertExternalCalendarBlocks(`gcal-${conn.id}-${space.id}`, result.blocks.map(b => ({
+          spaceId: space.id,
+          source: "google_calendar",
+          sourceId: `gcal-${conn.id}-${space.id}`,
+          externalEventId: b.externalEventId,
+          title: b.title,
+          blockDate: b.blockDate,
+          blockStartTime: b.blockStartTime,
+          blockEndTime: b.blockEndTime,
+          allDay: b.allDay ? 1 : 0,
+        })));
+      }
+
+      await storage.updateHostCalendarConnection(conn.id, { lastSyncAt: new Date(), lastSyncError: null });
+    } catch (err) {
+      const msg = (err as Error).message;
+      console.error(`[calendar-sync] Google Calendar ${conn.id} error:`, msg);
+      await storage.updateHostCalendarConnection(conn.id, { lastSyncError: msg }).catch(() => {});
+      // Disable sync on auth errors
+      if (msg.includes("invalid_grant") || msg.includes("Token has been")) {
+        await storage.updateHostCalendarConnection(conn.id, { syncEnabled: 0 }).catch(() => {});
+      }
+    }
+  }
+
+  // 3. Cleanup expired blocks
+  const cleaned = await storage.cleanupExpiredExternalBlocks();
+  if (cleaned > 0) console.log(`[calendar-sync] Cleaned up ${cleaned} expired blocks`);
+
+  if (feeds.length > 0 || connections.length > 0) {
+    console.log(`[calendar-sync] Synced ${feeds.length} iCal feeds, ${connections.length} Google Calendar connections`);
+  }
+}
+
 export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
   if (payoutInterval) return;
 
@@ -658,6 +742,7 @@ export function startPayoutProcessing(intervalMs = 60 * 60 * 1000): void {
     try {
       await processBookingNotifications();
       await processArrivalGuideEmails();
+      await processCalendarSync();
     } catch (err) {
       console.error("[notifications] Processing cycle error:", (err as Error).message);
     }

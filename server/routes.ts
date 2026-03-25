@@ -9,7 +9,8 @@ import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendE
 import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees, resolveFeeTier, type FeeTier, FEE_TIERS, TAX_RATES, DEFAULT_TAX_JURISDICTION } from "@shared/pricing";
-import { createBookingCalendarEvent, createShootCalendarEvent, deleteBookingCalendarEvent, generateAddToCalendarUrl } from "./googleCalendar";
+import { createBookingCalendarEvent, createShootCalendarEvent, deleteBookingCalendarEvent, generateAddToCalendarUrl, generateHostCalendarAuthUrl, exchangeHostCalendarCode, createHostBookingEvent } from "./googleCalendar";
+import { generateIcsEvent, generateIcsExportFeed } from "./icalSync";
 import { calculateRefundAmount, processCompletedBookings, processPendingPayouts, processBookingNotifications, holdPayout, releasePayout, reversePayout } from "./payouts";
 import { isAuthenticated } from "./auth";
 import multer from "multer";
@@ -3629,7 +3630,15 @@ export async function registerRoutes(
           return { start: b.bookingStartTime!, hours: b.bookingHours || 1, startMin, endMin };
         });
 
-      res.json({ date, bookedSlots });
+      // Include external calendar blocks
+      const externalBlocks = await storage.getExternalBlocksBySpaceAndDate(req.params.id, date as string);
+      const externalSlots = externalBlocks.map(b => {
+        const [sH, sM] = b.blockStartTime.split(":").map(Number);
+        const [eH, eM] = b.blockEndTime.split(":").map(Number);
+        return { start: b.blockStartTime, hours: 0, startMin: sH * 60 + sM, endMin: b.allDay ? 24 * 60 : eH * 60 + eM, external: true, title: b.title || "Busy" };
+      });
+
+      res.json({ date, bookedSlots: [...bookedSlots, ...externalSlots] });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -3727,7 +3736,17 @@ export async function registerRoutes(
             return requestedStart < bEnd && requestedEnd + bufferMinutes > bStart;
           });
 
-          if (hasConflict) {
+          // Also check external calendar blocks
+          const externalBlocks = await storage.getExternalBlocksBySpaceAndDate(spaceId, bookingDate);
+          const hasExternalConflict = externalBlocks.some(block => {
+            const [sH, sM] = block.blockStartTime.split(":").map(Number);
+            const [eH, eM] = block.blockEndTime.split(":").map(Number);
+            const bStart = sH * 60 + sM;
+            const bEnd = block.allDay ? 24 * 60 : eH * 60 + eM;
+            return requestedStart < bEnd && requestedEnd > bStart;
+          });
+
+          if (hasConflict || hasExternalConflict) {
             throw new Error("TIME_SLOT_CONFLICT");
           }
         }
@@ -5426,6 +5445,195 @@ export async function registerRoutes(
       if (!rec) return res.status(404).json({ message: "Not found" });
       await storage.deleteRecurringBooking(req.params.id);
       res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // CALENDAR SYNC
+  // ══════════════════════════════════════════════════════════════════
+
+  // Google Calendar OAuth — authorize host
+  app.get("/api/calendar/google/authorize", isAuthenticated, async (req: any, res) => {
+    try {
+      const url = generateHostCalendarAuthUrl(req.user.claims.sub);
+      res.json({ url });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Google Calendar OAuth — callback
+  app.get("/api/calendar/google/callback", async (req, res) => {
+    try {
+      const { code, state: userId } = req.query;
+      if (!code || !userId || typeof code !== "string" || typeof userId !== "string") {
+        return res.redirect("/portal?tab=spaces&calendarError=missing_params");
+      }
+      const tokens = await exchangeHostCalendarCode(code);
+
+      // Upsert: remove old connection if exists
+      const existing = await storage.getHostCalendarConnectionByUserId(userId);
+      if (existing) {
+        await storage.deleteExternalBlocksBySource(existing.id);
+        await storage.deleteHostCalendarConnection(existing.id);
+      }
+
+      await storage.createHostCalendarConnection({
+        userId,
+        provider: "google",
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        tokenExpiresAt: tokens.expiresAt,
+      });
+
+      res.redirect("/portal?tab=spaces&calendarConnected=true");
+    } catch (err: any) {
+      console.error("Google Calendar callback error:", err);
+      res.redirect("/portal?tab=spaces&calendarError=auth_failed");
+    }
+  });
+
+  // Google Calendar connection status
+  app.get("/api/calendar/google/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const conn = await storage.getHostCalendarConnectionByUserId(req.user.claims.sub);
+      if (!conn) return res.json({ connected: false });
+      res.json({
+        connected: true,
+        syncEnabled: conn.syncEnabled === 1,
+        lastSyncAt: conn.lastSyncAt,
+        lastSyncError: conn.lastSyncError,
+      });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Disconnect Google Calendar
+  app.delete("/api/calendar/google/disconnect", isAuthenticated, async (req: any, res) => {
+    try {
+      const conn = await storage.getHostCalendarConnectionByUserId(req.user.claims.sub);
+      if (!conn) return res.status(404).json({ message: "Not connected" });
+      await storage.deleteExternalBlocksBySource(conn.id);
+      await storage.deleteHostCalendarConnection(conn.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Toggle Google Calendar sync
+  app.post("/api/calendar/google/toggle-sync", isAuthenticated, async (req: any, res) => {
+    try {
+      const conn = await storage.getHostCalendarConnectionByUserId(req.user.claims.sub);
+      if (!conn) return res.status(404).json({ message: "Not connected" });
+      const updated = await storage.updateHostCalendarConnection(conn.id, {
+        syncEnabled: conn.syncEnabled === 1 ? 0 : 1,
+      });
+      res.json({ syncEnabled: updated.syncEnabled === 1 });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // iCal feeds — list
+  app.get("/api/spaces/:id/ical-feeds", isAuthenticated, async (req: any, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+      const feeds = await storage.getIcalFeedsBySpace(req.params.id);
+      res.json(feeds);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // iCal feeds — add
+  app.post("/api/spaces/:id/ical-feeds", isAuthenticated, async (req: any, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+      const { feedUrl, feedName } = req.body;
+      if (!feedUrl || typeof feedUrl !== "string" || !feedUrl.startsWith("http")) {
+        return res.status(400).json({ message: "Invalid feed URL" });
+      }
+      // Test fetch to validate the URL
+      try {
+        const { fetchAndParseIcalFeed } = await import("./icalSync");
+        await fetchAndParseIcalFeed(feedUrl);
+      } catch (fetchErr: any) {
+        return res.status(400).json({ message: `Could not fetch feed: ${fetchErr.message}` });
+      }
+      const feed = await storage.createIcalFeed({
+        spaceId: req.params.id,
+        userId: req.user.claims.sub,
+        feedUrl,
+        feedName: feedName || null,
+      });
+      res.json(feed);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // iCal feeds — delete
+  app.delete("/api/ical-feeds/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const feed = await storage.getIcalFeedById(req.params.id);
+      if (!feed || feed.userId !== req.user.claims.sub) return res.status(403).json({ message: "Not authorized" });
+      await storage.deleteExternalBlocksBySource(feed.id);
+      await storage.deleteIcalFeed(feed.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // iCal export — public feed for a space
+  app.get("/api/spaces/:id/calendar.ics", async (req, res) => {
+    try {
+      const ics = await generateIcsExportFeed(req.params.id);
+      res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="align-calendar.ics"`);
+      res.send(ics);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ICS download — single booking
+  app.get("/api/space-bookings/:id/download.ics", isAuthenticated, async (req: any, res) => {
+    try {
+      const booking = await storage.getSpaceBookingById(req.params.id);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      const space = await storage.getSpaceById(booking.spaceId);
+      const userId = req.user.claims.sub;
+      if (booking.userId !== userId && space?.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      if (!booking.bookingDate || !booking.bookingStartTime || !booking.bookingHours) {
+        return res.status(400).json({ message: "Booking details incomplete" });
+      }
+      const [h, m] = booking.bookingStartTime.split(":").map(Number);
+      const start = new Date(`${booking.bookingDate}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
+      const end = new Date(start.getTime() + booking.bookingHours * 60 * 60 * 1000);
+
+      const event = generateIcsEvent({
+        uid: `booking-${booking.id}@alignworkspaces.com`,
+        summary: `${space?.name || "Space"} — ${booking.userName || "Booking"}`,
+        description: `Booking via Align Workspaces\nGuest: ${booking.userName || "Guest"}\nDuration: ${booking.bookingHours}hr`,
+        dtstart: start,
+        dtend: end,
+        location: space?.address || undefined,
+      });
+
+      const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Align Workspaces//Booking//EN\r\nCALSCALE:GREGORIAN\r\n${event}\r\nEND:VCALENDAR`;
+
+      res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="align-booking.ics"`);
+      res.send(ics);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

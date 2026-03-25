@@ -880,3 +880,57 @@ export const invoicePayments = pgTable("invoice_payments", {
 });
 
 export type InvoicePayment = typeof invoicePayments.$inferSelect;
+
+// ── Host Calendar Connections ───────────────────────────────────────
+export const hostCalendarConnections = pgTable("host_calendar_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  provider: text("provider").notNull().default("google"),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiresAt: timestamp("token_expires_at"),
+  calendarId: text("calendar_id").default("primary"),
+  syncEnabled: integer("sync_enabled").default(1),
+  lastSyncAt: timestamp("last_sync_at"),
+  lastSyncError: text("last_sync_error"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type HostCalendarConnection = typeof hostCalendarConnections.$inferSelect;
+export type InsertHostCalendarConnection = typeof hostCalendarConnections.$inferInsert;
+
+// ── iCal Feeds ──────────────────────────────────────────────────────
+export const icalFeeds = pgTable("ical_feeds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  userId: text("user_id").notNull(),
+  feedUrl: text("feed_url").notNull(),
+  feedName: text("feed_name"),
+  isActive: integer("is_active").default(1),
+  lastFetchAt: timestamp("last_fetch_at"),
+  lastFetchError: text("last_fetch_error"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type IcalFeed = typeof icalFeeds.$inferSelect;
+export type InsertIcalFeed = typeof icalFeeds.$inferInsert;
+
+// ── External Calendar Blocks ────────────────────────────────────────
+export const externalCalendarBlocks = pgTable("external_calendar_blocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  source: text("source").notNull(),                    // 'google_calendar' | 'ical_feed'
+  sourceId: text("source_id").notNull(),               // host_calendar_connections.id or ical_feeds.id
+  externalEventId: text("external_event_id"),          // UID from iCal or Google event ID
+  title: text("title"),
+  blockDate: text("block_date").notNull(),             // 'YYYY-MM-DD'
+  blockStartTime: text("block_start_time").notNull(),  // 'HH:MM'
+  blockEndTime: text("block_end_time").notNull(),      // 'HH:MM'
+  allDay: integer("all_day").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type ExternalCalendarBlock = typeof externalCalendarBlocks.$inferSelect;
+export type InsertExternalCalendarBlock = typeof externalCalendarBlocks.$inferInsert;

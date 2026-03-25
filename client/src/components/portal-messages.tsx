@@ -29,6 +29,7 @@ import {
   BellRing,
   Star,
   MapPin,
+  Download,
 } from "lucide-react";
 import { ArrivalGuideViewer } from "./arrival-guide";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -578,6 +579,17 @@ function ConversationView({
                 >
                   <CalendarPlus className="w-3.5 h-3.5" />
                   Google Calendar
+                </button>
+                <button
+                  onClick={() => {
+                    window.location.href = `/api/space-bookings/${booking.id}/download.ics`;
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                  data-testid="button-download-ics"
+                  title="Add this booking to your calendar app (Apple Calendar, Outlook, etc.)"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download .ics
                 </button>
                 {!isHost && booking.spaceAddress && (
                   <a

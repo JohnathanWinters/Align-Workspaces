@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -196,6 +196,23 @@ export interface IStorage {
 
   // Host response metrics
   getHostResponseMetrics(hostId: string): Promise<{ avgMinutes: number; responseRate: number }>;
+
+  // Calendar sync
+  createHostCalendarConnection(data: InsertHostCalendarConnection): Promise<HostCalendarConnection>;
+  getHostCalendarConnectionByUserId(userId: string): Promise<HostCalendarConnection | undefined>;
+  updateHostCalendarConnection(id: string, data: Partial<HostCalendarConnection>): Promise<HostCalendarConnection>;
+  deleteHostCalendarConnection(id: string): Promise<void>;
+  getActiveHostCalendarConnections(): Promise<HostCalendarConnection[]>;
+  createIcalFeed(data: InsertIcalFeed): Promise<IcalFeed>;
+  getIcalFeedsBySpace(spaceId: string): Promise<IcalFeed[]>;
+  getIcalFeedById(id: string): Promise<IcalFeed | undefined>;
+  updateIcalFeed(id: string, data: Partial<IcalFeed>): Promise<IcalFeed>;
+  deleteIcalFeed(id: string): Promise<void>;
+  getActiveIcalFeeds(): Promise<IcalFeed[]>;
+  upsertExternalCalendarBlocks(sourceId: string, blocks: InsertExternalCalendarBlock[]): Promise<void>;
+  getExternalBlocksBySpaceAndDate(spaceId: string, date: string): Promise<ExternalCalendarBlock[]>;
+  deleteExternalBlocksBySource(sourceId: string): Promise<void>;
+  cleanupExpiredExternalBlocks(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1359,6 +1376,84 @@ export class DatabaseStorage implements IStorage {
       avgMinutes,
       responseRate: totalMessages > 0 ? Math.round((respondedCount / totalMessages) * 100) : 0,
     };
+  }
+
+  // ── Calendar Sync ─────────────────────────────────────────────────
+
+  async createHostCalendarConnection(data: InsertHostCalendarConnection): Promise<HostCalendarConnection> {
+    const [result] = await db.insert(hostCalendarConnections).values(data).returning();
+    return result;
+  }
+
+  async getHostCalendarConnectionByUserId(userId: string): Promise<HostCalendarConnection | undefined> {
+    const [result] = await db.select().from(hostCalendarConnections).where(eq(hostCalendarConnections.userId, userId));
+    return result;
+  }
+
+  async updateHostCalendarConnection(id: string, data: Partial<HostCalendarConnection>): Promise<HostCalendarConnection> {
+    const [result] = await db.update(hostCalendarConnections).set({ ...data, updatedAt: new Date() }).where(eq(hostCalendarConnections.id, id)).returning();
+    return result;
+  }
+
+  async deleteHostCalendarConnection(id: string): Promise<void> {
+    await db.delete(hostCalendarConnections).where(eq(hostCalendarConnections.id, id));
+  }
+
+  async getActiveHostCalendarConnections(): Promise<HostCalendarConnection[]> {
+    return db.select().from(hostCalendarConnections).where(eq(hostCalendarConnections.syncEnabled, 1));
+  }
+
+  async createIcalFeed(data: InsertIcalFeed): Promise<IcalFeed> {
+    const [result] = await db.insert(icalFeeds).values(data).returning();
+    return result;
+  }
+
+  async getIcalFeedsBySpace(spaceId: string): Promise<IcalFeed[]> {
+    return db.select().from(icalFeeds).where(eq(icalFeeds.spaceId, spaceId)).orderBy(desc(icalFeeds.createdAt));
+  }
+
+  async getIcalFeedById(id: string): Promise<IcalFeed | undefined> {
+    const [result] = await db.select().from(icalFeeds).where(eq(icalFeeds.id, id));
+    return result;
+  }
+
+  async updateIcalFeed(id: string, data: Partial<IcalFeed>): Promise<IcalFeed> {
+    const [result] = await db.update(icalFeeds).set(data).where(eq(icalFeeds.id, id)).returning();
+    return result;
+  }
+
+  async deleteIcalFeed(id: string): Promise<void> {
+    await db.delete(icalFeeds).where(eq(icalFeeds.id, id));
+  }
+
+  async getActiveIcalFeeds(): Promise<IcalFeed[]> {
+    return db.select().from(icalFeeds).where(eq(icalFeeds.isActive, 1));
+  }
+
+  async upsertExternalCalendarBlocks(sourceId: string, blocks: InsertExternalCalendarBlock[]): Promise<void> {
+    await db.delete(externalCalendarBlocks).where(eq(externalCalendarBlocks.sourceId, sourceId));
+    if (blocks.length > 0) {
+      await db.insert(externalCalendarBlocks).values(blocks);
+    }
+  }
+
+  async getExternalBlocksBySpaceAndDate(spaceId: string, date: string): Promise<ExternalCalendarBlock[]> {
+    return db.select().from(externalCalendarBlocks)
+      .where(and(eq(externalCalendarBlocks.spaceId, spaceId), eq(externalCalendarBlocks.blockDate, date)));
+  }
+
+  async deleteExternalBlocksBySource(sourceId: string): Promise<void> {
+    await db.delete(externalCalendarBlocks).where(eq(externalCalendarBlocks.sourceId, sourceId));
+  }
+
+  async cleanupExpiredExternalBlocks(): Promise<number> {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const result = await db.delete(externalCalendarBlocks)
+      .where(sql`${externalCalendarBlocks.blockDate} < ${yesterdayStr}`)
+      .returning();
+    return result.length;
   }
 }
 
