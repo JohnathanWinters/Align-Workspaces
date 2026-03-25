@@ -434,28 +434,22 @@ function AnimatedPrice({ value, prefix = "$" }: { value: number; prefix?: string
 function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }: {
   space: Space; onClose: () => void; schedule: WeekSchedule | null; bufferMinutes: number; bookMutation: any;
 }) {
-  const [step, setStep] = useState<"date" | "date-check" | "time" | "time-check" | "confirm">("date");
-  const [bookingDate, setBookingDate] = useState("");
+  const [step, setStep] = useState<"date" | "time" | "time-check" | "confirm">("date");
+  const [bookingDates, setBookingDates] = useState<string[]>([]);
   const [bookingStartTime, setBookingStartTime] = useState("");
   const [bookingHours, setBookingHours] = useState(1);
   const [direction, setDirection] = useState(1);
-  const [makeRecurring, setMakeRecurring] = useState(false);
-  const [recurringEndDate, setRecurringEndDate] = useState("");
+  const [bookingIndex, setBookingIndex] = useState(0);
   const { toast } = useToast();
 
-  const recurringMutation = useMutation({
-    mutationFn: async (data: { spaceId: string; dayOfWeek: number; startTime: string; hours: number; startDate: string; endDate?: string }) => {
-      const res = await apiRequest("POST", "/api/recurring-bookings", data);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Recurring booking requested!", description: "The other party will need to confirm." });
-      onClose();
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
+  // Use first selected date for time slot calculations
+  const bookingDate = bookingDates[0] || "";
+  const dateCount = bookingDates.length;
+
+  // Recurring discount from host settings
+  const discountPercent = (space as any).recurringDiscountPercent || 0;
+  const discountAfter = (space as any).recurringDiscountAfter || 0;
+  const hasRecurringDiscount = discountPercent > 0 && dateCount > 1;
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -473,7 +467,7 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
   };
   const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
 
-  // Fetch booked slots for the selected date
+  // Fetch booked slots for the first selected date (used for time picker)
   const { data: bookedData } = useQuery<{ bookedSlots: Array<{ startMin: number; endMin: number }> }>({
     queryKey: ["/api/spaces", space.id, "booked-slots", bookingDate],
     queryFn: () => fetch(`/api/spaces/${space.id}/booked-slots?date=${bookingDate}`).then(r => r.json()),
@@ -482,19 +476,17 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
 
   const allSlots = bookingDate ? getAvailableTimeSlots(effectiveSchedule, bookingDate, bufferMinutes) : [];
 
-  // Filter out slots that overlap with existing bookings
   const availableSlots = allSlots.filter(slot => {
     if (!bookedData?.bookedSlots?.length) return true;
     const [h, m] = slot.split(":").map(Number);
     const slotStart = h * 60 + m;
-    const slotEnd = slotStart + 60; // 1-hour minimum slot
+    const slotEnd = slotStart + 60;
     return !bookedData.bookedSlots.some(b => slotStart < b.endMin && slotEnd > b.startMin);
   });
 
   const maxHours = bookingDate && bookingStartTime ? (() => {
     const scheduleMax = getMaxHoursFromSlot(effectiveSchedule, bookingDate, bookingStartTime, bufferMinutes);
     if (!bookedData?.bookedSlots?.length) return scheduleMax;
-    // Limit hours to not overlap with the next booking
     const [h, m] = bookingStartTime.split(":").map(Number);
     const startMin = h * 60 + m;
     let maxMin = startMin + scheduleMax * 60;
@@ -505,9 +497,11 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
     }
     return Math.max(1, Math.floor((maxMin - startMin) / 60));
   })() : 8;
-  const basePriceCents = space.pricePerHour * 100 * bookingHours;
 
-  // Fetch real fee breakdown from API (includes tier detection + tax)
+  // Pricing: per-date base price
+  const perDateBase = space.pricePerHour * 100 * bookingHours;
+
+  // Fetch real fee breakdown from API
   const { data: feeData } = useQuery<{
     basePriceCents: number; guestFeeAmount: number;
     taxAmount: number; totalGuestCharged: number;
@@ -518,12 +512,22 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
     enabled: bookingHours >= 1,
   });
 
-  const guestFee = feeData?.guestFeeAmount ?? Math.round(basePriceCents * 0.07);
-  const taxAmount = feeData?.taxAmount ?? Math.round(basePriceCents * 0.07);
-  const totalCharge = feeData?.totalGuestCharged ?? (basePriceCents + guestFee + taxAmount);
+  // Calculate per-date pricing
+  const perDateGuestFee = feeData?.guestFeeAmount ?? Math.round(perDateBase * 0.07);
+  const perDateTax = feeData?.taxAmount ?? Math.round(perDateBase * 0.07);
+  const perDateTotal = feeData?.totalGuestCharged ?? (perDateBase + perDateGuestFee + perDateTax);
   const isRepeatGuest = feeData?.isRepeatGuest ?? false;
-  const standardFee = Math.round(basePriceCents * 0.07);
-  const loyaltySavings = isRepeatGuest ? standardFee - guestFee : 0;
+  const standardFee = Math.round(perDateBase * 0.07);
+  const loyaltySavings = isRepeatGuest ? standardFee - perDateGuestFee : 0;
+
+  // Multi-date totals
+  const allDatesBase = perDateBase * dateCount;
+  const allDatesTotal = perDateTotal * dateCount;
+
+  // Recurring discount: how many dates qualify for the discount
+  const discountEligibleCount = hasRecurringDiscount ? Math.max(0, dateCount - discountAfter) : 0;
+  const discountSavings = discountEligibleCount > 0 ? Math.round(perDateBase * (discountPercent / 100) * discountEligibleCount) : 0;
+  const grandTotal = allDatesTotal - discountSavings;
 
   const isDateAvailable = (date: Date): boolean => {
     const yyyy = date.getFullYear();
@@ -534,16 +538,23 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
     return dayKey ? effectiveSchedule[dayKey] !== null : false;
   };
 
-  const stepIndex = step === "date" || step === "date-check" ? 0 : step === "time" || step === "time-check" ? 1 : 2;
+  const toDateStr = (date: Date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const stepIndex = step === "date" ? 0 : step === "time" || step === "time-check" ? 1 : 2;
   const steps = [
-    { label: "Date", icon: CalendarDays },
+    { label: dateCount > 1 ? `Dates (${dateCount})` : "Date", icon: CalendarDays },
     { label: "Time", icon: Clock },
     { label: "Confirm", icon: CreditCard },
   ];
 
   const goBack = () => {
     setDirection(-1);
-    if (step === "time") { setStep("date"); setBookingDate(""); setBookingStartTime(""); }
+    if (step === "time") { setStep("date"); setBookingStartTime(""); }
     else if (step === "confirm") { setStep("time"); setBookingStartTime(""); }
   };
 
@@ -623,21 +634,29 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
           <AnimatePresence mode="wait" custom={direction}>
             {step === "date" && (
               <motion.div key="date" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15, ease: "easeOut" }} className="space-y-3">
-                <p className="text-sm font-medium text-stone-600 text-center">When would you like to visit?</p>
+                <p className="text-sm font-medium text-stone-600 text-center">
+                  {dateCount === 0 ? "When would you like to visit?" : `${dateCount} date${dateCount !== 1 ? "s" : ""} selected`}
+                </p>
+                {discountPercent > 0 && dateCount <= 1 && (
+                  <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 mx-auto bg-emerald-50/80 rounded-full border border-emerald-100 w-fit">
+                    <Repeat className="w-3 h-3 text-emerald-600" />
+                    <span className="text-[11px] text-emerald-700 font-medium">
+                      Select multiple dates to save {discountPercent}%
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-center">
                   <Calendar
-                    mode="single"
-                    selected={bookingDate ? new Date(bookingDate + "T12:00:00") : undefined}
-                    onSelect={(date) => {
-                      if (date) {
-                        const yyyy = date.getFullYear();
-                        const mm = String(date.getMonth() + 1).padStart(2, "0");
-                        const dd = String(date.getDate()).padStart(2, "0");
-                        setBookingDate(`${yyyy}-${mm}-${dd}`);
-                        setBookingStartTime("");
-                        setBookingHours(1);
-                        setDirection(1);
-                        setStep("date-check");
+                    mode="multiple"
+                    selected={bookingDates.map(d => new Date(d + "T12:00:00"))}
+                    onSelect={(dates) => {
+                      if (dates) {
+                        const sorted = dates
+                          .map(d => toDateStr(d))
+                          .sort();
+                        setBookingDates(sorted);
+                      } else {
+                        setBookingDates([]);
                       }
                     }}
                     disabled={(date) => {
@@ -649,11 +668,41 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                     data-testid="popup-calendar"
                   />
                 </div>
-              </motion.div>
-            )}
-            {step === "date-check" && (
-              <motion.div key="date-check" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <StepCheckmark onComplete={() => setStep("time")} />
+                {dateCount > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {bookingDates.map(d => (
+                        <span key={d} className="text-[11px] bg-[#c4956a]/10 text-[#c4956a] px-2 py-1 rounded-full font-medium">
+                          {new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      ))}
+                    </div>
+                    {dateCount > 1 && discountPercent > 0 && discountEligibleCount > 0 && (
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        <span className="text-xs text-emerald-700 font-medium">
+                          {discountPercent}% off {discountEligibleCount} of {dateCount} dates
+                        </span>
+                      </div>
+                    )}
+                    <motion.button
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                      onClick={() => {
+                        setBookingStartTime("");
+                        setBookingHours(1);
+                        setDirection(1);
+                        setStep("time");
+                      }}
+                      className="w-full py-3 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] shadow-lg shadow-[#c4956a]/30 flex items-center justify-center gap-2 transition-colors"
+                      data-testid="button-next-to-time"
+                    >
+                      Next — Pick a Time
+                      <ChevronRight className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+                )}
               </motion.div>
             )}
             {step === "time" && (
@@ -665,7 +714,11 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                   <p className="text-sm font-medium text-stone-600">Pick a time slot</p>
                 </div>
                 <p className="text-xs text-stone-400 -mt-2">
-                  {new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                  {dateCount > 1 ? (
+                    <>{dateCount} dates selected &middot; same time for all</>
+                  ) : (
+                    new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+                  )}
                 </p>
                 {availableSlots.length === 0 ? (
                   <p className="text-sm text-stone-500 text-center py-4">No available time slots for this date.</p>
@@ -703,14 +756,23 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                   <button onClick={goBack} className="p-1.5 rounded-full hover:bg-stone-100 transition-colors" data-testid="button-booking-back-confirm">
                     <ArrowLeft className="w-4 h-4 text-stone-500" />
                   </button>
-                  <p className="text-sm font-medium text-stone-600">Confirm your booking</p>
+                  <p className="text-sm font-medium text-stone-600">Confirm your booking{dateCount > 1 ? "s" : ""}</p>
                 </div>
                 <div className="bg-stone-50 rounded-xl p-4 space-y-3">
+                  {/* Selected dates */}
                   <div className="flex justify-between text-sm">
-                    <span className="text-stone-500">Date</span>
-                    <span className="font-medium text-stone-800">
-                      {new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                    </span>
+                    <span className="text-stone-500">{dateCount > 1 ? "Dates" : "Date"}</span>
+                    <div className="text-right">
+                      {dateCount <= 3 ? (
+                        bookingDates.map(d => (
+                          <p key={d} className="font-medium text-stone-800 text-xs">
+                            {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                          </p>
+                        ))
+                      ) : (
+                        <span className="font-medium text-stone-800">{dateCount} dates selected</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-stone-500">Time</span>
@@ -726,106 +788,83 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                   </div>
                   <div className="border-t border-stone-200 pt-3 space-y-1.5">
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-500">${space.pricePerHour}/hr &times; {bookingHours} hr{bookingHours > 1 ? "s" : ""}</span>
-                      <span className="text-stone-700"><AnimatedPrice value={basePriceCents} /></span>
+                      <span className="text-stone-500">
+                        ${space.pricePerHour}/hr &times; {bookingHours} hr{bookingHours > 1 ? "s" : ""}
+                        {dateCount > 1 && <> &times; {dateCount} dates</>}
+                      </span>
+                      <span className="text-stone-700"><AnimatedPrice value={allDatesBase} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-500">Service fee</span>
-                      <span className="text-stone-700"><AnimatedPrice value={guestFee} /></span>
+                      <span className="text-stone-500">Service fee{dateCount > 1 && ` (${dateCount}x)`}</span>
+                      <span className="text-stone-700"><AnimatedPrice value={perDateGuestFee * dateCount} /></span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-stone-500">Taxes</span>
-                      <span className="text-stone-700"><AnimatedPrice value={taxAmount} /></span>
+                      <span className="text-stone-500">Taxes{dateCount > 1 && ` (${dateCount}x)`}</span>
+                      <span className="text-stone-700"><AnimatedPrice value={perDateTax * dateCount} /></span>
                     </div>
                     {isRepeatGuest && loyaltySavings > 0 && (
                       <div className="bg-emerald-50 rounded-lg px-3 py-2 -mx-1">
                         <div className="flex justify-between text-sm text-emerald-700">
                           <span className="flex items-center gap-1 font-medium">
-                            <Check className="w-3 h-3" /> Loyalty discount applied
+                            <Check className="w-3 h-3" /> Loyalty discount
                           </span>
-                          <span className="font-semibold">-<AnimatedPrice value={loyaltySavings} /></span>
+                          <span className="font-semibold">-<AnimatedPrice value={loyaltySavings * dateCount} /></span>
                         </div>
-                        <p className="text-[10px] text-emerald-600 mt-0.5">You saved ${(loyaltySavings / 100).toFixed(2)} with your repeat guest discount</p>
+                      </div>
+                    )}
+                    {hasRecurringDiscount && discountEligibleCount > 0 && (
+                      <div className="bg-emerald-50 rounded-lg px-3 py-2 -mx-1">
+                        <div className="flex justify-between text-sm text-emerald-700">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Repeat className="w-3 h-3" /> Recurring discount ({discountPercent}%)
+                          </span>
+                          <span className="font-semibold">-<AnimatedPrice value={discountSavings} /></span>
+                        </div>
+                        <p className="text-[10px] text-emerald-600 mt-0.5">
+                          Applied to {discountEligibleCount} of {dateCount} dates
+                          {discountAfter > 0 && <> (kicks in after {discountAfter})</>}
+                        </p>
                       </div>
                     )}
                     <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-stone-200">
                       <span className="text-stone-800">Total</span>
-                      <span className="text-[#c4956a]"><AnimatedPrice value={totalCharge} /></span>
+                      <span className="text-[#c4956a]"><AnimatedPrice value={grandTotal} /></span>
                     </div>
                   </div>
                 </div>
-                {/* Make Recurring Toggle */}
-                <div className="bg-stone-50 rounded-xl p-4 space-y-3">
-                  <label className="flex items-center justify-between cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Repeat className="w-4 h-4 text-stone-500" />
-                      <span className="text-sm font-medium text-stone-700">Make this a weekly booking</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setMakeRecurring(!makeRecurring)}
-                      className={`relative w-10 h-5 rounded-full transition-colors ${makeRecurring ? "bg-[#c4956a]" : "bg-stone-300"}`}
-                      data-testid="toggle-recurring"
-                    >
-                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${makeRecurring ? "translate-x-5" : "translate-x-0.5"}`} />
-                    </button>
-                  </label>
-                  {makeRecurring && (
-                    <div className="space-y-2 pt-1">
-                      <p className="text-xs text-stone-500">
-                        Every <strong>{new Date(bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" })}</strong> at <strong>{formatTime(bookingStartTime)}</strong> for <strong>{bookingHours}hr{bookingHours > 1 ? "s" : ""}</strong>
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-stone-500 whitespace-nowrap">End date</span>
-                        <input
-                          type="date"
-                          value={recurringEndDate}
-                          onChange={(e) => setRecurringEndDate(e.target.value)}
-                          min={bookingDate}
-                          className="flex-1 text-xs border border-stone-200 rounded-lg px-2 py-1.5 text-stone-700"
-                          placeholder="Optional"
-                          data-testid="input-recurring-end-date"
-                        />
-                        <span className="text-[10px] text-stone-400">(optional)</span>
-                      </div>
-                      <p className="text-[10px] text-stone-400">The other party will need to confirm. Individual bookings are created and charged weekly.</p>
-                    </div>
-                  )}
-                </div>
 
-                {makeRecurring ? (
-                  <button
-                    onClick={() => {
-                      const selectedDate = new Date(bookingDate + "T12:00:00");
-                      recurringMutation.mutate({
-                        spaceId: space.id,
-                        dayOfWeek: selectedDate.getDay(),
-                        startTime: bookingStartTime,
-                        hours: bookingHours,
-                        startDate: bookingDate,
-                        ...(recurringEndDate ? { endDate: recurringEndDate } : {}),
-                      });
-                    }}
-                    disabled={recurringMutation.isPending}
-                    className="w-full py-3 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b3845c] disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                    data-testid="button-request-recurring"
-                  >
-                    {recurringMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Repeat className="w-4 h-4" />}
-                    Request Weekly Booking
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => bookMutation.mutate({ bookingDate, bookingStartTime, bookingHours })}
-                    disabled={bookMutation.isPending}
-                    className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                    data-testid="button-confirm-booking"
-                  >
-                    {bookMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                    Pay & Book
-                  </button>
-                )}
+                <button
+                  onClick={async () => {
+                    // Book each date sequentially
+                    setBookingIndex(0);
+                    for (let i = 0; i < bookingDates.length; i++) {
+                      setBookingIndex(i);
+                      await new Promise<void>((resolve, reject) => {
+                        bookMutation.mutate(
+                          { bookingDate: bookingDates[i], bookingStartTime, bookingHours },
+                          { onSuccess: () => resolve(), onError: (err: any) => reject(err) }
+                        );
+                      }).catch(() => {});
+                    }
+                  }}
+                  disabled={bookMutation.isPending}
+                  className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                  data-testid="button-confirm-booking"
+                >
+                  {bookMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Booking {bookingIndex + 1} of {dateCount}...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      {dateCount > 1 ? `Pay & Book ${dateCount} Dates` : "Pay & Book"}
+                    </>
+                  )}
+                </button>
                 <p className="text-[10px] text-stone-400 text-center">
-                  {makeRecurring ? "A confirmation request will be sent to the host" : "You'll be redirected to Stripe for secure payment"}
+                  {dateCount > 1 ? "Each date creates a separate booking. You'll be redirected to Stripe." : "You'll be redirected to Stripe for secure payment"}
                 </p>
               </motion.div>
             )}
