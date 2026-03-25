@@ -2399,6 +2399,7 @@ function HostGuideContent() {
           details: [
             "Keep 87.5% of every booking — our standard host fee is just 12.5%",
             "Save even more with referrals — your host fee drops to 8% on referred bookings",
+            "Offer recurring booking discounts (up to 50% off) to attract weekly regulars",
             "Your payout is never affected by guest fees — they pay a separate 5–7% + tax",
             "Get paid directly to your bank account through Stripe Connect",
             "Stay on top of your income — track earnings, payouts, and savings in the Earnings tab",
@@ -2433,6 +2434,20 @@ function HostGuideContent() {
             "Stay in control of schedule changes — approve or decline reschedule requests",
             "Protect your time — mark no-shows so you have a record if a guest doesn't arrive",
             "Never miss an appointment — bookings auto-sync to your Google Calendar",
+          ],
+        },
+        {
+          icon: Repeat,
+          title: "Recurring Bookings & Discounts",
+          description: "Build steady income with weekly recurring bookings. Offer a discount to reward loyal guests who commit to a regular schedule.",
+          details: [
+            "Guests or hosts can propose a recurring weekly booking — the other party confirms or declines",
+            "Individual bookings are auto-created each week, so both sides have full visibility",
+            "Set a recurring discount (up to 50%) in your space settings to incentivize regulars",
+            "Control when the discount kicks in — immediately, or after 1, 2, 3, 5, or 10 completed bookings",
+            "Guests see the discount on your listing page and in their recurring booking card",
+            "Pause or cancel a recurring series anytime — both host and guest have full control",
+            "If a guest has 3 consecutive unpaid bookings, the series auto-pauses to protect you",
           ],
         },
         {
