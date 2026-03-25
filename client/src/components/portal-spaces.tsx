@@ -22,6 +22,7 @@ import {
   GripVertical,
   Pencil,
   Save,
+  Check,
   CheckCircle2,
   ExternalLink,
   CreditCard,
@@ -338,6 +339,8 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     hostName: space.hostName || "",
     bufferMinutes: String(space.bufferMinutes ?? 15),
     cancellationPolicy: (space as any).cancellationPolicy || "flexible",
+    recurringDiscountPercent: String((space as any).recurringDiscountPercent || ""),
+    recurringDiscountAfter: String((space as any).recurringDiscountAfter || "0"),
   });
 
   const updateMutation = useMutation({
@@ -348,6 +351,8 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
         pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
         capacity: formData.capacity ? Number(formData.capacity) : undefined,
         bufferMinutes: Number(formData.bufferMinutes),
+        recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
+        recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
         amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
@@ -414,6 +419,26 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Price/Day ($)</label>
           <Input type="number" value={formData.pricePerDay} onChange={(e) => update("pricePerDay", e.target.value)} data-testid={`edit-input-price-day-${space.id}`} />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Recurring Discount (%)</label>
+          <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} data-testid={`edit-input-recurring-discount-${space.id}`} />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
+          <select
+            value={formData.recurringDiscountAfter}
+            onChange={(e) => update("recurringDiscountAfter", e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
+            data-testid={`edit-select-recurring-after-${space.id}`}
+          >
+            <option value="0">Immediately</option>
+            <option value="1">After 1 booking</option>
+            <option value="2">After 2 bookings</option>
+            <option value="3">After 3 bookings</option>
+            <option value="5">After 5 bookings</option>
+            <option value="10">After 10 bookings</option>
+          </select>
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Capacity</label>
@@ -1283,7 +1308,33 @@ function RecurringBookingsSection() {
                     </span>
                     {rb.startTime && <span>{rb.startTime}</span>}
                     {rb.hours && <span>{rb.hours}hr{rb.hours > 1 ? "s" : ""}</span>}
+                    {rb.pricePerHour > 0 && (
+                      <span className="font-medium text-gray-700">
+                        {rb.discountActive ? (
+                          <>
+                            <span className="line-through text-gray-400 mr-1">${rb.pricePerHour}/hr</span>
+                            <span className="text-emerald-600">${rb.effectiveRate}/hr</span>
+                          </>
+                        ) : (
+                          <>${rb.pricePerHour}/hr</>
+                        )}
+                      </span>
+                    )}
                   </div>
+                  {rb.recurringDiscountPercent > 0 && (
+                    <div className="mt-1.5">
+                      {rb.discountActive ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 font-medium">
+                          <Check className="w-2.5 h-2.5" />
+                          {rb.recurringDiscountPercent}% recurring discount applied
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-medium">
+                          {rb.recurringDiscountPercent}% discount after {rb.recurringDiscountAfter - rb.completedInSeries} more booking{(rb.recurringDiscountAfter - rb.completedInSeries) !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {rb.status === "pending_confirmation" && (
                     <p className="text-xs text-amber-600 mt-1.5 font-medium">
                       {canConfirm(rb) ? "Awaiting your confirmation" : "Waiting for other party to confirm"}

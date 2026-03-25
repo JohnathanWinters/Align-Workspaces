@@ -5250,12 +5250,26 @@ export async function registerRoutes(
       ];
       const enriched = await Promise.all(allRecurring.map(async (rb) => {
         const space = await storage.getSpaceById(rb.spaceId);
+        const pricePerHour = space?.pricePerHour || 0;
+        const discountPercent = space?.recurringDiscountPercent || 0;
+        const discountAfter = space?.recurringDiscountAfter || 0;
+        // Count completed bookings in this recurring series
+        const seriesBookings = await storage.getSpaceBookingsByRecurringId(rb.id);
+        const completedInSeries = seriesBookings.filter(b => b.status === "completed").length;
+        const discountActive = discountPercent > 0 && completedInSeries >= discountAfter;
+        const effectiveRate = discountActive ? Math.round(pricePerHour * (1 - discountPercent / 100)) : pricePerHour;
         return {
           ...rb,
           spaceName: space?.name || "Unknown Space",
           spaceImage: (space?.imageUrls as string[])?.[0] || null,
           role: rb._role,
           otherPartyName: rb._role === "guest" ? (space?.name || "Host") : (rb.userName || "Guest"),
+          pricePerHour,
+          recurringDiscountPercent: discountPercent,
+          recurringDiscountAfter: discountAfter,
+          completedInSeries,
+          discountActive,
+          effectiveRate,
         };
       }));
       res.json(enriched);

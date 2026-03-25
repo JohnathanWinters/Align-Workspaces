@@ -960,9 +960,20 @@ function BookingCard({
         <span className="text-base text-stone-500">/hr</span>
       </div>
       {space.pricePerDay && (
-        <p className="text-sm text-stone-400 mb-5">${space.pricePerDay}/day also available</p>
+        <p className="text-sm text-stone-400 mb-1">${space.pricePerDay}/day also available</p>
       )}
-      {!space.pricePerDay && <div className="mb-5" />}
+      {(space as any).recurringDiscountPercent > 0 && (
+        <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+          <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+          <span className="text-xs text-emerald-700 font-medium">
+            Save {(space as any).recurringDiscountPercent}% with a recurring booking
+            {(space as any).recurringDiscountAfter > 0 && (
+              <span className="text-emerald-600 font-normal"> (after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""})</span>
+            )}
+          </span>
+        </div>
+      )}
+      {!space.pricePerDay && !((space as any).recurringDiscountPercent > 0) && <div className="mb-5" />}
 
       {/* Hours & capacity */}
       <div className="space-y-3 mb-5 pb-5 border-b border-stone-100">
@@ -1456,24 +1467,37 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
               )}
 
               {/* Mobile-only price/meta row */}
-              <div className="flex items-center gap-5 text-sm mb-6 pb-6 border-b border-stone-200/60 lg:hidden">
-                <div className="flex items-center gap-1.5 text-stone-800">
-                  <DollarSign className="w-4 h-4 text-[#c4956a]" />
-                  <span className="font-semibold">${space.pricePerHour}/hr</span>
-                </div>
-                {space.pricePerDay && (
-                  <div className="text-stone-500">${space.pricePerDay}/day</div>
-                )}
-                {space.capacity && (
-                  <div className="flex items-center gap-1.5 text-stone-500">
-                    <Users className="w-4 h-4" />
-                    Up to {space.capacity}
+              <div className="mb-6 pb-6 border-b border-stone-200/60 lg:hidden">
+                <div className="flex items-center gap-5 text-sm">
+                  <div className="flex items-center gap-1.5 text-stone-800">
+                    <DollarSign className="w-4 h-4 text-[#c4956a]" />
+                    <span className="font-semibold">${space.pricePerHour}/hr</span>
                   </div>
-                )}
-                {space.availableHours && (
-                  <div className="flex items-center gap-1.5 text-stone-500">
-                    <Clock className="w-4 h-4" />
-                    <span>{space.availableHours}</span>
+                  {space.pricePerDay && (
+                    <div className="text-stone-500">${space.pricePerDay}/day</div>
+                  )}
+                  {space.capacity && (
+                    <div className="flex items-center gap-1.5 text-stone-500">
+                      <Users className="w-4 h-4" />
+                      Up to {space.capacity}
+                    </div>
+                  )}
+                  {space.availableHours && (
+                    <div className="flex items-center gap-1.5 text-stone-500">
+                      <Clock className="w-4 h-4" />
+                      <span>{space.availableHours}</span>
+                    </div>
+                  )}
+                </div>
+                {(space as any).recurringDiscountPercent > 0 && (
+                  <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs text-emerald-700 font-medium">
+                      Save {(space as any).recurringDiscountPercent}% with a recurring booking
+                      {(space as any).recurringDiscountAfter > 0 && (
+                        <span className="text-emerald-600 font-normal"> (after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""})</span>
+                      )}
+                    </span>
                   </div>
                 )}
               </div>

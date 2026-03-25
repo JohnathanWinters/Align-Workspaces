@@ -564,9 +564,16 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </div>
         )}
         {/* Price overlay — bottom-left of image */}
-        <div className="absolute bottom-3 left-3 z-10">
-          <span className="text-white text-xl font-medium leading-none">${space.pricePerHour}</span>
-          <span className="text-white/70 text-xs font-medium ml-0.5">/hr</span>
+        <div className="absolute bottom-3 left-3 z-10 flex items-end gap-1.5">
+          <div>
+            <span className="text-white text-xl font-medium leading-none">${space.pricePerHour}</span>
+            <span className="text-white/70 text-xs font-medium ml-0.5">/hr</span>
+          </div>
+          {(space as any).recurringDiscountPercent > 0 && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm leading-tight">
+              -{(space as any).recurringDiscountPercent}% recurring
+            </span>
+          )}
         </div>
         {/* Action buttons + photo count — bottom-right */}
         <div className="absolute bottom-3 right-3 flex items-center gap-1.5 z-10">

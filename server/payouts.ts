@@ -533,7 +533,16 @@ export async function processRecurringBookings(): Promise<number> {
         const completedBookings = guestBookings.filter(b => b.status === "completed");
         const isRepeatGuest = completedBookings.length > 0;
         const feeTier = resolveFeeTier({ isRepeatGuest, isHostReferred: false });
-        const basePriceCents = (space.pricePerHour || 0) * 100 * rec.hours;
+        let basePriceCents = (space.pricePerHour || 0) * 100 * rec.hours;
+
+        // Apply recurring booking discount if set
+        const discountPercent = space.recurringDiscountPercent || 0;
+        const discountAfter = space.recurringDiscountAfter || 0;
+        const completedRecurringCount = existingBookings.filter(b => b.status === "completed").length;
+        if (discountPercent > 0 && completedRecurringCount >= discountAfter) {
+          basePriceCents = Math.round(basePriceCents * (1 - discountPercent / 100));
+        }
+
         const fees = calculateSpaceBookingFees(basePriceCents, feeTier);
 
         // Create individual booking
