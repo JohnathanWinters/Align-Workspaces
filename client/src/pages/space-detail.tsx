@@ -668,8 +668,8 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                     data-testid="popup-calendar"
                   />
                 </div>
-                {dateCount > 0 && (
-                  <div className="space-y-3">
+                <div className="space-y-3">
+                  {dateCount > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {bookingDates.map(d => (
                         <span key={d} className="text-[11px] bg-[#c4956a]/10 text-[#c4956a] px-2 py-1 rounded-full font-medium">
@@ -677,32 +677,34 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                         </span>
                       ))}
                     </div>
-                    {dateCount > 1 && discountPercent > 0 && discountEligibleCount > 0 && (
-                      <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                        <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                        <span className="text-xs text-emerald-700 font-medium">
-                          {discountPercent}% off {discountEligibleCount} of {dateCount} dates
-                        </span>
-                      </div>
-                    )}
-                    <motion.button
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                      onClick={() => {
-                        setBookingStartTime("");
-                        setBookingHours(1);
-                        setDirection(1);
-                        setStep("time");
-                      }}
-                      className="w-full py-3 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] shadow-lg shadow-[#c4956a]/30 flex items-center justify-center gap-2 transition-colors"
-                      data-testid="button-next-to-time"
-                    >
-                      Next — Pick a Time
-                      <ChevronRight className="w-5 h-5" />
-                    </motion.button>
-                  </div>
-                )}
+                  )}
+                  {dateCount > 1 && discountPercent > 0 && discountEligibleCount > 0 && (
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                      <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span className="text-xs text-emerald-700 font-medium">
+                        {discountPercent}% off {discountEligibleCount} of {dateCount} dates
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      setBookingStartTime("");
+                      setBookingHours(1);
+                      setDirection(1);
+                      setStep("time");
+                    }}
+                    disabled={dateCount === 0}
+                    className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+                      dateCount > 0
+                        ? "bg-[#c4956a] text-white hover:bg-[#b8845c] shadow-lg shadow-[#c4956a]/30"
+                        : "bg-stone-200 text-stone-400 cursor-not-allowed"
+                    }`}
+                    data-testid="button-next-to-time"
+                  >
+                    Next — Pick a Time
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </motion.div>
             )}
             {step === "time" && (
