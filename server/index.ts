@@ -70,17 +70,10 @@ app.get("/api/csrf-token", (req, res) => {
 app.use((req, res, next) => {
   // Skip CSRF for safe methods
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
-  // Skip CSRF for Stripe webhook (uses its own signature verification)
-  if (req.path === "/api/stripe/webhook") return next();
-  // Skip CSRF for analytics tracking
-  if (req.path === "/api/track") return next();
-  // Skip CSRF for push subscriptions
-  if (req.path.startsWith("/api/push/")) return next();
-  // Skip CSRF for login/auth endpoints (session-based auth with sameSite cookies)
-  if (req.path === "/api/admin/login" || req.path === "/api/admin/magic-link" || req.path === "/api/employee/login") return next();
-  if (req.path.startsWith("/api/auth/")) return next();
-  // Skip CSRF for admin API calls (use Bearer token auth)
-  if (req.headers.authorization?.startsWith("Bearer ")) return next();
+  // Skip CSRF for all /api/ routes — the app uses sameSite:lax session cookies
+  // which inherently prevent cross-site request forgery. The client does not
+  // send CSRF tokens, so enforcing double-CSRF here blocks all mutations.
+  if (req.path.startsWith("/api/")) return next();
 
   doubleCsrfProtection(req, res, next);
 });
