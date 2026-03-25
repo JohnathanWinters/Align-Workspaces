@@ -278,7 +278,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGalleryImages(shootId: string): Promise<GalleryImage[]> {
-    return db.select().from(galleryImages).where(eq(galleryImages.shootId, shootId)).orderBy(galleryImages.sortOrder);
+    return db.select().from(galleryImages).where(eq(galleryImages.shootId, shootId)).orderBy(galleryImages.originalFilename, galleryImages.sortOrder);
   }
 
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
