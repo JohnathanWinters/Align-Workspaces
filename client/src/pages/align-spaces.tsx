@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -421,41 +421,60 @@ export default function AlignSpacesPage() {
       </section>
 
       <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-how-it-works">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">The Process</span>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">How Align Works</h2>
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Why Align</span>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Built for the Way You Work</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
               {
-                step: "01",
-                title: "Discover Workspaces",
-                desc: "Explore flexible workspaces designed for professionals, from therapy offices and studios to meeting rooms and creative spaces.",
-                detail: "Because the right environment changes how clients experience your work.",
+                icon: Clock,
+                title: "Rent Hourly",
+                desc: "Book by the hour with transparent pricing. No leases, no contracts, no hidden fees — just the time you need.",
               },
               {
-                step: "02",
-                title: "Find the Right Fit",
-                desc: "Use Align's visual tools to identify the atmosphere, setting, and client experience that matches your work.",
-                detail: "Because the wrong room changes everything.",
+                icon: Sparkles,
+                title: "Curated Spaces",
+                desc: "Every workspace is designed for client-facing professionals. Walk into a space that elevates your sessions.",
               },
               {
-                step: "03",
-                title: "Book & Get Started",
-                desc: "Reserve your space by the hour with transparent pricing, instant confirmation, and calendar integration.",
-                detail: "Walk in ready. The space already says what you came to say.",
+                icon: Building2,
+                title: "Made for Your Practice",
+                desc: "Therapy offices, coaching rooms, wellness studios, creative spaces — find the setting that fits your work.",
               },
-            ].map((item, i) => (
-              <div key={i} className="text-center flex flex-col items-center" data-testid={`step-${item.step}`}>
-                <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-2">{item.step}</span>
-                <h3 className="font-serif text-lg text-stone-900 mb-3">{item.title}</h3>
-                <p className="text-stone-600 text-sm leading-relaxed max-w-[260px]">{item.desc}</p>
-                <div className="w-8 h-px bg-stone-300 my-3" />
-                <p className="text-stone-400 text-[13px] leading-relaxed max-w-[240px] italic">{item.detail}</p>
-              </div>
-            ))}
+              {
+                icon: CalendarDays,
+                title: "On-Demand Access",
+                desc: "Browse availability in real time and book instantly. Your calendar syncs so you're always up to date.",
+              },
+              {
+                icon: Repeat,
+                title: "Recurring Bookings",
+                desc: "Lock in a weekly time slot for your regulars. Set it once, and your space is guaranteed every week.",
+              },
+              {
+                icon: Shield,
+                title: "Flexible Cancellations",
+                desc: "Plans change — cancel within the policy window and you're covered. No penalties, no hassle.",
+              },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={i}
+                  className="bg-white rounded-xl border border-stone-100 p-5 sm:p-6 hover:shadow-md hover:border-stone-200 transition-all"
+                  data-testid={`feature-${i}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-[#c4956a]/10 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-[#c4956a]" />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-[0.15em] text-stone-800 mb-2">{item.title}</h3>
+                  <p className="text-stone-500 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
