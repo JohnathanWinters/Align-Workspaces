@@ -2744,7 +2744,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
   const tabs = [
     { key: "saved" as const, label: "Saved", icon: Heart },
     { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
-    { key: "my-spaces" as const, label: "Workspaces", icon: Building2 },
+    { key: "my-spaces" as const, label: "My Workspaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
   ];
 

@@ -2346,7 +2346,7 @@ function PortalContent() {
                 }`}
               >
                 <Building2 className="w-4 h-4" />
-                Spaces
+                Workspaces
                 {activeTab === "spaces" && (
                   <motion.div
                     layoutId="portal-tab-indicator"
