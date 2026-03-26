@@ -398,7 +398,7 @@ export const spaces = pgTable("spaces", {
   tags: text("tags").array(),
   cancellationPolicy: text("cancellation_policy").default("flexible"), // 'flexible' | 'moderate' | 'strict'
   recurringDiscountPercent: integer("recurring_discount_percent"),
-  recurringDiscountAfter: integer("recurring_discount_after").default(0),
+  recurringDiscountAfter: integer("recurring_discount_after").default(3),
   isSample: integer("is_sample").default(0),
   isActive: integer("is_active").default(1),
   createdAt: timestamp("created_at").defaultNow(),

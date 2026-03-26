@@ -36,6 +36,7 @@ import {
   Star,
   FolderHeart,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   TrendingUp,
   Repeat,
@@ -339,8 +340,8 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     hostName: space.hostName || "",
     bufferMinutes: String(space.bufferMinutes ?? 15),
     cancellationPolicy: (space as any).cancellationPolicy || "flexible",
-    recurringDiscountPercent: String((space as any).recurringDiscountPercent || ""),
-    recurringDiscountAfter: String((space as any).recurringDiscountAfter || "0"),
+    recurringDiscountPercent: String((space as any).recurringDiscountPercent ?? "0"),
+    recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "3"),
   });
 
   const updateMutation = useMutation({
@@ -425,7 +426,7 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
           <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} data-testid={`edit-input-recurring-discount-${space.id}`} />
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
+          <label className="text-xs text-gray-500 mb-1 block">Recurring Discount Kicks In After</label>
           <select
             value={formData.recurringDiscountAfter}
             onChange={(e) => update("recurringDiscountAfter", e.target.value)}
@@ -1700,6 +1701,61 @@ function MySpacesTab() {
     <div className="space-y-6">
       <StripeConnectSection hasSpaces={mySpaces.length > 0} />
 
+      {/* Host Guide — prominent button near the top */}
+      {mySpaces.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowGuide(true)}
+            className="w-full rounded-xl border border-[#c4956a]/20 bg-[#c4956a]/5 px-5 py-3.5 text-left flex items-center justify-between hover:bg-[#c4956a]/10 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#c4956a]/15 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-4 h-4 text-[#c4956a]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-stone-800">Host Guide</h3>
+                <p className="text-[11px] text-stone-500">Tips on pricing, bookings, referrals, and more</p>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-400" />
+          </button>
+          <AnimatePresence>
+            {showGuide && (
+              <motion.div
+                className="fixed inset-0 z-[2000] flex items-center justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowGuide(false)}
+              >
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+                <motion.div
+                  className="relative bg-white w-full max-w-2xl mx-4 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+                  initial={{ y: 40, opacity: 0, scale: 0.97 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: 40, opacity: 0, scale: 0.97 }}
+                  transition={{ type: "spring", damping: 28, stiffness: 350 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 flex-shrink-0">
+                    <div className="flex items-center gap-2.5">
+                      <BookOpen className="w-5 h-5 text-[#c4956a]" />
+                      <h2 className="font-serif text-lg font-bold text-stone-900">Host Guide</h2>
+                    </div>
+                    <button onClick={() => setShowGuide(false)} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors">
+                      <X className="w-4 h-4 text-stone-500" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto px-6 py-5">
+                    <HostGuideContent />
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-gray-900 text-sm">Your Listings</h3>
         {!showForm && (
@@ -1750,33 +1806,6 @@ function MySpacesTab() {
         </div>
       )}
 
-      {/* Host Guide (collapsible, merged from former tab) */}
-      {mySpaces.length > 0 && (
-        <div className="border-t border-stone-200 pt-5">
-          <button
-            onClick={() => setShowGuide(!showGuide)}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" />
-              Host Guide
-            </h3>
-            {showGuide ? <ChevronUp className="w-4 h-4 text-stone-400" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
-          </button>
-          <AnimatePresence>
-            {showGuide && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4"
-              >
-                <HostGuideContent />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
     </div>
   );
 }
