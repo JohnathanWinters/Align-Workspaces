@@ -157,6 +157,10 @@ export default function SupportPage() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                   >
+                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-support">
+                      <User className="w-4 h-4" />
+                      Client Portal
+                    </button>
                     <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-support">
                       <Building2 className="w-4 h-4" />
                       Align Workspaces
@@ -180,10 +184,6 @@ export default function SupportPage() {
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-support">
                       <Info className="w-4 h-4" />
                       Our Vision
-                    </button>
-                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-support">
-                      <User className="w-4 h-4" />
-                      Client Portal
                     </button>
                   </motion.div>
                 )}

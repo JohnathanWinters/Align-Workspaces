@@ -345,6 +345,10 @@ export default function AlignSpacesPage() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                   >
+                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-menu">
+                      <User className="w-4 h-4" />
+                      Client Portal
+                    </button>
                     <button onClick={() => { setLocation("/workspaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-browse-menu">
                       <Building2 className="w-4 h-4" />
                       Workspaces
@@ -356,10 +360,6 @@ export default function AlignSpacesPage() {
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
                       <Images className="w-4 h-4" />
                       Our Work
-                    </button>
-                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-menu">
-                      <User className="w-4 h-4" />
-                      Client Portal
                     </button>
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-menu">
                       <Star className="w-4 h-4" />

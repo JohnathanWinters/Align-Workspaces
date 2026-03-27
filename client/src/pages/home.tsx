@@ -391,6 +391,10 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           transition={{ duration: 0.2 }}
                           className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                         >
+                          <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-header">
+                            <User className="w-4 h-4" />
+                            Client Portal
+                          </button>
                           <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-header">
                             <Building2 className="w-4 h-4" />
                             Align Workspaces
@@ -398,10 +402,6 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-header">
                             <Images className="w-4 h-4" />
                             Our Work
-                          </button>
-                          <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-header">
-                            <User className="w-4 h-4" />
-                            Client Portal
                           </button>
                           <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-header">
                             <Star className="w-4 h-4" />

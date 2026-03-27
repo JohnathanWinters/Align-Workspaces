@@ -97,6 +97,12 @@ export default function PhotographersPage() {
                       transition={{ duration: 0.2 }}
                       className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                     >
+                      <Link href="/portal">
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-photographers">
+                          <Users className="w-4 h-4" />
+                          Client Portal
+                        </button>
+                      </Link>
                       <Link href="/portrait-builder">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-photographers">
                           <Camera className="w-4 h-4" />
@@ -131,12 +137,6 @@ export default function PhotographersPage() {
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-photographers">
                           <HelpCircle className="w-4 h-4" />
                           Support
-                        </button>
-                      </Link>
-                      <Link href="/portal">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-photographers">
-                          <Users className="w-4 h-4" />
-                          Client Portal
                         </button>
                       </Link>
                     </motion.div>
