@@ -266,6 +266,7 @@ export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
+  const [showExplore, setShowExplore] = useState(false);
   const spacesCarousel = useDragScroll();
   const prosCarousel = useDragScroll();
 
@@ -764,14 +765,14 @@ export default function AlignSpacesPage() {
             <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-stone-100">
               <p className="text-stone-600 font-serif text-base sm:text-lg mb-2">Your space, your image, your practice.</p>
               <p className="text-stone-400 text-sm mb-5">All in one place.</p>
-              <Link
-                href="/workspaces"
+              <button
+                onClick={() => setShowExplore(true)}
                 data-testid="button-featured-find-space"
-                className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+                className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
               >
-                Start with a space
+                Explore what Align offers
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </section>
@@ -829,6 +830,53 @@ export default function AlignSpacesPage() {
 
       <AnimatePresence>
         {showListModal && <ListSpaceModal onClose={() => setShowListModal(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showExplore && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowExplore(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+            >
+              <div className="p-6 text-center border-b border-stone-100">
+                <h3 className="font-serif text-xl text-[#2a2a2a]">What are you looking for?</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-0">
+                <Link
+                  href="/workspaces"
+                  className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors border-r border-stone-100"
+                >
+                  <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
+                    <Building2 className="w-6 h-6 text-[#c4956a]" />
+                  </div>
+                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Workspaces</span>
+                  <span className="text-xs text-stone-400">Find your space</span>
+                </Link>
+                <Link
+                  href="/portrait-builder"
+                  className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors"
+                >
+                  <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
+                    <Camera className="w-6 h-6 text-[#c4956a]" />
+                  </div>
+                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Portrait Builder</span>
+                  <span className="text-xs text-stone-400">Build your image</span>
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
