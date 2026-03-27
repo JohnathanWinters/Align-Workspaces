@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface UserIndicatorProps {
@@ -31,18 +31,32 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
 
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        data-testid="button-user-indicator"
-        className={`flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2 ${isLight ? "" : "text-foreground/50 hover:text-foreground"}`}
-        aria-label="Account menu"
-        style={isLight ? { color: "#d4c4a8" } : undefined}
-        onMouseEnter={isLight ? (e) => { e.currentTarget.style.color = "#f0e6d0"; } : undefined}
-        onMouseLeave={isLight ? (e) => { e.currentTarget.style.color = "#d4c4a8"; } : undefined}
-      >
-        <User className="w-4 h-4" />
-        {user.firstName || "Account"}
-      </button>
+      {isLight ? (
+        <button
+          onClick={() => setOpen(!open)}
+          data-testid="button-user-indicator"
+          className="flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2"
+          aria-label="Account menu"
+          style={{ color: "#d4c4a8" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#f0e6d0"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#d4c4a8"; }}
+        >
+          <User className="w-4 h-4" />
+          {user.firstName || "Account"}
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(!open)}
+          data-testid="button-user-indicator"
+          className="flex items-center gap-1.5 text-foreground/40 hover:text-foreground/70 transition-colors"
+          aria-label="Account menu"
+        >
+          <div className="w-7 h-7 rounded-full border border-foreground/20 flex items-center justify-center">
+            <User className="w-3.5 h-3.5" />
+          </div>
+          <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      )}
       <AnimatePresence>
         {open && (
           <motion.div
