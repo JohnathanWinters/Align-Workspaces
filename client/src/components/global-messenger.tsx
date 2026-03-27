@@ -261,56 +261,52 @@ export default function GlobalMessenger() {
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Pill Button */}
       <motion.button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-5 right-5 z-[9998] w-14 h-14 rounded-full bg-gray-900 text-white shadow-lg hover:bg-black hover:shadow-xl transition-all flex items-center justify-center"
+        className="fixed bottom-5 right-5 z-[9998] h-11 rounded-full bg-gray-900 text-white shadow-lg hover:bg-black hover:shadow-xl transition-all flex items-center gap-2 px-4"
         aria-label={isOpen ? "Close messages" : `Open messages${totalUnread > 0 ? ` (${totalUnread} unread)` : ""}`}
         aria-expanded={isOpen}
         aria-controls="global-messenger-panel"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
               key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
+              className="flex items-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <X className="w-6 h-6" />
+              <X className="w-4 h-4" />
+              <span className="text-sm font-medium">Close</span>
             </motion.div>
           ) : (
             <motion.div
               key="message"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
+              className="flex items-center gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <MessageCircle className="w-6 h-6" />
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Messages</span>
+              {totalUnread > 0 && (
+                <span className="min-w-[20px] h-5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center px-1.5">
+                  {totalUnread > 99 ? "99+" : totalUnread}
+                </span>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Unread badge */}
-        {totalUnread > 0 && !isOpen && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 min-w-[22px] h-[22px] rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center px-1.5 ring-2 ring-white"
-            aria-live="polite"
-            aria-label={`${totalUnread} unread message${totalUnread !== 1 ? "s" : ""}`}
-          >
-            {totalUnread > 99 ? "99+" : totalUnread}
-          </motion.span>
-        )}
       </motion.button>
 
       {/* Messenger Panel */}
