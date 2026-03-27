@@ -17,6 +17,8 @@ import SpacesBrowsePage from "@/pages/spaces-browse";
 import SpaceDetailPage from "@/pages/space-detail";
 import SupportPage from "@/pages/support";
 import PortraitLandingPage from "@/pages/portrait-landing";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAuth } from "@/hooks/use-auth";
 import GlobalMessenger from "@/components/global-messenger";
@@ -36,6 +38,8 @@ function Router() {
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/our-vision" component={AboutPage} />
       <Route path="/support" component={SupportPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
       <Route path="/portal" component={PortalPage} />
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />

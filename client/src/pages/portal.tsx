@@ -2509,6 +2509,12 @@ function PortalLogin() {
             <Button type="submit" disabled={loading || !email.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
               {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : <><Mail className="w-4 h-4 mr-2" /> Send Sign-In Link</>}
             </Button>
+            <p className="text-white/30 text-[11px] text-center mt-3 leading-relaxed">
+              By signing in, you agree to our{" "}
+              <a href="/terms" target="_blank" className="text-white/50 hover:text-white/70 underline">Terms of Service</a>
+              {" "}and{" "}
+              <a href="/privacy" target="_blank" className="text-white/50 hover:text-white/70 underline">Privacy Policy</a>.
+            </p>
           </form>
         )}
 

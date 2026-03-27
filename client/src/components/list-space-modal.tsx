@@ -353,6 +353,12 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit for Approval"}
             </Button>
             <p className="text-xs text-foreground/40 text-center">Your listing will be reviewed by our team before going live.</p>
+            <p className="text-[11px] text-foreground/30 text-center leading-relaxed">
+              By listing your workspace, you agree to our{" "}
+              <a href="/terms" target="_blank" className="underline hover:text-foreground/50">Terms of Service</a>,{" "}
+              <a href="/privacy" target="_blank" className="underline hover:text-foreground/50">Privacy Policy</a>,
+              and confirm you have the legal authority to list this space.
+            </p>
           </div>
         )}
       </motion.div>

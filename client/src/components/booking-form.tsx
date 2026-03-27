@@ -417,6 +417,12 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                             "Book Your Shoot"
                           )}
                         </Button>
+                        <p className="text-muted-foreground text-[11px] text-center mt-3 leading-relaxed">
+                          By booking, you agree to our{" "}
+                          <a href="/terms" target="_blank" className="underline hover:text-foreground">Terms of Service</a>
+                          {" "}and{" "}
+                          <a href="/privacy" target="_blank" className="underline hover:text-foreground">Privacy Policy</a>.
+                        </p>
                       </form>
                     </Form>
                   </motion.div>

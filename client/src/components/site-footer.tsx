@@ -69,6 +69,15 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
         <div className="flex flex-col items-center mb-2">
           <img src="/images/logo-align-dark.png" alt="Align" className="w-10 h-10 object-contain" />
         </div>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <Link href="/terms">
+            <span className={`text-[10px] ${textColor} ${hoverColor} transition-colors cursor-pointer`}>Terms of Service</span>
+          </Link>
+          <span className={`text-[10px] ${textColor}`}>|</span>
+          <Link href="/privacy">
+            <span className={`text-[10px] ${textColor} ${hoverColor} transition-colors cursor-pointer`}>Privacy Policy</span>
+          </Link>
+        </div>
         <p className={`text-center text-[10px] ${textColor}`} data-testid="text-footer-copyright">
           &copy; 2026 Align Workspaces
         </p>

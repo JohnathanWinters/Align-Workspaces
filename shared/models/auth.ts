@@ -30,6 +30,8 @@ export const users = pgTable("users", {
     emailMessages?: boolean;
     emailBookings?: boolean;
   }>(),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  termsVersion: varchar("terms_version"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -95,7 +95,11 @@ export function registerAuthRoutes(app: Express): void {
       let [user] = await db.select().from(users).where(eq(users.email, magicToken.email));
 
       if (!user) {
-        const newUserData: any = { email: magicToken.email };
+        const newUserData: any = {
+          email: magicToken.email,
+          termsAcceptedAt: new Date(),
+          termsVersion: "2026-03-27",
+        };
         if (typeof firstName === "string" && firstName.trim()) newUserData.firstName = firstName.trim();
         if (typeof lastName === "string" && lastName.trim()) newUserData.lastName = lastName.trim();
         const [newUser] = await db
@@ -103,6 +107,9 @@ export function registerAuthRoutes(app: Express): void {
           .values(newUserData)
           .returning();
         user = newUser;
+      } else if (!user.termsAcceptedAt) {
+        // Existing user who hasn't accepted terms yet — mark acceptance on login
+        await db.update(users).set({ termsAcceptedAt: new Date(), termsVersion: "2026-03-27" }).where(eq(users.id, user.id));
       }
 
       (req.session as any).magicUserId = user.id;

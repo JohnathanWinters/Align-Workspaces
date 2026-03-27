@@ -1058,6 +1058,12 @@ function BookingCard({
         <Send className="w-4 h-4" />
         Request to book
       </button>
+      <p className="text-[11px] text-stone-400 text-center mt-2 leading-relaxed">
+        By booking, you agree to our{" "}
+        <a href="/terms" target="_blank" className="underline hover:text-stone-600">Terms</a>
+        {" "}and{" "}
+        <a href="/privacy" target="_blank" className="underline hover:text-stone-600">Privacy Policy</a>.
+      </p>
 
       {/* Save & Share */}
       <div className="flex items-center justify-center gap-4 mt-4">
