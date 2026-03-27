@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { User, LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -35,17 +34,14 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
       <button
         onClick={() => setOpen(!open)}
         data-testid="button-user-indicator"
-        className="flex items-center"
+        className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-3 py-2"
         aria-label="Account menu"
+        style={{ color: isLight ? "#d4c4a8" : "#c4956a" }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = isLight ? "#f0e6d0" : "#a07a52"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = isLight ? "#d4c4a8" : "#c4956a"; }}
       >
-        <Avatar className={`w-7 h-7 ring-1 ring-offset-1 ring-offset-transparent ${isLight ? "ring-white/30" : "ring-stone-200/40"}`}>
-          {user.profileImageUrl && (
-            <AvatarImage src={user.profileImageUrl} alt={user.firstName || "User"} />
-          )}
-          <AvatarFallback className={`${isLight ? "bg-white/20 text-white" : "bg-stone-100 text-stone-500"}`}>
-            <User className="w-3.5 h-3.5" />
-          </AvatarFallback>
-        </Avatar>
+        <User className="w-4 h-4" />
+        {user.firstName || "Account"}
       </button>
       <AnimatePresence>
         {open && (
