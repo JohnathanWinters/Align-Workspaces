@@ -5020,13 +5020,12 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
 }
 
 const PIPELINE_STAGES = [
-  { key: "new", label: "New Lead", color: "bg-blue-100 text-blue-700" },
-  { key: "contacted", label: "Contacted", color: "bg-purple-100 text-purple-700" },
-  { key: "follow-up", label: "Follow-up", color: "bg-yellow-100 text-yellow-800" },
-  { key: "proposal", label: "Proposal Sent", color: "bg-orange-100 text-orange-700" },
-  { key: "booked", label: "Booked", color: "bg-green-100 text-green-700" },
-  { key: "completed", label: "Completed", color: "bg-stone-200 text-stone-700" },
-  { key: "lost", label: "Lost", color: "bg-red-100 text-red-600" },
+  { key: "new", label: "New", color: "bg-blue-100 text-blue-700" },
+  { key: "contacted", label: "Reached Out", color: "bg-purple-100 text-purple-700" },
+  { key: "follow-up", label: "Following Up", color: "bg-yellow-100 text-yellow-800" },
+  { key: "booked", label: "Scheduled", color: "bg-green-100 text-green-700" },
+  { key: "completed", label: "Active Client", color: "bg-emerald-100 text-emerald-700" },
+  { key: "lost", label: "Inactive", color: "bg-stone-200 text-stone-500" },
 ];
 
 const ACTIVITY_TYPES = [
@@ -5058,7 +5057,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [showActions, setShowActions] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
-    category: "portraits", stage: "new", notes: "", estimatedValue: "",
+    category: "portraits", stage: "new", notes: "",
     nextFollowUp: "",
   });
 
@@ -5086,7 +5085,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const handleSave = async () => {
     if (!form.name.trim()) return;
     try {
-      const body: any = { ...form, estimatedValue: form.estimatedValue ? parseInt(form.estimatedValue) : undefined };
+      const body: any = { ...form };
       if (form.nextFollowUp) body.nextFollowUp = new Date(form.nextFollowUp).toISOString();
       else body.nextFollowUp = null;
       if (editingContact) {
@@ -5105,7 +5104,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         if (res.ok) { toast({ title: "Contact added" }); }
       }
       setShowForm(false); setEditingContact(null);
-      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", estimatedValue: "", nextFollowUp: "" });
+      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "" });
       await loadContacts();
     } catch { toast({ title: "Save failed", variant: "destructive" }); }
   };
@@ -5215,7 +5214,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       name: contact.name, email: contact.email || "", phone: contact.phone || "",
       instagram: contact.instagram || "", source: contact.source || "website",
       category: contact.category || "portraits", stage: contact.stage,
-      notes: contact.notes || "", estimatedValue: contact.estimatedValue?.toString() || "",
+      notes: contact.notes || "",
       nextFollowUp: contact.nextFollowUp ? new Date(contact.nextFollowUp).toISOString().split("T")[0] : "",
     });
     setShowForm(true);
@@ -5239,7 +5238,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
 
   const stageOf = (key: string) => PIPELINE_STAGES.find(s => s.key === key);
 
-  const totalValue = filteredContacts.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
+  // Relationship health metrics
+  const goingCold = filteredContacts.filter(c => c.lastContactDate && (Date.now() - new Date(c.lastContactDate).getTime()) > 30 * 24 * 60 * 60 * 1000).length;
   const followUpsDue = filteredContacts.filter(c => c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()).length;
 
   const FOLLOW_UP_OPTIONS = [
@@ -5308,7 +5308,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               {selectedContact.instagram && <p className="flex items-center gap-2"><Instagram className="w-3.5 h-3.5 text-gray-400" /> @{selectedContact.instagram.replace("@", "")}</p>}
               <p className="flex items-center gap-2"><Globe className="w-3.5 h-3.5 text-gray-400" /> Source: {selectedContact.source}</p>
               <p className="flex items-center gap-2"><Camera className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.category === "spaces" ? "Spaces" : "Portraits"}</p>
-              {selectedContact.estimatedValue && <p className="flex items-center gap-2"><Coins className="w-3.5 h-3.5 text-gray-400" /> ${selectedContact.estimatedValue}</p>}
             </CardContent>
           </Card>
           <Card className="border-gray-100">
@@ -5472,8 +5471,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs text-gray-500">Estimated Value ($)</Label>
-                    <Input type="number" value={form.estimatedValue} onChange={e => setForm(p => ({ ...p, estimatedValue: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-value" />
+                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
+                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
                   </div>
                   <div>
                     <Label className="text-xs text-gray-500">Next Follow-up</Label>
@@ -5542,7 +5541,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               )}
             </AnimatePresence>
           </div>
-          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", estimatedValue: "", nextFollowUp: "" }); }} data-testid="button-add-contact">
+          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "" }); }} data-testid="button-add-contact">
             <Plus className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Add Contact</span>
           </Button>
         </div>
@@ -5574,13 +5573,13 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Contacts</p>
           <p className="text-xl sm:text-2xl font-semibold text-gray-900">{filteredContacts.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3" data-testid="stat-pipeline-value">
-          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Value</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">${totalValue.toLocaleString()}</p>
+        <div className={`rounded-lg border p-2.5 sm:p-3 ${followUpsDue > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
+          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Follow-ups Due</p>
+          <p className={`text-xl sm:text-2xl font-semibold ${followUpsDue > 0 ? "text-amber-600" : "text-gray-900"}`}>{followUpsDue}</p>
         </div>
-        <div className={`rounded-lg border p-2.5 sm:p-3 ${followUpsDue > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
-          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Due</p>
-          <p className={`text-xl sm:text-2xl font-semibold ${followUpsDue > 0 ? "text-red-600" : "text-gray-900"}`}>{followUpsDue}</p>
+        <div className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3">
+          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Going Cold</p>
+          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{filteredContacts.filter(c => c.lastContactDate && (Date.now() - new Date(c.lastContactDate).getTime()) > 30 * 24 * 60 * 60 * 1000).length}</p>
         </div>
       </div>
 
@@ -5591,7 +5590,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
             {PIPELINE_STAGES.map(stage => {
               const stageContacts = getStageContacts(stage.key);
-              const stageValue = stageContacts.reduce((sum, c) => sum + (c.estimatedValue || 0), 0);
               const stageDue = stageContacts.filter(c => c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()).length;
               return (
                 <div key={stage.key} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 hover:shadow-sm transition-shadow" data-testid={`pipeline-column-${stage.key}`}>
@@ -5599,10 +5597,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
                   </div>
                   <p className="text-2xl sm:text-3xl font-semibold text-gray-900">{stageContacts.length}</p>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    {stageValue > 0 && <span className="text-[11px] text-green-600 font-medium">${stageValue.toLocaleString()}</span>}
-                    {stageDue > 0 && <span className="text-[11px] text-red-500 font-medium flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> {stageDue} due</span>}
-                  </div>
+                  {stageDue > 0 && <p className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5 mt-1.5"><Clock className="w-2.5 h-2.5" /> {stageDue} due</p>}
                 </div>
               );
             })}
@@ -5670,7 +5665,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
                       </div>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                      {c.estimatedValue && <span className="text-xs text-green-600 font-medium shrink-0 hidden sm:inline">${c.estimatedValue}</span>}
                       <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}</span>
                       <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
                     </button>
@@ -5708,8 +5702,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                             <span className="text-sm font-medium text-gray-900">{c.name}</span>
                             {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
                           </div>
-                          {c.estimatedValue && <span className="text-xs text-green-600 font-medium shrink-0 hidden sm:inline">${c.estimatedValue}</span>}
-                          {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
+                              {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
                           <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isListExpanded ? "rotate-180" : ""}`} />
                         </button>
                         <AnimatePresence>
@@ -5727,7 +5720,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                                   {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-gray-400" /> {c.phone}</span>}
                                   {c.instagram && <span className="flex items-center gap-1"><Instagram className="w-3 h-3 text-gray-400" /> @{c.instagram.replace("@", "")}</span>}
                                   <span className="capitalize flex items-center gap-1"><Camera className="w-3 h-3 text-gray-400" /> {c.category}</span>
-                                  {c.estimatedValue && <span className="flex items-center gap-1 text-green-600"><Coins className="w-3 h-3" /> ${c.estimatedValue}</span>}
                                   <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-gray-400" /> {c.source}</span>
                                 </div>
                                 {c.nextFollowUp && (
@@ -5834,8 +5826,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs text-gray-500">Estimated Value ($)</Label>
-                    <Input type="number" value={form.estimatedValue} onChange={e => setForm(p => ({ ...p, estimatedValue: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-value" />
+                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
+                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
                   </div>
                   <div>
                     <Label className="text-xs text-gray-500">Next Follow-up</Label>
@@ -5862,7 +5854,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white rounded-xl max-w-lg w-full p-6" onClick={e => e.stopPropagation()} data-testid="modal-import-csv">
               <h2 className="font-serif text-lg font-semibold mb-2">Import from CSV / Excel</h2>
-              <p className="text-xs text-gray-400 mb-3">Upload a CSV file or paste CSV data. Columns: Name, Email, Phone, Instagram, Source, Category, Stage, Notes, Estimated Value, Next Follow-Up</p>
+              <p className="text-xs text-gray-400 mb-3">Upload a CSV file or paste CSV data. Columns: Name, Email, Phone, Instagram, Source, Category, Stage, Notes, Next Follow-Up</p>
               <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleFileUpload} />
               <Button variant="outline" size="sm" className="mb-3 h-8 text-xs" onClick={() => fileRef.current?.click()} data-testid="button-choose-file">
                 <Upload className="w-3 h-3 mr-1" /> Choose File
