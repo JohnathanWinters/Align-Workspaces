@@ -93,6 +93,26 @@ function getCropZoom(_crop: { x: number; y: number; zoom?: number } | null | und
   return undefined;
 }
 
+// For pip thumbnails: uses negative inset technique for sharp zoom without transform conflicts
+function getPipStyle(crop: { x: number; y: number; zoom?: number } | null | undefined, fallback?: string): { containerStyle?: React.CSSProperties; imgStyle: React.CSSProperties } {
+  const x = crop?.x ?? 50;
+  const y = crop?.y ?? 50;
+  const zoom = crop?.zoom ?? 1;
+  const insetPct = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
+  return {
+    containerStyle: { position: "relative" as const, overflow: "hidden" as const },
+    imgStyle: {
+      position: "absolute" as const,
+      objectFit: "cover" as const,
+      objectPosition: `${x}% ${y}%`,
+      top: `-${insetPct}%`,
+      left: `-${insetPct}%`,
+      width: `${100 + insetPct * 2}%`,
+      height: `${100 + insetPct * 2}%`,
+    },
+  };
+}
+
 const CATEGORY_ORDER = ["Therapists", "Counselors", "Chefs", "Personal Trainers"];
 
 function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
@@ -199,20 +219,18 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            {/* Portrait pip */}
-            <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-24 h-[7.5rem] sm:w-32 sm:h-40 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
-              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-                {pro.portraitImageUrl ? (
-                  <img src={pro.portraitImageUrl} alt={pro.name}
-                    className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
-                    fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
-                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
-                  />
-                ) : <Initials name={pro.name} />}
-              </div>
+            {/* Portrait pip — percentage based */}
+            <div className="absolute bottom-[4%] left-[3%] w-[22%] aspect-[3/4] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+              {pro.portraitImageUrl ? (
+                <img src={pro.portraitImageUrl} alt={pro.name}
+                  className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
+                  fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
+                  style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).imgStyle}
+                />
+              ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
-              <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-[4%] right-[3%] bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
                 <Building2 className="w-3 h-3" />
                 {pro.spaceName}
               </div>
@@ -299,18 +317,16 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            {/* Portrait pip */}
-            <div className="absolute bottom-2.5 left-2.5 w-20 h-[6.25rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
-              <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
-                {pro.portraitImageUrl ? (
-                  <img src={pro.portraitImageUrl} alt={pro.name}
-                    className={`w-full h-full object-cover ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-                    loading={index < 6 ? "eager" : "lazy"}
-                    onLoad={() => setImgLoaded(true)}
-                    style={getCropStyle(pro.portraitCropPosition)}
-                  />
-                ) : <Initials name={pro.name} />}
-              </div>
+            {/* Portrait pip — percentage based */}
+            <div className="absolute bottom-[4%] left-[3%] w-[28%] aspect-[3/4] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+              {pro.portraitImageUrl ? (
+                <img src={pro.portraitImageUrl} alt={pro.name}
+                  className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
+                  loading={index < 6 ? "eager" : "lazy"}
+                  onLoad={() => setImgLoaded(true)}
+                  style={getPipStyle(pro.portraitCropPosition).imgStyle}
+                />
+              ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
               <div className="absolute bottom-2.5 right-2.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 z-10">
@@ -1081,18 +1097,16 @@ function ProfilePage({ slug }: { slug: string }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 w-24 h-[7.5rem] sm:w-36 sm:h-44 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
-              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-                {pro.portraitImageUrl ? (
-                  <img src={pro.portraitImageUrl} alt={pro.name}
-                    className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
-                  />
-                ) : <Initials name={pro.name} />}
-              </div>
+            <div className="absolute bottom-[4%] left-[3%] w-[25%] sm:w-[18%] aspect-[3/4] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+              {pro.portraitImageUrl ? (
+                <img src={pro.portraitImageUrl} alt={pro.name}
+                  fetchPriority="high" decoding="sync"
+                  style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").imgStyle}
+                />
+              ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
-              <div className="absolute bottom-3 right-3 sm:bottom-6 sm:right-6 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-[4%] right-[3%] bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
                 <Building2 className="w-3 h-3" />
                 {pro.spaceName}
               </div>
@@ -1289,20 +1303,20 @@ function ProfilePage({ slug }: { slug: string }) {
         </section>
       )}
 
-      <section className="py-16 sm:py-24 max-w-6xl mx-auto px-6">
-        <div className="relative overflow-hidden rounded-lg bg-stone-900 text-white px-6 sm:px-12 py-14 sm:py-20 text-center">
+      <section className="py-12 sm:py-16 max-w-5xl mx-auto px-6">
+        <div className="relative overflow-hidden rounded-lg bg-stone-900 text-white px-6 sm:px-10 py-10 sm:py-14 text-center">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent_60%)]" />
           </div>
           <div className="relative z-10">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-6">Your story matters</p>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 leading-tight">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-4">Your story matters</p>
+            <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-3 leading-tight">
               Know Someone Inspiring?
             </h2>
-            <p className="text-white/50 max-w-lg mx-auto mb-10 leading-relaxed text-sm sm:text-base">
+            <p className="text-white/50 max-w-md mx-auto mb-8 leading-relaxed text-sm">
               Every great community is built on the people in it. Help us tell their story.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
               <Button
                 size="lg"
                 className="bg-[#c4956a] hover:bg-[#b8895e] text-white rounded-full px-8 shadow-lg shadow-amber-900/20"
