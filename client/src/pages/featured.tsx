@@ -199,7 +199,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
                 />
               </div>
               {/* Portrait pip */}
-              <div className="absolute bottom-3 left-3 w-20 h-24 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
+              <div className="absolute bottom-3 left-3 w-24 h-[7.5rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
                 <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
                   {pro.portraitImageUrl ? (
                     <img src={pro.portraitImageUrl} alt={pro.name}
@@ -338,7 +338,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
                 />
               </div>
               {/* Portrait pip */}
-              <div className="absolute bottom-2.5 left-2.5 w-16 h-20 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
+              <div className="absolute bottom-2.5 left-2.5 w-20 h-[6.25rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
                 <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
                   {pro.portraitImageUrl ? (
                     <img src={pro.portraitImageUrl} alt={pro.name}
@@ -1159,7 +1159,7 @@ function ProfilePage({ slug }: { slug: string }) {
                   style={getCropStyle(pro.spaceImageCropPosition)}
                 />
               </div>
-              <div className="absolute bottom-3 left-3 w-20 h-24 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
+              <div className="absolute bottom-3 left-3 w-24 h-[7.5rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
                 <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
                   {pro.portraitImageUrl ? (
                     <img src={pro.portraitImageUrl} alt={pro.name}
