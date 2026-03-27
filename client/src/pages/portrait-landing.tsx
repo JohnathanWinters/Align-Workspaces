@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import {
@@ -25,6 +26,18 @@ import { SiteFooter } from "@/components/site-footer";
 export default function PortraitLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
+
+  const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category: string; cropPosition: any }>>({
+    queryKey: ["/api/portfolio-photos"],
+    queryFn: async () => {
+      const res = await fetch("/api/portfolio-photos");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const portraitPhotos = portfolioPhotos.filter(p => p.category !== "spaces").slice(0, 6);
 
   useEffect(() => {
     document.title = "Portraits | Align Workspaces";
@@ -122,73 +135,49 @@ export default function PortraitLandingPage() {
         <div className="h-px bg-stone-200/80" />
       </div>
 
-      {/* How It Works */}
-      <section className="py-14 sm:py-20">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12 sm:mb-16"
-          >
-            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">How It Works</p>
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
-              Built Around You
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {[
-              {
-                step: "01",
-                title: "Choose Your Setting",
-                desc: "Pick the environment that reflects where your clients expect to find you — office, studio, outdoor, or somewhere unique.",
-              },
-              {
-                step: "02",
-                title: "Define Your Presence",
-                desc: "Tell us how you want to come across: welcoming, confident, warm, or motivated. We match the lighting and tone to that.",
-              },
-              {
-                step: "03",
-                title: "Set the Feeling",
-                desc: "How should clients feel working with you? Inspired, comfortable, or reassured — each shapes the session differently.",
-              },
-              {
-                step: "04",
-                title: "See Your Direction",
-                desc: "We curate portfolio examples, a wardrobe guide, and a color palette based on your answers. Your shoot plan, visualized.",
-              },
-              {
-                step: "05",
-                title: "Choose Your Package",
-                desc: "Select how the images will be used — social media, commercial, or team photos — and see transparent pricing.",
-              },
-              {
-                step: "06",
-                title: "Book Your Session",
-                desc: "Pick your date and lock it in. A 50% deposit secures your spot, the rest is due at the shoot.",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="relative"
-              >
-                <span className="text-[#c4956a]/20 font-serif text-4xl font-bold absolute -top-2 -left-1">{item.step}</span>
-                <div className="pt-8">
-                  <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[#2a2a2a] mb-2">{item.title}</h3>
-                  <p className="text-stone-400 text-sm leading-relaxed">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+      {/* Portfolio */}
+      {portraitPhotos.length > 0 && (
+        <section className="py-14 sm:py-20">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10 sm:mb-14 px-5 sm:px-8">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Our Work</p>
+              <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
+                First Impressions We've Built
+              </h2>
+            </div>
+            {/* Mobile: carousel */}
+            <div className="sm:hidden">
+              <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-5 pb-4 scrollbar-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
+                {portraitPhotos.map((photo, i) => {
+                  const crop = photo.cropPosition || { x: 50, y: 50, zoom: 1 };
+                  return (
+                    <div key={photo.id} className="snap-start flex-shrink-0 w-[65%] aspect-[3/4] rounded-lg overflow-hidden">
+                      <img src={photo.imageUrl} alt="Portrait" className="w-full h-full object-cover"
+                        style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
+                        loading={i < 3 ? "eager" : "lazy"} draggable={false}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Desktop: grid */}
+            <div className="hidden sm:grid grid-cols-3 gap-3 px-5 sm:px-8">
+              {portraitPhotos.map((photo, i) => {
+                const crop = photo.cropPosition || { x: 50, y: 50, zoom: 1 };
+                return (
+                  <div key={photo.id} className="aspect-[3/4] rounded-lg overflow-hidden">
+                    <img src={photo.imageUrl} alt="Portrait" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                      style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
+                      loading={i < 3 ? "eager" : "lazy"}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <div className="max-w-4xl mx-auto px-5 sm:px-8">
         <div className="h-px bg-stone-200/80" />
@@ -210,34 +199,46 @@ export default function PortraitLandingPage() {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
-            {[
+          {(() => {
+            const items = [
               { icon: Clock, title: "1-Hour Session", desc: "Focused and tailored to your brand and vision" },
               { icon: Image, title: "15+ Edited Photos", desc: "High-resolution, professionally retouched" },
               { icon: Sparkles, title: "2 Yearly Edit Tokens", desc: "Refresh or refine your images anytime" },
               { icon: Palette, title: "Personal Mood Board", desc: "Curated from your builder choices" },
               { icon: Camera, title: "Wardrobe Guidance", desc: "Outfit recommendations for your session" },
               { icon: CheckCircle2, title: "Online Gallery", desc: "Private gallery to view and share" },
-            ].map((item, i) => {
+            ];
+            const renderCard = (item: typeof items[0], i: number) => {
               const Icon = item.icon;
               return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className="bg-white rounded-xl border border-stone-100 p-5 text-center"
-                >
+                <div key={i} className="bg-white rounded-xl border border-stone-100 p-5 text-center">
                   <div className="w-10 h-10 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                     <Icon className="w-4.5 h-4.5 text-[#c4956a]" />
                   </div>
                   <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2a2a2a] mb-1">{item.title}</h3>
                   <p className="text-stone-400 text-[12px] leading-relaxed">{item.desc}</p>
-                </motion.div>
+                </div>
               );
-            })}
-          </div>
+            };
+            return (
+              <>
+                {/* Mobile: carousel */}
+                <div className="sm:hidden">
+                  <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-5 pb-4 scrollbar-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
+                    {items.map((item, i) => (
+                      <div key={i} className="snap-start flex-shrink-0 w-[70%]">
+                        {renderCard(item, i)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop: grid */}
+                <div className="hidden sm:grid grid-cols-3 gap-5 sm:gap-6">
+                  {items.map((item, i) => renderCard(item, i))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </section>
 
