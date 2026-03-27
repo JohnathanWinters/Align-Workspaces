@@ -383,46 +383,6 @@ export default function AlignSpacesPage() {
             ))}
           </div>
 
-          {!spacesLoading && allSpaces.length > 0 && (
-            <div className="mt-8 space-y-6">
-              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-4 rounded-xl px-5 py-4 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="section-post-space-cta">
-                <p className="text-sm text-foreground/60 text-center sm:text-left">
-                  <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
-                  <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
-                </p>
-                <button
-                  onClick={() => setShowListModal(true)}
-                  className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 w-full sm:w-auto rounded-full hover:bg-stone-800 transition-colors font-medium"
-                  data-testid="button-post-space-cta"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Post your space
-                </button>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 justify-center" data-testid="section-neighborhoods">
-                <span className="text-[11px] text-stone-400 uppercase tracking-wider font-medium whitespace-nowrap">Explore Miami</span>
-                <div className="hidden sm:block w-px h-4 bg-stone-300/60" />
-                <div className="flex flex-wrap justify-center gap-2">
-                  {(() => {
-                    const neighborhoods = [...new Set((spaces || []).map(s => s.neighborhood).filter(Boolean))];
-                    const allNeighborhoods = neighborhoods.length > 0 ? neighborhoods : ["Wynwood", "Coral Gables", "Brickell", "Coconut Grove"];
-                    return allNeighborhoods.map((hood) => (
-                      <Link
-                        key={hood}
-                        href="/workspaces"
-                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-stone-200/80 hover:border-[#c4956a]/40 hover:bg-white transition-all duration-300"
-                        data-testid={`neighborhood-${hood?.toLowerCase().replace(/\s+/g, "-")}`}
-                      >
-                        <MapPin className="w-3 h-3 text-[#c4956a]" />
-                        <span className="text-xs font-medium text-stone-600 group-hover:text-stone-900 transition-colors">{hood}</span>
-                      </Link>
-                    ));
-                  })()}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
@@ -482,6 +442,47 @@ export default function AlignSpacesPage() {
               );
             })}
           </div>
+
+          {!spacesLoading && allSpaces.length > 0 && (
+            <div className="mt-10 space-y-6">
+              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-4 rounded-xl px-5 py-4 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="section-post-space-cta">
+                <p className="text-sm text-foreground/60 text-center sm:text-left">
+                  <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
+                  <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
+                </p>
+                <button
+                  onClick={() => setShowListModal(true)}
+                  className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 text-xs tracking-wider uppercase bg-stone-900 text-white px-4 py-2 w-full sm:w-auto rounded-full hover:bg-stone-800 transition-colors font-medium"
+                  data-testid="button-post-space-cta"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Post your space
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 justify-center" data-testid="section-neighborhoods">
+                <span className="text-[11px] text-stone-400 uppercase tracking-wider font-medium whitespace-nowrap">Explore Miami</span>
+                <div className="hidden sm:block w-px h-4 bg-stone-300/60" />
+                <div className="flex flex-wrap justify-center gap-2">
+                  {(() => {
+                    const neighborhoods = [...new Set((spaces || []).map(s => s.neighborhood).filter(Boolean))];
+                    const allNeighborhoods = neighborhoods.length > 0 ? neighborhoods : ["Wynwood", "Coral Gables", "Brickell", "Coconut Grove"];
+                    return allNeighborhoods.map((hood) => (
+                      <Link
+                        key={hood}
+                        href="/workspaces"
+                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-stone-200/80 hover:border-[#c4956a]/40 hover:bg-white transition-all duration-300"
+                        data-testid={`neighborhood-${hood?.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        <MapPin className="w-3 h-3 text-[#c4956a]" />
+                        <span className="text-xs font-medium text-stone-600 group-hover:text-stone-900 transition-colors">{hood}</span>
+                      </Link>
+                    ));
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
