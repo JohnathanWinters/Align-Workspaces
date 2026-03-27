@@ -8569,7 +8569,7 @@ function AdminDashboard({ token }: { token: string }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 leading-tight">Admin Panel</p>
             <a href="/" className="text-[11px] text-[#c4956a] hover:text-[#a07a52] transition-colors flex items-center gap-1">
-              <ExternalLink className="w-2.5 h-2.5" />
+              <ArrowLeft className="w-2.5 h-2.5" />
               Back to site
             </a>
           </div>
