@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle } from "lucide-react";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
@@ -57,6 +57,7 @@ function useDragScroll() {
 export default function PhotographersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showExplore, setShowExplore] = useState(false);
+  const [showFounders, setShowFounders] = useState(false);
   const membersCarousel = useDragScroll();
   useEffect(() => {
     document.title = "Our Vision | Align Workspaces";
@@ -209,117 +210,116 @@ export default function PhotographersPage() {
 
       <section className="py-14 sm:py-20">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="text-center mb-10 sm:mb-12"
-          >
-            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">The Team</p>
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]" data-testid="text-team-heading">
-              Meet the Founders
-            </h2>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="max-w-3xl mx-auto"
-          >
-            {membersLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-              </div>
-            ) : (
-              <>
-                {/* Mobile: horizontal carousel */}
-                <div className="md:hidden">
-                  <div
-                    ref={membersCarousel.ref}
-                    onDragStart={membersCarousel.onDragStart}
-                    onMouseDown={membersCarousel.onMouseDown}
-                    onMouseMove={membersCarousel.onMouseMove}
-                    onMouseUp={membersCarousel.onMouseUp}
-                    onMouseLeave={membersCarousel.onMouseLeave}
-                    onClickCapture={membersCarousel.preventClickIfDragged}
-                    className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none"
-                    style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
-                  >
+          {/* Mobile: collapsible reveal */}
+          <div className="md:hidden text-center">
+            <button
+              onClick={() => setShowFounders(!showFounders)}
+              className="inline-flex items-center gap-2.5 text-sm font-medium text-[#2a2a2a] hover:text-[#c4956a] transition-colors"
+              data-testid="button-toggle-founders"
+            >
+              <Users className="w-4 h-4 text-[#c4956a]" />
+              <span className="font-serif text-lg">Meet the Founders</span>
+              <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform duration-300 ${showFounders ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>
+              {showFounders && !membersLoading && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-8 space-y-6">
                     {members.map((member, i) => {
                       const crop = member.cropPosition || { x: 50, y: 50, zoom: 1 };
                       const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
                         ? member.photoUrl
                         : member.photoUrl ? `/objects/${member.photoUrl}` : null;
                       return (
-                        <div key={member.id} className="snap-start flex-shrink-0 w-[85%] bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid={`card-photographer-page-${i}`}>
-                          {photoSrc && (
-                            <div className="aspect-[4/3] overflow-hidden">
-                              <img src={photoSrc} alt={member.name} className="w-full h-full object-cover" draggable={false}
-                                style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
-                                loading="lazy" decoding="async"
-                              />
+                        <div key={member.id} className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden text-left" data-testid={`card-photographer-page-${i}`}>
+                          <div className="flex gap-0">
+                            {photoSrc && (
+                              <div className="w-[35%] flex-shrink-0 overflow-hidden">
+                                <img src={photoSrc} alt={member.name} className="w-full h-full object-cover" draggable={false}
+                                  style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
+                                  loading="lazy" decoding="async"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 p-4 flex flex-col justify-center">
+                              <h3 className="font-serif text-lg text-[#2a2a2a] mb-0.5">{member.name}</h3>
+                              <p className="text-[12px] text-[#c4956a] font-medium mb-1">{member.role}</p>
+                              {member.location && (
+                                <p className="text-[11px] text-stone-400 mb-2 flex items-center gap-1">
+                                  <MapPin className="w-2.5 h-2.5" /> {member.location}
+                                </p>
+                              )}
+                              {member.bio && (
+                                <p className="text-[12px] text-stone-500 leading-[1.6] line-clamp-3">
+                                  {member.bio.split("\n").filter(Boolean)[0]}
+                                </p>
+                              )}
                             </div>
-                          )}
-                          <div className="p-5">
-                            <h3 className="font-serif text-xl text-[#2a2a2a] mb-1">{member.name}</h3>
-                            <p className="text-[13px] text-[#c4956a] font-medium mb-1">{member.role}</p>
-                            {member.location && (
-                              <p className="text-[12px] text-stone-400 mb-3 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {member.location}
-                              </p>
-                            )}
-                            {member.bio && (
-                              <p className="text-[13px] text-stone-500 leading-[1.7] line-clamp-4">
-                                {member.bio.split("\n").filter(Boolean)[0]}
-                              </p>
-                            )}
                           </div>
                         </div>
                       );
                     })}
                   </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop: always visible grid */}
+          <div className="hidden md:block">
+            <div className="text-center mb-10">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">The Team</p>
+              <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]" data-testid="text-team-heading">
+                Meet the Founders
+              </h2>
+            </div>
+            <div className="max-w-3xl mx-auto grid grid-cols-2 gap-6">
+              {membersLoading ? (
+                <div className="col-span-2 flex justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
                 </div>
-                {/* Desktop: grid */}
-                <div className="hidden md:grid grid-cols-2 gap-6">
-                  {members.map((member, i) => {
-                    const crop = member.cropPosition || { x: 50, y: 50, zoom: 1 };
-                    const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
-                      ? member.photoUrl
-                      : member.photoUrl ? `/objects/${member.photoUrl}` : null;
-                    return (
-                      <div key={member.id} className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid={`card-photographer-page-${i}`}>
-                        {photoSrc && (
-                          <div className="aspect-[4/3] overflow-hidden">
-                            <img src={photoSrc} alt={member.name} className="w-full h-full object-cover"
-                              style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
-                              loading="lazy" decoding="async" data-testid={`img-photographer-page-${i}`}
-                            />
-                          </div>
-                        )}
-                        <div className="p-6 sm:p-8">
-                          <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid={`text-photographer-page-name-${i}`}>{member.name}</h3>
-                          <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid={`text-photographer-page-role-${i}`}>{member.role}</p>
-                          {member.location && (
-                            <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" /> {member.location}
-                            </p>
-                          )}
-                          {member.bio && (
-                            <div className="space-y-3" data-testid={`text-photographer-page-bio-${i}`}>
-                              {member.bio.split("\n").filter(Boolean).map((para, j) => (
-                                <p key={j} className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">{para}</p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+              ) : members.map((member, i) => {
+                const crop = member.cropPosition || { x: 50, y: 50, zoom: 1 };
+                const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
+                  ? member.photoUrl
+                  : member.photoUrl ? `/objects/${member.photoUrl}` : null;
+                return (
+                  <div key={member.id} className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden" data-testid={`card-photographer-page-${i}`}>
+                    {photoSrc && (
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img src={photoSrc} alt={member.name} className="w-full h-full object-cover"
+                          style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
+                          loading="lazy" decoding="async" data-testid={`img-photographer-page-${i}`}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </motion.div>
+                    )}
+                    <div className="p-6 sm:p-8">
+                      <h3 className="font-serif text-xl sm:text-2xl text-[#2a2a2a] mb-1" data-testid={`text-photographer-page-name-${i}`}>{member.name}</h3>
+                      <p className="text-[13px] text-[#c4956a] font-medium mb-1" data-testid={`text-photographer-page-role-${i}`}>{member.role}</p>
+                      {member.location && (
+                        <p className="text-[12px] text-stone-400 mb-5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {member.location}
+                        </p>
+                      )}
+                      {member.bio && (
+                        <div className="space-y-3" data-testid={`text-photographer-page-bio-${i}`}>
+                          {member.bio.split("\n").filter(Boolean).map((para, j) => (
+                            <p key={j} className="text-[13px] sm:text-sm text-stone-500 leading-[1.7]">{para}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </section>
 
