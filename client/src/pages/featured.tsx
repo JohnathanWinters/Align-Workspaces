@@ -185,80 +185,41 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
     >
       <div className="relative w-full overflow-hidden 2xl:rounded-b-lg">
         {hasSpace ? (
-          <>
-            {/* Mobile: workspace full-width with portrait pip */}
-            <div className="sm:hidden relative aspect-[4/3]">
-              {!spaceLoaded && (
-                <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
-              )}
-              <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
-                <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
-                  className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceLoaded ? "opacity-100" : "opacity-0"}`}
-                  fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
-                  style={getCropStyle(pro.spaceImageCropPosition)}
-                />
-              </div>
-              {/* Portrait pip */}
-              <div className="absolute bottom-3 left-3 w-24 h-[7.5rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
-                <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-                  {pro.portraitImageUrl ? (
-                    <img src={pro.portraitImageUrl} alt={pro.name}
-                      className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
-                      fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
-                      style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
-                    />
-                  ) : <Initials name={pro.name} />}
-                </div>
-              </div>
-              {pro.spaceName && (
-                <div className="absolute bottom-3 right-3 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
-                  <Building2 className="w-3 h-3" />
-                  {pro.spaceName}
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
+          /* Workspace full-width with portrait pip */
+          <div className="relative aspect-[4/3] sm:aspect-[21/9]">
+            {!spaceLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
+            )}
+            <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
+              <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
+                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceLoaded ? "opacity-100" : "opacity-0"}`}
+                fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
+                style={getCropStyle(pro.spaceImageCropPosition)}
+              />
             </div>
-            {/* Desktop: side-by-side split */}
-            <div className="hidden sm:flex h-[55vh] md:h-[60vh] lg:h-[65vh]">
-              <div className="w-[33%] h-full relative overflow-hidden">
-                {!heroLoaded && pro.portraitImageUrl && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
-                )}
-                <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-                  {pro.portraitImageUrl ? (
-                    <img src={pro.portraitImageUrl} alt={pro.name}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${heroLoaded ? "opacity-100" : "opacity-0"}`}
-                      fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
-                      style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
-                    />
-                  ) : <Initials name={pro.name} />}
-                </div>
-              </div>
-              <div className="w-[67%] h-full relative overflow-hidden">
-                {!spaceLoaded && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
-                )}
-                <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
-                  <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
-                    className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceLoaded ? "opacity-100" : "opacity-0"}`}
-                    fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
-                    style={getCropStyle(pro.spaceImageCropPosition)}
+            {/* Portrait pip */}
+            <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-24 h-[7.5rem] sm:w-32 sm:h-40 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
+              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img src={pro.portraitImageUrl} alt={pro.name}
+                    className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
+                    fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
+                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
                   />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                {pro.spaceName && (
-                  <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
-                    <Building2 className="w-3 h-3" />
-                    {pro.spaceName}
-                  </div>
-                )}
+                ) : <Initials name={pro.name} />}
               </div>
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 z-[2] pointer-events-none" />
             </div>
-          </>
+            {pro.spaceName && (
+              <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+                <Building2 className="w-3 h-3" />
+                {pro.spaceName}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 pointer-events-none" />
+          </div>
         ) : (
-          /* Single image fallback */
-          <div className="relative aspect-[3/4] sm:aspect-auto sm:min-h-[55vh] lg:min-h-[60vh] overflow-hidden">
+          /* Portrait-only fallback */
+          <div className="relative aspect-[4/3] sm:aspect-[21/9] overflow-hidden">
             <div className="absolute inset-0">
               {!heroLoaded && pro.portraitImageUrl && (
                 <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
