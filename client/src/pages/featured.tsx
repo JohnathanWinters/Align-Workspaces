@@ -79,16 +79,18 @@ function normalizeSocialLinks(links: any): Array<{ platform: string; url: string
   return [];
 }
 
-function getCropStyle(crop: { x: number; y: number; zoom?: number } | null | undefined, fallbackPosition?: string) {
+function getCropStyle(crop: { x: number; y: number; zoom?: number } | null | undefined, fallbackPosition?: string): React.CSSProperties | undefined {
   if (!crop && !fallbackPosition) return undefined;
   const pos = crop ? `${crop.x}% ${crop.y}%` : fallbackPosition!;
+  if (crop?.zoom && crop.zoom !== 1) {
+    return { objectPosition: pos, transform: `scale(${crop.zoom})`, transformOrigin: pos };
+  }
   return { objectPosition: pos };
 }
 
-function getCropZoom(crop: { x: number; y: number; zoom?: number } | null | undefined): { transform: string; transformOrigin: string } | undefined {
-  if (!crop?.zoom || crop.zoom === 1) return undefined;
-  const pos = `${crop.x}% ${crop.y}%`;
-  return { transform: `scale(${crop.zoom})`, transformOrigin: pos };
+// Kept for backward compat but returns undefined — zoom now lives on the img via getCropStyle
+function getCropZoom(_crop: { x: number; y: number; zoom?: number } | null | undefined): undefined {
+  return undefined;
 }
 
 const CATEGORY_ORDER = ["Therapists", "Counselors", "Chefs", "Personal Trainers"];
