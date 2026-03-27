@@ -1378,15 +1378,18 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
       {/* ─── Sticky header ─── */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/60">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <button
-            onClick={smartBack}
-            className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back</span>
-          </button>
-          <UserIndicator />
+          <div className="flex items-center gap-2">
+            <UserIndicator />
+            <button
+              onClick={smartBack}
+              className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          </div>
+          <div className="w-9" />
         </div>
       </div>
 

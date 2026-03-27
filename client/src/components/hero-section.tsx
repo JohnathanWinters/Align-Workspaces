@@ -77,15 +77,13 @@ export function HeroSection({ onStart }: HeroSectionProps) {
 
       <nav className="relative z-20 px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="w-9" />
-          <div className="w-9" />
+          <UserIndicator variant="light" />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.15 }}
             className="flex items-center gap-3"
           >
-            <UserIndicator variant="light" />
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}

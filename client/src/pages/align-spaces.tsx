@@ -246,7 +246,7 @@ export default function AlignSpacesPage() {
     <div className="bg-[#f5f0e8] min-h-screen" data-testid="page-landing">
       <nav className="sticky top-0 z-50 bg-stone-900/95 backdrop-blur-sm border-b border-stone-800/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="w-9" />
+          <UserIndicator variant="light" />
 
           <Link href="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5" data-testid="link-home-logo">
             <img
@@ -263,7 +263,6 @@ export default function AlignSpacesPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <UserIndicator variant="light" />
             <div className="relative" data-menu-container>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
