@@ -197,17 +197,22 @@ export default function GlobalMessenger() {
     ...(adminConvo ? [adminConvo] : []),
   ].reduce((sum, c) => sum + ((c as any).unreadCount || 0), 0);
 
-  // Hide on portal messages tab
-  const [isOnPortalMessages, setIsOnPortalMessages] = useState(false);
+  // Hide on certain pages
+  const [isHiddenPage, setIsHiddenPage] = useState(false);
   useEffect(() => {
     const check = () => {
-      const onPortal = window.location.pathname === "/portal";
+      const path = window.location.pathname;
       const tab = new URLSearchParams(window.location.search).get("tab");
-      setIsOnPortalMessages(onPortal && tab === "messages");
+      const hidden =
+        (path === "/portal" && tab === "messages") ||
+        path === "/" ||
+        path === "/portrait-builder" ||
+        path === "/workspaces" ||
+        path.startsWith("/featured");
+      setIsHiddenPage(hidden);
     };
     check();
     window.addEventListener("popstate", check);
-    // Poll since wouter uses replaceState/pushState which don't fire popstate
     const interval = setInterval(check, 500);
     return () => {
       window.removeEventListener("popstate", check);
@@ -256,8 +261,8 @@ export default function GlobalMessenger() {
   // Don't render when not authenticated
   if (authLoading || !isAuthenticated || !user) return null;
 
-  // Don't render on portal messages tab
-  if (isOnPortalMessages) return null;
+  // Don't render on public/browsing pages or portal messages tab
+  if (isHiddenPage) return null;
 
   return (
     <>
