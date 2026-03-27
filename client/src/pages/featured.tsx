@@ -1069,65 +1069,35 @@ function ProfilePage({ slug }: { slug: string }) {
     <div className="min-h-screen bg-background">
       <FeaturedNav />
 
-      {/* Split hero: portrait + space side by side */}
+      {/* Hero: workspace full-width with portrait pip */}
       <section className="relative w-full max-w-[2000px] mx-auto overflow-hidden">
         {pro.spaceImageUrl ? (
-          <>
-            {/* Mobile: workspace full-width with portrait pip */}
-            <div className="sm:hidden relative aspect-[16/10]">
-              <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
-                <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
-                  className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-                  style={getCropStyle(pro.spaceImageCropPosition)}
-                />
-              </div>
-              <div className="absolute bottom-3 left-3 w-24 h-[7.5rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
-                <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-                  {pro.portraitImageUrl ? (
-                    <img src={pro.portraitImageUrl} alt={pro.name}
-                      className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-                      style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
-                    />
-                  ) : <Initials name={pro.name} />}
-                </div>
-              </div>
-              {pro.spaceName && (
-                <div className="absolute bottom-3 right-3 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
-                  <Building2 className="w-3 h-3" />
-                  {pro.spaceName}
-                </div>
-              )}
+          <div className="relative aspect-[4/3] sm:aspect-[21/9]">
+            <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
+              <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
+                className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
+                style={getCropStyle(pro.spaceImageCropPosition)}
+              />
             </div>
-            {/* Desktop: side-by-side split */}
-            <div className="hidden sm:flex h-[45vh] md:h-[50vh] lg:h-[55vh]">
-              <div className="w-[33%] h-full relative overflow-hidden">
-                <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-                  {pro.portraitImageUrl ? (
-                    <img src={pro.portraitImageUrl} alt={pro.name}
-                      className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-                      style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
-                    />
-                  ) : <Initials name={pro.name} />}
-                </div>
-              </div>
-              <div className="w-[67%] h-full relative overflow-hidden">
-                <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
-                  <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
+            <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 w-24 h-[7.5rem] sm:w-36 sm:h-44 rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
+              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img src={pro.portraitImageUrl} alt={pro.name}
                     className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-                    style={getCropStyle(pro.spaceImageCropPosition)}
+                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
                   />
-                </div>
-                {pro.spaceName && (
-                  <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                    <Building2 className="w-3 h-3" />
-                    {pro.spaceName}
-                  </div>
-                )}
+                ) : <Initials name={pro.name} />}
               </div>
             </div>
-          </>
+            {pro.spaceName && (
+              <div className="absolute bottom-3 right-3 sm:bottom-6 sm:right-6 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+                <Building2 className="w-3 h-3" />
+                {pro.spaceName}
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="h-[40vh] sm:h-[45vh] md:h-[50vh] lg:h-[55vh]">
+          <div className="relative aspect-[4/3] sm:aspect-[21/9]">
             <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={`${pro.name} - ${pro.profession}`}
