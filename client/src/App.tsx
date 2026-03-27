@@ -17,6 +17,7 @@ import SpacesBrowsePage from "@/pages/spaces-browse";
 import SpaceDetailPage from "@/pages/space-detail";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAuth } from "@/hooks/use-auth";
+import GlobalMessenger from "@/components/global-messenger";
 
 function BuildMyPhoto() {
   return <HomePage autoStart />;
@@ -59,6 +60,7 @@ function App() {
           <AnalyticsWrapper>
             <Toaster />
             <Router />
+            <GlobalMessenger />
           </AnalyticsWrapper>
         </TooltipProvider>
       </QueryClientProvider>

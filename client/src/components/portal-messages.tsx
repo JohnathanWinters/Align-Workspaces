@@ -46,7 +46,7 @@ import {
 } from "./availability-schedule-editor";
 import type { SpaceBooking, SpaceMessage, DirectMessage } from "@shared/schema";
 
-interface EnrichedBooking extends SpaceBooking {
+export interface EnrichedBooking extends SpaceBooking {
   spaceName: string;
   spaceType?: string;
   otherPartyName: string;
@@ -57,7 +57,7 @@ interface EnrichedBooking extends SpaceBooking {
   spaceBufferMinutes?: number;
 }
 
-interface EnrichedDirectConversation {
+export interface EnrichedDirectConversation {
   id: string;
   spaceId: string;
   spaceName: string;
@@ -72,7 +72,7 @@ interface EnrichedDirectConversation {
   type: "direct";
 }
 
-interface EnrichedAdminConversation {
+export interface EnrichedAdminConversation {
   id: string;
   clientId: string;
   otherPartyName: string;
@@ -82,12 +82,12 @@ interface EnrichedAdminConversation {
   type: "admin";
 }
 
-type UnifiedConversation =
+export type UnifiedConversation =
   | (EnrichedBooking & { type: "booking" })
   | EnrichedDirectConversation
   | EnrichedAdminConversation;
 
-const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
+export const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
   awaiting_payment: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Awaiting Payment" },
   pending: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock, label: "Pending" },
   approved: { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, label: "Confirmed" },
@@ -103,7 +103,7 @@ const paymentStatusConfig: Record<string, { color: string; label: string }> = {
   paid: { color: "bg-green-50 text-green-700 border-green-200", label: "Paid" },
 };
 
-function formatRelativeTime(dateStr: string) {
+export function formatRelativeTime(dateStr: string) {
   const d = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
@@ -114,7 +114,7 @@ function formatRelativeTime(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function getMessagePreview(msg: { message: string; messageType?: string; senderRole: string } | null): string {
+export function getMessagePreview(msg: { message: string; messageType?: string; senderRole: string } | null): string {
   if (!msg) return "No messages yet";
   if (msg.messageType === "system") {
     // Shorten common system messages for sidebar
@@ -135,7 +135,7 @@ function getMessagePreview(msg: { message: string; messageType?: string; senderR
   return msg.message.length > 40 ? msg.message.slice(0, 40) + "…" : msg.message;
 }
 
-function ConversationList({
+export function ConversationList({
   conversations,
   activeId,
   onSelect,
@@ -290,7 +290,7 @@ function PaymentRequestMessage({ message, booking, userId }: { message: SpaceMes
   );
 }
 
-function ConversationView({
+export function ConversationView({
   booking,
   userId,
   onBack,
@@ -1171,7 +1171,7 @@ function ConversationView({
   );
 }
 
-function DirectConversationView({
+export function DirectConversationView({
   conversation,
   userId,
   onBack,
@@ -1323,7 +1323,7 @@ function DirectConversationView({
   );
 }
 
-function AdminConversationView({
+export function AdminConversationView({
   conversation,
   userId,
   onBack,
