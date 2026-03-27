@@ -1992,16 +1992,16 @@ function PortalContent() {
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-10">
-        <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 flex items-center justify-between relative">
           <a
             href="/"
             data-testid="button-back-home"
-            className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Exit</span>
           </a>
-          <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
             <span className="hidden sm:inline">Client Portal</span>
           </span>
           <div className="flex items-center gap-2">
