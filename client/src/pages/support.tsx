@@ -332,7 +332,7 @@ export default function SupportPage() {
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter hideNewsletter />
     </div>
   );
 }
