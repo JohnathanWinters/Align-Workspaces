@@ -484,16 +484,15 @@ export default function AlignSpacesPage() {
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Built for the Way You Work</h2>
           </div>
 
-          {(() => {
-            const features = [
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {[
               { icon: Clock, title: "Rent Hourly", desc: "Book by the hour with transparent pricing. No leases, no contracts, no hidden fees — just the time you need." },
               { icon: Sparkles, title: "Curated Spaces", desc: "Every workspace is designed for client-facing professionals. Walk into a space that elevates your sessions." },
               { icon: Building2, title: "Made for Your Practice", desc: "Therapy offices, coaching rooms, wellness studios, creative spaces — find the setting that fits your work." },
               { icon: CalendarDays, title: "On-Demand Access", desc: "Browse availability in real time and book instantly. Your calendar syncs so you're always up to date." },
               { icon: Repeat, title: "Recurring Bookings", desc: "Lock in a weekly time slot for your regulars. Set it once, and your space is guaranteed every week." },
               { icon: Shield, title: "Flexible Cancellations", desc: "Plans change — cancel within the policy window and you're covered. No penalties, no hassle." },
-            ];
-            const renderCard = (item: typeof features[0], i: number) => {
+            ].map((item, i) => {
               const Icon = item.icon;
               return (
                 <div key={i} className="bg-white rounded-xl border border-stone-100 p-5 sm:p-6 hover:shadow-md hover:border-stone-200 transition-all" data-testid={`feature-${i}`}>
@@ -504,26 +503,8 @@ export default function AlignSpacesPage() {
                   <p className="text-stone-500 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               );
-            };
-            return (
-              <>
-                {/* Mobile: carousel */}
-                <div className="sm:hidden">
-                  <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none [&_img]:pointer-events-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
-                    {features.map((item, i) => (
-                      <div key={i} className="snap-start flex-shrink-0 w-[75%]">
-                        {renderCard(item, i)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Desktop: grid */}
-                <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                  {features.map((item, i) => renderCard(item, i))}
-                </div>
-              </>
-            );
-          })()}
+            })}
+          </div>
 
           {!spacesLoading && allSpaces.length > 0 && (
             <div className="mt-10 space-y-6">

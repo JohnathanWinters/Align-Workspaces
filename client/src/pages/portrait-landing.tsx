@@ -199,16 +199,15 @@ export default function PortraitLandingPage() {
             </h2>
           </motion.div>
 
-          {(() => {
-            const items = [
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
+            {[
               { icon: Clock, title: "1-Hour Session", desc: "Focused and tailored to your brand and vision" },
               { icon: Image, title: "15+ Edited Photos", desc: "High-resolution, professionally retouched" },
               { icon: Sparkles, title: "2 Yearly Edit Tokens", desc: "Refresh or refine your images anytime" },
               { icon: Palette, title: "Personal Mood Board", desc: "Curated from your builder choices" },
               { icon: Camera, title: "Wardrobe Guidance", desc: "Outfit recommendations for your session" },
               { icon: CheckCircle2, title: "Online Gallery", desc: "Private gallery to view and share" },
-            ];
-            const renderCard = (item: typeof items[0], i: number) => {
+            ].map((item, i) => {
               const Icon = item.icon;
               return (
                 <div key={i} className="bg-white rounded-xl border border-stone-100 p-5 text-center">
@@ -219,26 +218,8 @@ export default function PortraitLandingPage() {
                   <p className="text-stone-400 text-[12px] leading-relaxed">{item.desc}</p>
                 </div>
               );
-            };
-            return (
-              <>
-                {/* Mobile: carousel */}
-                <div className="sm:hidden">
-                  <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-5 pb-4 scrollbar-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
-                    {items.map((item, i) => (
-                      <div key={i} className="snap-start flex-shrink-0 w-[70%]">
-                        {renderCard(item, i)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Desktop: grid */}
-                <div className="hidden sm:grid grid-cols-3 gap-5 sm:gap-6">
-                  {items.map((item, i) => renderCard(item, i))}
-                </div>
-              </>
-            );
-          })()}
+            })}
+          </div>
         </div>
       </section>
 
