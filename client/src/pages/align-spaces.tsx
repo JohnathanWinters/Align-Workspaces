@@ -429,7 +429,7 @@ export default function AlignSpacesPage() {
               onMouseUp={spacesCarousel.onMouseUp}
               onMouseLeave={spacesCarousel.onMouseLeave}
               onClickCapture={spacesCarousel.preventClickIfDragged}
-              className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 -mx-0 scrollbar-none cursor-grab select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+              className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 -mx-0 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
             >
               {spacesLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
@@ -656,7 +656,7 @@ export default function AlignSpacesPage() {
                 onMouseUp={prosCarousel.onMouseUp}
                 onMouseLeave={prosCarousel.onMouseLeave}
                 onClickCapture={prosCarousel.preventClickIfDragged}
-                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none cursor-grab select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
               >
                 {(featuredPros || []).slice(0, 6).map((pro) => (
                   <Link
