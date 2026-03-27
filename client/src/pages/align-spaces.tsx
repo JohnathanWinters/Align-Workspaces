@@ -94,6 +94,10 @@ function useDragScroll() {
   const ref = useRef<HTMLDivElement>(null);
   const state = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
 
+  const onDragStart = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     const el = ref.current;
     if (!el) return;
@@ -139,7 +143,7 @@ function useDragScroll() {
     }
   }, []);
 
-  return { ref, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, preventClickIfDragged };
+  return { ref, onDragStart, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, preventClickIfDragged };
 }
 
 function SpaceCard({ space }: { space: Space }) {
@@ -424,6 +428,7 @@ export default function AlignSpacesPage() {
           <div className="sm:hidden">
             <div
               ref={spacesCarousel.ref}
+              onDragStart={spacesCarousel.onDragStart}
               onMouseDown={spacesCarousel.onMouseDown}
               onMouseMove={spacesCarousel.onMouseMove}
               onMouseUp={spacesCarousel.onMouseUp}
@@ -651,6 +656,7 @@ export default function AlignSpacesPage() {
             <div className="sm:hidden">
               <div
                 ref={prosCarousel.ref}
+                onDragStart={prosCarousel.onDragStart}
                 onMouseDown={prosCarousel.onMouseDown}
                 onMouseMove={prosCarousel.onMouseMove}
                 onMouseUp={prosCarousel.onMouseUp}
