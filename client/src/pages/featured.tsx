@@ -217,14 +217,14 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 
   return (
     <section
-      className="cursor-pointer group max-w-[2000px] mx-auto"
+      className="cursor-pointer group"
       onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid="card-professional-of-week"
     >
       <div className="relative w-full overflow-hidden 2xl:rounded-b-lg">
         {hasSpace ? (
           /* Workspace full-width with portrait pip */
-          <div className="relative aspect-[4/3] sm:aspect-[21/9]">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             {!spaceLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
             )}
@@ -235,8 +235,8 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            {/* Portrait pip — percentage based */}
-            <div className="absolute bottom-[4%] left-[3%] w-[22%] h-[55%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            {/* Portrait pip */}
+            <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-[22%] sm:w-[14%] h-[45%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -246,7 +246,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
-              <div className="absolute bottom-[4%] right-[3%] bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
                 <Building2 className="w-3 h-3" />
                 {pro.spaceName}
               </div>
@@ -255,7 +255,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
           </div>
         ) : (
           /* Portrait-only fallback */
-          <div className="relative aspect-[4/3] sm:aspect-[21/9] overflow-hidden">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden">
             <div className="absolute inset-0">
               {!heroLoaded && pro.portraitImageUrl && (
                 <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
@@ -334,7 +334,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip — percentage based */}
-            <div className="absolute bottom-[4%] left-[3%] w-[28%] h-[55%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-3 left-3 w-[28%] h-[45%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1104,16 +1104,16 @@ function ProfilePage({ slug }: { slug: string }) {
       <FeaturedNav />
 
       {/* Hero: workspace full-width with portrait pip */}
-      <section className="relative w-full max-w-[2000px] mx-auto overflow-hidden">
+      <section className="relative w-full overflow-hidden">
         {pro.spaceImageUrl ? (
-          <div className="relative aspect-[4/3] sm:aspect-[21/9]">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
               <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
                 className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute bottom-[4%] left-[3%] w-[25%] sm:w-[18%] h-[55%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-[22%] sm:w-[14%] h-[45%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
@@ -1122,14 +1122,14 @@ function ProfilePage({ slug }: { slug: string }) {
               ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
-              <div className="absolute bottom-[4%] right-[3%] bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
                 <Building2 className="w-3 h-3" />
                 {pro.spaceName}
               </div>
             )}
           </div>
         ) : (
-          <div className="relative aspect-[4/3] sm:aspect-[21/9]">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={`${pro.name} - ${pro.profession}`}
