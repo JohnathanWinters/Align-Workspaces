@@ -236,7 +236,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 w-28 h-36 sm:w-40 sm:h-52 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-24 h-28 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -276,7 +276,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
         )}
       </div>
 
-      <div className="px-5 sm:px-6 pt-6 pb-8 max-w-6xl mx-auto">
+      <div className="px-5 sm:px-6 pt-8 pb-8 max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] mb-3 flex items-center gap-1.5 font-semibold">
             <Star className="w-3 h-3 fill-[#c4956a] text-[#c4956a]" />
@@ -334,7 +334,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute bottom-3 left-3 w-20 h-28 sm:w-24 sm:h-32 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute -bottom-3 left-3 w-16 h-20 sm:w-20 sm:h-24 rounded-lg ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1113,7 +1113,7 @@ function ProfilePage({ slug }: { slug: string }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 w-28 h-36 sm:w-40 sm:h-52 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-24 h-28 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
@@ -1152,7 +1152,7 @@ function ProfilePage({ slug }: { slug: string }) {
       </section>
 
       {/* Profile info — unified for mobile + desktop */}
-      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-8 sm:pt-12">
+      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-2">{pro.profession}</p>
           <h1 className="font-serif text-[2rem] sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-2 sm:mb-3 text-foreground" data-testid="text-profile-name">
