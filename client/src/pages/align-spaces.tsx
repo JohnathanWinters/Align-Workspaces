@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -88,6 +88,58 @@ function parseColorPalette(raw: string | null | undefined): { colors: { hex: str
       explanation: typeof parsed.explanation === "string" ? parsed.explanation : undefined,
     };
   } catch { return null; }
+}
+
+function useDragScroll() {
+  const ref = useRef<HTMLDivElement>(null);
+  const state = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    state.current = { isDown: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft, moved: false };
+    el.style.cursor = "grabbing";
+    el.style.scrollSnapType = "none";
+  }, []);
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!state.current.isDown) return;
+    e.preventDefault();
+    const el = ref.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - state.current.startX) * 1.5;
+    if (Math.abs(walk) > 5) state.current.moved = true;
+    el.scrollLeft = state.current.scrollLeft - walk;
+  }, []);
+
+  const onMouseUp = useCallback(() => {
+    state.current.isDown = false;
+    const el = ref.current;
+    if (!el) return;
+    el.style.cursor = "";
+    el.style.scrollSnapType = "";
+  }, []);
+
+  const onMouseLeave = useCallback(() => {
+    if (state.current.isDown) {
+      state.current.isDown = false;
+      const el = ref.current;
+      if (!el) return;
+      el.style.cursor = "";
+      el.style.scrollSnapType = "";
+    }
+  }, []);
+
+  const preventClickIfDragged = useCallback((e: React.MouseEvent) => {
+    if (state.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      state.current.moved = false;
+    }
+  }, []);
+
+  return { ref, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, preventClickIfDragged };
 }
 
 function SpaceCard({ space }: { space: Space }) {
@@ -210,6 +262,8 @@ export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
+  const spacesCarousel = useDragScroll();
+  const prosCarousel = useDragScroll();
 
   const { data: spaces, isLoading: spacesLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -368,7 +422,15 @@ export default function AlignSpacesPage() {
         <div className="max-w-6xl mx-auto">
           {/* Mobile: horizontal scroll carousel */}
           <div className="sm:hidden">
-            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 -mx-0 scrollbar-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+            <div
+              ref={spacesCarousel.ref}
+              onMouseDown={spacesCarousel.onMouseDown}
+              onMouseMove={spacesCarousel.onMouseMove}
+              onMouseUp={spacesCarousel.onMouseUp}
+              onMouseLeave={spacesCarousel.onMouseLeave}
+              onClickCapture={spacesCarousel.preventClickIfDragged}
+              className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 -mx-0 scrollbar-none cursor-grab select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+            >
               {spacesLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="snap-start flex-shrink-0 w-[85%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
@@ -587,7 +649,15 @@ export default function AlignSpacesPage() {
 
             {/* Mobile: horizontal scroll carousel */}
             <div className="sm:hidden">
-              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+              <div
+                ref={prosCarousel.ref}
+                onMouseDown={prosCarousel.onMouseDown}
+                onMouseMove={prosCarousel.onMouseMove}
+                onMouseUp={prosCarousel.onMouseUp}
+                onMouseLeave={prosCarousel.onMouseLeave}
+                onClickCapture={prosCarousel.preventClickIfDragged}
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none cursor-grab select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+              >
                 {(featuredPros || []).slice(0, 6).map((pro) => (
                   <Link
                     key={pro.id}
