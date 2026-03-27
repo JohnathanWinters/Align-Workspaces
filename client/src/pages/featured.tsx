@@ -224,7 +224,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
       <div className="relative w-full overflow-hidden 2xl:rounded-b-lg">
         {hasSpace ? (
           /* Workspace full-width with portrait pip */
-          <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             {!spaceLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
             )}
@@ -236,7 +236,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute top-[35%] left-[3%] w-[18%] sm:w-[12%] bottom-[5%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            <div className="absolute -bottom-8 left-4 sm:-bottom-10 sm:left-6 w-28 h-36 sm:w-40 sm:h-52 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -255,7 +255,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
           </div>
         ) : (
           /* Portrait-only fallback */
-          <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             <div className="absolute inset-0">
               {!heroLoaded && pro.portraitImageUrl && (
                 <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
@@ -276,7 +276,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
         )}
       </div>
 
-      <div className="px-5 sm:px-6 pt-6 pb-8 max-w-6xl mx-auto">
+      <div className="px-5 sm:px-6 pt-12 sm:pt-14 pb-8 max-w-6xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] mb-3 flex items-center gap-1.5 font-semibold">
             <Star className="w-3 h-3 fill-[#c4956a] text-[#c4956a]" />
@@ -334,7 +334,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute top-[35%] left-[3%] w-[22%] bottom-[5%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute -bottom-6 left-3 w-20 h-28 sm:w-24 sm:h-32 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1106,14 +1106,14 @@ function ProfilePage({ slug }: { slug: string }) {
       {/* Hero: workspace full-width with portrait pip */}
       <section className="relative w-full">
         {pro.spaceImageUrl ? (
-          <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
               <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
                 className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute top-[35%] left-[3%] w-[18%] sm:w-[12%] bottom-[5%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute -bottom-8 left-4 sm:-bottom-10 sm:left-6 w-28 h-36 sm:w-40 sm:h-52 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
@@ -1129,7 +1129,7 @@ function ProfilePage({ slug }: { slug: string }) {
             )}
           </div>
         ) : (
-          <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden">
+          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={`${pro.name} - ${pro.profession}`}
@@ -1152,7 +1152,7 @@ function ProfilePage({ slug }: { slug: string }) {
       </section>
 
       {/* Profile info — unified for mobile + desktop */}
-      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-8 sm:pt-12">
+      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-14 sm:pt-16">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-2">{pro.profession}</p>
           <h1 className="font-serif text-[2rem] sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-2 sm:mb-3 text-foreground" data-testid="text-profile-name">
