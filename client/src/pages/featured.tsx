@@ -220,7 +220,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               />
             </div>
             {/* Portrait pip — percentage based */}
-            <div className="absolute bottom-[4%] left-[3%] w-[22%] aspect-[3/4] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-[4%] left-[3%] w-[22%] h-[55%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -318,7 +318,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip — percentage based */}
-            <div className="absolute bottom-[4%] left-[3%] w-[28%] aspect-[3/4] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-[4%] left-[3%] w-[28%] h-[55%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1097,7 +1097,7 @@ function ProfilePage({ slug }: { slug: string }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute bottom-[4%] left-[3%] w-[25%] sm:w-[18%] aspect-[3/4] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute bottom-[4%] left-[3%] w-[25%] sm:w-[18%] h-[55%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
