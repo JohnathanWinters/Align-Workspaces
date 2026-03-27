@@ -236,7 +236,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute top-[45%] bottom-3 left-3 sm:top-[40%] sm:bottom-5 sm:left-5 w-[22%] sm:w-[14%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-20 h-24 sm:w-28 sm:h-36 rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -334,7 +334,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip — percentage based */}
-            <div className="absolute top-[45%] bottom-3 left-3 w-[28%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-2 left-2 w-16 h-20 sm:w-20 sm:h-24 rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1113,7 +1113,7 @@ function ProfilePage({ slug }: { slug: string }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute top-[45%] bottom-3 left-3 sm:top-[40%] sm:bottom-5 sm:left-5 w-[22%] sm:w-[14%] rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 w-20 h-24 sm:w-28 sm:h-36 rounded-lg ring-2 ring-white shadow-lg z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
