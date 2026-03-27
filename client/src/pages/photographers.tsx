@@ -402,7 +402,7 @@ export default function PhotographersPage() {
         </div>
       </section>
 
-      <SiteFooter />
+      <SiteFooter hideNewsletter />
     </div>
   );
 }

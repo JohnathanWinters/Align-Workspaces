@@ -4,9 +4,10 @@ import { NewsletterSignup } from "./newsletter-signup";
 
 interface SiteFooterProps {
   variant?: "dark" | "light";
+  hideNewsletter?: boolean;
 }
 
-export function SiteFooter({ variant = "light" }: SiteFooterProps) {
+export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFooterProps) {
   const isDark = variant === "dark";
   const textColor = isDark ? "text-white/60" : "text-stone-500 dark:text-white/60";
   const hoverColor = isDark ? "hover:text-white" : "hover:text-stone-900 dark:hover:text-white";
@@ -25,15 +26,17 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
   return (
     <footer className={`relative z-10 w-full px-6 py-8 sm:py-10 pb-16 sm:pb-10`} data-testid="site-footer">
       <div className={`max-w-4xl mx-auto border-t ${dividerColor} pt-8`}>
-        <div className="mb-10 px-2">
-          <div className="text-center mb-4">
-            <span className={`text-[10px] tracking-[0.3em] uppercase font-semibold block mb-1.5 ${isDark ? "text-[#c9a96e]/70" : "text-[#c4956a]"}`}>Stay Connected</span>
-            <p className={`text-sm ${isDark ? "text-white/50" : "text-stone-500"} max-w-sm mx-auto leading-relaxed`}>
-              New spaces, community guides, and stories from professionals across Miami.
-            </p>
+        {!hideNewsletter && (
+          <div className="mb-10 px-2">
+            <div className="text-center mb-4">
+              <span className={`text-[10px] tracking-[0.3em] uppercase font-semibold block mb-1.5 ${isDark ? "text-[#c9a96e]/70" : "text-[#c4956a]"}`}>Stay Connected</span>
+              <p className={`text-sm ${isDark ? "text-white/50" : "text-stone-500"} max-w-sm mx-auto leading-relaxed`}>
+                New spaces, community guides, and stories from professionals across Miami.
+              </p>
+            </div>
+            <NewsletterSignup variant={variant} />
           </div>
-          <NewsletterSignup variant={variant} />
-        </div>
+        )}
 
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6">
           {navLinks.map((link) => (
