@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle } from "lucide-react";
 import { Link } from "wouter";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
@@ -85,6 +85,12 @@ export default function PhotographersPage() {
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-photographers">
                           <Info className="w-4 h-4" />
                           Our Vision
+                        </button>
+                      </Link>
+                      <Link href="/support">
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-photographers">
+                          <HelpCircle className="w-4 h-4" />
+                          Support
                         </button>
                       </Link>
                       <Link href="/portal">

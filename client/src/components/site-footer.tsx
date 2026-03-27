@@ -18,6 +18,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
     { label: "Featured Pros", href: "/featured" },
     { label: "Our Vision", href: "/our-vision" },
     { label: "Portfolio", href: "/portfolio" },
+    { label: "Support", href: "/support" },
     { label: "Client Portal", href: "/portal" },
   ];
 

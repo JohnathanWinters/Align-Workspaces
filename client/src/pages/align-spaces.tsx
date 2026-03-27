@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users } from "lucide-react";
+import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -292,6 +292,10 @@ export default function AlignSpacesPage() {
                   <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-menu">
                     <Info className="w-4 h-4" />
                     Our Vision
+                  </button>
+                  <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-menu">
+                    <HelpCircle className="w-4 h-4" />
+                    Support
                   </button>
                 </motion.div>
               )}

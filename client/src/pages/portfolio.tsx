@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, ArrowRight, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -401,6 +401,12 @@ export default function PortfolioPage() {
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-portfolio">
                         <Info className="w-4 h-4" />
                         Our Vision
+                      </button>
+                    </Link>
+                    <Link href="/support">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-portfolio">
+                        <HelpCircle className="w-4 h-4" />
+                        Support
                       </button>
                     </Link>
                     <Link href="/portal">

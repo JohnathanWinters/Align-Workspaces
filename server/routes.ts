@@ -809,6 +809,25 @@ export async function registerRoutes(
     }
   });
 
+  // Public support form (no auth required)
+  app.post("/api/support-request", async (req, res) => {
+    try {
+      const { name, email, message } = req.body;
+      if (!message || typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+      if (!email || typeof email !== "string" || !email.trim()) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      const clientName = (name && typeof name === "string" && name.trim()) || "Visitor";
+      await sendHelpRequest({ clientName, clientEmail: email.trim(), message: message.trim() });
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Failed to send support request:", err);
+      res.status(500).json({ message: "Failed to send message. Please try again." });
+    }
+  });
+
   app.get("/api/shoots", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

@@ -119,6 +119,7 @@ app.use("/api/collaborate", moderateLimiter);
 app.use("/api/nominations", moderateLimiter);
 app.use("/api/newsletter/subscribe", moderateLimiter);
 app.use("/api/help-request", moderateLimiter);
+app.use("/api/support-request", moderateLimiter);
 app.use("/api/track", moderateLimiter);
 
 // Apply general limiter to all /api/ routes as a baseline

@@ -43,6 +43,7 @@ import {
   Camera,
   Info,
   Images,
+  HelpCircle,
 } from "lucide-react";
 import { getClothingRecommendations, fabricImageMap } from "@/lib/clothing-recommendations";
 import { TestimonialsSection } from "@/components/testimonials-section";
@@ -408,6 +409,10 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-header">
                             <Info className="w-4 h-4" />
                             Our Vision
+                          </button>
+                          <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-header">
+                            <HelpCircle className="w-4 h-4" />
+                            Support
                           </button>
                         </motion.div>
                       )}

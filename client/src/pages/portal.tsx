@@ -16,6 +16,7 @@ import {
   Calendar,
   LogOut,
   Image,
+  HelpCircle,
   Clock,
   CheckCircle,
   Loader2,
@@ -31,7 +32,6 @@ import {
   CalendarPlus,
   ChevronRight,
   X,
-  HelpCircle,
   Send,
   CheckCircle2,
   Coins,
@@ -1867,128 +1867,6 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
   );
 }
 
-function HelpButton() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [sent, setSent] = useState(false);
-
-  const sendMutation = useMutation({
-    mutationFn: async (msg: string) => {
-      await apiRequest("POST", "/api/help-request", { message: msg });
-    },
-    onSuccess: () => {
-      setSent(true);
-      setMessage("");
-      setTimeout(() => {
-        setSent(false);
-        setIsOpen(false);
-      }, 2500);
-    },
-  });
-
-  return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        data-testid="button-need-help"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#1a1a1a] text-white px-5 py-3 rounded-full shadow-lg hover:bg-black transition-colors text-sm font-medium"
-      >
-        <HelpCircle className="w-4 h-4" />
-        Need Help?
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-4"
-            onClick={() => { if (!sendMutation.isPending) setIsOpen(false); }}
-            data-testid="help-overlay"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ duration: 0.25 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-              data-testid="help-dialog"
-            >
-              <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-                    <HelpCircle className="w-4.5 h-4.5 text-gray-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-lg text-gray-900">Need Help?</h3>
-                    <p className="text-xs text-gray-500">We'll get back to you as soon as possible</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  data-testid="button-close-help"
-                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="p-5">
-                {sent ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center py-8 text-center"
-                    data-testid="help-success"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
-                      <CheckCircle2 className="w-6 h-6 text-green-600" />
-                    </div>
-                    <h4 className="font-serif text-lg text-gray-900 mb-1">Message Sent!</h4>
-                    <p className="text-sm text-gray-500">We'll get back to you shortly.</p>
-                  </motion.div>
-                ) : (
-                  <>
-                    <Textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder="Type your question or message here..."
-                      rows={5}
-                      disabled={sendMutation.isPending}
-                      data-testid="input-help-message"
-                      className="resize-none border-gray-200 focus:border-gray-400 focus:ring-0 text-sm"
-                    />
-                    {sendMutation.isError && (
-                      <p className="text-red-500 text-xs mt-2" data-testid="text-help-error">
-                        Failed to send message. Please try again.
-                      </p>
-                    )}
-                    <Button
-                      onClick={() => sendMutation.mutate(message)}
-                      disabled={!message.trim() || sendMutation.isPending}
-                      data-testid="button-send-help"
-                      className="w-full mt-4 bg-[#1a1a1a] text-white hover:bg-black"
-                    >
-                      {sendMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4 mr-2" />
-                      )}
-                      {sendMutation.isPending ? "Sending..." : "Send Message"}
-                    </Button>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
@@ -2107,14 +1985,12 @@ function PortalContent() {
           shoot={selectedShoot}
           onBack={() => setSelectedShoot(null)}
         />
-        <HelpButton />
       </>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-      <HelpButton />
       <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-10">
         <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
           <a
@@ -2226,6 +2102,12 @@ function PortalContent() {
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-about-portal">
                         <Info className="w-4 h-4" />
                         Our Vision
+                      </button>
+                    </Link>
+                    <Link href="/support">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-support-portal">
+                        <HelpCircle className="w-4 h-4" />
+                        Support
                       </button>
                     </Link>
                   </motion.div>
