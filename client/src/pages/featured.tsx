@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { useSmartBack } from "@/hooks/use-smart-back";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images, Building2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images, Building2, Info, HelpCircle, User } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { UserIndicator } from "@/components/user-indicator";
@@ -147,27 +147,45 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                   >
+                    <Link href="/">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <Building2 className="w-4 h-4" />
+                        Align Workspaces
+                      </button>
+                    </Link>
+                    <Link href="/workspaces">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <Building2 className="w-4 h-4" />
+                        Workspaces
+                      </button>
+                    </Link>
                     <Link href="/portrait-builder">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-nav">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Camera className="w-4 h-4" />
                         Portrait Builder
                       </button>
                     </Link>
                     <Link href="/portfolio">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-nav">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Images className="w-4 h-4" />
                         Our Work
                       </button>
                     </Link>
-                    <Link href="/">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-nav">
-                        <MapPin className="w-4 h-4" />
-                        Align Workspaces
+                    <Link href="/our-vision">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <Info className="w-4 h-4" />
+                        Our Vision
+                      </button>
+                    </Link>
+                    <Link href="/support">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <HelpCircle className="w-4 h-4" />
+                        Support
                       </button>
                     </Link>
                     <Link href="/portal">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-nav">
-                        <Users className="w-4 h-4" />
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <User className="w-4 h-4" />
                         Client Portal
                       </button>
                     </Link>
