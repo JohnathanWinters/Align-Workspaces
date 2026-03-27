@@ -361,7 +361,6 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
               <div className="flex items-center relative">
                 <div className="flex items-center gap-3 z-10">
-                  <UserIndicator />
                   <button
                     onClick={() => autoStart ? setLocation("/") : setCurrentStep(0)}
                     className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
@@ -370,6 +369,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                     <ArrowLeft className="w-4 h-4" />
                     <span className="hidden sm:inline">Back</span>
                   </button>
+                  <UserIndicator />
                 </div>
                 <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
                   Portrait Builder

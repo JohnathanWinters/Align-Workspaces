@@ -34,11 +34,11 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
       <button
         onClick={() => setOpen(!open)}
         data-testid="button-user-indicator"
-        className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300 px-3 py-2"
+        className={`flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2 ${isLight ? "" : "text-foreground/50 hover:text-foreground"}`}
         aria-label="Account menu"
-        style={{ color: isLight ? "#d4c4a8" : "#c4956a" }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = isLight ? "#f0e6d0" : "#a07a52"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = isLight ? "#d4c4a8" : "#c4956a"; }}
+        style={isLight ? { color: "#d4c4a8" } : undefined}
+        onMouseEnter={isLight ? (e) => { e.currentTarget.style.color = "#f0e6d0"; } : undefined}
+        onMouseLeave={isLight ? (e) => { e.currentTarget.style.color = "#d4c4a8"; } : undefined}
       >
         <User className="w-4 h-4" />
         {user.firstName || "Account"}
