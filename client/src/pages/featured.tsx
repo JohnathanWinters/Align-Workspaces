@@ -34,6 +34,7 @@ interface FeaturedProfessional {
   ctaLabel: string | null;
   ctaUrl: string | null;
   spaceImageUrl: string | null;
+  spaceImageCropPosition: { x: number; y: number; zoom?: number } | null;
   spaceName: string | null;
   spaceQuote: string | null;
   isFeaturedOfWeek: number;
@@ -204,10 +205,13 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               {!spaceLoaded && (
                 <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
               )}
-              <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
-                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceLoaded ? "opacity-100" : "opacity-0"}`}
-                fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
-              />
+              <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
+                <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceLoaded ? "opacity-100" : "opacity-0"}`}
+                  fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
+                  style={getCropStyle(pro.spaceImageCropPosition)}
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               {pro.spaceName && (
                 <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
@@ -308,13 +312,16 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               {!spaceImgLoaded && (
                 <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
               )}
-              <img
-                src={pro.spaceImageUrl!}
-                alt={pro.spaceName || "Their workspace"}
-                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceImgLoaded ? "opacity-100" : "opacity-0"}`}
-                loading={index < 6 ? "eager" : "lazy"}
-                onLoad={() => setSpaceImgLoaded(true)}
-              />
+              <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
+                <img
+                  src={pro.spaceImageUrl!}
+                  alt={pro.spaceName || "Their workspace"}
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceImgLoaded ? "opacity-100" : "opacity-0"}`}
+                  loading={index < 6 ? "eager" : "lazy"}
+                  onLoad={() => setSpaceImgLoaded(true)}
+                  style={getCropStyle(pro.spaceImageCropPosition)}
+                />
+              </div>
               {pro.spaceName && (
                 <div className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
                   <Building2 className="w-2.5 h-2.5" />
@@ -1090,9 +1097,12 @@ function ProfilePage({ slug }: { slug: string }) {
               </div>
             </div>
             <div className="w-[65%] sm:w-[67%] h-full relative overflow-hidden">
-              <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
-                className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-              />
+              <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
+                <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
+                  className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
+                  style={getCropStyle(pro.spaceImageCropPosition)}
+                />
+              </div>
               {pro.spaceName && (
                 <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5">
                   <Building2 className="w-3 h-3" />

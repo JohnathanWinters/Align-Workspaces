@@ -316,6 +316,7 @@ export const featuredProfessionals = pgTable("featured_professionals", {
   ctaLabel: text("cta_label"),
   ctaUrl: text("cta_url"),
   spaceImageUrl: text("space_image_url"),
+  spaceImageCropPosition: jsonb("space_image_crop_position").$type<{ x: number; y: number; zoom?: number }>(),
   spaceName: text("space_name"),
   spaceQuote: text("space_quote"),
   yearsHosting: integer("years_hosting"),

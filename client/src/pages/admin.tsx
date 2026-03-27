@@ -3962,8 +3962,10 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [formPortraitFile, setFormPortraitFile] = useState<File | null>(null);
   const [cropPosition, setCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
   const [heroCropPosition, setHeroCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 20, zoom: 1 });
+  const [spaceCropPosition, setSpaceCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [isHeroDragging, setIsHeroDragging] = useState(false);
+  const [isSpaceDragging, setIsSpaceDragging] = useState(false);
   const [expandedPro, setExpandedPro] = useState<string | null>(null);
   const [allWorkspaces, setAllWorkspaces] = useState<Array<{ id: string; name: string; imageUrls: string[] | null; neighborhood: string | null }>>([]);
   const cropContainerRef = useRef<HTMLDivElement>(null);
@@ -4070,6 +4072,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         metaDescription: form.metaDescription || form.headline,
         spaceName: form.spaceName?.trim() || null,
         spaceQuote: form.spaceQuote?.trim() || null,
+        spaceImageCropPosition: spaceCropPosition,
       };
 
       const url = editing ? `/api/admin/featured/${editing.id}` : "/api/admin/featured";
@@ -4167,6 +4170,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
     setFormPortraitFile(null);
     setCropPosition({ x: pro.portraitCropPosition?.x ?? 50, y: pro.portraitCropPosition?.y ?? 50, zoom: pro.portraitCropPosition?.zoom ?? 1 });
     setHeroCropPosition({ x: pro.heroCropPosition?.x ?? 50, y: pro.heroCropPosition?.y ?? 20, zoom: pro.heroCropPosition?.zoom ?? 1 });
+    setSpaceCropPosition({ x: (pro as any).spaceImageCropPosition?.x ?? 50, y: (pro as any).spaceImageCropPosition?.y ?? 50, zoom: (pro as any).spaceImageCropPosition?.zoom ?? 1 });
     setShowForm(true);
   };
 
@@ -4621,6 +4625,123 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
               );
             })()}
+            {editing && (editing as any).spaceImageUrl && (
+              <div>
+                <Label>Workspace Image Crop</Label>
+                <p className="text-xs text-gray-400 mb-2">Drag to reposition how the workspace photo appears in cards and the profile hero</p>
+                <div className="flex gap-4 items-start">
+                  <div
+                    className="w-56 h-36 rounded-lg overflow-hidden bg-stone-200 relative select-none cursor-grab active:cursor-grabbing flex-shrink-0"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setIsSpaceDragging(true);
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      const startPos = { ...spaceCropPosition };
+                      const handleMove = (ev: MouseEvent) => {
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+                        setSpaceCropPosition(prev => ({
+                          ...prev,
+                          x: Math.max(0, Math.min(100, startPos.x - (dx / 2.24))),
+                          y: Math.max(0, Math.min(100, startPos.y - (dy / 1.44))),
+                        }));
+                      };
+                      const handleUp = () => {
+                        setIsSpaceDragging(false);
+                        window.removeEventListener("mousemove", handleMove);
+                        window.removeEventListener("mouseup", handleUp);
+                      };
+                      window.addEventListener("mousemove", handleMove);
+                      window.addEventListener("mouseup", handleUp);
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      setIsSpaceDragging(true);
+                      const startX = touch.clientX;
+                      const startY = touch.clientY;
+                      const startPos = { ...spaceCropPosition };
+                      const handleMove = (ev: TouchEvent) => {
+                        ev.preventDefault();
+                        const t = ev.touches[0];
+                        const dx = t.clientX - startX;
+                        const dy = t.clientY - startY;
+                        setSpaceCropPosition(prev => ({
+                          ...prev,
+                          x: Math.max(0, Math.min(100, startPos.x - (dx / 2.24))),
+                          y: Math.max(0, Math.min(100, startPos.y - (dy / 1.44))),
+                        }));
+                      };
+                      const cleanup = () => {
+                        setIsSpaceDragging(false);
+                        window.removeEventListener("touchmove", handleMove);
+                        window.removeEventListener("touchend", cleanup);
+                        window.removeEventListener("touchcancel", cleanup);
+                      };
+                      window.addEventListener("touchmove", handleMove, { passive: false });
+                      window.addEventListener("touchend", cleanup);
+                      window.addEventListener("touchcancel", cleanup);
+                    }}
+                  >
+                    <img
+                      src={(editing as any).spaceImageUrl}
+                      alt="Workspace preview"
+                      className="w-full h-full object-cover pointer-events-none"
+                      style={{
+                        objectPosition: `${spaceCropPosition.x}% ${spaceCropPosition.y}%`,
+                        transform: `scale(${spaceCropPosition.zoom})`,
+                        transformOrigin: `${spaceCropPosition.x}% ${spaceCropPosition.y}%`,
+                      }}
+                      draggable={false}
+                    />
+                    {!isSpaceDragging && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+                          <Move className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-3 pt-1 flex-1">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-500">Zoom</Label>
+                        <span className="text-xs text-gray-400 tabular-nums">{Math.round(spaceCropPosition.zoom * 100)}%</span>
+                      </div>
+                      <input type="range" min="1" max="2" step="0.05" value={spaceCropPosition.zoom}
+                        onChange={e => setSpaceCropPosition(prev => ({ ...prev, zoom: parseFloat(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-500">Vertical</Label>
+                        <span className="text-xs text-gray-400 tabular-nums">{Math.round(spaceCropPosition.y)}%</span>
+                      </div>
+                      <input type="range" min="0" max="100" step="1" value={spaceCropPosition.y}
+                        onChange={e => setSpaceCropPosition(prev => ({ ...prev, y: parseFloat(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs text-gray-500">Horizontal</Label>
+                        <span className="text-xs text-gray-400 tabular-nums">{Math.round(spaceCropPosition.x)}%</span>
+                      </div>
+                      <input type="range" min="0" max="100" step="1" value={spaceCropPosition.x}
+                        onChange={e => setSpaceCropPosition(prev => ({ ...prev, x: parseFloat(e.target.value) }))}
+                        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-stone-700 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-stone-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
+                      />
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="text-xs text-gray-400 w-fit"
+                      onClick={() => setSpaceCropPosition({ x: 50, y: 50, zoom: 1 })}>
+                      Reset to center
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div><Label>Why This Workspace (their quote)</Label><Textarea value={form.spaceQuote} onChange={e => setForm({ ...form, spaceQuote: e.target.value })} placeholder="What makes this workspace special to them and their practice..." rows={3} /></div>
           </div>
 
