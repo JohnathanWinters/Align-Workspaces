@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
@@ -23,9 +23,39 @@ import {
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
 
+function useDragScroll() {
+  const ref = useRef<HTMLDivElement>(null);
+  const state = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
+  const onDragStart = useCallback((e: React.DragEvent) => { e.preventDefault(); }, []);
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    const el = ref.current; if (!el) return;
+    state.current = { isDown: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft, moved: false };
+    el.style.cursor = "grabbing"; el.style.scrollSnapType = "none";
+  }, []);
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!state.current.isDown) return; e.preventDefault();
+    const el = ref.current; if (!el) return;
+    const walk = (e.pageX - el.offsetLeft - state.current.startX) * 1.5;
+    if (Math.abs(walk) > 5) state.current.moved = true;
+    el.scrollLeft = state.current.scrollLeft - walk;
+  }, []);
+  const onMouseUp = useCallback(() => {
+    state.current.isDown = false; const el = ref.current;
+    if (el) { el.style.cursor = ""; el.style.scrollSnapType = ""; }
+  }, []);
+  const onMouseLeave = useCallback(() => {
+    if (state.current.isDown) { state.current.isDown = false; const el = ref.current; if (el) { el.style.cursor = ""; el.style.scrollSnapType = ""; } }
+  }, []);
+  const preventClickIfDragged = useCallback((e: React.MouseEvent) => {
+    if (state.current.moved) { e.preventDefault(); e.stopPropagation(); state.current.moved = false; }
+  }, []);
+  return { ref, onDragStart, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, preventClickIfDragged };
+}
+
 export default function PortraitLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
+  const photosCarousel = useDragScroll();
 
   const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category: string; cropPosition: any }>>({
     queryKey: ["/api/portfolio-photos"],
@@ -145,9 +175,18 @@ export default function PortraitLandingPage() {
                 First Impressions We've Built
               </h2>
             </div>
-            {/* Mobile: carousel */}
+            {/* Mobile: carousel with drag scroll */}
             <div className="sm:hidden">
-              <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-5 pb-4 scrollbar-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
+              <div
+                ref={photosCarousel.ref}
+                onDragStart={photosCarousel.onDragStart}
+                onMouseDown={photosCarousel.onMouseDown}
+                onMouseMove={photosCarousel.onMouseMove}
+                onMouseUp={photosCarousel.onMouseUp}
+                onMouseLeave={photosCarousel.onMouseLeave}
+                onClickCapture={photosCarousel.preventClickIfDragged}
+                className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-5 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+              >
                 {portraitPhotos.map((photo, i) => {
                   const crop = photo.cropPosition || { x: 50, y: 50, zoom: 1 };
                   return (
@@ -174,6 +213,16 @@ export default function PortraitLandingPage() {
                   </div>
                 );
               })}
+            </div>
+            <div className="text-center mt-8 px-5 sm:px-8">
+              <Link
+                href="/portfolio"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#c4956a] hover:text-[#a07a52] transition-colors"
+              >
+                <Images className="w-4 h-4" />
+                View full portfolio
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </section>
