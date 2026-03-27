@@ -1332,15 +1332,26 @@ function ProfilePage({ slug }: { slug: string }) {
       )}
 
       {relatedPros.length > 0 && (
-        <section className="max-w-6xl mx-auto px-6 py-16 sm:py-24">
-          <div className="border-t border-foreground/10 pt-12 sm:pt-16">
+        <section className="max-w-6xl mx-auto py-16 sm:py-24">
+          <div className="border-t border-foreground/10 pt-12 sm:pt-16 px-6">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mb-2">Continue Reading</p>
             <h2 className="font-serif text-2xl sm:text-3xl font-semibold mb-10" data-testid="text-related-heading">You Might Also Like</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+          </div>
+          {/* Mobile: horizontal carousel */}
+          <div className="sm:hidden">
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-6 pb-4 scrollbar-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
               {relatedPros.map((p, idx) => (
-                <EditorialCard key={p.id} pro={p} index={idx} />
+                <div key={p.id} className="snap-start flex-shrink-0 w-[80%]">
+                  <EditorialCard pro={p} index={idx} />
+                </div>
               ))}
             </div>
+          </div>
+          {/* Desktop: grid */}
+          <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 px-6">
+            {relatedPros.map((p, idx) => (
+              <EditorialCard key={p.id} pro={p} index={idx} />
+            ))}
           </div>
         </section>
       )}
