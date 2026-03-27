@@ -364,9 +364,33 @@ export default function AlignSpacesPage() {
         </p>
       </div>
 
-      <section className="px-4 sm:px-6 pb-12 sm:pb-16" data-testid="section-spaces-grid">
+      <section className="pb-12 sm:pb-16" data-testid="section-spaces-grid">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {/* Mobile: horizontal scroll carousel */}
+          <div className="sm:hidden">
+            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 -mx-0 scrollbar-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+              {spacesLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="snap-start flex-shrink-0 w-[85%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
+                    <div className="aspect-[4/3] bg-stone-200" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-stone-200 rounded w-3/4" />
+                      <div className="h-4 bg-stone-200 rounded w-1/2" />
+                    </div>
+                  </div>
+                ))
+              ) : allSpaces.map((space) => (
+                <div key={space.id} className="snap-start flex-shrink-0 w-[85%]">
+                  <SpaceCard space={space} />
+                </div>
+              ))}
+            </div>
+            {!spacesLoading && allSpaces.length > 2 && (
+              <p className="text-center text-[11px] text-stone-400 mt-1 px-4">Swipe to see more</p>
+            )}
+          </div>
+          {/* Desktop: grid */}
+          <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 px-4 sm:px-6">
             {spacesLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
@@ -382,7 +406,6 @@ export default function AlignSpacesPage() {
               <SpaceCard key={space.id} space={space} />
             ))}
           </div>
-
         </div>
       </section>
 
@@ -562,7 +585,60 @@ export default function AlignSpacesPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {/* Mobile: horizontal scroll carousel */}
+            <div className="sm:hidden">
+              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 scrollbar-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+                {(featuredPros || []).slice(0, 6).map((pro) => (
+                  <Link
+                    key={pro.id}
+                    href={`/featured/${pro.slug}`}
+                    className="snap-start flex-shrink-0 w-[78%] group block rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300"
+                    data-testid={`featured-pro-${pro.id}`}
+                  >
+                    <div className="aspect-[4/5] overflow-hidden bg-stone-100 relative">
+                      {pro.portraitImageUrl ? (() => {
+                        const crop = pro.portraitCropPosition as any;
+                        const x = crop?.x ?? 50;
+                        const y = crop?.y ?? 50;
+                        const zoom = crop?.zoom ?? 1;
+                        const insetPct = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
+                        return (
+                          <img src={pro.portraitImageUrl} alt={pro.name}
+                            className="absolute object-cover"
+                            style={{ objectPosition: `${x}% ${y}%`, top: `-${insetPct}%`, left: `-${insetPct}%`, width: `${100 + insetPct * 2}%`, height: `${100 + insetPct * 2}%` }}
+                          />
+                        );
+                      })() : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-16 h-16 text-stone-300" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
+                      <p className="text-sm text-[#c4956a] font-medium mb-1">{pro.profession}</p>
+                      <div className="flex items-center gap-1.5 text-stone-400 text-xs">
+                        <MapPin className="w-3 h-3" />
+                        <span>{pro.location}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center mt-2 px-4">
+                <Link
+                  href="/featured"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
+                  data-testid="link-featured-all-mobile"
+                >
+                  View all professionals
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Desktop: grid */}
+            <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {(featuredPros || []).slice(0, 3).map((pro) => (
                 <Link
                   key={pro.id}
@@ -576,21 +652,11 @@ export default function AlignSpacesPage() {
                       const x = crop?.x ?? 50;
                       const y = crop?.y ?? 50;
                       const zoom = crop?.zoom ?? 1;
-                      // Use negative inset to simulate zoom via overflow + scale,
-                      // keeping the image sharp by letting the browser sample more pixels
                       const insetPct = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
                       return (
-                        <img
-                          src={pro.portraitImageUrl}
-                          alt={pro.name}
+                        <img src={pro.portraitImageUrl} alt={pro.name}
                           className="absolute object-cover transition-transform duration-500"
-                          style={{
-                            objectPosition: `${x}% ${y}%`,
-                            top: `-${insetPct}%`,
-                            left: `-${insetPct}%`,
-                            width: `${100 + insetPct * 2}%`,
-                            height: `${100 + insetPct * 2}%`,
-                          }}
+                          style={{ objectPosition: `${x}% ${y}%`, top: `-${insetPct}%`, left: `-${insetPct}%`, width: `${100 + insetPct * 2}%`, height: `${100 + insetPct * 2}%` }}
                         />
                       );
                     })() : (
@@ -617,17 +683,6 @@ export default function AlignSpacesPage() {
                   </div>
                 </Link>
               ))}
-            </div>
-
-            <div className="sm:hidden text-center mt-6">
-              <Link
-                href="/featured"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
-                data-testid="link-featured-all-mobile"
-              >
-                View all professionals
-                <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
 
             <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-stone-100">
