@@ -316,9 +316,9 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid={`card-featured-${pro.slug}`}
     >
-      <div className={`relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300 ${hasSpace ? "aspect-[4/3]" : "aspect-[3/4]"}`}>
+      <div className={`relative mb-4`}>
+        <div className={`overflow-hidden rounded-md shadow-md group-hover:shadow-xl transition-shadow duration-300 ${hasSpace ? "aspect-[4/3]" : "aspect-[3/4]"}`}>
         {hasSpace ? (
-          /* Workspace full-width with portrait pip */
           <div className="w-full h-full relative">
             {!spaceImgLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
@@ -332,17 +332,6 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
                 onLoad={() => setSpaceImgLoaded(true)}
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
-            </div>
-            {/* Portrait pip */}
-            <div className="absolute -bottom-3 left-3 w-16 h-20 sm:w-20 sm:h-24 rounded-lg ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
-              {pro.portraitImageUrl ? (
-                <img src={pro.portraitImageUrl} alt={pro.name}
-                  className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
-                  loading={index < 6 ? "eager" : "lazy"}
-                  onLoad={() => setImgLoaded(true)}
-                  style={getPipStyle(pro.portraitCropPosition).imgStyle}
-                />
-              ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
               <div className="absolute bottom-2.5 right-2.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 z-10">
@@ -377,6 +366,17 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
           </div>
         ) : null}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+        </div>
+        {/* Portrait pip — outside overflow container */}
+        {hasSpace && pro.portraitImageUrl && (
+          <div className="absolute -bottom-4 left-3 w-16 h-20 sm:w-20 sm:h-28 rounded-lg ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
+            <img src={pro.portraitImageUrl} alt={pro.name}
+              className="w-full h-full object-cover"
+              loading={index < 6 ? "eager" : "lazy"}
+              style={{ objectPosition: `${pro.portraitCropPosition?.x ?? 50}% ${pro.portraitCropPosition?.y ?? 50}%` }}
+            />
+          </div>
+        )}
       </div>
       <div>
         <div className="flex items-center gap-2 mb-1.5">
