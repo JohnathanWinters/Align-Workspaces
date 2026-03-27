@@ -3965,6 +3965,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [isDragging, setIsDragging] = useState(false);
   const [isHeroDragging, setIsHeroDragging] = useState(false);
   const [expandedPro, setExpandedPro] = useState<string | null>(null);
+  const [allWorkspaces, setAllWorkspaces] = useState<Array<{ id: string; name: string; imageUrls: string[] | null; neighborhood: string | null }>>([]);
   const cropContainerRef = useRef<HTMLDivElement>(null);
   const heroCropContainerRef = useRef<HTMLDivElement>(null);
   const formPortraitPreviewRef = useRef(formPortraitPreview);
@@ -4015,8 +4016,17 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       const res = await adminFetch("/api/admin/featured");
       if (res.ok) setProfessionals(await res.json());
     } catch {}
+    try {
+      const res = await adminFetch("/api/admin/spaces/all");
+      if (res.ok) {
+        const spaces = await res.json();
+        setAllWorkspaces(spaces.map((s: any) => ({ id: s.id, name: s.name, imageUrls: s.imageUrls, neighborhood: s.neighborhood })));
+      }
+    } catch {}
     setLoading(false);
   }, [adminFetch]);
+
+  const fetchProfessionals = loadData;
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -4544,11 +4554,74 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
 
           <div className="space-y-4">
             <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Their Workspace</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div><Label>Space Name</Label><Input value={form.spaceName} onChange={e => setForm({ ...form, spaceName: e.target.value })} placeholder="e.g. Align Studio — Coral Gables" /></div>
+            <div>
+              <Label>Select Workspace</Label>
+              <Select
+                value={allWorkspaces.find(w => w.name === form.spaceName)?.id || "__custom"}
+                onValueChange={v => {
+                  if (v === "__custom") {
+                    setForm({ ...form, spaceName: "" });
+                  } else {
+                    const ws = allWorkspaces.find(w => w.id === v);
+                    if (ws) setForm({ ...form, spaceName: ws.name });
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Choose a workspace or enter custom" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__custom">Custom name...</SelectItem>
+                  {allWorkspaces.map(ws => (
+                    <SelectItem key={ws.id} value={ws.id}>
+                      {ws.name}{ws.neighborhood ? ` — ${ws.neighborhood}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div><Label>Why This Space (their quote about the space)</Label><Textarea value={form.spaceQuote} onChange={e => setForm({ ...form, spaceQuote: e.target.value })} placeholder="What makes this workspace special to them and their practice..." rows={3} /></div>
-            <p className="text-xs text-gray-400">Space image can be uploaded after saving via the list view.</p>
+            {(!allWorkspaces.find(w => w.name === form.spaceName) || !form.spaceName) && (
+              <div><Label>Workspace Name</Label><Input value={form.spaceName} onChange={e => setForm({ ...form, spaceName: e.target.value })} placeholder="e.g. Align Studio — Coral Gables" /></div>
+            )}
+            {(() => {
+              const selectedWs = allWorkspaces.find(w => w.name === form.spaceName);
+              if (!selectedWs?.imageUrls?.length) return null;
+              return (
+                <div>
+                  <Label>Use a photo from this workspace</Label>
+                  <p className="text-xs text-gray-400 mb-2">Click a photo to set it as the workspace image (uploaded after saving)</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {selectedWs.imageUrls.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={async () => {
+                          if (!editing?.id) {
+                            toast({ title: "Save the professional first, then select a workspace photo", variant: "destructive" });
+                            return;
+                          }
+                          setUploading(editing.id);
+                          try {
+                            const imgRes = await fetch(url);
+                            const blob = await imgRes.blob();
+                            const fd = new FormData();
+                            fd.append("file", blob, "workspace.webp");
+                            const res = await adminFetch(`/api/admin/featured/${editing.id}/upload-space-image`, { method: "POST", body: fd, isFormData: true });
+                            if (res.ok) toast({ title: "Workspace photo set" });
+                          } catch { toast({ title: "Failed to set photo", variant: "destructive" }); }
+                          setUploading(null);
+                        }}
+                        className="aspect-[4/3] rounded-lg overflow-hidden border-2 border-transparent hover:border-[#c4956a] transition-colors relative group"
+                      >
+                        <img src={url} alt={`Workspace photo ${i + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                          <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">Use this</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+            <div><Label>Why This Workspace (their quote)</Label><Textarea value={form.spaceQuote} onChange={e => setForm({ ...form, spaceQuote: e.target.value })} placeholder="What makes this workspace special to them and their practice..." rows={3} /></div>
           </div>
 
           <div className="space-y-4">
