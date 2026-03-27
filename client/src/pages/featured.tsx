@@ -319,82 +319,43 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid={`card-featured-${pro.slug}`}
     >
-      <div className={`relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300 ${hasSpace ? "aspect-[4/3] sm:aspect-[4/3]" : "aspect-[3/4]"}`}>
+      <div className={`relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300 ${hasSpace ? "aspect-[4/3]" : "aspect-[3/4]"}`}>
         {hasSpace ? (
-          <>
-            {/* Mobile: workspace full-width with portrait pip */}
-            <div className="sm:hidden w-full h-full relative">
-              {!spaceImgLoaded && (
-                <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
-              )}
-              <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
-                <img
-                  src={pro.spaceImageUrl!}
-                  alt={pro.spaceName || "Their workspace"}
-                  className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceImgLoaded ? "opacity-100" : "opacity-0"}`}
-                  loading={index < 6 ? "eager" : "lazy"}
-                  onLoad={() => setSpaceImgLoaded(true)}
-                  style={getCropStyle(pro.spaceImageCropPosition)}
-                />
-              </div>
-              {/* Portrait pip */}
-              <div className="absolute bottom-2.5 left-2.5 w-20 h-[6.25rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
-                <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
-                  {pro.portraitImageUrl ? (
-                    <img src={pro.portraitImageUrl} alt={pro.name}
-                      className="w-full h-full object-cover"
-                      loading={index < 6 ? "eager" : "lazy"}
-                      onLoad={() => setImgLoaded(true)}
-                      style={getCropStyle(pro.portraitCropPosition)}
-                    />
-                  ) : <Initials name={pro.name} />}
-                </div>
-              </div>
-              {pro.spaceName && (
-                <div className="absolute bottom-2.5 right-2.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 z-10">
-                  <Building2 className="w-2.5 h-2.5" />
-                  {pro.spaceName}
-                </div>
-              )}
+          /* Workspace full-width with portrait pip */
+          <div className="w-full h-full relative">
+            {!spaceImgLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
+            )}
+            <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
+              <img
+                src={pro.spaceImageUrl!}
+                alt={pro.spaceName || "Their workspace"}
+                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceImgLoaded ? "opacity-100" : "opacity-0"}`}
+                loading={index < 6 ? "eager" : "lazy"}
+                onLoad={() => setSpaceImgLoaded(true)}
+                style={getCropStyle(pro.spaceImageCropPosition)}
+              />
             </div>
-            {/* Desktop: side-by-side split */}
-            <div className="hidden sm:flex h-full">
-              <div className="w-[38%] h-full relative overflow-hidden flex-shrink-0">
-                {!imgLoaded && pro.portraitImageUrl && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
-                )}
-                <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
-                  {pro.portraitImageUrl ? (
-                    <img src={pro.portraitImageUrl} alt={pro.name}
-                      className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-                      loading={index < 6 ? "eager" : "lazy"}
-                      onLoad={() => setImgLoaded(true)}
-                      style={getCropStyle(pro.portraitCropPosition)}
-                    />
-                  ) : <Initials name={pro.name} />}
-                </div>
-              </div>
-              <div className="w-[62%] h-full relative overflow-hidden">
-                {!spaceImgLoaded && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
-                )}
-                <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
-                  <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
-                    className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceImgLoaded ? "opacity-100" : "opacity-0"}`}
+            {/* Portrait pip */}
+            <div className="absolute bottom-2.5 left-2.5 w-20 h-[6.25rem] rounded-lg overflow-hidden ring-2 ring-white shadow-lg z-10">
+              <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img src={pro.portraitImageUrl} alt={pro.name}
+                    className={`w-full h-full object-cover ${imgLoaded ? "opacity-100" : "opacity-0"}`}
                     loading={index < 6 ? "eager" : "lazy"}
-                    onLoad={() => setSpaceImgLoaded(true)}
-                    style={getCropStyle(pro.spaceImageCropPosition)}
+                    onLoad={() => setImgLoaded(true)}
+                    style={getCropStyle(pro.portraitCropPosition)}
                   />
-                </div>
-                {pro.spaceName && (
-                  <div className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Building2 className="w-2.5 h-2.5" />
-                    {pro.spaceName}
-                  </div>
-                )}
+                ) : <Initials name={pro.name} />}
               </div>
             </div>
-          </>
+            {pro.spaceName && (
+              <div className="absolute bottom-2.5 right-2.5 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 z-10">
+                <Building2 className="w-2.5 h-2.5" />
+                {pro.spaceName}
+              </div>
+            )}
+          </div>
         ) : (
           /* Portrait-only fallback */
           <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
