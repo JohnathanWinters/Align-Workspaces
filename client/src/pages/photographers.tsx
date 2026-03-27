@@ -56,6 +56,7 @@ function useDragScroll() {
 
 export default function PhotographersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showExplore, setShowExplore] = useState(false);
   const membersCarousel = useDragScroll();
   useEffect(() => {
     document.title = "Our Vision | Align Workspaces";
@@ -390,17 +391,66 @@ export default function PhotographersPage() {
               One professional at a time.
             </p>
 
-            <Link
-              href="/workspaces"
+            <button
+              onClick={() => setShowExplore(true)}
               data-testid="button-browse-workspaces-vision"
               className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
             >
               Explore what Align offers
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           </motion.div>
         </div>
       </section>
+
+      <AnimatePresence>
+        {showExplore && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowExplore(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+            >
+              <div className="p-6 text-center border-b border-stone-100">
+                <h3 className="font-serif text-xl text-[#2a2a2a]">What are you looking for?</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-0">
+                <Link
+                  href="/workspaces"
+                  className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors border-r border-stone-100"
+                  data-testid="link-explore-workspaces"
+                >
+                  <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
+                    <Building2 className="w-6 h-6 text-[#c4956a]" />
+                  </div>
+                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Workspaces</span>
+                  <span className="text-xs text-stone-400">Find your space</span>
+                </Link>
+                <Link
+                  href="/portrait-builder"
+                  className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors"
+                  data-testid="link-explore-portraits"
+                >
+                  <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
+                    <Camera className="w-6 h-6 text-[#c4956a]" />
+                  </div>
+                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Portrait Builder</span>
+                  <span className="text-xs text-stone-400">Build your image</span>
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <SiteFooter hideNewsletter />
     </div>
