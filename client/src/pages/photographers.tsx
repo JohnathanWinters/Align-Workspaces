@@ -149,109 +149,73 @@ export default function PhotographersPage() {
         </div>
       </header>
 
-      <section className="py-14 sm:py-20" data-testid="section-what-align-brings">
+      <section className="pt-16 sm:pt-24 pb-14 sm:pb-20" data-testid="section-what-align-brings">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-center mb-12 sm:mb-16"
+            className="text-center mb-14 sm:mb-20"
           >
-            <p className="text-[11px] tracking-[0.15em] uppercase text-stone-400 font-medium mb-4">
-              Built in Miami for therapists, coaches, and independent professionals.
-            </p>
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-6 h-px bg-stone-300/60" />
-              <p className="text-[11px] tracking-[0.2em] uppercase text-[#c4956a] font-medium">
-                The Platform
-              </p>
-              <div className="w-6 h-px bg-stone-300/60" />
-            </div>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-[2.25rem] text-[#2a2a2a] mb-3" data-testid="text-what-align-heading">
-              What Align Brings Together
-            </h2>
-            <p className="text-stone-500 text-sm sm:text-base max-w-lg mx-auto">
-              Every independent professional needs three things:
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-4">Our Vision</p>
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-[2.75rem] text-[#2a2a2a] leading-tight mb-4" data-testid="text-what-align-heading">
+              Space, Image, Community
+            </h1>
+            <p className="text-stone-500 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+              Everything an independent professional needs to build a practice that feels intentional.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
             {[
               {
                 icon: Building2,
-                title: "A space that fits the work.",
+                title: "The Right Space",
                 desc: "Miami workspaces, available by the hour, matched to the experience you want to create.",
               },
               {
                 icon: Image,
-                title: "An image that reflects the work.",
+                title: "The Right Image",
                 desc: "Professional portraits and branding that match the experience clients walk into.",
               },
               {
                 icon: Heart,
-                title: "A community that understands the work.",
-                desc: "A network of professionals sharing resources, spaces, and support.",
+                title: "The Right People",
+                desc: "A network of professionals sharing resources, workspaces, and support.",
               },
             ].map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.15 + i * 0.1 }}
                 className="text-center flex flex-col items-center"
                 data-testid={`pillar-${i}`}
               >
-                <div className="w-12 h-12 rounded-full bg-[#f5f0e8] flex items-center justify-center mb-4">
+                <div className="w-11 h-11 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-5">
                   <item.icon className="w-5 h-5 text-[#c4956a]" />
                 </div>
-                <h3 className="font-serif text-lg text-[#2a2a2a] mb-3 leading-snug">{item.title}</h3>
-                <p className="text-stone-500 text-sm leading-relaxed max-w-[280px]">{item.desc}</p>
+                <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[#2a2a2a] mb-2">{item.title}</h3>
+                <p className="text-stone-400 text-sm leading-relaxed max-w-[260px]">{item.desc}</p>
               </motion.div>
             ))}
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.4 }}
-            className="text-center"
-          >
-            <div className="inline-block bg-[#f5f0e8] rounded-xl px-6 sm:px-8 py-4 sm:py-5 border border-[#e8dfd2]">
-              <p className="text-[#2a2a2a] text-sm sm:text-base font-medium font-serif">
-                Not three separate things. <span className="italic text-[#c4956a]">One aligned practice.</span>
-              </p>
-            </div>
-          </motion.div>
         </div>
       </section>
 
-      <section className="relative">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <div className="flex items-center gap-4 py-4">
-            <div className="flex-1 h-px bg-stone-200/80" />
-            <Sparkles className="w-3.5 h-3.5 text-[#c9a96e]/50" />
-            <div className="flex-1 h-px bg-stone-200/80" />
-          </div>
-        </div>
-      </section>
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+        <div className="h-px bg-stone-200/80" />
+      </div>
 
-      <section className="py-12 sm:py-16">
+      <section className="py-14 sm:py-20">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
             className="text-center mb-10 sm:mb-12"
           >
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-6 h-px bg-stone-300/60" />
-              <p className="text-[11px] tracking-[0.2em] uppercase text-stone-400 font-medium">
-                Behind the Vision
-              </p>
-              <div className="w-6 h-px bg-stone-300/60" />
-            </div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">The Team</p>
             <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]" data-testid="text-team-heading">
               Meet the Founders
             </h2>
@@ -359,42 +323,29 @@ export default function PhotographersPage() {
         </div>
       </section>
 
-      <section className="relative">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          <div className="flex items-center gap-4 py-4">
-            <div className="flex-1 h-px bg-stone-200/80" />
-            <Sparkles className="w-3.5 h-3.5 text-[#c9a96e]/50" />
-            <div className="flex-1 h-px bg-stone-200/80" />
-          </div>
-        </div>
-      </section>
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+        <div className="h-px bg-stone-200/80" />
+      </div>
 
       <section className="py-14 sm:py-20" data-testid="section-looking-ahead">
-        <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
+        <div className="max-w-xl mx-auto px-5 sm:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="w-6 h-px bg-stone-300/60" />
-              <p className="text-[11px] tracking-[0.2em] uppercase text-[#c4956a] font-medium">
-                Looking Ahead
-              </p>
-              <div className="w-6 h-px bg-stone-300/60" />
-            </div>
-            <p className="text-[#3d3d3d] text-base sm:text-[17px] leading-[1.8] mb-6">
-              We're building a Miami where independent professionals can build practices that feel intentional from the inside out. Where the space, the image, and the experience tell the same story.
+            <p className="text-[#3d3d3d] font-serif text-lg sm:text-xl leading-[1.7] mb-3">
+              Where the space, the image, and the experience tell the same story.
             </p>
-            <p className="text-[#2a2a2a] font-serif text-lg sm:text-xl italic mb-10">
+            <p className="text-[#c4956a] font-serif italic mb-10">
               One professional at a time.
             </p>
 
             <button
               onClick={() => setShowExplore(true)}
               data-testid="button-browse-workspaces-vision"
-              className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+              className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
             >
               Explore what Align offers
               <ArrowRight className="w-4 h-4" />
