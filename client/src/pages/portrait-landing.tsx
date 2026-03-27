@@ -1,0 +1,286 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Link, useLocation } from "wouter";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Camera,
+  Clock,
+  Palette,
+  Image,
+  Sparkles,
+  CheckCircle2,
+  Menu,
+  X,
+  Building2,
+  Star,
+  Info,
+  Images,
+  User,
+  HelpCircle,
+} from "lucide-react";
+import { UserIndicator } from "@/components/user-indicator";
+import { SiteFooter } from "@/components/site-footer";
+
+export default function PortraitLandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    document.title = "Portraits | Align Workspaces";
+    window.scrollTo(0, 0);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#faf8f5]">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#faf8f5]/95 backdrop-blur-sm border-b border-stone-200/60">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 z-10">
+            <UserIndicator />
+            <button
+              onClick={() => setLocation("/")}
+              className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
+            </button>
+          </div>
+
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
+            Portraits
+          </span>
+
+          <div className="flex items-center gap-3 z-10">
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 text-xs tracking-[0.2em] uppercase text-foreground/60 hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-stone-100/60"
+              >
+                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
+                >
+                  <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <Building2 className="w-4 h-4" /> Align Workspaces
+                  </button>
+                  <button onClick={() => { setLocation("/workspaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <Building2 className="w-4 h-4" /> Workspaces
+                  </button>
+                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <Images className="w-4 h-4" /> Our Work
+                  </button>
+                  <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <Star className="w-4 h-4" /> Featured Pros
+                  </button>
+                  <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <Info className="w-4 h-4" /> Our Vision
+                  </button>
+                  <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <HelpCircle className="w-4 h-4" /> Support
+                  </button>
+                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <User className="w-4 h-4" /> Client Portal
+                  </button>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="pt-16 sm:pt-24 pb-14 sm:pb-20">
+        <div className="max-w-3xl mx-auto px-5 sm:px-8 text-center">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-4">Portrait Builder</p>
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2a2a2a] leading-tight mb-5">
+              Your Portrait Is Your<br className="hidden sm:block" /> First Impression
+            </h1>
+            <p className="text-stone-500 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
+              Design a photoshoot that aligns your work, character, and the impression you want your clients to feel. In about two minutes.
+            </p>
+            <Link
+              href="/portrait-builder"
+              className="inline-flex items-center gap-2 bg-stone-900 text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
+            >
+              Start the Builder
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+        <div className="h-px bg-stone-200/80" />
+      </div>
+
+      {/* How It Works */}
+      <section className="py-14 sm:py-20">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">How It Works</p>
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
+              Built Around You
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {[
+              {
+                step: "01",
+                title: "Choose Your Setting",
+                desc: "Pick the environment that reflects where your clients expect to find you — office, studio, outdoor, or somewhere unique.",
+              },
+              {
+                step: "02",
+                title: "Define Your Presence",
+                desc: "Tell us how you want to come across: welcoming, confident, warm, or motivated. We match the lighting and tone to that.",
+              },
+              {
+                step: "03",
+                title: "Set the Feeling",
+                desc: "How should clients feel working with you? Inspired, comfortable, or reassured — each shapes the session differently.",
+              },
+              {
+                step: "04",
+                title: "See Your Direction",
+                desc: "We curate portfolio examples, a wardrobe guide, and a color palette based on your answers. Your shoot plan, visualized.",
+              },
+              {
+                step: "05",
+                title: "Choose Your Package",
+                desc: "Select how the images will be used — social media, commercial, or team photos — and see transparent pricing.",
+              },
+              {
+                step: "06",
+                title: "Book Your Session",
+                desc: "Pick your date and lock it in. A 50% deposit secures your spot, the rest is due at the shoot.",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="relative"
+              >
+                <span className="text-[#c4956a]/20 font-serif text-4xl font-bold absolute -top-2 -left-1">{item.step}</span>
+                <div className="pt-8">
+                  <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[#2a2a2a] mb-2">{item.title}</h3>
+                  <p className="text-stone-400 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+        <div className="h-px bg-stone-200/80" />
+      </div>
+
+      {/* What You Get */}
+      <section className="py-14 sm:py-20">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">What You Get</p>
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
+              Everything for One Session
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
+            {[
+              { icon: Clock, title: "1-Hour Session", desc: "Focused and tailored to your brand and vision" },
+              { icon: Image, title: "15+ Edited Photos", desc: "High-resolution, professionally retouched" },
+              { icon: Sparkles, title: "2 Yearly Edit Tokens", desc: "Refresh or refine your images anytime" },
+              { icon: Palette, title: "Personal Mood Board", desc: "Curated from your builder choices" },
+              { icon: Camera, title: "Wardrobe Guidance", desc: "Outfit recommendations for your session" },
+              { icon: CheckCircle2, title: "Online Gallery", desc: "Private gallery to view and share" },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                  className="bg-white rounded-xl border border-stone-100 p-5 text-center"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                    <Icon className="w-4.5 h-4.5 text-[#c4956a]" />
+                  </div>
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#2a2a2a] mb-1">{item.title}</h3>
+                  <p className="text-stone-400 text-[12px] leading-relaxed">{item.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+        <div className="h-px bg-stone-200/80" />
+      </div>
+
+      {/* The Idea */}
+      <section className="py-14 sm:py-20">
+        <div className="max-w-xl mx-auto px-5 sm:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="text-[#3d3d3d] font-serif text-lg sm:text-xl leading-[1.7] mb-3">
+              How you see yourself and how others see you aren't always the same thing.
+            </p>
+            <p className="text-stone-400 text-sm leading-relaxed mb-10 max-w-md mx-auto">
+              The builder closes that gap — giving you a shoot plan designed around the experience you want clients to walk away with.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/portrait-builder"
+                className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
+              >
+                Start the Builder
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/portfolio"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#c4956a] hover:text-[#a07a52] transition-colors"
+              >
+                <Images className="w-4 h-4" />
+                See our work
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <SiteFooter />
+    </div>
+  );
+}

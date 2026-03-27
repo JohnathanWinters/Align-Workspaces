@@ -16,6 +16,7 @@ import AlignSpacesPage from "@/pages/align-spaces";
 import SpacesBrowsePage from "@/pages/spaces-browse";
 import SpaceDetailPage from "@/pages/space-detail";
 import SupportPage from "@/pages/support";
+import PortraitLandingPage from "@/pages/portrait-landing";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAuth } from "@/hooks/use-auth";
 import GlobalMessenger from "@/components/global-messenger";
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/" component={AlignSpacesPage} />
       <Route path="/workspaces" component={SpacesBrowsePage} />
       <Route path="/spaces/:slug" component={SpaceDetailPage} />
+      <Route path="/portraits" component={PortraitLandingPage} />
       <Route path="/portrait-builder" component={BuildMyPhoto} />
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/our-vision" component={AboutPage} />

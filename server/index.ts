@@ -126,8 +126,8 @@ app.use("/api/track", moderateLimiter);
 app.use("/api/", apiGeneralLimiter);
 
 const DOMAIN_REDIRECTS: Record<string, string> = {
-  "alignportraits.com": "https://alignworkspaces.com/portfolio",
-  "www.alignportraits.com": "https://alignworkspaces.com/portfolio",
+  "alignportraits.com": "https://alignworkspaces.com/portraits",
+  "www.alignportraits.com": "https://alignworkspaces.com/portraits",
   "buildmyphoto.com": "https://alignworkspaces.com/portrait-builder",
   "www.buildmyphoto.com": "https://alignworkspaces.com/portrait-builder",
   "alignvisuals.com": "https://alignworkspaces.com/portrait-builder",
