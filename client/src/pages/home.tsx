@@ -395,7 +395,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                         >
                           <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-header">
                             <Building2 className="w-4 h-4" />
-                            Align Spaces
+                            Align Workspaces
                           </button>
                           <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-header">
                             <Images className="w-4 h-4" />

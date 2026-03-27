@@ -2089,7 +2089,7 @@ function PortalContent() {
                     <Link href="/workspaces">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-spaces-portal">
                         <MapPin className="w-4 h-4" />
-                        Align Spaces
+                        Align Workspaces
                       </button>
                     </Link>
                     <Link href="/featured">
@@ -2145,7 +2145,7 @@ function PortalContent() {
                   data-testid="button-browse-spaces"
                   className="bg-[#1a1a1a] text-white hover:bg-black"
                 >
-                  Browse Spaces
+                  Browse Workspaces
                 </Button>
               </Link>
             )}
@@ -2580,7 +2580,7 @@ function PortalLogin() {
           </Link>
           <Link href="/workspaces">
             <Button variant="outline" size="lg" className="w-full text-white border-white/20 bg-white/5 hover:bg-white/10 text-base">
-              <Building2 className="w-4 h-4 mr-2" /> Back to Spaces
+              <Building2 className="w-4 h-4 mr-2" /> Back to Workspaces
             </Button>
           </Link>
         </div>

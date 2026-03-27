@@ -141,7 +141,7 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
                     <Link href="/">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-nav">
                         <MapPin className="w-4 h-4" />
-                        Align Spaces
+                        Align Workspaces
                       </button>
                     </Link>
                     <Link href="/portal">
@@ -1182,7 +1182,7 @@ function ProfilePage({ slug }: { slug: string }) {
             <div className="flex items-center gap-2 mb-3">
               <Building2 className="w-4 h-4 text-[#c4956a]" />
               <span className="text-[10px] uppercase tracking-[0.2em] text-[#c4956a] font-semibold">
-                {pro.spaceName ? `Why ${pro.spaceName}` : "Their Space"}
+                {pro.spaceName ? `Why ${pro.spaceName}` : "Their Workspace"}
               </span>
             </div>
             <p className="text-foreground/70 text-sm sm:text-base leading-relaxed italic">"{pro.spaceQuote}"</p>

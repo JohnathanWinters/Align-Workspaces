@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const INTERESTS = [
   { id: "portraits", label: "Portraits", emoji: "\u{1F4F8}" },
-  { id: "spaces", label: "New Spaces", emoji: "\u{1F3E2}" },
+  { id: "spaces", label: "New Workspaces", emoji: "\u{1F3E2}" },
   { id: "featured", label: "Featured Pros", emoji: "\u2B50" },
   { id: "updates", label: "Updates & News", emoji: "\u{1F4F0}" },
 ];

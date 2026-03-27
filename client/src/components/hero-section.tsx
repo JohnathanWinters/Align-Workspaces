@@ -104,7 +104,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                   >
                     <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
                       <Building2 className="w-4 h-4" />
-                      Align Spaces
+                      Align Workspaces
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
                       <Images className="w-4 h-4" />

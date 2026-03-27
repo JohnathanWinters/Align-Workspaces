@@ -74,7 +74,7 @@ export default function PhotographersPage() {
                       <Link href="/workspaces">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-photographers">
                           <MapPin className="w-4 h-4" />
-                          Align Spaces
+                          Align Workspaces
                         </button>
                       </Link>
                       <Link href="/featured">

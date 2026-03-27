@@ -14,7 +14,7 @@ export function SiteFooter({ variant = "light" }: SiteFooterProps) {
 
   const navLinks = [
     { label: "Portraits", href: "/portrait-builder" },
-    { label: "Spaces", href: "/workspaces" },
+    { label: "Workspaces", href: "/workspaces" },
     { label: "Featured Pros", href: "/featured" },
     { label: "Our Vision", href: "/our-vision" },
     { label: "Portfolio", href: "/portfolio" },

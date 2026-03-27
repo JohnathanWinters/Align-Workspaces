@@ -4543,7 +4543,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
           </div>
 
           <div className="space-y-4">
-            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Their Space</h3>
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Their Workspace</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><Label>Space Name</Label><Input value={form.spaceName} onChange={e => setForm({ ...form, spaceName: e.target.value })} placeholder="e.g. Align Studio — Coral Gables" /></div>
             </div>
@@ -6063,7 +6063,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
       "/portal": "Client Portal",
       "/featured": "Featured",
       "/workspaces": "Workspaces",
-      "/browse": "Browse Spaces",
+      "/browse": "Browse Workspaces",
     };
     return labels[path] || path;
   };
@@ -7280,7 +7280,7 @@ function AdminDashboard({ token }: { token: string }) {
     {
       label: "Operations",
       items: [
-        { id: "spaces" as const, label: "Spaces", icon: Building2 },
+        { id: "spaces" as const, label: "Workspaces", icon: Building2 },
         { id: "employees" as const, label: "Team", icon: Users },
         { id: "reviews" as const, label: "Reviews", icon: MessageSquare },
       ],

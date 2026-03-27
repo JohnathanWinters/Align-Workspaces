@@ -134,7 +134,7 @@ function clearRecentlyViewed() {
 }
 
 const SPACE_TYPES = [
-  { key: "all", label: "Browse All Spaces", icon: Building2, description: "Explore every workspace available in Miami" },
+  { key: "all", label: "Browse All Workspaces", icon: Building2, description: "Explore every workspace available in Miami" },
   { key: "therapy", label: "Therapy & Counseling", icon: Sofa, description: "Private offices for therapy sessions and mental health professionals" },
   { key: "coaching", label: "Coaching & Consulting", icon: Briefcase, description: "Professional meeting spaces for coaching and client consultations" },
   { key: "wellness", label: "Wellness & Holistic", icon: Leaf, description: "Calm environments for wellness practices and holistic sessions" },
@@ -452,7 +452,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/spaces/${space.slug}`;
-    const shareData = { title: space.name, text: `Check out ${space.name} on Align Spaces`, url };
+    const shareData = { title: space.name, text: `Check out ${space.name} on Align Workspaces`, url };
     if (navigator.share) {
       try { await navigator.share(shareData); } catch {}
     } else {
@@ -1472,7 +1472,7 @@ export default function SpacesBrowsePage() {
   }, [clearAvailFilters]);
 
   useEffect(() => {
-    document.title = "Workspaces | Align Spaces, Miami Workspaces for Professionals";
+    document.title = "Workspaces | Align Workspaces, Miami Workspaces for Professionals";
   }, []);
 
   if (!categoryChosen) {
@@ -1487,7 +1487,7 @@ export default function SpacesBrowsePage() {
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Back</span>
           </button>
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Align Spaces</span>
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Align Workspaces</span>
         </nav>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 pb-16">
@@ -1567,7 +1567,7 @@ export default function SpacesBrowsePage() {
               <span className="hidden sm:inline">{mobileView === "map" ? "List" : "Back"}</span>
             </button>
           </div>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Spaces</span>
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Align Workspaces</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileView(mobileView === "list" ? "map" : "list")}
@@ -1990,8 +1990,8 @@ export default function SpacesBrowsePage() {
             <div className="pb-24 lg:pb-8 pt-4">
               <div className="flex items-center justify-between gap-4 rounded-xl px-4 py-3 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="text-list-space-heading">
                 <p className="text-sm text-foreground/60">
-                  <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
-                  <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
+                  <span className="font-medium text-foreground/80">Have a workspace to share?</span>{" "}
+                  <span className="hidden sm:inline">Join a growing network of Miami workspaces.</span>
                 </p>
                 <button
                   onClick={() => setShowListModal(true)}

@@ -338,7 +338,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
           >
-            Thoughtfully designed spaces for therapists, coaches, and creatives, booked by the hour, built for the work you do.
+            Thoughtfully designed workspaces for therapists, coaches, and creatives, booked by the hour, built for the work you do.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -360,7 +360,7 @@ export default function AlignSpacesPage() {
 
       <div className="text-center px-4 sm:px-6 pb-6 sm:pb-8">
         <p className="text-stone-400 text-sm italic font-serif" data-testid="text-hero-bridge">
-          Every space is selected for the professionals who work in it.
+          Every workspace is selected for the professionals who work in it.
         </p>
       </div>
 
@@ -447,8 +447,8 @@ export default function AlignSpacesPage() {
             <div className="mt-10 space-y-6">
               <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-4 rounded-xl px-5 py-4 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="section-post-space-cta">
                 <p className="text-sm text-foreground/60 text-center sm:text-left">
-                  <span className="font-medium text-foreground/80">Have a space to share?</span>{" "}
-                  <span className="hidden sm:inline">Join a growing network of Miami spaces.</span>
+                  <span className="font-medium text-foreground/80">Have a workspace to share?</span>{" "}
+                  <span className="hidden sm:inline">Join a growing network of Miami workspaces.</span>
                 </p>
                 <button
                   onClick={() => setShowListModal(true)}
@@ -456,7 +456,7 @@ export default function AlignSpacesPage() {
                   data-testid="button-post-space-cta"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Post your space
+                  Post your workspace
                 </button>
               </div>
 

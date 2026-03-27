@@ -46,8 +46,8 @@ const faqs = [
     a: "Payments are processed securely through Stripe. Your host may send a payment request through the booking conversation, and you can pay directly from the chat.",
   },
   {
-    q: "How do I list my space?",
-    a: "Head to the Client Portal and navigate to the Workspaces tab. From there you can list a new space with photos, pricing, availability schedule, and more.",
+    q: "How do I list my workspace?",
+    a: "Head to the Client Portal and navigate to the Workspaces tab. From there you can list a new workspace with photos, pricing, availability schedule, and more.",
   },
   {
     q: "How do I check in to my booking?",
@@ -161,7 +161,7 @@ export default function SupportPage() {
                   >
                     <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-support">
                       <Building2 className="w-4 h-4" />
-                      Align Spaces
+                      Align Workspaces
                     </button>
                     <button onClick={() => { setLocation("/workspaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-workspaces-support">
                       <Building2 className="w-4 h-4" />

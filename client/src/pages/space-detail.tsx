@@ -1327,7 +1327,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
   const handleShare = async () => {
     if (!space) return;
     const url = `${window.location.origin}/spaces/${space.slug}`;
-    const shareData = { title: space.name, text: `Check out ${space.name} on Align Spaces`, url };
+    const shareData = { title: space.name, text: `Check out ${space.name} on Align Workspaces`, url };
     if (navigator.share) {
       try { await navigator.share(shareData); } catch {}
     } else {
@@ -1486,7 +1486,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                         Copy link
                       </button>
                       <a
-                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${space.name} on Align Spaces`)}&url=${encodeURIComponent(window.location.href)}`}
+                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${space.name} on Align Workspaces`)}&url=${encodeURIComponent(window.location.href)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setShowShareMenu(false)}

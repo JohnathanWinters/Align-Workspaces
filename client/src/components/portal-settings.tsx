@@ -459,7 +459,7 @@ function DefaultTabSection({ user }: { user: AuthUser }) {
     { value: "auto", label: "Auto-detect" },
     { value: "shoots", label: "Shoots" },
     { value: "edits", label: "Edits" },
-    { value: "my-spaces", label: "My Spaces" },
+    { value: "my-spaces", label: "My Workspaces" },
     { value: "past-spaces", label: "My Bookings" },
     { value: "messages", label: "Messages" },
   ];
