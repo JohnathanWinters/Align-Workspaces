@@ -236,7 +236,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute bottom-[5%] left-[3%] w-[18%] sm:w-[12%] aspect-[3/4] max-h-[60%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            <div className="absolute top-[35%] left-[3%] w-[18%] sm:w-[12%] bottom-[5%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -334,7 +334,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute bottom-[5%] left-[3%] w-[22%] aspect-[3/4] max-h-[60%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute top-[35%] left-[3%] w-[22%] bottom-[5%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1113,7 +1113,7 @@ function ProfilePage({ slug }: { slug: string }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute bottom-[5%] left-[3%] w-[18%] sm:w-[12%] aspect-[3/4] max-h-[60%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute top-[35%] left-[3%] w-[18%] sm:w-[12%] bottom-[5%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
