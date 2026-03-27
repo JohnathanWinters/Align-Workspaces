@@ -71,12 +71,12 @@ export default function PhotographersPage() {
     <div className="min-h-screen bg-[#faf8f5]">
       <header className="sticky top-0 z-50 bg-[#faf8f5]/95 backdrop-blur-sm border-b border-stone-200/60">
         <div className="px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors" data-testid="button-back-home-photographers">
+          <div className="flex items-center justify-between relative">
+            <Link href="/" className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10" data-testid="button-back-home-photographers">
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Back</span>
             </Link>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold">Our Vision</span>
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Our Vision</span>
             <div className="flex items-center gap-3">
               <UserIndicator />
               <div className="relative">
