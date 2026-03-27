@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { useSmartBack } from "@/hooks/use-smart-back";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images } from "lucide-react";
+import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images, Building2 } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { UserIndicator } from "@/components/user-indicator";
@@ -33,6 +33,9 @@ interface FeaturedProfessional {
   yearsInPractice: number | null;
   ctaLabel: string | null;
   ctaUrl: string | null;
+  spaceImageUrl: string | null;
+  spaceName: string | null;
+  spaceQuote: string | null;
   isFeaturedOfWeek: number;
   isSample: number;
   seoTitle: string | null;
@@ -170,6 +173,8 @@ function Initials({ name, className = "" }: { name: string; className?: string }
 function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
   const [, setLocation] = useLocation();
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [spaceLoaded, setSpaceLoaded] = useState(false);
+  const hasSpace = pro.spaceImageUrl;
 
   return (
     <section
@@ -177,75 +182,78 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
       onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid="card-professional-of-week"
     >
-      <div className="relative w-full aspect-[3/4] sm:aspect-auto sm:min-h-[65vh] lg:min-h-[70vh] 2xl:min-h-[75vh] 2xl:rounded-b-lg overflow-hidden">
-        <div className="absolute inset-0">
-          {!heroLoaded && pro.portraitImageUrl && (
-            <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300 z-[0]" />
-          )}
-          <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-            {pro.portraitImageUrl ? (
-              <img
-                src={pro.portraitImageUrl}
-                alt={`${pro.name} - ${pro.profession}`}
-                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${heroLoaded ? "opacity-100" : "opacity-0"}`}
-                fetchPriority="high"
-                decoding="sync"
-                onLoad={() => setHeroLoaded(true)}
-                style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
+      <div className="relative w-full overflow-hidden 2xl:rounded-b-lg">
+        {hasSpace ? (
+          /* Split hero: portrait left + space right */
+          <div className="flex h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[65vh]">
+            <div className="w-[35%] sm:w-[33%] h-full relative overflow-hidden">
+              {!heroLoaded && pro.portraitImageUrl && (
+                <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
+              )}
+              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img src={pro.portraitImageUrl} alt={pro.name}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${heroLoaded ? "opacity-100" : "opacity-0"}`}
+                    fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
+                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
+                  />
+                ) : <Initials name={pro.name} />}
+              </div>
+            </div>
+            <div className="w-[65%] sm:w-[67%] h-full relative overflow-hidden">
+              {!spaceLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
+              )}
+              <img src={pro.spaceImageUrl!} alt={pro.spaceName || "Their workspace"}
+                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceLoaded ? "opacity-100" : "opacity-0"}`}
+                fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
               />
-            ) : (
-              <Initials name={pro.name} />
-            )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              {pro.spaceName && (
+                <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+                  <Building2 className="w-3 h-3" />
+                  {pro.spaceName}
+                </div>
+              )}
+            </div>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 z-[2] pointer-events-none" />
           </div>
-        </div>
-        <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-[1]" />
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 z-[2]" />
-        <div className="hidden sm:block absolute inset-0 z-[3]">
-          <div className="absolute bottom-0 left-0 right-0 max-w-6xl mx-auto px-6 pb-16 md:pb-20">
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.05 }}
-            >
-              <p className="text-sm uppercase tracking-[0.2em] text-white/50 mb-3 flex items-center gap-2" data-testid="text-potw-heading">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                Featured Story
-              </p>
-              <h2 className="font-serif text-5xl md:text-6xl text-white leading-[1.1] mb-3 max-w-2xl" data-testid="text-potw-name">
-                {pro.name}
-              </h2>
-              <p className="text-white/60 text-lg mb-4">
-                {pro.profession} · {pro.location}
-              </p>
-              <p className="text-white/80 text-base max-w-xl leading-relaxed mb-6 font-light italic">
-                "{pro.headline}"
-              </p>
-              <span className="inline-flex items-center gap-2 text-sm text-white/70 group-hover:text-white group-hover:gap-3 transition-all duration-300 uppercase tracking-widest">
-                Read Their Story <ArrowRight className="w-4 h-4" />
-              </span>
-            </motion.div>
+        ) : (
+          /* Single image fallback */
+          <div className="relative aspect-[3/4] sm:aspect-auto sm:min-h-[55vh] lg:min-h-[60vh] overflow-hidden">
+            <div className="absolute inset-0">
+              {!heroLoaded && pro.portraitImageUrl && (
+                <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
+              )}
+              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img src={pro.portraitImageUrl} alt={`${pro.name} - ${pro.profession}`}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${heroLoaded ? "opacity-100" : "opacity-0"}`}
+                    fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
+                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition)}
+                  />
+                ) : <Initials name={pro.name} />}
+              </div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
           </div>
-        </div>
-
+        )}
       </div>
 
-      <div className="sm:hidden px-5 pt-6 pb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+      <div className="px-5 sm:px-6 pt-6 pb-8 max-w-6xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] mb-3 flex items-center gap-1.5 font-semibold">
             <Star className="w-3 h-3 fill-[#c4956a] text-[#c4956a]" />
             Featured Story
           </p>
-          <h2 className="font-serif text-[2rem] text-foreground leading-[1.1] mb-2" data-testid="text-potw-name-mobile">
+          <h2 className="font-serif text-[2rem] sm:text-4xl md:text-5xl text-foreground leading-[1.1] mb-2" data-testid="text-potw-name">
             {pro.name}
           </h2>
-          <p className="text-foreground/45 text-sm mb-3">
+          <p className="text-foreground/45 text-sm sm:text-base mb-3">
             {pro.profession} · {pro.location}
           </p>
-          <p className="text-foreground/60 text-sm max-w-xl leading-relaxed mb-5 italic">
+          <p className="text-foreground/60 text-sm sm:text-base max-w-xl leading-relaxed mb-5 italic">
             "{pro.headline}"
           </p>
           <span className="inline-flex items-center gap-2 text-xs text-[#c4956a] group-hover:text-[#b8895e] group-hover:gap-3 transition-all duration-300 uppercase tracking-[0.2em] font-semibold">
@@ -260,7 +268,9 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
 function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: number }) {
   const [, setLocation] = useLocation();
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [spaceImgLoaded, setSpaceImgLoaded] = useState(false);
   const cappedDelay = Math.min(index * 0.04, 0.15);
+  const hasSpace = pro.spaceImageUrl;
 
   return (
     <motion.article
@@ -271,31 +281,74 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
       onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid={`card-featured-${pro.slug}`}
     >
-      <div className="aspect-[3/4] relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300">
-        {!imgLoaded && pro.portraitImageUrl && (
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
+      <div className={`relative overflow-hidden rounded-md mb-4 shadow-md group-hover:shadow-xl transition-shadow duration-300 ${hasSpace ? "aspect-[4/3]" : "aspect-[3/4]"}`}>
+        {hasSpace ? (
+          /* Split view: slim portrait left + wide space right */
+          <div className="flex h-full">
+            <div className="w-[38%] h-full relative overflow-hidden flex-shrink-0">
+              {!imgLoaded && pro.portraitImageUrl && (
+                <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
+              )}
+              <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img
+                    src={pro.portraitImageUrl}
+                    alt={pro.name}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+                    loading={index < 6 ? "eager" : "lazy"}
+                    onLoad={() => setImgLoaded(true)}
+                    style={getCropStyle(pro.portraitCropPosition)}
+                  />
+                ) : (
+                  <Initials name={pro.name} />
+                )}
+              </div>
+            </div>
+            <div className="w-[62%] h-full relative overflow-hidden">
+              {!spaceImgLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
+              )}
+              <img
+                src={pro.spaceImageUrl!}
+                alt={pro.spaceName || "Their workspace"}
+                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${spaceImgLoaded ? "opacity-100" : "opacity-0"}`}
+                loading={index < 6 ? "eager" : "lazy"}
+                onLoad={() => setSpaceImgLoaded(true)}
+              />
+              {pro.spaceName && (
+                <div className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <Building2 className="w-2.5 h-2.5" />
+                  {pro.spaceName}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Portrait-only fallback */
+          <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
+            {!imgLoaded && pro.portraitImageUrl && (
+              <div className="absolute inset-0 bg-gradient-to-br from-stone-100 to-stone-200" />
+            )}
+            {pro.portraitImageUrl ? (
+              <img
+                src={pro.portraitImageUrl}
+                alt={`${pro.name} - ${pro.profession}`}
+                className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+                loading={index < 6 ? "eager" : "lazy"}
+                onLoad={() => setImgLoaded(true)}
+                style={getCropStyle(pro.portraitCropPosition)}
+              />
+            ) : (
+              <Initials name={pro.name} />
+            )}
+          </div>
         )}
-        <div className="w-full h-full" style={getCropZoom(pro.portraitCropPosition)}>
-          {pro.portraitImageUrl ? (
-            <img
-              src={pro.portraitImageUrl}
-              alt={`${pro.name} - ${pro.profession}`}
-              className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-              loading={index < 6 ? "eager" : "lazy"}
-              decoding={index < 3 ? "sync" : "async"}
-              onLoad={() => setImgLoaded(true)}
-              style={getCropStyle(pro.portraitCropPosition)}
-            />
-          ) : (
-            <Initials name={pro.name} />
-          )}
-        </div>
         {pro.isSample ? (
-          <div className="absolute top-3 left-3 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
+          <div className="absolute top-3 left-3 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
             Sample
           </div>
         ) : null}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
       </div>
       <div>
         <div className="flex items-center gap-2 mb-1.5">
@@ -1022,138 +1075,88 @@ function ProfilePage({ slug }: { slug: string }) {
     <div className="min-h-screen bg-background">
       <FeaturedNav />
 
-      <section className="relative w-full max-w-[2000px] mx-auto h-[55vh] sm:h-[65vh] md:h-[75vh] lg:h-[80vh] xl:h-[85vh] overflow-hidden">
-        <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
-          {pro.portraitImageUrl ? (
-            <img
-              src={pro.portraitImageUrl}
-              alt={`${pro.name} - ${pro.profession}`}
-              className="w-full h-full object-cover"
-              fetchPriority="high"
-              decoding="sync"
-              style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
-            />
-          ) : (
-            <Initials name={pro.name} />
-          )}
-        </div>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 80%, rgba(250, 248, 244, 1) 100%)' }} />
-        {pro.isSample ? (
-          <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">
-            Sample
+      {/* Split hero: portrait + space side by side */}
+      <section className="relative w-full max-w-[2000px] mx-auto overflow-hidden">
+        {pro.spaceImageUrl ? (
+          <div className="flex h-[40vh] sm:h-[45vh] md:h-[50vh] lg:h-[55vh]">
+            <div className="w-[35%] sm:w-[33%] h-full relative overflow-hidden">
+              <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+                {pro.portraitImageUrl ? (
+                  <img src={pro.portraitImageUrl} alt={pro.name}
+                    className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
+                    style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
+                  />
+                ) : <Initials name={pro.name} />}
+              </div>
+            </div>
+            <div className="w-[65%] sm:w-[67%] h-full relative overflow-hidden">
+              <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
+                className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
+              />
+              {pro.spaceName && (
+                <div className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                  <Building2 className="w-3 h-3" />
+                  {pro.spaceName}
+                </div>
+              )}
+            </div>
           </div>
+        ) : (
+          <div className="h-[40vh] sm:h-[45vh] md:h-[50vh] lg:h-[55vh]">
+            <div className="w-full h-full" style={getCropZoom(pro.heroCropPosition || pro.portraitCropPosition)}>
+              {pro.portraitImageUrl ? (
+                <img src={pro.portraitImageUrl} alt={`${pro.name} - ${pro.profession}`}
+                  className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
+                  style={getCropStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%")}
+                />
+              ) : <Initials name={pro.name} />}
+            </div>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 65%, rgba(250, 248, 244, 0.6) 85%, rgba(250, 248, 244, 1) 100%)' }} />
+          </div>
+        )}
+        {pro.isSample ? (
+          <div className="absolute top-4 left-4 bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm z-10">Sample</div>
         ) : null}
-
         <div className="absolute top-6 left-6 z-10">
           <Link href="/featured" className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            Back
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Back
           </Link>
         </div>
       </section>
 
-      <div className="sm:hidden px-5 pt-6 pb-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <p className="text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold mb-2">{pro.profession}</p>
-          <h1 className="font-serif text-[2rem] font-semibold leading-[1.05] mb-2 text-foreground" data-testid="text-profile-name-mobile">
+      {/* Profile info — unified for mobile + desktop */}
+      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-8 sm:pt-12">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-2">{pro.profession}</p>
+          <h1 className="font-serif text-[2rem] sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-2 sm:mb-3 text-foreground" data-testid="text-profile-name">
             {pro.name}
           </h1>
-          <div className="flex items-center gap-2 text-foreground/45 text-sm mb-2">
+          <div className="flex items-center gap-2 text-foreground/45 sm:text-foreground/60 text-sm mb-2 sm:mb-3">
             <MapPin className="w-3.5 h-3.5" />
             <span>{pro.location}</span>
             {pro.yearsInPractice && <span>· {pro.yearsInPractice} years</span>}
           </div>
           {pro.credentials && pro.credentials.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            <div className="flex flex-wrap gap-1.5 mb-4 sm:mb-5">
               {pro.credentials.slice(0, 3).map((cred, i) => (
                 <span key={i} className="text-[11px] bg-[#c4956a]/10 text-[#c4956a] font-medium px-2.5 py-1 rounded-full">{cred}</span>
               ))}
             </div>
           )}
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center flex-wrap gap-3">
             {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
               const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
               if (!Icon || !url) return null;
               return (
-                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-foreground/8 hover:bg-foreground/15 transition-colors text-foreground/70">
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`}
+                  className="p-2.5 rounded-full bg-foreground/8 hover:bg-foreground/15 transition-colors text-foreground/70">
                   <Icon className="w-4 h-4" />
                 </a>
               );
             })}
             <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: pro.name, text: shareText, url: shareUrl });
-                } else {
-                  navigator.clipboard.writeText(shareUrl);
-                }
-              }}
+              onClick={(e) => { e.stopPropagation(); navigator.share ? navigator.share({ title: pro.name, text: shareText, url: shareUrl }) : navigator.clipboard.writeText(shareUrl); }}
               className="p-2.5 rounded-full bg-foreground/8 hover:bg-foreground/15 transition-colors text-foreground/70"
-              data-testid="button-share"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-          {(pro.ctaUrl || normalizeSocialLinks(pro.socialLinks).find(s => s.platform === "website")) && (
-            <a
-              href={pro.ctaUrl || normalizeSocialLinks(pro.socialLinks).find(s => s.platform === "website")?.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-              data-testid="button-cta-mobile"
-            >
-              {pro.ctaLabel || "Connect"}
-              <ArrowRight className="w-4 h-4" />
-            </a>
-          )}
-        </motion.div>
-      </div>
-
-      <section className="hidden sm:block max-w-3xl mx-auto px-6 pt-12">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <p className="text-xs uppercase tracking-[0.15em] text-foreground/50 mb-2">{pro.profession}</p>
-          <h1 className="font-serif text-5xl md:text-6xl font-semibold leading-[1.05] mb-3 text-foreground" data-testid="text-profile-name">
-            {pro.name}
-          </h1>
-          <div className="flex items-center gap-2 text-foreground/60 text-sm mb-3">
-            <MapPin className="w-3.5 h-3.5" />
-            <span>{pro.location}</span>
-            {pro.yearsInPractice && <span>· {pro.yearsInPractice} years in practice</span>}
-          </div>
-          {pro.credentials && pro.credentials.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-5">
-              {pro.credentials.slice(0, 3).map((cred, i) => (
-                <span key={i} className="text-[11px] bg-[#c4956a]/10 text-[#c4956a] font-medium px-2.5 py-1 rounded-full">{cred}</span>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-3">
-            {normalizeSocialLinks(pro.socialLinks).map(({ platform, url }) => {
-              const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()];
-              if (!Icon || !url) return null;
-              return (
-                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" data-testid={`link-social-${platform}`} className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground">
-                  <Icon className="w-4 h-4" />
-                </a>
-              );
-            })}
-            <button
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: pro.name, text: shareText, url: shareUrl });
-                } else {
-                  navigator.clipboard.writeText(shareUrl);
-                }
-              }}
-              className="p-2.5 rounded-full bg-foreground/10 hover:bg-foreground/20 transition-colors text-foreground"
               data-testid="button-share"
             >
               <Share2 className="w-4 h-4" />
@@ -1161,20 +1164,33 @@ function ProfilePage({ slug }: { slug: string }) {
             {(pro.ctaUrl || normalizeSocialLinks(pro.socialLinks).find(s => s.platform === "website")) && (
               <a
                 href={pro.ctaUrl || normalizeSocialLinks(pro.socialLinks).find(s => s.platform === "website")?.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-foreground text-background ml-2 px-5 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
-                data-testid="button-cta-desktop"
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+                data-testid="button-cta"
               >
-                {pro.ctaLabel || "Connect"}
-                <ArrowRight className="w-4 h-4" />
+                {pro.ctaLabel || "Connect"} <ArrowRight className="w-4 h-4" />
               </a>
             )}
           </div>
         </motion.div>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 pt-10 sm:pt-14 pb-8" ref={storyRef}>
+      {/* Space context section */}
+      {pro.spaceQuote && (
+        <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-8 sm:pt-10">
+          <div className="bg-stone-50 border border-stone-200/60 rounded-xl p-5 sm:p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Building2 className="w-4 h-4 text-[#c4956a]" />
+              <span className="text-[10px] uppercase tracking-[0.2em] text-[#c4956a] font-semibold">
+                {pro.spaceName ? `Why ${pro.spaceName}` : "Their Space"}
+              </span>
+            </div>
+            <p className="text-foreground/70 text-sm sm:text-base leading-relaxed italic">"{pro.spaceQuote}"</p>
+          </div>
+        </section>
+      )}
+
+      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-10 sm:pt-14 pb-8" ref={storyRef}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

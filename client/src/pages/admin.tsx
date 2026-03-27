@@ -1730,6 +1730,8 @@ const defaultFeaturedForm = {
   seoTitle: "", metaDescription: "",
   yearsHosting: "",
   locationCount: "",
+  spaceName: "",
+  spaceQuote: "",
 };
 
 const SOCIAL_PLATFORMS = [
@@ -3952,8 +3954,10 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const spaceFileInputRef = useRef<HTMLInputElement>(null);
   const formFileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
+  const [spaceUploadTargetId, setSpaceUploadTargetId] = useState<string | null>(null);
   const [formPortraitPreview, setFormPortraitPreview] = useState<string | null>(null);
   const [formPortraitFile, setFormPortraitFile] = useState<File | null>(null);
   const [cropPosition, setCropPosition] = useState<{ x: number; y: number; zoom: number }>({ x: 50, y: 50, zoom: 1 });
@@ -4054,6 +4058,8 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         locationCount: form.locationCount ? parseInt(form.locationCount) : null,
         seoTitle: form.seoTitle || `${form.name} - ${form.profession} | Align`,
         metaDescription: form.metaDescription || form.headline,
+        spaceName: form.spaceName?.trim() || null,
+        spaceQuote: form.spaceQuote?.trim() || null,
       };
 
       const url = editing ? `/api/admin/featured/${editing.id}` : "/api/admin/featured";
@@ -4144,6 +4150,8 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
       metaDescription: pro.metaDescription || "",
       yearsHosting: "",
       locationCount: "",
+      spaceName: (pro as any).spaceName || "",
+      spaceQuote: (pro as any).spaceQuote || "",
     });
     setFormPortraitPreview(pro.portraitImageUrl || null);
     setFormPortraitFile(null);
@@ -4535,6 +4543,15 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
           </div>
 
           <div className="space-y-4">
+            <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Their Space</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div><Label>Space Name</Label><Input value={form.spaceName} onChange={e => setForm({ ...form, spaceName: e.target.value })} placeholder="e.g. Align Studio — Coral Gables" /></div>
+            </div>
+            <div><Label>Why This Space (their quote about the space)</Label><Textarea value={form.spaceQuote} onChange={e => setForm({ ...form, spaceQuote: e.target.value })} placeholder="What makes this workspace special to them and their practice..." rows={3} /></div>
+            <p className="text-xs text-gray-400">Space image can be uploaded after saving via the list view.</p>
+          </div>
+
+          <div className="space-y-4">
             <h3 className="font-medium text-sm text-gray-500 uppercase tracking-wider">Story</h3>
             <div><Label>Opening Hook (first-person, 2-3 sentences)</Label><Textarea value={form.narrativeHook} onChange={e => setForm({ ...form, narrativeHook: e.target.value })} placeholder="I became a therapist because..." rows={3} data-testid="input-featured-hook" /></div>
             <div>
@@ -4701,6 +4718,24 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
         if (file && uploadTargetId) handleUploadPortrait(uploadTargetId, file);
         e.target.value = "";
       }} />
+      <input type="file" ref={spaceFileInputRef} className="hidden" accept="image/*" onChange={async e => {
+        const file = e.target.files?.[0];
+        if (file && spaceUploadTargetId) {
+          setUploading(spaceUploadTargetId);
+          try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await fetch(`/api/admin/featured/${spaceUploadTargetId}/upload-space-image`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: fd,
+            });
+            if (res.ok) { toast({ title: "Space image uploaded" }); fetchProfessionals(); }
+          } catch {}
+          setUploading(null);
+        }
+        e.target.value = "";
+      }} />
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {loading ? (
@@ -4764,6 +4799,10 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setUploadTargetId(pro.id); fileInputRef.current?.click(); }} data-testid={`button-upload-featured-${pro.id}`}>
                               {uploading === pro.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
                               {pro.portraitImageUrl ? "Change Photo" : "Upload Photo"}
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setSpaceUploadTargetId(pro.id); spaceFileInputRef.current?.click(); }}>
+                              <Upload className="w-3 h-3 mr-1" />
+                              {(pro as any).spaceImageUrl ? "Change Space" : "Space Photo"}
                             </Button>
                             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => window.open(`/featured/${pro.slug}`, "_blank")} data-testid={`button-view-featured-${pro.id}`}>
                               <ExternalLink className="w-3 h-3 mr-1" /> View

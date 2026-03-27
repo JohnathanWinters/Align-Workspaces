@@ -2343,6 +2343,24 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/featured/:id/upload-space-image", isAdmin, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const rawBuffer = await fs.promises.readFile(req.file.path);
+      const processedBuffer = await sharp(rawBuffer)
+        .rotate()
+        .resize({ width: 2400, height: 1600, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 90, effort: 4 })
+        .toBuffer();
+      await fs.promises.unlink(req.file.path);
+      const imageUrl = await uploadBuffer(processedBuffer, "image/webp");
+      const pro = await storage.updateFeaturedProfessional(req.params.id, { spaceImageUrl: imageUrl });
+      res.json(pro);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/nominations", async (req, res) => {
     try {
       const validated = insertNominationSchema.parse(req.body);
