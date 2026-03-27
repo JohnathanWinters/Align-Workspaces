@@ -28,12 +28,6 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
 
   if (isLoading || !isAuthenticated || !user) return null;
 
-  const initials = user.firstName
-    ? user.firstName.charAt(0).toUpperCase()
-    : user.email
-      ? user.email.charAt(0).toUpperCase()
-      : "?";
-
   const isLight = variant === "light";
 
   return (
@@ -48,8 +42,8 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
           {user.profileImageUrl && (
             <AvatarImage src={user.profileImageUrl} alt={user.firstName || "User"} />
           )}
-          <AvatarFallback className={`text-xs font-medium ${isLight ? "bg-white/20 text-white" : "bg-stone-100 text-stone-500"}`}>
-            {initials}
+          <AvatarFallback className={`${isLight ? "bg-white/20 text-white" : "bg-stone-100 text-stone-500"}`}>
+            <User className="w-3.5 h-3.5" />
           </AvatarFallback>
         </Avatar>
       </button>
