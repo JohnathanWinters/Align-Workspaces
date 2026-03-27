@@ -146,7 +146,6 @@ app.use((req, res, next) => {
 const PATH_REDIRECTS: Record<string, string> = {
   "/browse": "/workspaces",
   "/portraits/builder": "/portrait-builder",
-  "/portraits": "/portrait-builder",
   "/about": "/our-vision",
 };
 
