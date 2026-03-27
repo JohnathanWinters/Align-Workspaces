@@ -8566,9 +8566,12 @@ function AdminDashboard({ token }: { token: string }) {
           <div className="w-8 h-8 rounded-lg bg-[#1a1a1a] flex items-center justify-center">
             <Lock className="w-4 h-4 text-white" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 leading-tight">Admin Panel</p>
-            <p className="text-[11px] text-gray-400">Align Workspaces</p>
+            <a href="/" className="text-[11px] text-[#c4956a] hover:text-[#a07a52] transition-colors flex items-center gap-1">
+              <ExternalLink className="w-2.5 h-2.5" />
+              Back to site
+            </a>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}

@@ -2196,29 +2196,6 @@ function PortalContent() {
                 </button>
               )}
               <button
-                onClick={() => setActiveTab("messages")}
-                data-testid="tab-messages"
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "messages"
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                <MessageCircle className="w-4 h-4" />
-                Messages
-                {unreadCount > 0 && (
-                  <span className="bg-gray-900 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-medium" data-testid="tab-messages-unread">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-                {activeTab === "messages" && (
-                  <motion.div
-                    layoutId="portal-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                  />
-                )}
-              </button>
-              <button
                 onClick={() => setActiveTab("spaces")}
                 data-testid="tab-my-spaces"
                 className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
