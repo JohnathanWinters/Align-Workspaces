@@ -124,23 +124,21 @@ export default function SupportPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#faf9f7]/95 backdrop-blur-sm border-b border-stone-200/60">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 z-10">
-            <UserIndicator />
-            <button
-              onClick={() => setLocation("/")}
-              className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10"
+            data-testid="button-back-home"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Home</span>
+          </button>
 
           <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
             Support
           </span>
 
           <div className="flex items-center gap-3 z-10">
+            <UserIndicator />
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
