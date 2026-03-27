@@ -372,6 +372,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                   Portrait Builder
                 </span>
                 <div className="flex items-center gap-3 ml-auto z-10">
+                  <UserIndicator />
                   <div className="relative">
                     <button
                       onClick={() => setMenuOpen(!menuOpen)}

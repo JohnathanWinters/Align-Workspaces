@@ -78,58 +78,61 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       <nav className="relative z-20 px-6 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="w-9" />
+          <div className="w-9" />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.15 }}
-            className="relative"
+            className="flex items-center gap-3"
           >
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              data-testid="button-hero-menu"
-              className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase text-white/70 hover:text-white font-semibold transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-white/10"
-            >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              Menu
-            </button>
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
-                >
-                  <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
-                    <Building2 className="w-4 h-4" />
-                    Align Spaces
-                  </button>
-                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
-                    <Images className="w-4 h-4" />
-                    Our Work
-                  </button>
-                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-hero">
-                    <User className="w-4 h-4" />
-                    Client Portal
-                  </button>
-                  <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-hero">
-                    <Star className="w-4 h-4" />
-                    Featured Pros
-                  </button>
-                  <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
-                    <Info className="w-4 h-4" />
-                    Our Vision
-                  </button>
-                  <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-hero">
-                    <HelpCircle className="w-4 h-4" />
-                    Support
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <UserIndicator variant="light" />
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                data-testid="button-hero-menu"
+                className="flex items-center gap-2 text-xs tracking-[0.25em] uppercase text-white/70 hover:text-white font-semibold transition-colors duration-300 px-3 py-2 rounded-lg hover:bg-white/10"
+              >
+                {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                Menu
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
+                  >
+                    <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-hero">
+                      <Building2 className="w-4 h-4" />
+                      Align Spaces
+                    </button>
+                    <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
+                      <Images className="w-4 h-4" />
+                      Our Work
+                    </button>
+                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-hero">
+                      <User className="w-4 h-4" />
+                      Client Portal
+                    </button>
+                    <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-hero">
+                      <Star className="w-4 h-4" />
+                      Featured Pros
+                    </button>
+                    <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
+                      <Info className="w-4 h-4" />
+                      Our Vision
+                    </button>
+                    <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-hero">
+                      <HelpCircle className="w-4 h-4" />
+                      Support
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
-          <UserIndicator variant="light" />
         </div>
       </nav>
 
