@@ -236,7 +236,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 w-24 h-32 sm:w-36 sm:h-44 rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-[5%] left-[3%] w-[18%] sm:w-[12%] aspect-[3/4] max-h-[60%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
@@ -334,7 +334,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
               />
             </div>
             {/* Portrait pip */}
-            <div className="absolute bottom-3 left-3 w-20 h-24 sm:w-24 sm:h-32 rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
+            <div className="absolute bottom-[5%] left-[3%] w-[22%] aspect-[3/4] max-h-[60%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.portraitCropPosition).containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   className={`${imgLoaded ? "opacity-100" : "opacity-0"}`}
@@ -1104,7 +1104,7 @@ function ProfilePage({ slug }: { slug: string }) {
       <FeaturedNav />
 
       {/* Hero: workspace full-width with portrait pip */}
-      <section className="relative w-full overflow-hidden">
+      <section className="relative w-full">
         {pro.spaceImageUrl ? (
           <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden">
             <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
@@ -1113,7 +1113,7 @@ function ProfilePage({ slug }: { slug: string }) {
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
             </div>
-            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 w-24 h-32 sm:w-40 sm:h-52 rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
+            <div className="absolute bottom-[5%] left-[3%] w-[18%] sm:w-[12%] aspect-[3/4] max-h-[60%] rounded-xl ring-2 ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
               {pro.portraitImageUrl ? (
                 <img src={pro.portraitImageUrl} alt={pro.name}
                   fetchPriority="high" decoding="sync"
