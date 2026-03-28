@@ -267,7 +267,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
         </div>
         {/* Portrait pip — outside overflow container */}
         {hasSpace && pro.portraitImageUrl && (
-          <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-20 h-24 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-stone-900 shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-20 h-24 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
               fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
@@ -370,7 +370,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
         </div>
         {/* Portrait pip — outside overflow container */}
         {hasSpace && pro.portraitImageUrl && (
-          <div className="absolute -bottom-4 left-3 w-16 h-20 sm:w-20 sm:h-28 rounded-lg ring-[3px] ring-stone-900 shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-4 left-3 w-16 h-20 sm:w-20 sm:h-28 rounded-lg ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className="w-full h-full object-cover"
               loading={index < 6 ? "eager" : "lazy"}
@@ -1145,7 +1145,7 @@ function ProfilePage({ slug }: { slug: string }) {
         </div>
         {/* Portrait pip — outside overflow container */}
         {pro.spaceImageUrl && pro.portraitImageUrl && (
-          <div className="absolute -bottom-6 left-4 sm:-bottom-8 sm:left-6 w-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px] aspect-[3/4] max-w-[240px] rounded-xl ring-[3px] ring-stone-900 shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-6 left-4 sm:-bottom-8 sm:left-6 w-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px] aspect-[3/4] max-w-[240px] rounded-xl ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
               style={{ objectPosition: `${pro.portraitCropPosition?.x ?? 50}% ${pro.portraitCropPosition?.y ?? 50}%` }}
