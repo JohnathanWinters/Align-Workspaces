@@ -5605,14 +5605,29 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       )}
       <AnimatePresence>
         {showForm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} data-testid="form-contact">
-              <div className="flex justify-between items-center mb-4">
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-[2001]"
+              onClick={() => { setShowForm(false); setEditingContact(null); }}
+            />
+            {/* Desktop: right drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
+              className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-[2002] flex-col overflow-y-auto hidden sm:flex"
+              data-testid="form-contact"
+            >
+              <div className="flex justify-between items-center px-6 py-4 border-b border-stone-100 flex-shrink-0">
                 <h2 className="font-serif text-lg font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h2>
-                <button onClick={() => { setShowForm(false); setEditingContact(null); }} className="p-1 hover:bg-gray-100 rounded"><X className="w-4 h-4" /></button>
+                <button onClick={() => { setShowForm(false); setEditingContact(null); }} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors"><X className="w-4 h-4 text-stone-500" /></button>
               </div>
-              <div className="space-y-3">
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
                 <div>
                   <Label className="text-xs text-gray-500">Name *</Label>
                   <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-name" />
@@ -5669,29 +5684,107 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
-                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
-                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
-                  </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Next Follow-up</Label>
+                  <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Notes</Label>
                   <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-20 text-sm" data-testid="input-contact-notes" />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => { setShowForm(false); setEditingContact(null); }} data-testid="button-cancel-contact">Cancel</Button>
-                  <Button onClick={handleSave} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-save-contact">
-                    <Save className="w-4 h-4 mr-1" /> {editingContact ? "Update" : "Add"}
-                  </Button>
-                </div>
+              </div>
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-stone-100 flex-shrink-0">
+                <Button variant="outline" onClick={() => { setShowForm(false); setEditingContact(null); }} data-testid="button-cancel-contact">Cancel</Button>
+                <Button onClick={handleSave} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-save-contact">
+                  <Save className="w-4 h-4 mr-1" /> {editingContact ? "Update" : "Add"}
+                </Button>
               </div>
             </motion.div>
-          </motion.div>
+            {/* Mobile: bottom sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
+              className="fixed left-0 right-0 bottom-0 bg-white rounded-t-2xl shadow-2xl z-[2002] flex flex-col max-h-[90vh] sm:hidden"
+              data-testid="form-contact-mobile"
+            >
+              <div className="flex justify-between items-center px-5 py-3 border-b border-stone-100 flex-shrink-0">
+                <h2 className="font-serif text-base font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h2>
+                <button onClick={() => { setShowForm(false); setEditingContact(null); }} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors"><X className="w-4 h-4 text-stone-500" /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                <div>
+                  <Label className="text-xs text-gray-500">Name *</Label>
+                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Email</Label>
+                  <Input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Phone</Label>
+                  <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Instagram</Label>
+                  <Input value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" className="h-9 text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Source</Label>
+                    <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="referral">Referral</SelectItem>
+                        <SelectItem value="social">Social Media</SelectItem>
+                        <SelectItem value="walk-in">Walk-in</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                        <SelectItem value="import">Import</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Category</Label>
+                    <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="portraits">Portraits</SelectItem>
+                        <SelectItem value="spaces">Spaces</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Stage</Label>
+                    <Select value={form.stage} onValueChange={v => setForm(p => ({ ...p, stage: v }))}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {PIPELINE_STAGES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Follow-up</Label>
+                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Notes</Label>
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-16 text-sm" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 px-5 py-3 border-t border-stone-100 flex-shrink-0">
+                <Button variant="outline" size="sm" onClick={() => { setShowForm(false); setEditingContact(null); }}>Cancel</Button>
+                <Button size="sm" onClick={handleSave} className="bg-stone-900 hover:bg-stone-800 text-white">
+                  <Save className="w-4 h-4 mr-1" /> {editingContact ? "Update" : "Add"}
+                </Button>
+              </div>
+            </motion.div>
+          </>
         )}
 
         {showImportCsv && (
