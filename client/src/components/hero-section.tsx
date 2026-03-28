@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { User, Menu, X, Building2, Camera, Star, Info, Eye, Images, HelpCircle } from "lucide-react";
+import { User, Menu, X, Building2, Camera, Star, Info, Compass, Images, HelpCircle } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "./site-footer";
@@ -119,7 +119,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                       Featured Pros
                     </button>
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
-                      <Eye className="w-4 h-4" />
+                      <Compass className="w-4 h-4" />
                       Our Vision
                     </button>
                     <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-hero">

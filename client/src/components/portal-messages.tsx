@@ -925,58 +925,6 @@ export function ConversationView({
           </div>
         )}
 
-        {isHost && booking.status === "approved" && !booking.paymentAmount && booking.paymentStatus !== "paid" && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            {!showPaymentForm ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowPaymentForm(true)}
-                className="text-xs h-7"
-                data-testid="button-show-payment-form"
-              >
-                <DollarSign className="w-3 h-3 mr-1" />
-                Request Payment
-              </Button>
-            ) : (
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 mb-0.5 block">Amount ($)</label>
-                  <Input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    placeholder="0.00"
-                    className="h-8 text-sm"
-                    data-testid="input-payment-amount"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 mb-0.5 block">Description</label>
-                  <Input
-                    value={paymentDesc}
-                    onChange={(e) => setPaymentDesc(e.target.value)}
-                    placeholder="e.g. 4 hours on March 15"
-                    className="h-8 text-sm"
-                    data-testid="input-payment-description"
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => paymentMutation.mutate()}
-                  disabled={!paymentAmount || paymentMutation.isPending}
-                  className="bg-stone-900 text-white hover:bg-stone-800 h-8 text-xs"
-                  data-testid="button-send-payment-request"
-                >
-                  {paymentMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Send"}
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setShowPaymentForm(false)} className="h-8 text-xs text-gray-400">
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#faf9f7]">

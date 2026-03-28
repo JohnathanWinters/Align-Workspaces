@@ -4,7 +4,7 @@ import { useRoute, Link, useLocation } from "wouter";
 import { setPageMeta } from "@/lib/seo";
 import { useSmartBack } from "@/hooks/use-smart-back";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images, Building2, Info, Eye, HelpCircle, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images, Building2, Info, Compass, HelpCircle, User } from "lucide-react";
 import { SiLinkedin, SiFacebook, SiX, SiInstagram, SiTiktok, SiYoutube, SiPinterest, SiSnapchat, SiThreads, SiWhatsapp, SiTelegram, SiSpotify, SiReddit, SiBehance, SiDribbble, SiMedium, SiYelp, SiGithub, SiVimeo, SiTumblr } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { UserIndicator } from "@/components/user-indicator";
@@ -180,7 +180,7 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
                     </Link>
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Eye className="w-4 h-4" />
+                        <Compass className="w-4 h-4" />
                         Our Vision
                       </button>
                     </Link>

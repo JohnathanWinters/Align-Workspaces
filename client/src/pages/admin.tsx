@@ -67,7 +67,7 @@ import {
   LayoutDashboard,
   ArrowUpDown,
   Bug,
-  Eye,
+  Compass,
   ToggleLeft,
   ToggleRight,
   DollarSign,
@@ -2450,7 +2450,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                         title="Hide"
                         data-testid={`button-review-hide-${review.id}`}
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Compass className="w-3.5 h-3.5" />
                       </Button>
                     )}
                     {review.status !== "flagged" && (
@@ -8703,7 +8703,7 @@ function AdminDashboard({ token }: { token: string }) {
                       data-testid="button-open-preview"
                       className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors"
                     >
-                      <Eye className="w-3 h-3" />
+                      <Compass className="w-3 h-3" />
                       Preview Portal
                     </button>
                   </div>
@@ -8847,7 +8847,7 @@ function AdminDashboard({ token }: { token: string }) {
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-violet-600" />
+                  <Compass className="w-4 h-4 text-violet-600" />
                   <p className="text-sm font-medium text-gray-900">Portal Preview</p>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">
                     {debugPreviewRole === "new" && "New User"}

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, Eye, ArrowRight, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building2, Info, Compass, ArrowRight, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -411,7 +411,7 @@ export default function PortfolioPage() {
                     </Link>
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-portfolio">
-                        <Eye className="w-4 h-4" />
+                        <Compass className="w-4 h-4" />
                         Our Vision
                       </button>
                     </Link>

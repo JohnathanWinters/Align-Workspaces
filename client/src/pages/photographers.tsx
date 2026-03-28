@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { setPageMeta } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, Eye, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle, ChevronDown } from "lucide-react";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, Compass, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle, ChevronDown } from "lucide-react";
 import { Link } from "wouter";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
@@ -59,6 +59,7 @@ export default function PhotographersPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showExplore, setShowExplore] = useState(false);
   const [showFounders, setShowFounders] = useState(false);
+  const [expandedFounder, setExpandedFounder] = useState<string | null>(null);
   const membersCarousel = useDragScroll();
   useEffect(() => {
     setPageMeta({
@@ -134,7 +135,7 @@ export default function PhotographersPage() {
                       </Link>
                       <Link href="/our-vision">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-photographers">
-                          <Eye className="w-4 h-4" />
+                          <Compass className="w-4 h-4" />
                           Our Vision
                         </button>
                       </Link>
@@ -213,65 +214,55 @@ export default function PhotographersPage() {
 
       <section className="py-14 sm:py-20">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          {/* Mobile: collapsible reveal */}
-          <div className="md:hidden text-center">
-            <button
-              onClick={() => setShowFounders(!showFounders)}
-              className="inline-flex items-center gap-2.5 text-sm font-medium text-[#2a2a2a] hover:text-[#c4956a] transition-colors"
-              data-testid="button-toggle-founders"
-            >
-              <Users className="w-4 h-4 text-[#c4956a]" />
-              <span className="font-serif text-lg">Meet the Founders</span>
-              <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform duration-300 ${showFounders ? "rotate-180" : ""}`} />
-            </button>
-            <AnimatePresence>
-              {showFounders && !membersLoading && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-8 space-y-6">
-                    {members.map((member, i) => {
-                      const crop = member.cropPosition || { x: 50, y: 50, zoom: 1 };
-                      const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
-                        ? member.photoUrl
-                        : member.photoUrl ? `/objects/${member.photoUrl}` : null;
-                      return (
-                        <div key={member.id} className="bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden text-left" data-testid={`card-photographer-page-${i}`}>
-                          <div className="flex gap-0">
-                            {photoSrc && (
-                              <div className="w-[35%] flex-shrink-0 overflow-hidden">
-                                <img src={photoSrc} alt={member.name} className="w-full h-full object-cover" draggable={false}
-                                  style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
-                                  loading="lazy" decoding="async"
-                                />
-                              </div>
-                            )}
-                            <div className="flex-1 p-4 flex flex-col justify-center">
-                              <h3 className="font-serif text-lg text-[#2a2a2a] mb-0.5">{member.name}</h3>
-                              <p className="text-[12px] text-[#c4956a] font-medium mb-1">{member.role}</p>
-                              {member.location && (
-                                <p className="text-[11px] text-stone-400 mb-2 flex items-center gap-1">
-                                  <MapPin className="w-2.5 h-2.5" /> {member.location}
-                                </p>
-                              )}
-                              {member.bio && (
-                                <p className="text-[12px] text-stone-500 leading-[1.6] line-clamp-3">
-                                  {member.bio.split("\n").filter(Boolean)[0]}
-                                </p>
-                              )}
-                            </div>
-                          </div>
+          {/* Mobile: always visible, clickable for full bio */}
+          <div className="md:hidden">
+            <div className="text-center mb-8">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">The Team</p>
+              <h2 className="font-serif text-2xl text-[#2a2a2a]">Meet the Founders</h2>
+            </div>
+            <div className="space-y-4">
+              {members.map((member, i) => {
+                const crop = member.cropPosition || { x: 50, y: 50, zoom: 1 };
+                const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
+                  ? member.photoUrl
+                  : member.photoUrl ? `/objects/${member.photoUrl}` : null;
+                const isExpanded = expandedFounder === member.id;
+                return (
+                  <button
+                    key={member.id}
+                    onClick={() => setExpandedFounder(isExpanded ? null : member.id)}
+                    className="w-full bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden text-left"
+                    data-testid={`card-photographer-page-${i}`}
+                  >
+                    <div className="flex gap-0">
+                      {photoSrc && (
+                        <div className="w-[35%] flex-shrink-0 overflow-hidden">
+                          <img src={photoSrc} alt={member.name} className="w-full h-full object-cover" draggable={false}
+                            style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
+                            loading="lazy" decoding="async"
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      )}
+                      <div className="flex-1 p-4 flex flex-col justify-center">
+                        <h3 className="font-serif text-lg text-[#2a2a2a] mb-0.5">{member.name}</h3>
+                        <p className="text-[12px] text-[#c4956a] font-medium mb-1">{member.role}</p>
+                        {member.location && (
+                          <p className="text-[11px] text-stone-400 mb-2 flex items-center gap-1">
+                            <MapPin className="w-2.5 h-2.5" /> {member.location}
+                          </p>
+                        )}
+                        {member.bio && (
+                          <p className={`text-[12px] text-stone-500 leading-[1.6] ${isExpanded ? "" : "line-clamp-2"}`}>
+                            {isExpanded ? member.bio : member.bio.split("\n").filter(Boolean)[0]}
+                          </p>
+                        )}
+                        <p className="text-[11px] text-[#c4956a] mt-2 font-medium">{isExpanded ? "Show less" : "Read more"}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Desktop: always visible grid */}

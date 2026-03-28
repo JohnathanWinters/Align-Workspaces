@@ -11,7 +11,7 @@ import {
   Camera,
   Star,
   Info,
-  Eye,
+  Compass,
   Images,
   User,
   HelpCircle,
@@ -206,7 +206,7 @@ export default function SupportPage() {
                       Featured Pros
                     </button>
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-support">
-                      <Eye className="w-4 h-4" />
+                      <Compass className="w-4 h-4" />
                       Our Vision
                     </button>
                   </motion.div>

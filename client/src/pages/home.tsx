@@ -42,7 +42,7 @@ import {
   Star,
   Camera,
   Info,
-  Eye,
+  Compass,
   Images,
   HelpCircle,
 } from "lucide-react";
@@ -409,7 +409,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                             Featured Pros
                           </button>
                           <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-header">
-                            <Eye className="w-4 h-4" />
+                            <Compass className="w-4 h-4" />
                             Our Vision
                           </button>
                           <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-header">
