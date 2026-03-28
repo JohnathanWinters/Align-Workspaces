@@ -5551,10 +5551,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 data-testid={`filter-${f}`}>{f === "all" ? "All" : f === "portraits" ? "Portraits" : "Spaces"}</button>
             ))}
           </div>
-          <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5 sm:ml-auto sm:order-last">
-            <button onClick={() => setViewMode("board")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "board" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-board">Overview</button>
-            <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500"}`} data-testid="button-view-list">List</button>
-          </div>
         </div>
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -5613,7 +5609,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-      ) : viewMode === "board" ? (
+      ) : (
         <div className="space-y-5" data-testid="pipeline-overview">
 
           {(() => {
@@ -5686,89 +5682,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               </div>
             );
           })()}
-        </div>
-      ) : (
-        <div className="space-y-4" data-testid="pipeline-list-table">
-          {PIPELINE_STAGES.map(stage => {
-            const stageContacts = getStageContacts(stage.key);
-            if (stageContacts.length === 0) return null;
-            return (
-              <div key={stage.key}>
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
-                  <span className="text-[10px] text-gray-400">{stageContacts.length}</span>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-                  {stageContacts.map(c => {
-                    const isListExpanded = expandedListContact === c.id;
-                    return (
-                      <div key={c.id}>
-                        <button
-                          onClick={() => setExpandedListContact(isListExpanded ? null : c.id)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
-                          data-testid={`pipeline-row-${c.id}`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                            {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
-                          </div>
-                              {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && <span className="text-[10px] text-red-500 font-medium shrink-0 flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> Due</span>}
-                          <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isListExpanded ? "rotate-180" : ""}`} />
-                        </button>
-                        <AnimatePresence>
-                          {isListExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-4 pb-4 pt-1 ml-11 space-y-3">
-                                <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500">
-                                  {c.email && <span className="flex items-center gap-1"><Send className="w-3 h-3 text-gray-400" /> {c.email}</span>}
-                                  {c.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3 text-gray-400" /> {c.phone}</span>}
-                                  {c.instagram && <span className="flex items-center gap-1"><Instagram className="w-3 h-3 text-gray-400" /> @{c.instagram.replace("@", "")}</span>}
-                                  <span className="capitalize flex items-center gap-1"><Camera className="w-3 h-3 text-gray-400" /> {c.category}</span>
-                                  <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-gray-400" /> {c.source}</span>
-                                </div>
-                                {c.nextFollowUp && (
-                                  <p className={`text-xs flex items-center gap-1 ${new Date(c.nextFollowUp.toString().split("T")[0] + "T00:00:00") <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                                    <CalendarDays className="w-3 h-3" /> Follow-up: {new Date(c.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
-                                  </p>
-                                )}
-                                {c.lastContactDate && (
-                                  <p className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Last contact: {new Date(c.lastContactDate.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}</p>
-                                )}
-                                {c.notes && <p className="text-xs text-gray-600">{c.notes}</p>}
-                                <div className="flex items-center gap-2 pt-1">
-                                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openDetail(c)} data-testid={`button-detail-contact-${c.id}`}>
-                                    <MessageCircle className="w-3 h-3 mr-1" /> Activities
-                                  </Button>
-                                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => openEdit(c)} data-testid={`button-edit-contact-${c.id}`}>
-                                    <Edit className="w-3 h-3 mr-1" /> Edit
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDelete(c.id)} data-testid={`button-delete-contact-${c.id}`}>
-                                    <Trash2 className="w-3 h-3 mr-1" /> Delete
-                                  </Button>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-          {filteredContacts.length === 0 && (
-            <div className="text-center py-12 text-gray-400 text-sm">No contacts found</div>
-          )}
         </div>
       )}
       <AnimatePresence>
