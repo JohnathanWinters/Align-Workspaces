@@ -405,7 +405,6 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onClose}
     >
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <motion.div
@@ -414,7 +413,6 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 40, opacity: 0, scale: 0.97 }}
         transition={{ type: "spring", damping: 28, stiffness: 350 }}
-        onClick={(e) => e.stopPropagation()}
         data-testid={`edit-space-form-${space.id}`}
       >
         {/* Header */}
