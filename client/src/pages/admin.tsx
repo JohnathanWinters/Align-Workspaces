@@ -5253,247 +5253,166 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const meetingCount = activities.filter(a => a.type === "meeting").length;
   const totalAttempts = callCount + textCount + emailCount;
 
-  if (selectedContact) {
-    return (
-      <div className="min-h-screen bg-[#faf9f7]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="flex items-center gap-2 mb-4 sm:mb-6">
-          <Button variant="ghost" size="sm" className="h-8 px-2 flex-shrink-0" onClick={() => setSelectedContact(null)} data-testid="button-pipeline-detail-back">
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="font-serif text-lg sm:text-xl font-semibold truncate">{selectedContact.name}</h1>
-          <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${stageOf(selectedContact.stage)?.color || "bg-gray-100"}`}>
-            {stageOf(selectedContact.stage)?.label}
-          </span>
-        </div>
-
-        {totalAttempts > 0 && (
-          <div className="flex flex-wrap gap-1.5 sm:gap-3 mb-4" data-testid="contact-attempt-stats">
-            {callCount > 0 && (
-              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-50 text-blue-700 rounded-full text-[11px] sm:text-xs font-medium">
-                <Phone className="w-3 h-3" /> {callCount}
+  return (
+    <>
+    <AnimatePresence>
+      {selectedContact && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[2000] flex items-center justify-center"
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <motion.div
+            initial={{ y: 40, opacity: 0, scale: 0.97 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 40, opacity: 0, scale: 0.97 }}
+            transition={{ type: "spring", damping: 28, stiffness: 350 }}
+            className="relative bg-white w-full max-w-2xl mx-4 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 flex-shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-semibold text-stone-600">{selectedContact.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-serif text-lg font-bold text-stone-900 truncate">{selectedContact.name}</h2>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stageOf(selectedContact.stage)?.color || "bg-gray-100"}`}>
+                    {stageOf(selectedContact.stage)?.label}
+                  </span>
+                </div>
               </div>
-            )}
-            {textCount > 0 && (
-              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-[11px] sm:text-xs font-medium">
-                <MessageCircle className="w-3 h-3" /> {textCount}
-              </div>
-            )}
-            {emailCount > 0 && (
-              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-violet-50 text-violet-700 rounded-full text-[11px] sm:text-xs font-medium">
-                <Send className="w-3 h-3" /> {emailCount}
-              </div>
-            )}
-            {meetingCount > 0 && (
-              <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-green-50 text-green-700 rounded-full text-[11px] sm:text-xs font-medium">
-                <Users className="w-3 h-3" /> {meetingCount}
-              </div>
-            )}
-            <div className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-100 text-gray-600 rounded-full text-[11px] sm:text-xs font-medium" data-testid="text-total-attempts">
-              {totalAttempts} total
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <Card className="border-gray-100">
-            <CardContent className="p-4 space-y-2 text-sm">
-              {selectedContact.email && <p className="flex items-center gap-2"><Send className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.email}</p>}
-              {selectedContact.phone && <p className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.phone}</p>}
-              {selectedContact.instagram && <p className="flex items-center gap-2"><Instagram className="w-3.5 h-3.5 text-gray-400" /> @{selectedContact.instagram.replace("@", "")}</p>}
-              <p className="flex items-center gap-2"><Globe className="w-3.5 h-3.5 text-gray-400" /> Source: {selectedContact.source}</p>
-              <p className="flex items-center gap-2"><Camera className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.category === "spaces" ? "Spaces" : "Portraits"}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-gray-100">
-            <CardContent className="p-4 space-y-2 text-sm">
-              {selectedContact.nextFollowUp && (
-                <p className={`flex items-center gap-2 ${new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00") <= new Date() ? "text-red-600 font-medium" : ""}`}>
-                  <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
-                </p>
-              )}
-              {selectedContact.lastContactDate && (
-                <p className="flex items-center gap-2 text-gray-500"><Clock className="w-3.5 h-3.5" /> Last contact: {new Date(selectedContact.lastContactDate.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}</p>
-              )}
-              {selectedContact.notes && <p className="text-gray-600 mt-2">{selectedContact.notes}</p>}
-              <div className="flex gap-2 mt-3">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(selectedContact)} data-testid="button-edit-contact-detail"><Edit className="w-3 h-3 mr-1" /> Edit</Button>
-                <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleDelete(selectedContact.id)} data-testid="button-delete-contact-detail"><Trash2 className="w-3 h-3 mr-1" /> Delete</Button>
+                <button onClick={() => setSelectedContact(null)} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors">
+                  <X className="w-4 h-4 text-stone-500" />
+                </button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        <div className="mb-4">
-          <Label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">Move to Stage</Label>
-          <div className="flex flex-wrap gap-1">
-            {PIPELINE_STAGES.map(s => (
-              <button key={s.key} onClick={() => { moveStage(selectedContact, s.key); setSelectedContact({ ...selectedContact, stage: s.key }); }}
-                className={`px-2 sm:px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium transition-all ${selectedContact.stage === s.key ? s.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
-                data-testid={`button-stage-${s.key}`}>{s.label}</button>
-            ))}
-          </div>
-        </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+              {/* Contact info + stats */}
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-gray-600">
+                {selectedContact.email && <span className="flex items-center gap-1.5"><Send className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.email}</span>}
+                {selectedContact.phone && <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.phone}</span>}
+                {selectedContact.instagram && <span className="flex items-center gap-1.5"><Instagram className="w-3.5 h-3.5 text-gray-400" /> @{selectedContact.instagram.replace("@", "")}</span>}
+                <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.source}</span>
+                <span className="flex items-center gap-1.5 capitalize"><Camera className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.category}</span>
+              </div>
 
-        <Card className="border-gray-100 mb-4 sm:mb-6">
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6"><CardTitle className="text-sm font-medium">Log Activity</CardTitle></CardHeader>
-          <CardContent className="space-y-2.5 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
-            <AnimatePresence>
-              {activityJustLogged && (
-                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium" data-testid="activity-success-banner">
-                  <CheckCircle className="w-4 h-4 flex-shrink-0" /> Activity logged!
-                </motion.div>
+              {/* Follow-up + last contact */}
+              <div className="flex flex-wrap gap-3 text-sm">
+                {selectedContact.nextFollowUp && (
+                  <span className={`flex items-center gap-1.5 ${new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00") <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                    <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
+                  </span>
+                )}
+                {selectedContact.lastContactDate && (
+                  <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {new Date(selectedContact.lastContactDate.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}</span>
+                )}
+              </div>
+
+              {selectedContact.notes && <p className="text-sm text-gray-600 bg-stone-50 rounded-lg p-3">{selectedContact.notes}</p>}
+
+              {totalAttempts > 0 && (
+                <div className="flex flex-wrap gap-1.5" data-testid="contact-attempt-stats">
+                  {callCount > 0 && <span className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-[11px] font-medium"><Phone className="w-3 h-3" /> {callCount}</span>}
+                  {textCount > 0 && <span className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[11px] font-medium"><MessageCircle className="w-3 h-3" /> {textCount}</span>}
+                  {emailCount > 0 && <span className="flex items-center gap-1 px-2 py-1 bg-violet-50 text-violet-700 rounded-full text-[11px] font-medium"><Send className="w-3 h-3" /> {emailCount}</span>}
+                  {meetingCount > 0 && <span className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-full text-[11px] font-medium"><Users className="w-3 h-3" /> {meetingCount}</span>}
+                  <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-medium" data-testid="text-total-attempts">{totalAttempts} total</span>
+                </div>
               )}
-            </AnimatePresence>
-            <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
-              {ACTIVITY_TYPES.map(a => (
-                <button key={a.key} onClick={() => setNewActivity(p => ({ ...p, type: a.key }))}
-                  className={`flex items-center justify-center sm:justify-start gap-1 px-2 sm:px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-medium transition-all ${newActivity.type === a.key ? "bg-stone-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                  data-testid={`button-activity-type-${a.key}`}><a.icon className="w-3 h-3" /> <span className="hidden sm:inline">{a.label}</span><span className="sm:hidden">{a.label.split(" ").pop()}</span></button>
-              ))}
-            </div>
-            <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
-              placeholder="What happened? Quick notes..." className="h-16 sm:h-20 text-sm" data-testid="input-activity-note" />
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <div className="flex-1">
-                <Label className="text-[11px] text-gray-500 mb-1 block">Schedule next follow-up</Label>
-                <Select value={String(newActivity.followUpDays)} onValueChange={v => setNewActivity(p => ({ ...p, followUpDays: parseInt(v) }))}>
-                  <SelectTrigger className="h-8 text-xs" data-testid="select-followup-schedule"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {FOLLOW_UP_OPTIONS.map(o => (
-                      <SelectItem key={o.days} value={String(o.days)}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white w-full sm:w-auto sm:mt-4" data-testid="button-log-activity">
-                <Plus className="w-3.5 h-3.5 mr-1" /> Log Activity
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-700">Activity History {activities.length > 0 && <span className="text-gray-400 font-normal">({activities.length})</span>}</h3>
-          {activities.length === 0 && <p className="text-sm text-gray-400">No activities logged yet.</p>}
-          {activities.map((a: any) => {
-            const at = ACTIVITY_TYPES.find(t => t.key === a.type);
-            const Icon = at?.icon || Edit;
-            return (
-              <div key={a.id} className="flex gap-3 items-start p-3 rounded-lg bg-gray-50" data-testid={`activity-${a.id}`}>
-                <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Icon className="w-3.5 h-3.5 text-gray-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-700">{at?.label || a.type}</span>
-                    <span className="text-[10px] text-gray-400">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                  </div>
-                  {a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>}
+              {/* Move to stage */}
+              <div>
+                <Label className="text-xs font-medium text-gray-500 mb-1.5 block">Move to Stage</Label>
+                <div className="flex flex-wrap gap-1">
+                  {PIPELINE_STAGES.map(s => (
+                    <button key={s.key} onClick={() => { moveStage(selectedContact, s.key); setSelectedContact({ ...selectedContact, stage: s.key }); }}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${selectedContact.stage === s.key ? s.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
+                      data-testid={`button-stage-${s.key}`}>{s.label}</button>
+                  ))}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      <AnimatePresence>
-        {showForm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()} data-testid="form-contact">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-serif text-lg font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h2>
-                <button onClick={() => { setShowForm(false); setEditingContact(null); }} className="p-1 hover:bg-gray-100 rounded"><X className="w-4 h-4" /></button>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs text-gray-500">Name *</Label>
-                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-name" />
+              {/* Log activity */}
+              <div className="bg-stone-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-sm font-medium text-gray-700">Log Activity</h4>
+                <AnimatePresence>
+                  {activityJustLogged && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                      className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium" data-testid="activity-success-banner">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" /> Activity logged!
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="flex flex-wrap gap-1.5">
+                  {ACTIVITY_TYPES.map(a => (
+                    <button key={a.key} onClick={() => setNewActivity(p => ({ ...p, type: a.key }))}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium transition-all ${newActivity.type === a.key ? "bg-stone-900 text-white" : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"}`}
+                      data-testid={`button-activity-type-${a.key}`}><a.icon className="w-3 h-3" /> {a.label}</button>
+                  ))}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Email</Label>
-                    <Input value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-email" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Phone</Label>
-                    <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-phone" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Instagram</Label>
-                    <Input value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" className="h-9 text-sm" data-testid="input-contact-instagram" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Source</Label>
-                    <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
-                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-source"><SelectValue /></SelectTrigger>
+                <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
+                  placeholder="What happened? Quick notes..." className="h-16 text-sm bg-white" data-testid="input-activity-note" />
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <Select value={String(newActivity.followUpDays)} onValueChange={v => setNewActivity(p => ({ ...p, followUpDays: parseInt(v) }))}>
+                      <SelectTrigger className="h-8 text-xs bg-white" data-testid="select-followup-schedule"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="website">Website</SelectItem>
-                        <SelectItem value="referral">Referral</SelectItem>
-                        <SelectItem value="social">Social Media</SelectItem>
-                        <SelectItem value="walk-in">Walk-in</SelectItem>
-                        <SelectItem value="event">Event</SelectItem>
-                        <SelectItem value="import">Import</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        {FOLLOW_UP_OPTIONS.map(o => (
+                          <SelectItem key={o.days} value={String(o.days)}>{o.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Category</Label>
-                    <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
-                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-category"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="portraits">Portraits</SelectItem>
-                        <SelectItem value="spaces">Spaces</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Stage</Label>
-                    <Select value={form.stage} onValueChange={v => setForm(p => ({ ...p, stage: v }))}>
-                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-stage"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {PIPELINE_STAGES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
-                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Next Follow-up</Label>
-                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500">Notes</Label>
-                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-20 text-sm" data-testid="input-contact-notes" />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => { setShowForm(false); setEditingContact(null); }} data-testid="button-cancel-contact">Cancel</Button>
-                  <Button onClick={handleSave} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-save-contact">
-                    <Save className="w-4 h-4 mr-1" /> {editingContact ? "Update" : "Add"}
+                  <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Log
                   </Button>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      </div>
-    );
-  }
 
-  return (
+              {/* Activity history */}
+              {activities.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700">History <span className="text-gray-400 font-normal">({activities.length})</span></h4>
+                  {activities.map((a: any) => {
+                    const at = ACTIVITY_TYPES.find(t => t.key === a.type);
+                    const Icon = at?.icon || Edit;
+                    return (
+                      <div key={a.id} className="flex gap-3 items-start p-3 rounded-lg bg-gray-50" data-testid={`activity-${a.id}`}>
+                        <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Icon className="w-3.5 h-3.5 text-gray-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-700">{at?.label || a.type}</span>
+                            <span className="text-[10px] text-gray-400">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                          </div>
+                          {a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-6 py-3 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
+              <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => { handleDelete(selectedContact.id); }} data-testid="button-delete-contact-detail">
+                <Trash2 className="w-3 h-3 mr-1" /> Delete
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setSelectedContact(null)}>Close</Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
     <div className="min-h-screen bg-[#faf9f7]">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="flex items-center justify-between mb-4">
@@ -5799,6 +5718,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       </AnimatePresence>
     </div>
     </div>
+    </>
   );
 }
 
