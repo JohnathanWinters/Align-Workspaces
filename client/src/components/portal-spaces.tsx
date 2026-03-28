@@ -970,6 +970,7 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
 
 function SavedTab() {
   const { toast } = useToast();
+  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string; timer: ReturnType<typeof setTimeout> } | null>(null);
 
   // Favorites
   const { data: favoriteSpaces = [], isLoading: favLoading } = useQuery<Space[]>({
@@ -989,6 +990,25 @@ function SavedTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/space-favorites"] });
     },
   });
+
+  const startRemove = (space: Space) => {
+    if (pendingRemove) {
+      clearTimeout(pendingRemove.timer);
+      removeFavorite.mutate(pendingRemove.id);
+    }
+    const timer = setTimeout(() => {
+      removeFavorite.mutate(space.id);
+      setPendingRemove(null);
+    }, 5000);
+    setPendingRemove({ id: space.id, name: space.name, timer });
+  };
+
+  const undoRemove = () => {
+    if (pendingRemove) {
+      clearTimeout(pendingRemove.timer);
+      setPendingRemove(null);
+    }
+  };
 
   // Wishlists
   const [newName, setNewName] = useState("");
@@ -1090,6 +1110,26 @@ function SavedTab() {
 
   return (
     <div className="space-y-6">
+      {/* Undo Banner */}
+      <AnimatePresence>
+        {pendingRemove && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center justify-between gap-3 px-4 py-3 bg-stone-800 text-white rounded-xl text-sm"
+          >
+            <span className="truncate">Removed <strong>{pendingRemove.name}</strong> from favorites</span>
+            <button
+              onClick={undoRemove}
+              className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors flex-shrink-0"
+            >
+              Undo
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Favorites Section */}
       {hasFavorites && (
         <div className="space-y-3">
@@ -1098,41 +1138,44 @@ function SavedTab() {
             Favorites
           </h3>
           <div className="grid gap-3">
-            {favoriteSpaces.map((space) => (
-              <Card key={space.id} className="overflow-hidden border border-gray-100" data-testid={`card-favorite-${space.id}`}>
-                <div className="flex gap-4 p-4">
-                  <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                    {(space.imageUrls as string[])?.[0] ? (
-                      <img src={(space.imageUrls as string[])[0]} alt={space.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
-                    )}
+            {favoriteSpaces.map((space) => {
+              const isPending = pendingRemove?.id === space.id;
+              return (
+                <Card key={space.id} className={`overflow-hidden border border-gray-100 transition-opacity ${isPending ? "opacity-40" : ""}`} data-testid={`card-favorite-${space.id}`}>
+                  <div className="flex gap-4 p-4">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                      {(space.imageUrls as string[])?.[0] ? (
+                        <img src={(space.imageUrls as string[])[0]} alt={space.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Building2 className="w-6 h-6 text-gray-300" /></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 text-sm truncate">{space.name}</h4>
+                      {space.address && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                          <MapPin className="w-3 h-3" />
+                          {space.address}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <button
+                        onClick={() => isPending ? undoRemove() : startRemove(space)}
+                        className="p-1.5 rounded-full hover:bg-stone-100 transition-colors"
+                        data-testid={`button-unfavorite-${space.id}`}
+                      >
+                        <Heart className={`w-4 h-4 ${isPending ? "text-stone-300" : "text-stone-600 fill-stone-600"}`} strokeWidth={2.5} />
+                      </button>
+                      <a href={`/spaces/${space.slug}`} className="text-xs text-[#c4956a] hover:underline" data-testid={`link-view-space-${space.id}`}>
+                        View
+                      </a>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">{space.name}</h4>
-                    {space.address && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                        <MapPin className="w-3 h-3" />
-                        {space.address}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <button
-                      onClick={() => removeFavorite.mutate(space.id)}
-                      className="p-1.5 rounded-full hover:bg-stone-100 transition-colors"
-                      data-testid={`button-unfavorite-${space.id}`}
-                    >
-                      <Heart className="w-4 h-4 text-stone-600 fill-stone-600" strokeWidth={2.5} />
-                    </button>
-                    <a href={`/spaces/${space.slug}`} className="text-xs text-[#c4956a] hover:underline" data-testid={`link-view-space-${space.id}`}>
-                      View
-                    </a>
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
