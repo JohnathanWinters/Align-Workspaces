@@ -5561,18 +5561,21 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
-        <div className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3" data-testid="stat-total-contacts">
-          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Contacts</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{filteredContacts.length}</p>
+      {/* Compact stats bar */}
+      <div className="flex items-center gap-4 sm:gap-6 mb-4 sm:mb-5 px-1" data-testid="stat-total-contacts">
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg sm:text-xl font-bold text-gray-900">{filteredContacts.length}</span>
+          <span className="text-[10px] text-gray-400 uppercase tracking-wider">Contacts</span>
         </div>
-        <div className={`rounded-lg border p-2.5 sm:p-3 ${followUpsDue > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
-          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Follow-ups Due</p>
-          <p className={`text-xl sm:text-2xl font-semibold ${followUpsDue > 0 ? "text-amber-600" : "text-gray-900"}`}>{followUpsDue}</p>
+        <div className="w-px h-5 bg-gray-200" />
+        <div className={`flex items-center gap-1.5 ${followUpsDue > 0 ? "text-amber-600" : ""}`} data-testid="stat-follow-ups">
+          <span className={`text-lg sm:text-xl font-bold ${followUpsDue > 0 ? "text-amber-600" : "text-gray-900"}`}>{followUpsDue}</span>
+          <span className={`text-[10px] uppercase tracking-wider ${followUpsDue > 0 ? "text-amber-500" : "text-gray-400"}`}>Follow-ups</span>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-2.5 sm:p-3">
-          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider">Going Cold</p>
-          <p className="text-xl sm:text-2xl font-semibold text-gray-900">{filteredContacts.filter(c => c.lastContactDate && (Date.now() - new Date(c.lastContactDate).getTime()) > 30 * 24 * 60 * 60 * 1000).length}</p>
+        <div className="w-px h-5 bg-gray-200" />
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg sm:text-xl font-bold text-gray-900">{filteredContacts.filter(c => c.lastContactDate && (Date.now() - new Date(c.lastContactDate).getTime()) > 30 * 24 * 60 * 60 * 1000).length}</span>
+          <span className="text-[10px] text-gray-400 uppercase tracking-wider">Cold</span>
         </div>
       </div>
 
@@ -5580,17 +5583,18 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : viewMode === "board" ? (
         <div className="space-y-5" data-testid="pipeline-overview">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+          {/* Compact pipeline stages */}
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none pb-1">
             {PIPELINE_STAGES.map(stage => {
               const stageContacts = getStageContacts(stage.key);
               const stageDue = stageContacts.filter(c => c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()).length;
               return (
-                <div key={stage.key} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 hover:shadow-sm transition-shadow" data-testid={`pipeline-column-${stage.key}`}>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stage.color}`}>{stage.label}</span>
+                <div key={stage.key} className="flex-1 min-w-0 bg-white rounded-lg border border-gray-100 px-3 py-2 hover:shadow-sm transition-shadow" data-testid={`pipeline-column-${stage.key}`}>
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${stage.color}`}>{stage.label}</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900">{stageContacts.length}</span>
                   </div>
-                  <p className="text-2xl sm:text-3xl font-semibold text-gray-900">{stageContacts.length}</p>
-                  {stageDue > 0 && <p className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5 mt-1.5"><Clock className="w-2.5 h-2.5" /> {stageDue} due</p>}
+                  {stageDue > 0 && <p className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5 mt-0.5"><Clock className="w-2.5 h-2.5" /> {stageDue} due</p>}
                 </div>
               );
             })}
