@@ -2889,6 +2889,24 @@ export async function registerRoutes(
         if (!Array.isArray(body.amenities)) return res.status(400).json({ message: "Amenities must be an array" });
         updates.amenities = body.amenities.map((a: any) => String(a).trim()).filter(Boolean);
       }
+      if (body.recurringDiscountPercent !== undefined) {
+        const n = body.recurringDiscountPercent === null ? null : Number(body.recurringDiscountPercent);
+        if (n !== null && (isNaN(n) || n < 0 || n > 100)) return res.status(400).json({ message: "Invalid recurring discount percent" });
+        updates.recurringDiscountPercent = n;
+      }
+      if (body.recurringDiscountAfter !== undefined) {
+        const n = Number(body.recurringDiscountAfter);
+        if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid recurring discount after value" });
+        updates.recurringDiscountAfter = n;
+      }
+      if (body.bufferMinutes !== undefined) {
+        const n = Number(body.bufferMinutes);
+        if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid buffer minutes" });
+        updates.bufferMinutes = n;
+      }
+      if (body.availabilitySchedule !== undefined) {
+        updates.availabilitySchedule = String(body.availabilitySchedule);
+      }
 
       if (Object.keys(updates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
 
