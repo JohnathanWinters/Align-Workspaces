@@ -267,24 +267,21 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
   const [editing, setEditing] = useState(false);
 
   return (
-    <Card className="bg-white" data-testid={`my-space-${space.id}`}>
-      <CardContent className="p-4">
-        <div
-          className="flex items-start justify-between cursor-pointer"
-          onClick={() => setEditing(!editing)}
-        >
-          <div>
-            <h3 className="font-medium text-gray-900 text-sm">{space.name}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <MapPin className="w-3 h-3 text-gray-400" />
-              <span className="text-xs text-gray-500">{space.address}</span>
+    <>
+      <Card className="bg-white" data-testid={`my-space-${space.id}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-medium text-gray-900 text-sm">{space.name}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <MapPin className="w-3 h-3 text-gray-400" />
+                <span className="text-xs text-gray-500">{space.address}</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />${space.pricePerHour}/hr</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
-              <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />${space.pricePerHour}/hr</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            {!editing && (
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setEditing(true)}
                 className="text-gray-400 hover:text-gray-700 transition-colors"
@@ -292,29 +289,45 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
               >
                 <Pencil className="w-4 h-4" />
               </button>
-            )}
-            <Badge className={statusColors[space.approvalStatus || "pending"]}>
-              {space.approvalStatus || "pending"}
-            </Badge>
+              <Badge className={statusColors[space.approvalStatus || "pending"]}>
+                {space.approvalStatus || "pending"}
+              </Badge>
+            </div>
           </div>
-        </div>
-        <AnimatePresence>
-          {editing && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-              <EditSpaceForm space={space} onClose={() => setEditing(false)} />
-              <ArrivalGuideEditor spaceId={space.id} />
-              <CalendarSyncSettings spaceId={space.id} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <SpacePhotoManager space={space} />
-      </CardContent>
-    </Card>
+          <SpacePhotoManager space={space} />
+        </CardContent>
+      </Card>
+      <AnimatePresence>
+        {editing && (
+          <EditSpaceModal space={space} onClose={() => setEditing(false)} />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
-function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }) {
+type EditTab = "details" | "pricing" | "schedule" | "extras";
+
+function getCompletionScore(formData: Record<string, string>, images: string[]) {
+  const checks = [
+    { label: "Space name", done: !!formData.name },
+    { label: "Address", done: !!formData.address },
+    { label: "Host name", done: !!formData.hostName },
+    { label: "Hourly price", done: !!formData.pricePerHour },
+    { label: "Description", done: !!formData.description },
+    { label: "Short description", done: !!formData.shortDescription },
+    { label: "Photos", done: images.length >= 1 },
+    { label: "Amenities", done: !!formData.amenities },
+    { label: "Daily price", done: !!formData.pricePerDay },
+    { label: "Neighborhood", done: !!formData.neighborhood },
+  ];
+  const done = checks.filter((c) => c.done).length;
+  return { checks, done, total: checks.length, percent: Math.round((done / checks.length) * 100) };
+}
+
+function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void }) {
   const { toast } = useToast();
+  const [tab, setTab] = useState<EditTab>("details");
   const [schedule, setSchedule] = useState<WeekSchedule>(() => {
     try {
       return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : {
@@ -341,6 +354,9 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     recurringDiscountPercent: String((space as any).recurringDiscountPercent ?? "0"),
     recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "3"),
   });
+
+  const images: string[] = (space.imageUrls || []) as string[];
+  const score = getCompletionScore(formData, images);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -372,169 +388,289 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const tabs: { id: EditTab; label: string; icon: React.ReactNode }[] = [
+    { id: "details", label: "Details", icon: <Building2 className="w-3.5 h-3.5" /> },
+    { id: "pricing", label: "Pricing", icon: <DollarSign className="w-3.5 h-3.5" /> },
+    { id: "schedule", label: "Schedule", icon: <CalendarDays className="w-3.5 h-3.5" /> },
+    { id: "extras", label: "Extras", icon: <Star className="w-3.5 h-3.5" /> },
+  ];
+
+  const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
+    ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
+    : null;
+
   return (
-    <div className="space-y-4 pt-3 border-t border-gray-100 mt-3" data-testid={`edit-space-form-${space.id}`}>
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-900">Edit Details</h4>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600" data-testid={`button-cancel-edit-space-${space.id}`}>
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Space Name</label>
-          <Input value={formData.name} onChange={(e) => update("name", e.target.value)} data-testid={`edit-input-name-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Space Category</label>
-          <select
-            value={formData.type}
-            onChange={(e) => update("type", e.target.value)}
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
-            data-testid={`edit-select-type-${space.id}`}
-          >
-            {SPACE_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
-          <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} data-testid={`edit-input-host-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Address</label>
-          <Input value={formData.address} onChange={(e) => update("address", e.target.value)} data-testid={`edit-input-address-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
-          <Input value={formData.neighborhood} onChange={(e) => update("neighborhood", e.target.value)} data-testid={`edit-input-neighborhood-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Price/Hour ($)</label>
-          <Input type="number" value={formData.pricePerHour} onChange={(e) => update("pricePerHour", e.target.value)} data-testid={`edit-input-price-hour-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Price/Day ($)</label>
-          <Input type="number" value={formData.pricePerDay} onChange={(e) => update("pricePerDay", e.target.value)} data-testid={`edit-input-price-day-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Recurring Discount (%)</label>
-          <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} data-testid={`edit-input-recurring-discount-${space.id}`} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Recurring Discount Kicks In After</label>
-          <select
-            value={formData.recurringDiscountAfter}
-            onChange={(e) => update("recurringDiscountAfter", e.target.value)}
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
-            data-testid={`edit-select-recurring-after-${space.id}`}
-          >
-            <option value="0">Immediately</option>
-            <option value="1">After 1 booking</option>
-            <option value="2">After 2 bookings</option>
-            <option value="3">After 3 bookings</option>
-            <option value="5">After 5 bookings</option>
-            <option value="10">After 10 bookings</option>
-          </select>
-        </div>
-        <div className="col-span-2">
-          <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
-          <div className="flex flex-wrap gap-2" data-testid={`edit-input-target-${space.id}`}>
-            {SPACE_TYPES.map((t) => {
-              const selected = (formData.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
-              const isSelected = selected.includes(t.label);
-              return (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => {
-                    const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
-                    update("targetProfession", next.join(", "));
-                  }}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                    isSelected
-                      ? "border-gray-800 bg-gray-800 text-white"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
+    <motion.div
+      className="fixed inset-0 z-[2000] flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <motion.div
+        className="relative bg-white w-full max-w-2xl mx-4 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+        initial={{ y: 40, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.97 }}
+        transition={{ type: "spring", damping: 28, stiffness: 350 }}
+        onClick={(e) => e.stopPropagation()}
+        data-testid={`edit-space-form-${space.id}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <Pencil className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+            <h2 className="font-serif text-lg font-bold text-stone-900 truncate">{space.name}</h2>
           </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors flex-shrink-0">
+            <X className="w-4 h-4 text-stone-500" />
+          </button>
         </div>
-      </div>
-      <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Buffer Time Between Bookings</label>
-        <div className="flex items-center gap-2">
-          <select
-            value={formData.bufferMinutes}
-            onChange={(e) => update("bufferMinutes", e.target.value)}
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
-            data-testid={`edit-select-buffer-${space.id}`}
+
+        {/* Completion Score */}
+        <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-stone-600">Listing completeness</span>
+            <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
+          </div>
+          <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 70 ? "bg-amber-500" : "bg-stone-400"}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${score.percent}%` }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+          {score.percent < 100 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {score.checks.filter((c) => !c.done).map((c) => (
+                <span key={c.label} className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 text-stone-500">{c.label}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-stone-100 px-6 gap-1 flex-shrink-0">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all ${
+                tab === t.id
+                  ? "border-[#c4956a] text-[#c4956a]"
+                  : "border-transparent text-stone-400 hover:text-stone-600"
+              }`}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {tab === "details" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Space Name</label>
+                  <Input value={formData.name} onChange={(e) => update("name", e.target.value)} data-testid={`edit-input-name-${space.id}`} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Space Category</label>
+                  <select value={formData.type} onChange={(e) => update("type", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-type-${space.id}`}>
+                    {SPACE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
+                  <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} data-testid={`edit-input-host-${space.id}`} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Address</label>
+                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} data-testid={`edit-input-address-${space.id}`} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
+                  <Input value={formData.neighborhood} onChange={(e) => update("neighborhood", e.target.value)} data-testid={`edit-input-neighborhood-${space.id}`} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
+                <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} data-testid={`edit-input-short-desc-${space.id}`} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                <Textarea value={formData.description} onChange={(e) => update("description", e.target.value)} rows={3} data-testid={`edit-input-description-${space.id}`} />
+              </div>
+            </div>
+          )}
+
+          {tab === "pricing" && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border-2 border-stone-900 bg-stone-50 p-4 text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Hourly Rate</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-stone-400 text-lg">$</span>
+                    <input
+                      type="number"
+                      value={formData.pricePerHour}
+                      onChange={(e) => update("pricePerHour", e.target.value)}
+                      className="w-20 text-center text-2xl font-bold text-stone-900 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      data-testid={`edit-input-price-hour-${space.id}`}
+                    />
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">per hour</p>
+                </div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4 text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Daily Rate</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-stone-400 text-lg">$</span>
+                    <input
+                      type="number"
+                      value={formData.pricePerDay}
+                      onChange={(e) => update("pricePerDay", e.target.value)}
+                      className="w-20 text-center text-2xl font-bold text-stone-900 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      data-testid={`edit-input-price-day-${space.id}`}
+                    />
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">per day (optional)</p>
+                </div>
+                <div className="rounded-xl border border-stone-200 bg-white p-4 text-center">
+                  <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Recurring Rate</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-stone-400 text-lg">$</span>
+                    <span className="text-2xl font-bold text-emerald-600">{recurringPrice || (formData.pricePerHour || "0")}</span>
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">per hour for regulars</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                  <Repeat className="w-3.5 h-3.5 text-emerald-600" />
+                  Recurring Discount
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
+                    <div className="flex items-center gap-2">
+                      <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} data-testid={`edit-input-recurring-discount-${space.id}`} />
+                      <span className="text-sm text-stone-400 flex-shrink-0">%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Kicks In After</label>
+                    <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-recurring-after-${space.id}`}>
+                      <option value="0">Immediately</option>
+                      <option value="1">After 1 booking</option>
+                      <option value="2">After 2 bookings</option>
+                      <option value="3">After 3 bookings</option>
+                      <option value="5">After 5 bookings</option>
+                      <option value="10">After 10 bookings</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "schedule" && (
+            <div className="space-y-4">
+              <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Buffer Time Between Bookings</label>
+                <select value={formData.bufferMinutes} onChange={(e) => update("bufferMinutes", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-buffer-${space.id}`}>
+                  <option value="0">No buffer</option>
+                  <option value="5">5 minutes</option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="20">20 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">60 minutes</option>
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
+                <select value={formData.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-cancellation-${space.id}`}>
+                  <option value="flexible">Flexible</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="strict">Strict</option>
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  {formData.cancellationPolicy === "flexible"
+                    ? "Full refund up to 24 hours before the booking"
+                    : formData.cancellationPolicy === "moderate"
+                    ? "Full refund up to 5 days before; 50% refund after that"
+                    : "50% refund up to 7 days before; no refund after that"}
+                </p>
+              </div>
+              <ArrivalGuideEditor spaceId={space.id} />
+              <CalendarSyncSettings spaceId={space.id} />
+            </div>
+          )}
+
+          {tab === "extras" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Amenities (comma-separated)</label>
+                <Input value={formData.amenities} onChange={(e) => update("amenities", e.target.value)} data-testid={`edit-input-amenities-${space.id}`} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
+                <div className="flex flex-wrap gap-2" data-testid={`edit-input-target-${space.id}`}>
+                  {SPACE_TYPES.map((t) => {
+                    const selected = (formData.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+                    const isSelected = selected.includes(t.label);
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => {
+                          const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
+                          update("targetProfession", next.join(", "));
+                        }}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                          isSelected
+                            ? "border-gray-800 bg-gray-800 text-white"
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
+          <Button size="sm" variant="outline" onClick={onClose} data-testid={`button-cancel-edit-space-btn-${space.id}`}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => updateMutation.mutate()}
+            disabled={updateMutation.isPending}
+            size="sm"
+            className="bg-stone-900 text-white hover:bg-black"
+            data-testid={`button-save-edit-space-${space.id}`}
           >
-            <option value="0">No buffer</option>
-            <option value="5">5 minutes</option>
-            <option value="10">10 minutes</option>
-            <option value="15">15 minutes</option>
-            <option value="20">20 minutes</option>
-            <option value="30">30 minutes</option>
-            <option value="45">45 minutes</option>
-            <option value="60">60 minutes</option>
-          </select>
+            {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+            Save Changes
+          </Button>
         </div>
-        <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
-      </div>
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
-        <select
-          value={formData.cancellationPolicy}
-          onChange={(e) => update("cancellationPolicy", e.target.value)}
-          className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
-          data-testid={`edit-select-cancellation-${space.id}`}
-        >
-          <option value="flexible">Flexible</option>
-          <option value="moderate">Moderate</option>
-          <option value="strict">Strict</option>
-        </select>
-        <p className="text-[10px] text-gray-400 mt-1">
-          {formData.cancellationPolicy === "flexible"
-            ? "Full refund up to 24 hours before the booking"
-            : formData.cancellationPolicy === "moderate"
-            ? "Full refund up to 5 days before; 50% refund after that"
-            : "50% refund up to 7 days before; no refund after that"}
-        </p>
-      </div>
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
-        <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} data-testid={`edit-input-short-desc-${space.id}`} />
-      </div>
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Description</label>
-        <Textarea value={formData.description} onChange={(e) => update("description", e.target.value)} rows={3} data-testid={`edit-input-description-${space.id}`} />
-      </div>
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">Amenities (comma-separated)</label>
-        <Input value={formData.amenities} onChange={(e) => update("amenities", e.target.value)} data-testid={`edit-input-amenities-${space.id}`} />
-      </div>
-      <div className="flex gap-2">
-        <Button
-          onClick={() => updateMutation.mutate()}
-          disabled={updateMutation.isPending}
-          size="sm"
-          className="bg-gray-900 text-white hover:bg-black"
-          data-testid={`button-save-edit-space-${space.id}`}
-        >
-          {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-          Save Changes
-        </Button>
-        <Button size="sm" variant="outline" onClick={onClose} data-testid={`button-cancel-edit-space-btn-${space.id}`}>
-          Cancel
-        </Button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
