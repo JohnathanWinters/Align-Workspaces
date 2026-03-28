@@ -221,9 +221,9 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
       onClick={() => { trackEvent("featured_professional_click", { slug: pro.slug, name: pro.name }); setLocation(`/featured/${pro.slug}`); }}
       data-testid="card-professional-of-week"
     >
-      <div className="relative w-full overflow-hidden 2xl:rounded-b-lg">
+      <div className="relative w-full max-w-[1600px] mx-auto">
+        <div className="overflow-hidden 2xl:rounded-b-lg">
         {hasSpace ? (
-          /* Workspace full-width with portrait pip */
           <div className="relative aspect-[4/3] sm:aspect-[2/1]">
             {!spaceLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300" />
@@ -234,16 +234,6 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
                 fetchPriority="high" decoding="sync" onLoad={() => setSpaceLoaded(true)}
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
-            </div>
-            {/* Portrait pip */}
-            <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-24 h-28 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).containerStyle}>
-              {pro.portraitImageUrl ? (
-                <img src={pro.portraitImageUrl} alt={pro.name}
-                  className={`${heroLoaded ? "opacity-100" : "opacity-0"}`}
-                  fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
-                  style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition).imgStyle}
-                />
-              ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
               <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
@@ -272,6 +262,17 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+          </div>
+        )}
+        </div>
+        {/* Portrait pip — outside overflow container */}
+        {hasSpace && pro.portraitImageUrl && (
+          <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-20 h-24 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
+            <img src={pro.portraitImageUrl} alt={pro.name}
+              className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
+              fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
+              style={{ objectPosition: `${pro.heroCropPosition?.x ?? pro.portraitCropPosition?.x ?? 50}% ${pro.heroCropPosition?.y ?? pro.portraitCropPosition?.y ?? 50}%` }}
+            />
           </div>
         )}
       </div>
@@ -378,7 +379,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
           </div>
         )}
       </div>
-      <div>
+      <div className="pt-2">
         <div className="flex items-center gap-2 mb-1.5">
           <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground">{pro.profession}</p>
           {pro.credentials && pro.credentials.length > 0 && (
@@ -1104,22 +1105,15 @@ function ProfilePage({ slug }: { slug: string }) {
       <FeaturedNav />
 
       {/* Hero: workspace full-width with portrait pip */}
-      <section className="relative w-full">
+      <section className="relative w-full max-w-[1600px] mx-auto">
+        <div className="relative">
         {pro.spaceImageUrl ? (
-          <div className="relative aspect-[4/3] sm:aspect-[2/1]">
+          <div className="overflow-hidden aspect-[4/3] sm:aspect-[2/1]">
             <div className="w-full h-full" style={getCropZoom(pro.spaceImageCropPosition)}>
               <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
                 className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
                 style={getCropStyle(pro.spaceImageCropPosition)}
               />
-            </div>
-            <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-24 h-28 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-white shadow-xl z-10" style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").containerStyle}>
-              {pro.portraitImageUrl ? (
-                <img src={pro.portraitImageUrl} alt={pro.name}
-                  fetchPriority="high" decoding="sync"
-                  style={getPipStyle(pro.heroCropPosition || pro.portraitCropPosition, "50% 20%").imgStyle}
-                />
-              ) : <Initials name={pro.name} />}
             </div>
             {pro.spaceName && (
               <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 bg-black/40 backdrop-blur-sm text-white text-[11px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
@@ -1148,6 +1142,16 @@ function ProfilePage({ slug }: { slug: string }) {
           <Link href="/featured" className="inline-flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors group bg-black/20 backdrop-blur-sm rounded-full px-4 py-2" data-testid="link-back-featured">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Back
           </Link>
+        </div>
+        {/* Portrait pip — outside overflow container */}
+        {pro.spaceImageUrl && pro.portraitImageUrl && (
+          <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-20 h-24 sm:w-32 sm:h-40 rounded-xl ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
+            <img src={pro.portraitImageUrl} alt={pro.name}
+              className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
+              style={{ objectPosition: `${pro.heroCropPosition?.x ?? pro.portraitCropPosition?.x ?? 50}% ${pro.heroCropPosition?.y ?? pro.portraitCropPosition?.y ?? 50}%` }}
+            />
+          </div>
+        )}
         </div>
       </section>
 
