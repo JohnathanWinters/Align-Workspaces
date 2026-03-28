@@ -656,31 +656,46 @@ export default function AlignSpacesPage() {
                     className="snap-start flex-shrink-0 w-[78%] group block rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300"
                     data-testid={`featured-pro-${pro.id}`}
                   >
-                    <div className="aspect-[4/5] overflow-hidden bg-stone-100 relative">
-                      {pro.portraitImageUrl ? (() => {
-                        const crop = pro.portraitCropPosition as any;
-                        const x = crop?.x ?? 50;
-                        const y = crop?.y ?? 50;
-                        const zoom = crop?.zoom ?? 1;
-                        const insetPct = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
-                        return (
-                          <img src={pro.portraitImageUrl} alt={pro.name}
-                            className="absolute object-cover"
-                            style={{ objectPosition: `${x}% ${y}%`, top: `-${insetPct}%`, left: `-${insetPct}%`, width: `${100 + insetPct * 2}%`, height: `${100 + insetPct * 2}%` }}
+                    <div className="relative">
+                      <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
+                        {pro.spaceImageUrl ? (
+                          <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
+                            className="w-full h-full object-cover"
                           />
-                        );
-                      })() : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <User className="w-16 h-16 text-stone-300" />
-                        </div>
-                      )}
-                      {pro.spaceImageUrl && (
-                        <div className="absolute bottom-3 right-3 w-28 h-20 rounded-xl ring-1 ring-white/40 shadow-md z-10 overflow-hidden">
-                          <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"} className="w-full h-full object-cover" />
+                        ) : pro.portraitImageUrl ? (() => {
+                          const crop = pro.portraitCropPosition as any;
+                          const x = crop?.x ?? 50;
+                          const y = crop?.y ?? 50;
+                          const zoom = crop?.zoom ?? 1;
+                          const insetPct = zoom > 1 ? ((1 - 1 / zoom) / 2) * 100 : 0;
+                          return (
+                            <img src={pro.portraitImageUrl} alt={pro.name}
+                              className="absolute object-cover"
+                              style={{ objectPosition: `${x}% ${y}%`, top: `-${insetPct}%`, left: `-${insetPct}%`, width: `${100 + insetPct * 2}%`, height: `${100 + insetPct * 2}%` }}
+                            />
+                          );
+                        })() : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="w-16 h-16 text-stone-300" />
+                          </div>
+                        )}
+                        {pro.spaceName && (
+                          <div className="absolute bottom-2 right-2 bg-black/40 backdrop-blur-sm text-white text-[9px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 z-10">
+                            <Building2 className="w-2.5 h-2.5" />
+                            {pro.spaceName}
+                          </div>
+                        )}
+                      </div>
+                      {pro.portraitImageUrl && pro.spaceImageUrl && (
+                        <div className="absolute -bottom-4 left-3 w-[60px] h-[60px] rounded-lg ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
+                          <img src={pro.portraitImageUrl} alt={pro.name}
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: `${(pro.portraitCropPosition as any)?.x ?? 50}% ${(pro.portraitCropPosition as any)?.y ?? 50}%` }}
+                          />
                         </div>
                       )}
                     </div>
-                    <div className="p-4">
+                    <div className={`p-4 ${pro.portraitImageUrl && pro.spaceImageUrl ? "pt-7" : ""}`}>
                       <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                       <p className="text-sm text-[#c4956a] font-medium mb-1">{pro.profession}</p>
                       <div className="flex items-center gap-1.5 text-stone-400 text-xs">
@@ -713,8 +728,12 @@ export default function AlignSpacesPage() {
                   data-testid={`featured-pro-${pro.id}`}
                 >
                   <div className="relative">
-                    <div className="aspect-[3/4] overflow-hidden bg-stone-100 relative">
-                      {pro.portraitImageUrl ? (() => {
+                    <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
+                      {pro.spaceImageUrl ? (
+                        <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
+                      ) : pro.portraitImageUrl ? (() => {
                         const crop = pro.portraitCropPosition as any;
                         const x = crop?.x ?? 50;
                         const y = crop?.y ?? 50;
@@ -731,14 +750,23 @@ export default function AlignSpacesPage() {
                           <User className="w-16 h-16 text-stone-300" />
                         </div>
                       )}
+                      {pro.spaceName && (
+                        <div className="absolute bottom-2.5 right-2.5 bg-black/40 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 z-10">
+                          <Building2 className="w-2.5 h-2.5" />
+                          {pro.spaceName}
+                        </div>
+                      )}
                     </div>
-                    {pro.spaceImageUrl && (
-                      <div className="absolute bottom-4 right-4 w-36 h-24 rounded-xl ring-1 ring-white/40 shadow-md z-20 overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                        <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"} className="w-full h-full object-cover" />
+                    {pro.portraitImageUrl && pro.spaceImageUrl && (
+                      <div className="absolute -bottom-5 left-4 w-[72px] h-[72px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
+                        <img src={pro.portraitImageUrl} alt={pro.name}
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: `${(pro.portraitCropPosition as any)?.x ?? 50}% ${(pro.portraitCropPosition as any)?.y ?? 50}%` }}
+                        />
                       </div>
                     )}
                   </div>
-                  <div className="p-4 sm:p-5">
+                  <div className={`p-4 sm:p-5 ${pro.portraitImageUrl && pro.spaceImageUrl ? "pt-8" : ""}`}>
                     <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                     <p className="text-sm text-[#c4956a] font-medium mb-2">{pro.profession}</p>
                     {pro.quote && (
