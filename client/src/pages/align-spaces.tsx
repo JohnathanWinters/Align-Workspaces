@@ -32,6 +32,8 @@ interface FeaturedPro {
   slug: string;
   portraitImageUrl: string | null;
   portraitCropPosition?: any;
+  spaceImageUrl?: string | null;
+  spaceName?: string | null;
   headline: string;
   quote: string;
   yearsHosting?: number | null;
@@ -672,6 +674,11 @@ export default function AlignSpacesPage() {
                           <User className="w-16 h-16 text-stone-300" />
                         </div>
                       )}
+                      {pro.spaceImageUrl && (
+                        <div className="absolute bottom-2 right-2 w-14 h-10 rounded-md ring-2 ring-white shadow-lg z-10 overflow-hidden">
+                          <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"} className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
                       <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
@@ -721,6 +728,11 @@ export default function AlignSpacesPage() {
                     })() : (
                       <div className="w-full h-full flex items-center justify-center">
                         <User className="w-16 h-16 text-stone-300" />
+                      </div>
+                    )}
+                    {pro.spaceImageUrl && (
+                      <div className="absolute bottom-3 right-3 w-16 h-12 rounded-lg ring-2 ring-white shadow-lg z-10 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                        <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"} className="w-full h-full object-cover" />
                       </div>
                     )}
                   </div>
