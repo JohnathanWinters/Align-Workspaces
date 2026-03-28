@@ -212,7 +212,7 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                 <Link href="/featured">
                   <Button variant="outline" size="sm" data-testid="link-featured-community">
                     <Users className="w-4 h-4 mr-2" />
-                    Featured Professionals
+                    Featured Pros
                   </Button>
                 </Link>
                 <a

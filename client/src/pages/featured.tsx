@@ -792,7 +792,7 @@ function FeaturedListingPage() {
     : filtered;
 
   useEffect(() => {
-    document.title = "Featured Professionals | Align";
+    document.title = "Featured Pros | Align";
   }, []);
 
   useEffect(() => {
@@ -840,7 +840,7 @@ function FeaturedListingPage() {
             {(!weeklyPro || activeCategory) && (
               <>
                 <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-semibold mb-4" data-testid="text-featured-heading">
-                  Featured Professionals
+                  Featured Pros
                 </h1>
                 <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-8">
                   The stories behind Miami's most passionate professionals, and the portraits that tell them.

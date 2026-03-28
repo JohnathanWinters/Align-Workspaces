@@ -4891,7 +4891,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
             <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-testid="button-featured-back">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="font-serif text-xl font-semibold">Featured Professionals ({professionals.length})</h1>
+            <h1 className="font-serif text-xl font-semibold">Featured Pros ({professionals.length})</h1>
           </div>
           <Button size="sm" onClick={() => { setShowForm(true); setEditing(null); setForm(defaultFeaturedForm); setFormPortraitFile(null); setFormPortraitPreview(null); setCropPosition({ x: 50, y: 50, zoom: 1 }); setHeroCropPosition({ x: 50, y: 20, zoom: 1 }); }} data-testid="button-add-featured">
             <Plus className="w-3.5 h-3.5 mr-1.5" />
