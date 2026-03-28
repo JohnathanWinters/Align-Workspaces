@@ -206,7 +206,7 @@ export default function SupportPage() {
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl text-gray-900 mb-3">How can we help?</h1>
             <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-              Whether you're a guest, a host, or just exploring — we're here to help you get the most out of Align.
+              Whether you're a guest, a host, or just exploring, we're here to help.
             </p>
           </motion.div>
         </div>
