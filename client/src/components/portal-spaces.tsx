@@ -600,9 +600,9 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
                 <select value={formData.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-cancellation-${space.id}`}>
-                  <option value="flexible">Flexible</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="strict">Strict</option>
+                  <option value="flexible">Flexible — Full refund up to 24 hours before</option>
+                  <option value="moderate">Moderate — Full refund up to 5 days, 50% after</option>
+                  <option value="strict">Strict — 50% refund up to 7 days, none after</option>
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">
                   {formData.cancellationPolicy === "flexible"
