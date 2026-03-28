@@ -3945,6 +3945,40 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                 </div>
 
                 <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Replace Photo</Label>
+                  <p className="text-xs text-gray-400 mb-2">Upload a new image to replace the current one</p>
+                  <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-stone-200 hover:border-stone-400 text-stone-500 hover:text-stone-700 transition-colors cursor-pointer text-xs font-medium">
+                    <Upload className="w-3.5 h-3.5" />
+                    Choose New Photo
+                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !editingPhoto) return;
+                      try {
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        fd.append("environments", JSON.stringify(tagForm.environments));
+                        fd.append("brandMessages", JSON.stringify(tagForm.brandMessages));
+                        fd.append("emotionalImpacts", JSON.stringify(tagForm.emotionalImpacts));
+                        fd.append("colorPalette", JSON.stringify(tagForm.colorPalette));
+                        fd.append("category", tagForm.category);
+                        const uploadRes = await adminFetch("/api/admin/portfolio/upload", { method: "POST", body: fd });
+                        if (!uploadRes.ok) throw new Error("Upload failed");
+                        const newPhoto = await uploadRes.json();
+                        // Delete the old photo
+                        await adminFetch(`/api/admin/portfolio/${editingPhoto.id}`, { method: "DELETE" });
+                        // Update local state
+                        setPhotos(prev => prev.map(p => p.id === editingPhoto.id ? newPhoto : p));
+                        setEditingPhoto(newPhoto);
+                        toast({ title: "Photo replaced" });
+                      } catch {
+                        toast({ title: "Replace failed", variant: "destructive" });
+                      }
+                      e.target.value = "";
+                    }} />
+                  </label>
+                </div>
+
+                <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Crop & Position</Label>
                   <p className="text-xs text-gray-400 mb-3">Adjust how the photo is framed in its card. Drag or use sliders.</p>
                   <div className="flex flex-col sm:flex-row gap-4">
