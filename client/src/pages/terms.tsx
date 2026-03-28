@@ -38,7 +38,7 @@ const sections: Section[] = [
   },
   {
     title: "3. Platform Role",
-    synopsis: "Align Workspaces is a marketplace — not a landlord, employer, or workspace operator.",
+    synopsis: "Align Workspaces is a marketplace, not a landlord, employer, or workspace operator.",
     content: (
       <>
         <p><strong>Align Workspaces is a marketplace intermediary.</strong> We are not a workspace owner, operator, landlord, real estate broker, or employer of any Host or Guest. The Platform facilitates connections between Hosts and Guests but does not provide workspace services itself.</p>
@@ -121,7 +121,7 @@ const sections: Section[] = [
   },
   {
     title: "9. Non-Circumvention",
-    synopsis: "Don't take transactions off-platform to avoid fees — 30% liquidated damages apply.",
+    synopsis: "Don't take transactions off-platform to avoid fees, 30% liquidated damages apply.",
     content: (
       <p>Users may not use contact information obtained through the Platform to transact outside the Platform in order to avoid paying Service Fees. If you are found to have circumvented the Platform, you agree to pay Align Workspaces an amount equal to 30% of the booking subtotal as liquidated damages.</p>
     ),
@@ -182,7 +182,7 @@ const sections: Section[] = [
   },
   {
     title: "16. Insurance",
-    synopsis: "Hosts insure their spaces, guests insure their belongings — we provide no coverage.",
+    synopsis: "Hosts insure their spaces, guests insure their belongings, we provide no coverage.",
     content: (
       <p>Hosts are responsible for maintaining their own liability insurance covering their workspace. Guests are responsible for insuring their own personal property. Align Workspaces does not provide insurance coverage for Hosts, Guests, or workspaces. We make no representations about the adequacy of any insurance.</p>
     ),
