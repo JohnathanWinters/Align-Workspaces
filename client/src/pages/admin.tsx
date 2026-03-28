@@ -3375,70 +3375,6 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     }
   };
 
-  const [generatingBio, setGeneratingBio] = useState(false);
-
-  const generateBio = async () => {
-    if (!editingPhoto) return;
-    const profession = tagForm.subjectProfession || "professional";
-    const name = tagForm.subjectName || "";
-    const brands = tagForm.brandMessages.map(b => brandLabels[b] || b);
-    const moods = tagForm.emotionalImpacts.map(m => moodLabels[m] || m);
-    const colors = tagForm.colorPalette.map(c => c.keyword);
-    const existingBios = photos
-      .filter(p => p.id !== editingPhoto.id && (p as any).subjectBio)
-      .map(p => ((p as any).subjectBio as string).toLowerCase());
-
-    // Try template-based first
-    const templates = [
-      (p: string, b: string[], m: string[]) => `A ${p} who believes ${b[0]?.toLowerCase() || "genuine"} energy is what keeps clients coming back.`,
-      (p: string, b: string[], m: string[]) => `A ${p} whose space is designed to make every client feel ${m[0]?.toLowerCase() || "at ease"} from the first moment.`,
-      (p: string, b: string[], m: string[]) => `A ${p} building a practice rooted in ${b[0]?.toLowerCase() || "trust"} and ${m[0]?.toLowerCase() || "connection"}.`,
-      (p: string, b: string[], m: string[]) => `A ${p} creating a ${m[0]?.toLowerCase() || "calm"} environment where real transformation happens.`,
-      (p: string, b: string[], m: string[]) => `A ${p} who leads with ${b[0]?.toLowerCase() || "warmth"} and leaves clients feeling ${m[0]?.toLowerCase() || "heard"}.`,
-      (p: string, b: string[], m: string[]) => `A ${p} whose clients say they feel ${m[0]?.toLowerCase() || "safe"} before the session even begins.`,
-      (p: string, b: string[], m: string[]) => `A ${p} dedicated to creating space where people feel genuinely ${m[0]?.toLowerCase() || "supported"}.`,
-      (p: string, b: string[], m: string[]) => `A ${p} with a ${b[0]?.toLowerCase() || "grounding"} presence that puts everyone at ease.`,
-      (p: string, b: string[], m: string[]) => `A ${p} who knows that ${b[0]?.toLowerCase() || "authentic"} connection is the foundation of lasting change.`,
-      (p: string, b: string[], m: string[]) => `A ${p} whose practice reflects a commitment to making every person feel ${m[0]?.toLowerCase() || "valued"}.`,
-      (p: string, b: string[], m: string[]) => `A ${p} bringing ${colors[0]?.toLowerCase() || "warmth"} and intention to everything they do.`,
-      (p: string, b: string[], m: string[]) => `A ${p} who creates a ${m[0]?.toLowerCase() || "welcoming"} atmosphere that clients remember.`,
-    ];
-
-    // Shuffle and find one not already used
-    const shuffled = [...templates].sort(() => Math.random() - 0.5);
-    for (const tpl of shuffled) {
-      const bio = tpl(profession.toLowerCase(), brands, moods);
-      if (!existingBios.includes(bio.toLowerCase())) {
-        setTagForm(prev => ({ ...prev, subjectBio: bio }));
-        return;
-      }
-    }
-
-    // All templates used, try AI if available
-    setGeneratingBio(true);
-    try {
-      const prompt = `Write a single short sentence (under 20 words) bio for a ${profession}${name ? ` named ${name}` : ""}. Their brand is ${brands.join(", ") || "warm and professional"}. Their clients should feel ${moods.join(", ") || "comfortable"}. ${colors.length > 0 ? `The color palette is ${colors.join(", ")}.` : ""} Do NOT use these bios: ${existingBios.slice(0, 5).join(" | ")}. Return only the sentence, no quotes.`;
-      const res = await adminFetch("/api/admin/ai/generate-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, maxTokens: 60 }),
-      });
-      if (res.ok) {
-        const { text } = await res.json();
-        setTagForm(prev => ({ ...prev, subjectBio: text.trim() }));
-      } else {
-        // Fallback: just use a random template even if duplicate
-        const bio = shuffled[0](profession.toLowerCase(), brands, moods);
-        setTagForm(prev => ({ ...prev, subjectBio: bio }));
-      }
-    } catch {
-      const bio = shuffled[0](profession.toLowerCase(), brands, moods);
-      setTagForm(prev => ({ ...prev, subjectBio: bio }));
-    } finally {
-      setGeneratingBio(false);
-    }
-  };
-
   const openEyedropper = () => {
     setEyedropperHover(null);
     setEyedropperOpen(true);
@@ -3852,18 +3788,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                 )}
                 {tagForm.category === "people" && (
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <Label className="text-sm font-medium text-gray-700">Subject Bio</Label>
-                      <button
-                        onClick={generateBio}
-                        disabled={generatingBio}
-                        className="text-[11px] text-[#c4956a] hover:text-[#b3845d] font-medium flex items-center gap-1 disabled:opacity-50"
-                        data-testid="button-generate-bio"
-                      >
-                        {generatingBio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                        Generate
-                      </button>
-                    </div>
+                    <Label className="text-sm font-medium text-gray-700 mb-1 block">Subject Bio</Label>
                     <input
                       value={tagForm.subjectBio}
                       onChange={e => setTagForm(prev => ({ ...prev, subjectBio: e.target.value }))}
