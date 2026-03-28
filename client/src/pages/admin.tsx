@@ -5700,13 +5700,13 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </Button>
               </div>
             </motion.div>
-            {/* Mobile: bottom sheet */}
+            {/* Mobile: side drawer */}
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 350 }}
-              className="fixed left-0 right-0 bottom-0 bg-white rounded-t-2xl shadow-2xl z-[2002] flex flex-col max-h-[90vh] sm:hidden"
+              className="fixed top-0 right-0 bottom-0 w-full max-w-[320px] bg-white shadow-2xl z-[2002] flex flex-col sm:hidden"
               data-testid="form-contact-mobile"
             >
               <div className="flex justify-between items-center px-5 py-3 border-b border-stone-100 flex-shrink-0">
