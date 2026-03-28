@@ -6346,10 +6346,15 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
             <p className="font-serif text-lg text-gray-900" data-testid="text-analytics-title">Analytics</p>
           </div>
           <div className="flex items-center gap-2">
-            {[7, 14, 30, 90].map((d) => (
-              <button key={d} onClick={() => setDays(d)} data-testid={`button-analytics-${d}d`}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${days === d ? "bg-[#1a1a1a] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"}`}
-              >{d}d</button>
+            {[
+              { value: 1, label: "1d" },
+              { value: 7, label: "7d" },
+              { value: 30, label: "30d" },
+              { value: 99999, label: "All" },
+            ].map((d) => (
+              <button key={d.value} onClick={() => setDays(d.value)} data-testid={`button-analytics-${d.value}d`}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${days === d.value ? "bg-stone-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"}`}
+              >{d.label}</button>
             ))}
           </div>
         </div>

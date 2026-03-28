@@ -2504,6 +2504,44 @@ function EarningsTab() {
           </AnimatePresence>
         </div>
       )}
+      {/* Fee Breakdown */}
+      <div className="border-t border-stone-200 pt-5 mt-2">
+        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <DollarSign className="w-3.5 h-3.5" />
+          Fee Breakdown
+        </h3>
+        <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-stone-800">Standard Host Fee</p>
+              <p className="text-[11px] text-stone-400">You keep 87.5% of every booking</p>
+            </div>
+            <span className="text-sm font-bold text-stone-900">12.5%</span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-emerald-700">Referred Booking Fee</p>
+              <p className="text-[11px] text-stone-400">You keep 92% when clients book via your referral link</p>
+            </div>
+            <span className="text-sm font-bold text-emerald-600">8%</span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-stone-800">Guest Service Fee</p>
+              <p className="text-[11px] text-stone-400">Added to your rate, paid by the guest</p>
+            </div>
+            <span className="text-sm font-bold text-stone-900">7%</span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-stone-800">Repeat Guest Fee</p>
+              <p className="text-[11px] text-stone-400">Returning guests pay a lower service fee</p>
+            </div>
+            <span className="text-sm font-bold text-stone-900">5%</span>
+          </div>
+        </div>
+        <p className="text-[11px] text-stone-400 mt-2 leading-relaxed">No monthly fees, no listing fees, no setup costs. You only pay when you earn. Payouts are deposited automatically via Stripe.</p>
+      </div>
     </div>
   );
 }

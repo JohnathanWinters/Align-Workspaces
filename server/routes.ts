@@ -5901,6 +5901,7 @@ Allow: /featured/
 Allow: /portfolio
 Disallow: /admin
 Disallow: /portal
+Disallow: /host-pricing
 Disallow: /employee
 Disallow: /api/
 
