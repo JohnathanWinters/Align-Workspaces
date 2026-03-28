@@ -684,7 +684,7 @@ export default function AlignSpacesPage() {
                         </div>
                       )}
                     </div>
-                    <div className={`p-4 ${pro.spaceImageUrl ? "pt-7" : ""}`}>
+                    <div className={`p-4 ${pro.spaceImageUrl ? "pt-10" : ""}`}>
                       <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                       <p className="text-sm text-[#c4956a] font-medium mb-1">{pro.profession}</p>
                       <div className="flex items-center gap-1.5 text-stone-400 text-xs">
