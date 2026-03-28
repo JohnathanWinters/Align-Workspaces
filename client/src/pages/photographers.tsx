@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle, ChevronDown } from "lucide-react";
@@ -60,7 +61,11 @@ export default function PhotographersPage() {
   const [showFounders, setShowFounders] = useState(false);
   const membersCarousel = useDragScroll();
   useEffect(() => {
-    document.title = "Our Vision | Align Workspaces";
+    setPageMeta({
+      title: "Our Vision | Space, Image & Community for Miami Professionals | Align",
+      description: "Learn about Align's mission to connect independent professionals with flexible workspaces, professional photography, and a supportive community in Miami.",
+      url: "https://alignworkspaces.com/our-vision",
+    });
   }, []);
 
   const { data: members = [], isLoading: membersLoading } = useQuery<TeamMember[]>({

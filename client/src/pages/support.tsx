@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
@@ -99,7 +100,11 @@ export default function SupportPage() {
   const [feedbackSent, setFeedbackSent] = useState(false);
 
   useEffect(() => {
-    document.title = "Support | Align Workspaces";
+    setPageMeta({
+      title: "Support | Align Workspaces",
+      description: "Get help with booking workspaces, payments, messaging hosts, and listing your space on Align. Contact us or browse our FAQ.",
+      url: "https://alignworkspaces.com/support",
+    });
   }, []);
 
   useEffect(() => {

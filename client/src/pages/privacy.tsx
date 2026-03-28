@@ -1,11 +1,16 @@
 import { useEffect } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
 export default function PrivacyPage() {
   useEffect(() => {
-    document.title = "Privacy Policy | Align Workspaces";
+    setPageMeta({
+      title: "Privacy Policy | Align Workspaces",
+      description: "Privacy Policy for Align Workspaces. Learn how we collect, use, and protect your personal information.",
+      url: "https://alignworkspaces.com/privacy",
+    });
     window.scrollTo(0, 0);
   }, []);
 

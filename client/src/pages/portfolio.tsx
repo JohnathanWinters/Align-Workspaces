@@ -4,6 +4,7 @@ import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { setPageMeta } from "@/lib/seo";
 import type { PortfolioPhoto, ColorSwatch, Space } from "@shared/schema";
 import { UserIndicator } from "@/components/user-indicator";
 import { environments, brandMessages, emotionalImpacts } from "@/lib/configurator-data";
@@ -333,7 +334,11 @@ export default function PortfolioPage() {
   };
 
   useEffect(() => {
-    document.title = "Portfolio | Miami Personal Branding Photography | Align";
+    setPageMeta({
+      title: "Portfolio | Professional Photography & Workspace Photography | Align Miami",
+      description: "See our work. Professional portraits, personal branding photography, and workspace photography for Miami's independent professionals.",
+      url: "https://alignworkspaces.com/portfolio",
+    });
     window.scrollTo(0, 0);
   }, []);
 

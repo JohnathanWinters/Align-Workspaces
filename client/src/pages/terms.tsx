@@ -1,11 +1,16 @@
 import { useEffect } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
 export default function TermsPage() {
   useEffect(() => {
-    document.title = "Terms of Service | Align Workspaces";
+    setPageMeta({
+      title: "Terms of Service | Align Workspaces",
+      description: "Terms of Service for Align Workspaces. Read about bookings, cancellations, host and guest obligations, and platform policies.",
+      url: "https://alignworkspaces.com/terms",
+    });
     window.scrollTo(0, 0);
   }, []);
 

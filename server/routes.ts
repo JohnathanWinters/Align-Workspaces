@@ -5965,18 +5965,27 @@ Sitemap: ${SITE_URL}/sitemap.xml
   app.get("/sitemap.xml", async (_req, res) => {
     const includeSamples = process.env.NODE_ENV !== "production" ? true : false;
     let featuredPros: { slug: string; name: string; profession: string }[] = [];
+    let approvedSpaces: { slug: string; name: string; type: string }[] = [];
     try {
       const pros = await storage.getFeaturedProfessionals(includeSamples);
       featuredPros = pros.map((p: any) => ({ slug: p.slug, name: p.name, profession: p.profession }));
+    } catch {}
+    try {
+      const spaces = await storage.getSpaces({ includeSamples });
+      approvedSpaces = spaces.filter((s: any) => s.approvalStatus === "approved" && s.slug).map((s: any) => ({ slug: s.slug, name: s.name, type: s.type }));
     } catch {}
 
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "weekly" },
       { loc: "/workspaces", priority: "0.9", changefreq: "daily" },
+      { loc: "/portraits", priority: "0.8", changefreq: "monthly" },
       { loc: "/portrait-builder", priority: "0.8", changefreq: "monthly" },
       { loc: "/portfolio", priority: "0.8", changefreq: "weekly" },
       { loc: "/featured", priority: "0.9", changefreq: "daily" },
       { loc: "/our-vision", priority: "0.6", changefreq: "monthly" },
+      { loc: "/support", priority: "0.4", changefreq: "monthly" },
+      { loc: "/terms", priority: "0.3", changefreq: "yearly" },
+      { loc: "/privacy", priority: "0.3", changefreq: "yearly" },
     ];
 
     const today = new Date().toISOString().split("T")[0];
@@ -6002,6 +6011,17 @@ Sitemap: ${SITE_URL}/sitemap.xml
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+`;
+    }
+
+    for (const space of approvedSpaces) {
+      const encodedSlug = encodeURIComponent(space.slug).replace(/&/g, '&amp;').replace(/'/g, '&apos;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      xml += `  <url>
+    <loc>${SITE_URL}/spaces/${encodedSlug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 `;
     }

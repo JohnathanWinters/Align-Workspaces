@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1503,7 +1504,11 @@ export default function SpacesBrowsePage() {
   }, [clearAvailFilters]);
 
   useEffect(() => {
-    document.title = "Workspaces | Align Workspaces, Miami Workspaces for Professionals";
+    setPageMeta({
+      title: "Browse Workspaces in Miami | Therapy Offices, Studios & More | Align",
+      description: "Find flexible professional workspaces in Miami by the hour. Therapy offices, coaching rooms, creative studios, and wellness spaces. Book instantly on Align.",
+      url: "https://alignworkspaces.com/workspaces",
+    });
   }, []);
 
   if (!categoryChosen) {

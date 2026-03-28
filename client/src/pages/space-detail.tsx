@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1119,6 +1120,59 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
       return res.json();
     },
   });
+
+  useEffect(() => {
+    if (!space) return;
+    const neighborhood = space.neighborhood ? ` in ${space.neighborhood}` : "";
+    const typeLabel = space.type === "therapy" ? "Therapy Office" : space.type === "coaching" ? "Coaching Space" : space.type === "wellness" ? "Wellness Studio" : space.type === "creative" ? "Creative Studio" : space.type === "workshop" ? "Workshop Space" : "Workspace";
+    setPageMeta({
+      title: `${space.name} | ${typeLabel}${neighborhood}, Miami | Align Workspaces`,
+      description: space.shortDescription || space.description?.slice(0, 155) || `Book ${space.name}${neighborhood} by the hour on Align Workspaces. $${space.pricePerHour}/hr.`,
+      url: `https://alignworkspaces.com/spaces/${space.slug}`,
+      image: (space.imageUrls as string[])?.[0] || undefined,
+    });
+
+    // Structured data for this space
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": space.name,
+      "description": space.shortDescription || space.description,
+      "url": `https://alignworkspaces.com/spaces/${space.slug}`,
+      "image": (space.imageUrls as string[]) || [],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": space.address,
+        "addressLocality": space.neighborhood || "Miami",
+        "addressRegion": "FL",
+        "addressCountry": "US",
+      },
+      ...(space.latitude && space.longitude ? {
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": space.latitude,
+          "longitude": space.longitude,
+        },
+      } : {}),
+      "priceRange": `$${space.pricePerHour}/hr`,
+      "makesOffer": {
+        "@type": "Offer",
+        "price": space.pricePerHour,
+        "priceCurrency": "USD",
+        "unitText": "HOUR",
+        "availability": "https://schema.org/InStock",
+      },
+    };
+    let scriptEl = document.getElementById("space-jsonld");
+    if (!scriptEl) {
+      scriptEl = document.createElement("script");
+      scriptEl.id = "space-jsonld";
+      scriptEl.setAttribute("type", "application/ld+json");
+      document.head.appendChild(scriptEl);
+    }
+    scriptEl.textContent = JSON.stringify(jsonLd);
+    return () => { scriptEl?.remove(); };
+  }, [space]);
 
   // Track referral link clicks — set cookie on server when ?ref= param is present
   useEffect(() => {

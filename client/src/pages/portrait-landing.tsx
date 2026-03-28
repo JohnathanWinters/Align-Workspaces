@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { setPageMeta } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
@@ -70,7 +71,11 @@ export default function PortraitLandingPage() {
   const portraitPhotos = portfolioPhotos.filter(p => p.category !== "spaces").slice(0, 6);
 
   useEffect(() => {
-    document.title = "Portraits | Align Workspaces";
+    setPageMeta({
+      title: "Professional Portraits for Therapists & Coaches in Miami | Align",
+      description: "Professional headshots and branding photography designed for therapists, coaches, and wellness professionals in Miami. Book your session today.",
+      url: "https://alignworkspaces.com/portraits",
+    });
     window.scrollTo(0, 0);
   }, []);
 
