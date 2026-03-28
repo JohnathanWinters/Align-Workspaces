@@ -386,6 +386,10 @@ export default function AlignSpacesPage() {
                       <Info className="w-4 h-4" />
                       Our Vision
                     </button>
+                    <button onClick={() => { setLocation("/host-pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
+                      <DollarSign className="w-4 h-4" />
+                      Pricing
+                    </button>
                     <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-menu">
                       <HelpCircle className="w-4 h-4" />
                       Support
