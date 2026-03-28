@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
+import { setPageMeta } from "@/lib/seo";
 import { useSmartBack } from "@/hooks/use-smart-back";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Share2, Star, Users, Camera, ChevronRight, X, Menu, MapPin, Globe, Heart, Loader2, CheckCircle2, Sparkles, Mail, Images, Building2, Info, HelpCircle, User } from "lucide-react";
@@ -792,7 +793,11 @@ function FeaturedListingPage() {
     : filtered;
 
   useEffect(() => {
-    document.title = "Featured Pros | Align";
+    setPageMeta({
+      title: "Featured Therapists, Coaches & Professionals in Miami | Align Workspaces",
+      description: "Meet Miami's independent professionals who use Align to find flexible workspaces for their practice. Therapists, coaches, wellness practitioners, and creatives building their brand.",
+      url: "https://alignworkspaces.com/featured",
+    });
   }, []);
 
   useEffect(() => {
@@ -1036,17 +1041,76 @@ function ProfilePage({ slug }: { slug: string }) {
 
   useEffect(() => {
     if (pro) {
-      document.title = pro.seoTitle || `${pro.name} - ${pro.profession} | Align`;
-      const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) metaDesc.setAttribute("content", pro.metaDescription || pro.headline);
-      else {
-        const meta = document.createElement("meta");
-        meta.name = "description";
-        meta.content = pro.metaDescription || pro.headline;
-        document.head.appendChild(meta);
+      const title = pro.seoTitle || `${pro.name}, ${pro.profession} in ${pro.location} | Align Workspaces`;
+      const description = pro.metaDescription || pro.headline || `Meet ${pro.name}, a ${pro.profession} in ${pro.location}. See how they use Align to find the right workspace for their practice.`;
+      const url = `https://alignworkspaces.com/featured/${pro.slug}`;
+      const image = pro.portraitImageUrl || pro.spaceImageUrl || "";
+
+      document.title = title;
+
+      const setMeta = (name: string, content: string, attr = "name") => {
+        let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
+        if (!el) { el = document.createElement("meta"); el.setAttribute(attr, name); document.head.appendChild(el); }
+        el.setAttribute("content", content);
+      };
+      setMeta("description", description);
+      setMeta("og:title", title, "property");
+      setMeta("og:description", description, "property");
+      setMeta("og:type", "profile", "property");
+      setMeta("og:url", url, "property");
+      if (image) setMeta("og:image", image, "property");
+      setMeta("twitter:card", "summary_large_image", "name");
+      setMeta("twitter:title", title, "name");
+      setMeta("twitter:description", description, "name");
+      if (image) setMeta("twitter:image", image, "name");
+
+      // Person structured data
+      const jsonLd: any = {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": pro.name,
+        "jobTitle": pro.profession,
+        "url": url,
+        "description": description,
+        ...(image ? { "image": image } : {}),
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": pro.location?.split(",")[0]?.trim() || "Miami",
+          "addressRegion": "FL",
+          "addressCountry": "US",
+        },
+        ...(pro.credentials?.length ? { "hasCredential": pro.credentials.map((c: string) => ({ "@type": "EducationalOccupationalCredential", "credentialCategory": c })) } : {}),
+        ...(pro.socialLinks?.length ? { "sameAs": pro.socialLinks.filter((l: any) => l.url).map((l: any) => l.url) } : {}),
+        ...(pro.spaceName ? { "workLocation": { "@type": "Place", "name": pro.spaceName, ...(pro.spaceImageUrl ? { "image": pro.spaceImageUrl } : {}) } } : {}),
+      };
+      let scriptEl = document.getElementById("pro-jsonld");
+      if (!scriptEl) { scriptEl = document.createElement("script"); scriptEl.id = "pro-jsonld"; scriptEl.setAttribute("type", "application/ld+json"); document.head.appendChild(scriptEl); }
+      scriptEl.textContent = JSON.stringify(jsonLd);
+
+      // FAQ schema for Q&A sections
+      const qaItems = [
+        ...(pro.storySections?.qaSections || []).map((qa: any) => ({ q: qa.question, a: qa.answer })),
+        ...(pro.storySections?.whyStarted ? [{ q: `Why does ${pro.name} do this work?`, a: pro.storySections.whyStarted }] : []),
+        ...(pro.storySections?.whatTheyLove ? [{ q: `What makes ${pro.name}'s work meaningful?`, a: pro.storySections.whatTheyLove }] : []),
+        ...(pro.storySections?.misunderstanding ? [{ q: `What's a common misconception about being a ${pro.profession.toLowerCase()}?`, a: pro.storySections.misunderstanding }] : []),
+      ];
+      if (qaItems.length > 0) {
+        const faqLd = {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": qaItems.map(qa => ({
+            "@type": "Question",
+            "name": qa.q,
+            "acceptedAnswer": { "@type": "Answer", "text": qa.a },
+          })),
+        };
+        let faqEl = document.getElementById("pro-faq-jsonld");
+        if (!faqEl) { faqEl = document.createElement("script"); faqEl.id = "pro-faq-jsonld"; faqEl.setAttribute("type", "application/ld+json"); document.head.appendChild(faqEl); }
+        faqEl.textContent = JSON.stringify(faqLd);
       }
     }
     window.scrollTo(0, 0);
+    return () => { document.getElementById("pro-jsonld")?.remove(); document.getElementById("pro-faq-jsonld")?.remove(); };
   }, [pro]);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";

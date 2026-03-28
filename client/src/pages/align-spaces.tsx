@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { setPageMeta } from "@/lib/seo";
 import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
@@ -289,7 +290,11 @@ export default function AlignSpacesPage() {
   });
 
   useEffect(() => {
-    document.title = "Align | Professional Workspaces for Miami Professionals";
+    setPageMeta({
+      title: "Align Workspaces | Flexible Workspace Rentals & Professional Portraits in Miami",
+      description: "Rent therapy offices, coaching rooms, creative studios, and wellness spaces by the hour in Miami. Professional branding photography for small business professionals. Book on Align.",
+      url: "https://alignworkspaces.com",
+    });
   }, []);
 
   useEffect(() => {
