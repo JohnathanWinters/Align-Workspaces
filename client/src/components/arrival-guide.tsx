@@ -22,6 +22,9 @@ import {
   DoorOpen,
   Navigation,
   CheckCircle2,
+  Building2,
+  ZoomIn,
+  ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -177,14 +180,44 @@ export function ArrivalGuideEditor({ spaceId }: { spaceId: string }) {
           );
         })}
 
-        {steps.length < 6 && (
+        {steps.length < 6 && steps.length > 0 && (
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors text-xs"
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            {uploading ? "Uploading..." : steps.length === 0 ? "Add your first step" : "Add another step"}
+            {uploading ? "Uploading..." : "Add another step"}
+          </button>
+        )}
+
+        {steps.length === 0 && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full rounded-xl border-2 border-dashed border-gray-200 hover:border-[#c4956a]/40 transition-colors group"
+          >
+            <div className="px-4 py-5">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                {/* Wide shot example */}
+                <div className="w-20 h-14 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
+                  <Building2 className="w-5 h-5 text-stone-300 group-hover:text-[#c4956a]/50 transition-colors" />
+                  <span className="text-[8px] text-stone-300 font-medium uppercase tracking-wide">Wide</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-stone-300" />
+                {/* Close-up example */}
+                <div className="w-20 h-14 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
+                  <ZoomIn className="w-5 h-5 text-stone-300 group-hover:text-[#c4956a]/50 transition-colors" />
+                  <span className="text-[8px] text-stone-300 font-medium uppercase tracking-wide">Close-up</span>
+                </div>
+              </div>
+              <p className="text-xs text-stone-400 group-hover:text-stone-500 transition-colors font-medium mb-1">
+                {uploading ? "Uploading..." : "Add your first step"}
+              </p>
+              <p className="text-[10px] text-stone-300 group-hover:text-stone-400 transition-colors leading-relaxed">
+                Start with a wide shot of the building, then add close-ups of the entrance, hallway, and door so guests can find you easily.
+              </p>
+            </div>
           </button>
         )}
 
