@@ -19,6 +19,7 @@ import {
   Mail,
   MessageCircle,
   ChevronDown,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,6 +94,8 @@ export default function SupportPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   useEffect(() => {
     document.title = "Support | Align Workspaces";
@@ -116,6 +119,20 @@ export default function SupportPage() {
     onSuccess: () => {
       setSent(true);
       setMessage("");
+    },
+  });
+
+  const feedbackMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/support-request", {
+        name: user?.name || user?.firstName || "Anonymous",
+        email: user?.email || email || "no-email@feedback",
+        message: `[SITE FEEDBACK]\n\n${feedback}`,
+      });
+    },
+    onSuccess: () => {
+      setFeedbackSent(true);
+      setFeedback("");
     },
   });
 
@@ -330,6 +347,72 @@ export default function SupportPage() {
             </div>
           </motion.div>
         </div>
+
+        {/* Feedback Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-12 sm:mt-16 max-w-2xl mx-auto"
+        >
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
+                <Lightbulb className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <h2 className="font-serif text-lg text-gray-900">Help us improve</h2>
+                <p className="text-xs text-gray-500">Share your ideas on how we can make Align better</p>
+              </div>
+            </div>
+
+            {feedbackSent ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center justify-center py-8 text-center"
+              >
+                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="font-serif text-lg text-gray-900 mb-1">Thanks for your feedback!</h3>
+                <p className="text-sm text-gray-500 mb-5">We read every suggestion and use them to improve Align.</p>
+                <Button variant="outline" size="sm" onClick={() => setFeedbackSent(false)} className="text-xs">
+                  Submit more feedback
+                </Button>
+              </motion.div>
+            ) : (
+              <div className="space-y-3">
+                <Textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="What would make Align better for you? Any features, changes, or ideas are welcome."
+                  rows={4}
+                  disabled={feedbackMutation.isPending}
+                  className="resize-none bg-gray-50 border-gray-200 text-sm"
+                  data-testid="input-feedback"
+                />
+                {feedbackMutation.isError && (
+                  <p className="text-red-500 text-xs">Failed to send. Please try again.</p>
+                )}
+                <Button
+                  onClick={() => feedbackMutation.mutate()}
+                  disabled={!feedback.trim() || feedbackMutation.isPending}
+                  size="sm"
+                  className="bg-gray-900 text-white hover:bg-black"
+                  data-testid="button-send-feedback"
+                >
+                  {feedbackMutation.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  {feedbackMutation.isPending ? "Sending..." : "Submit Feedback"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </motion.div>
       </main>
 
       <SiteFooter hideNewsletter />
