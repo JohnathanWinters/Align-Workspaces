@@ -246,22 +246,6 @@ export async function seedTestClient() {
     { id: "test-sm-6", shootId: TEST_SHOOT_UPCOMING, senderId: userId, senderRole: "client", senderName: user.firstName || "Client", message: "I think a warm neutral or soft gray would be great. Something clean and professional.", createdAt: pastTimestamp(13) },
   ]);
 
-  // 11. Admin conversation
-  await db.insert(adminConversations).values({
-    id: TEST_ADMIN_CONV,
-    clientId: userId,
-    createdAt: pastTimestamp(60),
-  });
-
-  // 12. Admin messages
-  await db.insert(adminMessages).values([
-    { id: "test-am-1", conversationId: TEST_ADMIN_CONV, senderId: "admin", senderRole: "admin", senderName: "Armando R.", message: "Welcome to your Align Workspaces portal! I'm here if you have any questions about your shoots, edits, or anything else.", createdAt: pastTimestamp(60) },
-    { id: "test-am-2", conversationId: TEST_ADMIN_CONV, senderId: userId, senderRole: "client", senderName: user.firstName || "Client", message: "Thank you, Armando! I'm excited about working together. Quick question — how do the retouching sessions work?", createdAt: pastTimestamp(58) },
-    { id: "test-am-3", conversationId: TEST_ADMIN_CONV, senderId: "admin", senderRole: "admin", senderName: "Armando R.", message: "Great question! You get 2 complimentary retouching sessions per year, and you can buy extras anytime. Just go to the Edits tab to submit photos.", createdAt: pastTimestamp(57) },
-    { id: "test-am-4", conversationId: TEST_ADMIN_CONV, senderId: userId, senderRole: "client", senderName: user.firstName || "Client", message: "That's perfect, thank you! And I love the space booking feature — I've been looking for a therapy office for my Saturday clients.", createdAt: pastTimestamp(55) },
-    { id: "test-am-5", conversationId: TEST_ADMIN_CONV, senderId: "admin", senderRole: "admin", senderName: "Armando R.", message: "The Coral Gables Therapy Suite would be perfect for that! Beautiful space with great natural light. Let me know if you need help with anything.", createdAt: pastTimestamp(54) },
-  ]);
-
   // 13. Space bookings
   await db.insert(spaceBookings).values([
     {
