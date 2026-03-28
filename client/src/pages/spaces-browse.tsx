@@ -1275,11 +1275,13 @@ export default function SpacesBrowsePage() {
     return params.get("list") === "true";
   });
   
+  const [searchQuery, setSearchQuery] = useState("");
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [zipCode, setZipCode] = useState<string>("");
   const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
   const [availableToday, setAvailableToday] = useState(false);
+  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -1384,10 +1386,28 @@ export default function SpacesBrowsePage() {
       ? allSpaces
       : allSpaces.filter(s => s.type === activeType || (s.tags && s.tags.includes(activeType)));
 
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.neighborhood || "").toLowerCase().includes(q) ||
+        (s.address || "").toLowerCase().includes(q) ||
+        (s.amenities || []).some((a: string) => a.toLowerCase().includes(q))
+      );
+    }
+
     const minVal = priceMin ? parseInt(priceMin) : null;
     const maxVal = priceMax ? parseInt(priceMax) : null;
     if (minVal !== null) result = result.filter(s => s.pricePerHour >= minVal);
     if (maxVal !== null) result = result.filter(s => s.pricePerHour <= maxVal);
+
+    if (amenityFilters.length > 0) {
+      result = result.filter(s =>
+        amenityFilters.every(af =>
+          (s.amenities || []).some((a: string) => a.toLowerCase().includes(af.toLowerCase()))
+        )
+      );
+    }
 
     if (availableToday) {
       const today = new Date();
@@ -1422,7 +1442,7 @@ export default function SpacesBrowsePage() {
     }
 
     return result;
-  }, [allSpaces, activeType, priceMin, priceMax, sortBy, zipCoords, availableToday]);
+  }, [allSpaces, activeType, searchQuery, priceMin, priceMax, amenityFilters, sortBy, zipCoords, availableToday]);
 
   const getDistanceForSpace = useCallback((space: Space): number | null => {
     if (!zipCoords || !space.latitude || !space.longitude) return null;
@@ -1441,8 +1461,9 @@ export default function SpacesBrowsePage() {
     if (zipCode.length === 5) count++;
     if (availableToday) count++;
     if (availSearchActive) count++;
+    count += amenityFilters.length;
     return count;
-  }, [priceMin, priceMax, zipCode, availableToday, availSearchActive]);
+  }, [priceMin, priceMax, zipCode, availableToday, availSearchActive, amenityFilters]);
 
   const handleMarkerClick = useCallback((id: string) => {
     setHoveredCardId(id);
@@ -1644,6 +1665,16 @@ export default function SpacesBrowsePage() {
       </nav>
 
       <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-3 border-b border-stone-100 dark:border-stone-800 bg-background">
+        <div className="relative mb-2">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, neighborhood, or amenity..."
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-stone-200 bg-white text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-300 transition-all"
+            data-testid="input-space-search"
+          />
+        </div>
         <div className="flex items-center gap-2 mb-2" data-testid="quick-category-pills">
           {/* Category chips — left side */}
           <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
@@ -1870,9 +1901,27 @@ export default function SpacesBrowsePage() {
                   )}
                 </div>
 
+                <div className="w-full pt-2">
+                  <p className="text-[10px] text-stone-500 uppercase tracking-wider font-medium mb-1.5">Amenities</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Wi-Fi", "Parking", "Sound Insulated", "Natural Light", "Private Entrance", "Waiting Area", "Climate Control", "ADA Accessible"].map(amenity => {
+                      const isActive = amenityFilters.includes(amenity);
+                      return (
+                        <button
+                          key={amenity}
+                          onClick={() => setAmenityFilters(prev => isActive ? prev.filter(a => a !== amenity) : [...prev, amenity])}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${isActive ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-500 hover:bg-stone-200"}`}
+                        >
+                          {amenity}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {activeFilterCount > 0 && (
                   <button
-                    onClick={clearAllFilters}
+                    onClick={() => { clearAllFilters(); setAmenityFilters([]); setSearchQuery(""); }}
                     className="text-xs text-[#c4956a] hover:text-[#b3845d] font-medium pb-1.5 transition-colors"
                     data-testid="button-clear-filters"
                   >
