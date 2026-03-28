@@ -1145,7 +1145,7 @@ function ProfilePage({ slug }: { slug: string }) {
         </div>
         {/* Portrait pip — outside overflow container */}
         {pro.spaceImageUrl && pro.portraitImageUrl && (
-          <div className="absolute -bottom-6 left-4 sm:-bottom-8 sm:left-6 w-[30%] sm:w-[18%] aspect-[3/4] max-w-[240px] rounded-xl ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-6 left-4 sm:-bottom-8 sm:left-6 w-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px] aspect-[3/4] max-w-[240px] rounded-xl ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
               style={{ objectPosition: `${pro.portraitCropPosition?.x ?? 50}% ${pro.portraitCropPosition?.y ?? 50}%` }}
