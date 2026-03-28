@@ -5499,7 +5499,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           <Button variant="ghost" size="sm" className="h-8 px-2 flex-shrink-0" onClick={onBack} data-testid="button-pipeline-back">
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h1 className="font-serif text-lg sm:text-xl font-semibold truncate" data-testid="text-pipeline-title">Book of Business</h1>
+          <h1 className="font-serif text-lg sm:text-xl font-semibold truncate" data-testid="text-pipeline-title">Contacts</h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-2">
@@ -7444,7 +7444,7 @@ function AdminDashboard({ token }: { token: string }) {
         { id: "clients" as const, label: "Clients", icon: Users },
         { id: "shoots" as const, label: "Shoots", icon: Camera },
         { id: "messages" as const, label: "Messages", icon: MessageCircle },
-        { id: "pipeline" as const, label: "Book of Business", icon: FileSpreadsheet },
+        { id: "pipeline" as const, label: "Contacts", icon: FileSpreadsheet },
       ],
     },
     {
@@ -8898,7 +8898,7 @@ function AdminDashboard({ token }: { token: string }) {
           </button>
           <p className="text-sm font-medium text-gray-700 truncate">
             {view === "clients" && "Clients"}
-            {view === "pipeline" && "Book of Business"}
+            {view === "pipeline" && "Contacts"}
             {view === "portfolio" && "Portfolio"}
             {view === "featured" && "Featured"}
             {view === "nominations" && "Nominations"}

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { User, LogOut, ChevronDown } from "lucide-react";
+import { User, LogOut, ChevronDown, LifeBuoy, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface UserIndicatorProps {
@@ -85,6 +85,24 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
               >
                 <User className="w-3.5 h-3.5" />
                 Client Portal
+              </Link>
+              <Link
+                href="/support"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-lg px-2 py-2 transition-colors"
+                data-testid="link-user-support"
+              >
+                <LifeBuoy className="w-3.5 h-3.5" />
+                Support
+              </Link>
+              <Link
+                href="/terms"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-lg px-2 py-2 transition-colors"
+                data-testid="link-user-terms"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Terms of Service
               </Link>
               <button
                 onClick={() => { setOpen(false); logout(); }}
