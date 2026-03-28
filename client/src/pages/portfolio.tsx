@@ -347,7 +347,8 @@ export default function PortfolioPage() {
 
   const spaceMap = (spaces || []).reduce<Record<string, Space>>((acc, s) => { acc[s.id] = s; return acc; }, {});
 
-  const filteredPhotos = photos?.filter(p => (p.category || "people") === activeCategory) || [];
+  const filteredPhotos = (photos?.filter(p => (p.category || "people") === activeCategory) || [])
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   return (
     <div className="min-h-screen bg-background">
