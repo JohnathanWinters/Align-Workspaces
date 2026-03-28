@@ -737,14 +737,14 @@ export default function AlignSpacesPage() {
                       )}
                     </div>
                     {pro.spaceImageUrl && (
-                      <div className="absolute -bottom-8 left-4 w-[150px] h-[105px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
+                      <div className="absolute -bottom-5 left-4 w-[150px] h-[105px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
                         <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
                           className="w-full h-full object-cover"
                         />
                       </div>
                     )}
                   </div>
-                  <div className={`p-4 sm:p-5 ${pro.spaceImageUrl ? "pt-16" : ""}`}>
+                  <div className={`p-4 sm:p-5 ${pro.spaceImageUrl ? "pt-12 sm:pt-14" : ""}`}>
                     <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                     <p className="text-sm text-[#c4956a] font-medium mb-2">{pro.profession}</p>
                     {pro.quote && (
