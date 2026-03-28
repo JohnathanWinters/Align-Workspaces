@@ -251,11 +251,19 @@ function SpaceCard({ space }: { space: Space }) {
           </div>
         )}
 
-        <div className="flex items-center pt-1">
+        <div className="flex items-center gap-3 pt-1">
           <div className="flex items-center gap-1.5 text-stone-700">
             <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
             <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
           </div>
+          {space.pricePerDay && (
+            <span className="text-xs text-stone-400">${space.pricePerDay}/day</span>
+          )}
+          {(space as any).recurringDiscountPercent > 0 && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+              -{(space as any).recurringDiscountPercent}% recurring
+            </span>
+          )}
         </div>
       </div>
     </div>
