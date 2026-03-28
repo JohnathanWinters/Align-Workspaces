@@ -153,7 +153,7 @@ function SpaceCard({ space }: { space: Space }) {
 
   return (
     <div
-      className="group rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300 cursor-pointer"
+      className="group rounded-xl overflow-hidden bg-white border border-stone-100 hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col h-full"
       data-testid={`space-card-${space.id}`}
       onClick={() => setLocation(`/spaces/${space.slug}`)}
     >
@@ -171,7 +171,7 @@ function SpaceCard({ space }: { space: Space }) {
           </div>
         )}
       </div>
-      <div className="p-4 sm:p-5">
+      <div className="p-4 sm:p-5 flex flex-col flex-1">
         {space.targetProfession && (
           <div className="flex items-center gap-1.5 mb-2">
             <span className="text-xs font-semibold text-[#c4956a] tracking-wide">Ideal for {space.targetProfession}</span>
@@ -251,7 +251,7 @@ function SpaceCard({ space }: { space: Space }) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-1">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-1 mt-auto">
           <div className="flex items-center gap-1.5 text-stone-700">
             <DollarSign className="w-3.5 h-3.5 text-[#c4956a]" />
             <span className="font-semibold text-sm">${space.pricePerHour}/hr</span>
@@ -261,7 +261,7 @@ function SpaceCard({ space }: { space: Space }) {
           )}
           {(space as any).recurringDiscountPercent > 0 && (
             <span className="text-xs text-emerald-600 font-medium">
-              ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr after {(space as any).recurringDiscountAfter || 3}+ bookings
+              ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             </span>
           )}
         </div>

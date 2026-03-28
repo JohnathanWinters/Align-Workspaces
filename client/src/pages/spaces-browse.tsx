@@ -628,14 +628,8 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           )}
         </div>
 
-        {/* Secondary metadata line: capacity + daily rate */}
+        {/* Secondary metadata line: daily rate */}
         <div className="flex items-center gap-3 text-xs text-stone-500 mb-2.5">
-          {space.capacity && (
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3 text-stone-400" />
-              Up to {space.capacity}
-            </span>
-          )}
           {space.pricePerDay && (
             <span className="flex items-center gap-1">
               <DollarSign className="w-3 h-3 text-stone-400" />
@@ -676,7 +670,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           if (!paletteData) return null;
           return (
             <div
-              className="mb-3 pt-3 border-t border-stone-100"
+              className="mt-auto mb-3 pt-3 border-t border-stone-100"
               data-testid={`palette-preview-${space.id}`}
               onClick={(e) => {
                 if (paletteData.explanation) {

@@ -2730,7 +2730,7 @@ export async function registerRoutes(
   app.post("/api/spaces", isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user;
-      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, capacity, amenities, targetProfession, availableHours, hostName } = req.body;
+      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName } = req.body;
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -2756,7 +2756,7 @@ export async function registerRoutes(
         longitude,
         pricePerHour: parseInt(pricePerHour),
         pricePerDay: pricePerDay ? parseInt(pricePerDay) : null,
-        capacity: capacity ? parseInt(capacity) : null,
+        capacity: null,
         amenities: amenities || [],
         imageUrls: [],
         targetProfession: targetProfession || null,
@@ -2884,11 +2884,6 @@ export async function registerRoutes(
         const n = Number(body.pricePerDay);
         if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid price per day" });
         updates.pricePerDay = n;
-      }
-      if (body.capacity !== undefined) {
-        const n = Number(body.capacity);
-        if (isNaN(n) || n < 0) return res.status(400).json({ message: "Invalid capacity" });
-        updates.capacity = n;
       }
       if (body.amenities !== undefined) {
         if (!Array.isArray(body.amenities)) return res.status(400).json({ message: "Amenities must be an array" });

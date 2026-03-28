@@ -281,7 +281,6 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
             </div>
             <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
               <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />${space.pricePerHour}/hr</span>
-              {space.capacity && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{space.capacity} people</span>}
             </div>
           </div>
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -334,7 +333,6 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
     neighborhood: space.neighborhood || "",
     pricePerHour: String(space.pricePerHour || ""),
     pricePerDay: String(space.pricePerDay || ""),
-    capacity: String(space.capacity || ""),
     amenities: (space.amenities || []).join(", "),
     targetProfession: space.targetProfession || "",
     hostName: space.hostName || "",
@@ -350,7 +348,6 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
         ...formData,
         pricePerHour: formData.pricePerHour ? Number(formData.pricePerHour) : undefined,
         pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
-        capacity: formData.capacity ? Number(formData.capacity) : undefined,
         bufferMinutes: Number(formData.bufferMinutes),
         recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
         recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
@@ -440,10 +437,6 @@ function EditSpaceForm({ space, onClose }: { space: Space; onClose: () => void }
             <option value="5">After 5 bookings</option>
             <option value="10">After 10 bookings</option>
           </select>
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Capacity</label>
-          <Input type="number" value={formData.capacity} onChange={(e) => update("capacity", e.target.value)} data-testid={`edit-input-capacity-${space.id}`} />
         </div>
         <div className="col-span-2">
           <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
@@ -561,7 +554,6 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     neighborhood: "",
     pricePerHour: "",
     pricePerDay: "",
-    capacity: "",
     amenities: "",
     targetProfession: "",
     hostName: "",
@@ -640,10 +632,6 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Price per Day ($)</label>
             <Input type="number" value={formData.pricePerDay} onChange={(e) => update("pricePerDay", e.target.value)} placeholder="200" data-testid="input-space-price-day" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Capacity</label>
-            <Input type="number" value={formData.capacity} onChange={(e) => update("capacity", e.target.value)} placeholder="6" data-testid="input-space-capacity" />
           </div>
           <div className="col-span-2">
             <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
@@ -991,7 +979,7 @@ function SavedTab() {
                         {space.address}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr · Up to {space.capacity} guests</p>
+                    <p className="text-xs text-gray-500 mt-1">${space.pricePerHour}/hr</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <button

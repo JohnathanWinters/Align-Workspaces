@@ -196,7 +196,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
-    capacity: "", amenities: "", targetProfession: "", availableHours: "", hostName: "",
+    amenities: "", targetProfession: "", availableHours: "", hostName: "",
   });
 
   const createMutation = useMutation({
@@ -318,10 +318,6 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <div>
                 <label className="text-xs text-foreground/50 mb-1 block">Price per Day ($)</label>
                 <Input type="number" value={formData.pricePerDay} onChange={e => update("pricePerDay", e.target.value)} placeholder="200" data-testid="input-list-price-day" />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Capacity</label>
-                <Input type="number" value={formData.capacity} onChange={e => update("capacity", e.target.value)} placeholder="6" data-testid="input-list-capacity" />
               </div>
               <div>
                 <label className="text-xs text-foreground/50 mb-1 block">Target Profession</label>

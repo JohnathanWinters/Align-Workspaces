@@ -2623,7 +2623,6 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
       neighborhood: space.neighborhood || "",
       pricePerHour: space.pricePerHour || 0,
       pricePerDay: space.pricePerDay || 0,
-      capacity: space.capacity || 0,
       targetProfession: space.targetProfession || "",
       availabilitySchedule: space.availabilitySchedule || "",
       bufferMinutes: space.bufferMinutes ?? 15,
@@ -2652,7 +2651,6 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
         ...editForm,
         pricePerHour: parseInt(editForm.pricePerHour) || 0,
         pricePerDay: parseInt(editForm.pricePerDay) || null,
-        capacity: parseInt(editForm.capacity) || null,
         bufferMinutes: parseInt(editForm.bufferMinutes) || 15,
         amenities: editForm.amenities.split(",").map((a: string) => a.trim()).filter(Boolean),
         tags: derivedTags.length > 0 ? derivedTags : editForm.tags,
@@ -2807,10 +2805,6 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           <input type="number" value={editForm.pricePerDay} onChange={e => setEditForm({ ...editForm, pricePerDay: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-price-day" />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Capacity</label>
-                          <input type="number" value={editForm.capacity} onChange={e => setEditForm({ ...editForm, capacity: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-capacity" />
-                        </div>
-                        <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1">Host Name</label>
                           <input value={editForm.hostName} onChange={e => setEditForm({ ...editForm, hostName: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-host" />
                         </div>
@@ -2925,7 +2919,6 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                           </p>
                           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mb-2 text-xs text-gray-400">
                             {space.pricePerDay > 0 && <span>${space.pricePerDay}/day</span>}
-                            <span>Cap: {space.capacity || "N/A"}</span>
                             {space.isSample === 1 && <span className="text-amber-500">Sample</span>}
                             {space.latitude && space.longitude ? (
                               <span className="text-emerald-500">Mapped</span>

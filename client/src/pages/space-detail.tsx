@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   MapPin,
   Clock,
-  Users,
   DollarSign,
   Building2,
   ChevronRight,
@@ -176,13 +175,11 @@ function getSpaceHighlights(space: Space) {
   const items: { icon: typeof Check; text: string }[] = [];
   const a = (space.amenities || []).map((x) => x.toLowerCase());
 
-  if (space.capacity) items.push({ icon: Users, text: `Up to ${space.capacity} people` });
   if (a.some((x) => x.includes("parking"))) items.push({ icon: Car, text: "Free parking" });
   if (a.some((x) => x.includes("natural light") || x.includes("window"))) items.push({ icon: Sun, text: "Abundant natural light" });
   if (a.some((x) => x.includes("sound") || x.includes("speaker") || x.includes("audio"))) items.push({ icon: Volume2, text: "Sound system available" });
   if (a.some((x) => x.includes("dressing") || x.includes("changing"))) items.push({ icon: Sparkles, text: "Private dressing room" });
   if (a.some((x) => x.includes("wifi") || x.includes("internet"))) items.push({ icon: Wifi, text: "High-speed WiFi" });
-  if (space.capacity && space.capacity >= 8) items.push({ icon: Building2, text: "Large private space" });
   if (a.some((x) => x.includes("kitchen") || x.includes("coffee"))) items.push({ icon: Coffee, text: "Kitchen & refreshments" });
 
   return items.slice(0, 6);
@@ -1024,30 +1021,28 @@ function BookingCard({
         <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
           <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
           <span className="text-xs text-emerald-700 font-medium">
-            ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr with recurring booking
+            ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             {(space as any).recurringDiscountAfter > 0 && (
-              <span className="text-emerald-600 font-normal"> (after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""})</span>
+              <span className="text-emerald-600 font-normal"> · after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""}</span>
             )}
           </span>
         </div>
       )}
       {!space.pricePerDay && !((space as any).recurringDiscountPercent > 0) && <div className="mb-5" />}
 
-      {/* Hours & capacity */}
-      <div className="space-y-3 mb-5 pb-5 border-b border-stone-100">
-        {space.availableHours && (
-          <div className="flex items-center gap-2.5 text-sm text-stone-600">
-            <Clock className="w-4 h-4 text-stone-400" />
-            <span>{space.availableHours}</span>
+      {/* Hours */}
+      {space.availableHours && (
+        <div className="mb-5 pb-5 border-b border-stone-100">
+          <div className="flex gap-2.5 text-sm text-stone-600">
+            <Clock className="w-4 h-4 text-stone-400 flex-shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              {space.availableHours.split(/\s*[·,]\s*/).map((group, i) => (
+                <div key={i}>{group}</div>
+              ))}
+            </div>
           </div>
-        )}
-        {space.capacity && (
-          <div className="flex items-center gap-2.5 text-sm text-stone-600">
-            <Users className="w-4 h-4 text-stone-400" />
-            <span>Up to {space.capacity} people</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* CTA */}
       <button
@@ -1541,28 +1536,26 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                   {space.pricePerDay && (
                     <div className="text-stone-500">${space.pricePerDay}/day</div>
                   )}
-                  {space.capacity && (
-                    <div className="flex items-center gap-1.5 text-stone-500">
-                      <Users className="w-4 h-4" />
-                      Up to {space.capacity}
-                    </div>
-                  )}
-                  {space.availableHours && (
-                    <div className="flex items-center gap-1.5 text-stone-500">
-                      <Clock className="w-4 h-4" />
-                      <span>{space.availableHours}</span>
-                    </div>
-                  )}
                 </div>
                 {(space as any).recurringDiscountPercent > 0 && (
                   <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
                     <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                     <span className="text-xs text-emerald-700 font-medium">
-                      ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr with recurring booking
+                      ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
                       {(space as any).recurringDiscountAfter > 0 && (
-                        <span className="text-emerald-600 font-normal"> (after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""})</span>
+                        <span className="text-emerald-600 font-normal"> · after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""}</span>
                       )}
                     </span>
+                  </div>
+                )}
+                {space.availableHours && (
+                  <div className="flex gap-1.5 text-sm text-stone-500 mt-3">
+                    <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      {space.availableHours.split(/\s*[·,]\s*/).map((group, i) => (
+                        <div key={i}>{group}</div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
