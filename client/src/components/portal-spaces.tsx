@@ -2202,6 +2202,27 @@ function EarningsTab() {
         </div>
       )}
 
+      {/* Earnings milestone */}
+      {(() => {
+        const total = earningsData.allTime.totalEarnings / 100;
+        const milestones = [100, 500, 1000, 2500, 5000, 10000, 25000];
+        const nextMilestone = milestones.find(m => m > total) || milestones[milestones.length - 1];
+        const prevMilestone = milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+        const progress = Math.min(100, ((total - prevMilestone) / (nextMilestone - prevMilestone)) * 100);
+        return (
+          <div className="bg-white rounded-xl border border-stone-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-stone-500">Next milestone</p>
+              <p className="text-xs text-stone-400">${total.toFixed(0)} / ${nextMilestone.toLocaleString()}</p>
+            </div>
+            <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#c4956a] to-emerald-500 transition-all duration-700" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="text-[10px] text-stone-400 mt-1.5">${(nextMilestone - total).toFixed(0)} to go</p>
+          </div>
+        );
+      })()}
+
       {/* 3. Tier breakdown */}
       <div className="bg-white rounded-xl border border-stone-200 p-4">
         <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-3">Bookings by Type</p>
@@ -2504,43 +2525,33 @@ function EarningsTab() {
           </AnimatePresence>
         </div>
       )}
-      {/* Fee Breakdown */}
+      {/* Understand Your Fees */}
       <div className="border-t border-stone-200 pt-5 mt-2">
-        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-          <DollarSign className="w-3.5 h-3.5" />
-          Fee Breakdown
-        </h3>
-        <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-100">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-stone-800">Standard Host Fee</p>
-              <p className="text-[11px] text-stone-400">You keep 87.5% of every booking</p>
+        <a
+          href="/host-pricing"
+          target="_blank"
+          className="block rounded-xl border border-[#c4956a]/20 bg-gradient-to-r from-[#c4956a]/5 to-transparent p-5 hover:border-[#c4956a]/40 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#c4956a]/10 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-[#c4956a]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-stone-800 group-hover:text-stone-900">Understand Your Fees & Earnings</p>
+                <p className="text-xs text-stone-400">Interactive calculator, fee breakdown, and referral savings</p>
+              </div>
             </div>
-            <span className="text-sm font-bold text-stone-900">12.5%</span>
+            <ExternalLink className="w-4 h-4 text-stone-300 group-hover:text-[#c4956a] transition-colors flex-shrink-0" />
           </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-emerald-700">Referred Booking Fee</p>
-              <p className="text-[11px] text-stone-400">You keep 92% when clients book via your referral link</p>
-            </div>
-            <span className="text-sm font-bold text-emerald-600">8%</span>
+          <div className="flex items-center gap-4 mt-3 ml-[52px]">
+            <span className="text-[11px] text-stone-500">Standard: <strong className="text-stone-700">12.5%</strong></span>
+            <span className="text-[11px] text-stone-300">|</span>
+            <span className="text-[11px] text-emerald-600">Referred: <strong>8%</strong></span>
+            <span className="text-[11px] text-stone-300">|</span>
+            <span className="text-[11px] text-stone-500">No monthly fees</span>
           </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-stone-800">Guest Service Fee</p>
-              <p className="text-[11px] text-stone-400">Added to your rate, paid by the guest</p>
-            </div>
-            <span className="text-sm font-bold text-stone-900">7%</span>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-stone-800">Repeat Guest Fee</p>
-              <p className="text-[11px] text-stone-400">Returning guests pay a lower service fee</p>
-            </div>
-            <span className="text-sm font-bold text-stone-900">5%</span>
-          </div>
-        </div>
-        <p className="text-[11px] text-stone-400 mt-2 leading-relaxed">No monthly fees, no listing fees, no setup costs. You only pay when you earn. Payouts are deposited automatically via Stripe.</p>
+        </a>
       </div>
     </div>
   );
