@@ -52,6 +52,7 @@ import {
   XCircle,
   BarChart3,
   Pipette,
+  Palette,
   Phone,
   FileSpreadsheet,
   ArrowRight,
@@ -3303,6 +3304,76 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
     }));
   };
 
+  const generatePalette = async () => {
+    if (!editingPhoto) return;
+    try {
+      const img = document.createElement("img");
+      img.crossOrigin = "anonymous";
+      img.src = editingPhoto.imageUrl;
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+      const canvas = document.createElement("canvas");
+      const size = 100;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      // Sample pixels and bucket by hue
+      const buckets: { r: number; g: number; b: number; count: number }[] = [];
+      for (let i = 0; i < data.length; i += 16) { // sample every 4th pixel
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+        if (sat < 0.08 && max > 200) continue; // skip near-white
+        if (max < 30) continue; // skip near-black
+        let merged = false;
+        for (const bucket of buckets) {
+          const dr = Math.abs(bucket.r / bucket.count - r);
+          const dg = Math.abs(bucket.g / bucket.count - g);
+          const db = Math.abs(bucket.b / bucket.count - b);
+          if (dr + dg + db < 80) {
+            bucket.r += r; bucket.g += g; bucket.b += b; bucket.count++;
+            merged = true;
+            break;
+          }
+        }
+        if (!merged) buckets.push({ r, g, b, count: 1 });
+      }
+      buckets.sort((a, b) => b.count - a.count);
+      const top3 = buckets.slice(0, 3).map(b => {
+        const r = Math.round(b.r / b.count), g = Math.round(b.g / b.count), bl = Math.round(b.b / b.count);
+        const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
+        // Auto name based on hue
+        const max = Math.max(r, g, bl), min = Math.min(r, g, bl);
+        let hue = 0;
+        if (max !== min) {
+          if (max === r) hue = ((g - bl) / (max - min)) * 60;
+          else if (max === g) hue = (2 + (bl - r) / (max - min)) * 60;
+          else hue = (4 + (r - g) / (max - min)) * 60;
+          if (hue < 0) hue += 360;
+        }
+        const light = (max + min) / 2 / 255;
+        const sat = max === 0 ? 0 : (max - min) / max;
+        let name = "Neutral";
+        if (sat < 0.15) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
+        else if (hue < 15 || hue >= 345) name = light > 0.5 ? "Soft Rose" : "Deep Red";
+        else if (hue < 45) name = light > 0.5 ? "Warm Sand" : "Burnt Sienna";
+        else if (hue < 70) name = light > 0.5 ? "Golden Honey" : "Rich Amber";
+        else if (hue < 150) name = light > 0.5 ? "Sage Green" : "Forest Green";
+        else if (hue < 200) name = light > 0.5 ? "Sky Blue" : "Ocean Teal";
+        else if (hue < 260) name = light > 0.5 ? "Soft Blue" : "Deep Navy";
+        else if (hue < 300) name = light > 0.5 ? "Soft Lavender" : "Rich Plum";
+        else name = light > 0.5 ? "Dusty Rose" : "Deep Mauve";
+        return { hex, keyword: name };
+      });
+      setTagForm(prev => ({ ...prev, colorPalette: top3 }));
+      toast({ title: `Generated ${top3.length} colors` });
+    } catch {
+      toast({ title: "Failed to analyze image", variant: "destructive" });
+    }
+  };
+
   const openEyedropper = () => {
     setEyedropperHover(null);
     setEyedropperOpen(true);
@@ -3815,9 +3886,14 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                       <Plus className="w-3 h-3 mr-1" /> Add
                     </Button>
                   </div>
-                  <Button size="sm" variant="outline" className="mt-2 w-full h-8 text-xs" onClick={openEyedropper} data-testid="button-eyedropper">
-                    <Pipette className="w-3 h-3 mr-1.5" /> Pick Color from Photo
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={openEyedropper} data-testid="button-eyedropper">
+                      <Pipette className="w-3 h-3 mr-1.5" /> Pick from Photo
+                    </Button>
+                    <Button size="sm" className="flex-1 h-8 text-xs bg-stone-900 text-white hover:bg-stone-800" onClick={generatePalette} data-testid="button-generate-palette">
+                      <Palette className="w-3 h-3 mr-1.5" /> Generate 3 Colors
+                    </Button>
+                  </div>
                   <canvas ref={eyedropperCanvasRef} className="hidden" />
                   <AnimatePresence>
                     {eyedropperOpen && editingPhoto && (
