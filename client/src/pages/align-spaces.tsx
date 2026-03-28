@@ -563,10 +563,10 @@ export default function AlignSpacesPage() {
 
       <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-portraits-feature">
         <div className="max-w-5xl mx-auto">
-          <p className="text-center font-serif text-lg sm:text-xl text-stone-500 italic mb-8 sm:mb-10" data-testid="text-portrait-bridge">
+          <p className="text-center font-serif text-lg sm:text-xl text-stone-400 italic mb-8 sm:mb-10" data-testid="text-portrait-bridge">
             Your space is only half the picture.
           </p>
-          <div className="bg-stone-900 rounded-2xl overflow-hidden flex flex-col md:flex-row">
+          <div className="bg-white border border-stone-200/60 rounded-2xl overflow-hidden flex flex-col md:flex-row">
             <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden">
               <img
                 src="/images/hero-bg-bright.webp"
@@ -577,26 +577,23 @@ export default function AlignSpacesPage() {
             </div>
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
               <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">See Yourself Clearly</span>
-              <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e6d0] tracking-tight leading-tight mb-5">
+              <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight leading-tight mb-4">
                 Portrait Builder
               </h2>
-              <p className="text-[#f0e6d0]/90 text-base sm:text-[17px] leading-relaxed mb-6 max-w-md font-serif italic">
+              <p className="text-stone-500 text-base sm:text-[17px] leading-relaxed mb-5 max-w-md font-serif italic">
                 How you see yourself and how others see you aren't always the same thing.
               </p>
-              <p className="text-[#d4c4a8] text-sm leading-relaxed mb-2 max-w-md">
+              <p className="text-stone-400 text-sm leading-relaxed mb-2 max-w-md">
                 Answer a few questions about your environment and your presence and the feeling you want clients to walk away with. We'll match you with a creative direction and a wardrobe guide and a color palette, then build a shoot concept you can book on the spot.
               </p>
-              <p className="text-[#c4956a]/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
+              <p className="text-stone-400/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
                 Takes about 2 minutes. Ends with a complete shoot plan built around you.
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Link
                   href="/portrait-builder"
                   data-testid="button-portraits-cta"
-                  className="inline-flex items-center gap-2 uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
-                  style={{ color: "#c9a96e", borderColor: "#c9a96e" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,169,110,0.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 transition-all duration-300 rounded-lg text-sm font-medium bg-stone-900 text-white hover:bg-stone-800"
                 >
                   Start the Builder
                   <ArrowRight className="w-4 h-4" />
@@ -604,10 +601,7 @@ export default function AlignSpacesPage() {
                 <Link
                   href="/portfolio"
                   data-testid="button-our-work-cta"
-                  className="inline-flex items-center gap-2 uppercase px-6 py-2.5 transition-all duration-300 border rounded-lg text-sm font-medium"
-                  style={{ color: "#d4c4a8", borderColor: "#d4c4a8" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(212,196,168,0.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 transition-all duration-300 border border-stone-200 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50"
                 >
                   <Images className="w-4 h-4" />
                   Our Work
