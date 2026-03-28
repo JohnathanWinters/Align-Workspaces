@@ -51,6 +51,7 @@ import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } 
 import { ArrivalGuideEditor } from "./arrival-guide";
 import BookingCalendar from "./booking-calendar";
 import { CalendarSyncSettings } from "./calendar-sync-settings";
+import { AmenityInput } from "./amenity-input";
 
 const SPACE_TYPES = [
   { value: "therapy", label: "Therapy & Counseling" },
@@ -308,7 +309,7 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
 
 type EditTab = "details" | "pricing" | "schedule" | "extras";
 
-function getCompletionScore(formData: Record<string, string>, images: string[]) {
+function getCompletionScore(formData: Record<string, string>, images: string[], amenitiesTags?: string[]) {
   const checks = [
     { label: "Space name", done: !!formData.name },
     { label: "Address", done: !!formData.address },
@@ -317,7 +318,7 @@ function getCompletionScore(formData: Record<string, string>, images: string[]) 
     { label: "Description", done: !!formData.description },
     { label: "Short description", done: !!formData.shortDescription },
     { label: "Photos", done: images.length >= 1 },
-    { label: "Amenities", done: !!formData.amenities },
+    { label: "Amenities", done: amenitiesTags ? amenitiesTags.length > 0 : !!formData.amenities },
     { label: "Daily price", done: !!formData.pricePerDay },
     { label: "Neighborhood", done: !!formData.neighborhood },
   ];
@@ -346,7 +347,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     neighborhood: space.neighborhood || "",
     pricePerHour: String(space.pricePerHour || ""),
     pricePerDay: String(space.pricePerDay || ""),
-    amenities: (space.amenities || []).join(", "),
+    amenities: "",
     targetProfession: space.targetProfession || "",
     hostName: space.hostName || "",
     bufferMinutes: String(space.bufferMinutes ?? 15),
@@ -354,9 +355,10 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     recurringDiscountPercent: String((space as any).recurringDiscountPercent ?? "0"),
     recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "3"),
   });
+  const [amenitiesTags, setAmenitiesTags] = useState<string[]>((space.amenities || []) as string[]);
 
   const images: string[] = (space.imageUrls || []) as string[];
-  const score = getCompletionScore(formData, images);
+  const score = getCompletionScore(formData, images, amenitiesTags);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -367,7 +369,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
         bufferMinutes: Number(formData.bufferMinutes),
         recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
         recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
-        amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
+        amenities: amenitiesTags,
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
         cancellationPolicy: formData.cancellationPolicy,
@@ -618,8 +620,8 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
           {tab === "extras" && (
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Amenities (comma-separated)</label>
-                <Input value={formData.amenities} onChange={(e) => update("amenities", e.target.value)} placeholder="e.g. Wi-Fi, Parking, Sound Insulated, White Noise Machine" data-testid={`edit-input-amenities-${space.id}`} />
+                <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
+                <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid={`edit-input-amenities-${space.id}`} />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
@@ -693,13 +695,14 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     hostName: "",
     bufferMinutes: "15",
   });
+  const [newAmenitiesTags, setNewAmenitiesTags] = useState<string[]>([]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       const payload = {
         ...formData,
         bufferMinutes: Number(formData.bufferMinutes),
-        amenities: formData.amenities.split(",").map((a) => a.trim()).filter(Boolean),
+        amenities: newAmenitiesTags,
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
       };
@@ -828,8 +831,8 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
         </div>
 
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Amenities (comma-separated)</label>
-          <Input value={formData.amenities} onChange={(e) => update("amenities", e.target.value)} placeholder="Wi-Fi, Parking, AC, Sound insulated" data-testid="input-space-amenities" />
+          <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
+          <AmenityInput value={newAmenitiesTags} onChange={setNewAmenitiesTags} data-testid="input-space-amenities" />
         </div>
 
         <Button

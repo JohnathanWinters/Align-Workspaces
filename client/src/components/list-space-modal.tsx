@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { AmenityInput } from "./amenity-input";
 
 function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess }: { spaceId: string; returnTo?: string; onClose: () => void; onSuccess: () => void }) {
   const [magicEmail, setMagicEmail] = useState("");
@@ -198,10 +199,11 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     amenities: "", targetProfession: "", availableHours: "", hostName: "",
   });
+  const [amenitiesTags, setAmenitiesTags] = useState<string[]>([]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...formData, type: formData.tags[0] || formData.type, amenities: formData.amenities.split(",").map(a => a.trim()).filter(Boolean) };
+      const payload = { ...formData, type: formData.tags[0] || formData.type, amenities: amenitiesTags };
       await apiRequest("POST", "/api/spaces", payload);
     },
     onSuccess: () => {
@@ -338,7 +340,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             </div>
             <div>
               <label className="text-xs text-foreground/50 mb-1 block">Amenities (comma-separated)</label>
-              <Input value={formData.amenities} onChange={e => update("amenities", e.target.value)} placeholder="Wi-Fi, Parking, AC" data-testid="input-list-amenities" />
+              <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
             </div>
             <Button
               onClick={() => createMutation.mutate()}
