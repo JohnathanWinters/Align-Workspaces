@@ -47,6 +47,7 @@ import {
   Menu,
   Star,
   Info,
+  Eye,
   Settings,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
@@ -2083,7 +2084,7 @@ function PortalContent() {
                     <Link href="/portfolio">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portfolio-portal">
                         <Images className="w-4 h-4" />
-                        Our Work
+                        Portfolio
                       </button>
                     </Link>
                     <Link href="/workspaces">
@@ -2100,7 +2101,7 @@ function PortalContent() {
                     </Link>
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-about-portal">
-                        <Info className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                         Our Vision
                       </button>
                     </Link>

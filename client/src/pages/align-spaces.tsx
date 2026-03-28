@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { setPageMeta } from "@/lib/seo";
-import { Menu, X, Camera, Star, Info, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle } from "lucide-react";
+import { Menu, X, Camera, Star, Info, Eye, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -376,14 +376,14 @@ export default function AlignSpacesPage() {
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
                       <Images className="w-4 h-4" />
-                      Our Work
+                      Portfolio
                     </button>
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-menu">
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-menu">
-                      <Info className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                       Our Vision
                     </button>
                     <button onClick={() => { setLocation("/host-pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
@@ -618,7 +618,7 @@ export default function AlignSpacesPage() {
                   className="inline-flex items-center gap-2 px-6 py-2.5 transition-all duration-300 border border-stone-200 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-50"
                 >
                   <Images className="w-4 h-4" />
-                  Our Work
+                  Portfolio
                 </Link>
               </div>
             </div>

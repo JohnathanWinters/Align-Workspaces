@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { User, Menu, X, Building2, Camera, Star, Info, Images, HelpCircle } from "lucide-react";
+import { User, Menu, X, Building2, Camera, Star, Info, Eye, Images, HelpCircle } from "lucide-react";
 import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "./site-footer";
@@ -112,14 +112,14 @@ export function HeroSection({ onStart }: HeroSectionProps) {
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-hero">
                       <Images className="w-4 h-4" />
-                      Our Work
+                      Portfolio
                     </button>
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-hero">
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-hero">
-                      <Info className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                       Our Vision
                     </button>
                     <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-hero">

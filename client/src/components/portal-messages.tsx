@@ -577,7 +577,7 @@ export function ConversationView({
             </div>
 
             {(booking.status === "approved" || booking.status === "confirmed" || booking.status === "checked_in") && (
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 <button
                   onClick={async () => {
                     try {
@@ -588,33 +588,33 @@ export function ConversationView({
                       toast({ title: "Could not generate calendar link", variant: "destructive" });
                     }
                   }}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                  className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-700 px-2.5 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
                   data-testid="button-add-to-calendar"
                 >
-                  <CalendarPlus className="w-3.5 h-3.5" />
-                  Google Calendar
+                  <CalendarPlus className="w-3 h-3" />
+                  Calendar
                 </button>
                 <button
                   onClick={() => {
                     window.location.href = `/api/space-bookings/${booking.id}/download.ics`;
                   }}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                  className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-700 px-2.5 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
                   data-testid="button-download-ics"
                   title="Add this booking to your calendar app (Apple Calendar, Outlook, etc.)"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  Download .ics
+                  <Download className="w-3 h-3" />
+                  .ics
                 </button>
                 {!isHost && booking.spaceAddress && (
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.spaceAddress)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs text-stone-500 hover:text-stone-700 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
+                    className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-700 px-2.5 py-1.5 rounded-md hover:bg-stone-50 transition-colors border border-stone-200"
                     data-testid="button-google-maps"
                   >
-                    <MapPin className="w-3.5 h-3.5" />
-                    Google Maps
+                    <MapPin className="w-3 h-3" />
+                    Maps
                   </a>
                 )}
                 {!isHost && <ArrivalGuideViewer bookingId={booking.id} />}

@@ -11,6 +11,7 @@ import {
   Camera,
   Star,
   Info,
+  Eye,
   Images,
   User,
   HelpCircle,
@@ -45,7 +46,7 @@ const faqs = [
   },
   {
     q: "How do payments work?",
-    a: "Payments are processed securely through Stripe. Your host may send a payment request through the booking conversation, and you can pay directly from the chat.",
+    a: "Payments are processed securely through Stripe at the time of booking. You pay the listed hourly rate plus a small service fee and applicable tax. Hosts receive payouts automatically to their connected bank account.",
   },
   {
     q: "How do I list my workspace?",
@@ -198,14 +199,14 @@ export default function SupportPage() {
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-support">
                       <Images className="w-4 h-4" />
-                      Our Work
+                      Portfolio
                     </button>
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-support">
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-support">
-                      <Info className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                       Our Vision
                     </button>
                   </motion.div>

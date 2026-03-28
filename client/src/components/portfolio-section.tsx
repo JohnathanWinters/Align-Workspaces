@@ -184,7 +184,7 @@ export function PortfolioSection() {
           className="text-center mb-12"
         >
           <p className="text-muted-foreground text-sm tracking-[0.15em] uppercase mb-3 font-medium">
-            Our Work
+            Portfolio
           </p>
           <h2 className="font-serif text-3xl sm:text-4xl mb-4" data-testid="text-recent-sessions">
             Recent Sessions

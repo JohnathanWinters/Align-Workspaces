@@ -20,6 +20,7 @@ import {
   Images,
   User,
   HelpCircle,
+  Eye,
 } from "lucide-react";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
@@ -126,13 +127,13 @@ export default function PortraitLandingPage() {
                     <Building2 className="w-4 h-4" /> Workspaces
                   </button>
                   <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                    <Images className="w-4 h-4" /> Our Work
+                    <Images className="w-4 h-4" /> Portfolio
                   </button>
                   <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                     <Star className="w-4 h-4" /> Featured Pros
                   </button>
                   <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                    <Info className="w-4 h-4" /> Our Vision
+                    <Eye className="w-4 h-4" /> Our Vision
                   </button>
                   <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                     <HelpCircle className="w-4 h-4" /> Support
@@ -175,7 +176,7 @@ export default function PortraitLandingPage() {
         <section className="py-14 sm:py-20">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10 sm:mb-14 px-5 sm:px-8">
-              <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Our Work</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Portfolio</p>
               <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
                 First Impressions We've Built
               </h2>

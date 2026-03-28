@@ -3507,7 +3507,7 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
           <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-portfolio-back">
             <ChevronLeft className="w-4 h-4 mr-1" /> Back
           </Button>
-          <h1 className="font-serif text-xl font-semibold" data-testid="text-portfolio-title">Portfolio / Our Work</h1>
+          <h1 className="font-serif text-xl font-semibold" data-testid="text-portfolio-title">Portfolio / Portfolio</h1>
           <Badge variant="secondary" className="text-xs">{filteredAdminPhotos.length} photos</Badge>
         </div>
         <div className="flex items-center gap-2">
