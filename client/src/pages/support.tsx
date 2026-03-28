@@ -95,6 +95,7 @@ export default function SupportPage() {
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [feedbackCategory, setFeedbackCategory] = useState("feature");
   const [feedbackSent, setFeedbackSent] = useState(false);
 
   useEffect(() => {
@@ -127,7 +128,7 @@ export default function SupportPage() {
       await apiRequest("POST", "/api/support-request", {
         name: user?.name || user?.firstName || "Anonymous",
         email: user?.email || email || "no-email@feedback",
-        message: `[SITE FEEDBACK]\n\n${feedback}`,
+        message: `[${feedbackCategory.toUpperCase()}] ${feedback}`,
       });
     },
     onSuccess: () => {
@@ -314,7 +315,7 @@ export default function SupportPage() {
                   <Button
                     onClick={() => sendMutation.mutate()}
                     disabled={!message.trim() || !email.trim() || sendMutation.isPending}
-                    className="w-full bg-gray-900 text-white hover:bg-black"
+                    className="w-full bg-stone-900 text-white hover:bg-stone-800"
                     data-testid="button-send-support"
                   >
                     {sendMutation.isPending ? (
@@ -357,6 +358,25 @@ export default function SupportPage() {
               </motion.div>
             ) : (
               <div className="space-y-3">
+                <div className="flex gap-1.5">
+                  {[
+                    { value: "feature", label: "Feature Idea" },
+                    { value: "bug", label: "Bug Report" },
+                    { value: "general", label: "General" },
+                  ].map((cat) => (
+                    <button
+                      key={cat.value}
+                      onClick={() => setFeedbackCategory(cat.value)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        feedbackCategory === cat.value
+                          ? "bg-stone-900 text-white"
+                          : "bg-stone-100 text-stone-500 hover:bg-stone-200"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
                 <Textarea
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
@@ -373,7 +393,7 @@ export default function SupportPage() {
                   onClick={() => feedbackMutation.mutate()}
                   disabled={!feedback.trim() || feedbackMutation.isPending}
                   size="sm"
-                  className="bg-gray-900 text-white hover:bg-black"
+                  className="bg-stone-900 text-white hover:bg-stone-800"
                   data-testid="button-send-feedback"
                 >
                   {feedbackMutation.isPending ? (

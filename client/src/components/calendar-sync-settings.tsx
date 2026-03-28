@@ -162,7 +162,7 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
           ) : (
             <div>
               <p className="text-xs text-stone-500 mb-2">Connect to automatically block times from your Google Calendar and sync new bookings.</p>
-              <Button size="sm" className="h-7 text-xs bg-stone-900 text-white hover:bg-black" onClick={() => connectGcal.mutate()} disabled={connectGcal.isPending}>
+              <Button size="sm" className="h-7 text-xs bg-stone-900 text-white hover:bg-stone-800" onClick={() => connectGcal.mutate()} disabled={connectGcal.isPending}>
                 {connectGcal.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <ExternalLink className="w-3 h-3 mr-1" />}
                 Connect Google Calendar
               </Button>
@@ -204,7 +204,7 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
                   className="text-xs"
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" className="h-7 text-xs bg-stone-900 text-white hover:bg-black" onClick={() => addFeed.mutate()} disabled={!feedUrl.trim() || addFeed.isPending}>
+                  <Button size="sm" className="h-7 text-xs bg-stone-900 text-white hover:bg-stone-800" onClick={() => addFeed.mutate()} disabled={!feedUrl.trim() || addFeed.isPending}>
                     {addFeed.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
                     Add Feed
                   </Button>

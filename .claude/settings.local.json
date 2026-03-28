@@ -1,11 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cd:*)",
-      "Bash(netstat:*)",
-      "Bash(taskkill:*)",
-      "Bash(wc:*)",
-      "Bash(curl:*)"
+      "Bash(*)",
+      "Edit(*)",
+      "Write(*)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Agent(*)",
+      "Skill(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "NotebookEdit(*)"
     ]
   }
 }

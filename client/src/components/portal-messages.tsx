@@ -277,7 +277,7 @@ function PaymentRequestMessage({ message, booking, userId }: { message: SpaceMes
           onClick={() => checkoutMutation.mutate()}
           disabled={checkoutMutation.isPending}
           size="sm"
-          className="w-full bg-gray-900 text-white hover:bg-black text-xs"
+          className="w-full bg-stone-900 text-white hover:bg-stone-800 text-xs"
           data-testid={`button-pay-booking-${booking.id}`}
         >
           {checkoutMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CreditCard className="w-3 h-3 mr-1" />}
@@ -775,7 +775,7 @@ export function ConversationView({
                     size="sm"
                     onClick={() => rescheduleMutation.mutate()}
                     disabled={rescheduleMutation.isPending}
-                    className="bg-gray-900 text-white hover:bg-black text-xs flex-1"
+                    className="bg-stone-900 text-white hover:bg-stone-800 text-xs flex-1"
                     data-testid="button-send-reschedule"
                   >
                     {rescheduleMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />}
@@ -965,7 +965,7 @@ export function ConversationView({
                   size="sm"
                   onClick={() => paymentMutation.mutate()}
                   disabled={!paymentAmount || paymentMutation.isPending}
-                  className="bg-gray-900 text-white hover:bg-black h-8 text-xs"
+                  className="bg-stone-900 text-white hover:bg-stone-800 h-8 text-xs"
                   data-testid="button-send-payment-request"
                 >
                   {paymentMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Send"}
@@ -1160,7 +1160,7 @@ export function ConversationView({
             onClick={handleSend}
             disabled={(!newMessage.trim() && !pendingImage) || sendMutation.isPending}
             size="sm"
-            className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
+            className="bg-stone-900 text-white hover:bg-stone-800 h-9 w-9 p-0"
             data-testid="button-send-message"
           >
             {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -1312,7 +1312,7 @@ export function DirectConversationView({
             onClick={handleSend}
             disabled={(!newMessage.trim() && !pendingImage) || sendMutation.isPending}
             size="sm"
-            className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
+            className="bg-stone-900 text-white hover:bg-stone-800 h-9 w-9 p-0"
             data-testid="button-send-dm"
           >
             {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -1461,7 +1461,7 @@ export function AdminConversationView({
             onClick={handleSend}
             disabled={(!newMessage.trim() && !pendingImage) || sendMutation.isPending}
             size="sm"
-            className="bg-gray-900 text-white hover:bg-black h-9 w-9 p-0"
+            className="bg-stone-900 text-white hover:bg-stone-800 h-9 w-9 p-0"
             data-testid="button-send-admin-message"
           >
             {sendMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

@@ -2072,7 +2072,7 @@ function AdminTransferOwnership({ space, token, onUpdate }: { space: any; token:
               size="sm"
               onClick={handleTransfer}
               disabled={(!selectedUser && !emailQuery.includes("@")) || transferring}
-              className="bg-gray-900 text-white hover:bg-gray-800 text-xs"
+              className="bg-stone-900 text-white hover:bg-stone-800 text-xs"
               data-testid={`button-confirm-transfer-${space.id}`}
             >
               {transferring ? <Loader2 className="w-3 h-3 animate-spin" /> : "Transfer"}
@@ -2874,7 +2874,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                         <input value={editForm.amenities} onChange={e => setEditForm({ ...editForm, amenities: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" data-testid="input-edit-amenities" />
                       </div>
                       <div className="flex gap-2 pt-2">
-                        <Button size="sm" onClick={saveEdit} disabled={saving} className="bg-gray-900 text-white hover:bg-gray-800" data-testid="button-save-space">
+                        <Button size="sm" onClick={saveEdit} disabled={saving} className="bg-stone-900 text-white hover:bg-stone-800" data-testid="button-save-space">
                           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
                           Save Changes
                         </Button>

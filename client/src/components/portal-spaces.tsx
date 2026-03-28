@@ -662,7 +662,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
             onClick={() => updateMutation.mutate()}
             disabled={updateMutation.isPending}
             size="sm"
-            className="bg-stone-900 text-white hover:bg-black"
+            className="bg-stone-900 text-white hover:bg-stone-800"
             data-testid={`button-save-edit-space-${space.id}`}
           >
             {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
@@ -838,7 +838,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
         <Button
           onClick={() => createMutation.mutate()}
           disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending}
-          className="w-full bg-gray-900 text-white hover:bg-black"
+          className="w-full bg-stone-900 text-white hover:bg-stone-800"
           data-testid="button-submit-space"
         >
           {createMutation.isPending ? (
@@ -951,7 +951,7 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
               onClick={() => onboardMutation.mutate()}
               disabled={onboardMutation.isPending}
               size="sm"
-              className="bg-gray-900 text-white hover:bg-black text-xs"
+              className="bg-stone-900 text-white hover:bg-stone-800 text-xs"
               data-testid="button-connect-stripe"
             >
               {onboardMutation.isPending ? (
@@ -1220,7 +1220,7 @@ function SavedTab() {
                       size="sm"
                       onClick={() => createMutation.mutate(newName.trim())}
                       disabled={!newName.trim() || createMutation.isPending}
-                      className="bg-gray-900 text-white hover:bg-black"
+                      className="bg-stone-900 text-white hover:bg-stone-800"
                       data-testid="button-save-collection"
                     >
                       {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
@@ -1952,7 +1952,7 @@ function MySpacesTab() {
           <Button
             onClick={() => setShowForm(true)}
             size="sm"
-            className="bg-gray-900 text-white hover:bg-black"
+            className="bg-stone-900 text-white hover:bg-stone-800"
             data-testid="button-add-space"
           >
             <Plus className="w-4 h-4 mr-1" />
@@ -1983,7 +1983,7 @@ function MySpacesTab() {
             <p className="text-gray-500 text-sm max-w-sm mb-6">
               Have a workspace in Miami? List it here and connect with professionals looking for a space.
             </p>
-            <Button onClick={() => setShowForm(true)} className="bg-gray-900 text-white hover:bg-black" data-testid="button-add-space-empty">
+            <Button onClick={() => setShowForm(true)} className="bg-stone-900 text-white hover:bg-stone-800" data-testid="button-add-space-empty">
               <Plus className="w-4 h-4 mr-1" /> List Your First Space
             </Button>
           </CardContent>

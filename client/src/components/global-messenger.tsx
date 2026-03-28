@@ -270,7 +270,7 @@ export default function GlobalMessenger() {
       <motion.button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-5 right-5 z-[9998] h-11 rounded-full bg-gray-900 text-white shadow-lg hover:bg-black hover:shadow-xl transition-all flex items-center gap-2 px-4"
+        className="fixed bottom-5 right-5 z-[9998] h-11 rounded-full bg-stone-900 text-white shadow-lg hover:bg-stone-800 hover:shadow-xl transition-all flex items-center gap-2 px-4"
         aria-label={isOpen ? "Close messages" : `Open messages${totalUnread > 0 ? ` (${totalUnread} unread)` : ""}`}
         aria-expanded={isOpen}
         aria-controls="global-messenger-panel"

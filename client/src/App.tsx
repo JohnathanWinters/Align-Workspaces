@@ -77,7 +77,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
           <p className="text-sm text-stone-500 max-w-sm">An unexpected error occurred. Please refresh the page to try again.</p>
           <button
             onClick={() => { this.setState({ hasError: false }); window.location.href = "/"; }}
-            className="px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-black transition-colors"
+            className="px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors"
           >
             Go Home
           </button>
