@@ -606,10 +606,10 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">
                   {formData.cancellationPolicy === "flexible"
-                    ? "Full refund up to 24 hours before the booking"
+                    ? "Recommended for new hosts to attract more bookings"
                     : formData.cancellationPolicy === "moderate"
-                    ? "Full refund up to 5 days before; 50% refund after that"
-                    : "50% refund up to 7 days before; no refund after that"}
+                    ? "Good balance between flexibility and protection"
+                    : "Best for high-demand spaces with consistent bookings"}
                 </p>
               </div>
               <ArrivalGuideEditor spaceId={space.id} />
