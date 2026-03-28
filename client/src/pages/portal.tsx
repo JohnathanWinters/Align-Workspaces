@@ -2234,6 +2234,46 @@ function PortalContent() {
             </div>
           </div>
 
+          {isNewUser && !spaceBookings?.guestBookings?.length && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 bg-white rounded-xl border border-stone-200/60 p-5 sm:p-6"
+            >
+              <h3 className="font-serif text-lg text-stone-900 mb-1">Welcome to Align</h3>
+              <p className="text-sm text-stone-400 mb-4">Here's what you can do from your portal.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button onClick={() => setActiveTab("spaces")} className="flex items-center gap-3 p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-colors text-left">
+                  <div className="w-9 h-9 rounded-lg bg-stone-200/60 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-4 h-4 text-stone-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-stone-800">Browse Workspaces</p>
+                    <p className="text-[11px] text-stone-400">Find your next session space</p>
+                  </div>
+                </button>
+                <button onClick={() => setActiveTab("messages")} className="flex items-center gap-3 p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-colors text-left">
+                  <div className="w-9 h-9 rounded-lg bg-stone-200/60 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-4 h-4 text-stone-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-stone-800">Messages</p>
+                    <p className="text-[11px] text-stone-400">Chat with hosts directly</p>
+                  </div>
+                </button>
+                <button onClick={() => { setActiveTab("spaces"); }} className="flex items-center gap-3 p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-colors text-left">
+                  <div className="w-9 h-9 rounded-lg bg-stone-200/60 flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-4 h-4 text-stone-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-stone-800">Save Favorites</p>
+                    <p className="text-[11px] text-stone-400">Bookmark spaces you love</p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === "settings" ? (
             <PortalSettings />
           ) : activeTab === "messages" ? (

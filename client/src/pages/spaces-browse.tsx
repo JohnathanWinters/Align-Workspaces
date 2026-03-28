@@ -157,6 +157,20 @@ const TYPE_LABELS: Record<string, string> = {
   photo_studio: "Photo/Video Studio",
 };
 
+const TYPE_ICONS: Record<string, any> = {
+  therapy: Sofa,
+  coaching: Briefcase,
+  wellness: Leaf,
+  workshop: UsersRound,
+  creative: Camera,
+  office: Briefcase,
+  studio: Camera,
+  gym: UsersRound,
+  meeting: Briefcase,
+  art_studio: Camera,
+  photo_studio: Camera,
+};
+
 const TYPE_COLORS: Record<string, string> = {
   therapy: "bg-blue-50 text-blue-700",
   coaching: "bg-amber-50 text-amber-700",
@@ -551,7 +565,8 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </div>
         )}
         {/* Single primary category tag — frosted glass, top-left */}
-        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-white/20 backdrop-blur-[8px] text-white border border-white/20 z-10">
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-white/20 backdrop-blur-[8px] text-white border border-white/20 z-10 flex items-center gap-1">
+          {TYPE_ICONS[primaryTag] && (() => { const Icon = TYPE_ICONS[primaryTag]; return <Icon className="w-3 h-3" />; })()}
           {TYPE_LABELS[primaryTag] || primaryTag}
         </span>
         {/* Verified / Sample badge — frosted glass, top-right */}
