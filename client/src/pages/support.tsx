@@ -222,18 +222,26 @@ export default function SupportPage() {
               <HelpCircle className="w-7 h-7 text-stone-500" />
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl text-gray-900 mb-3">How can we help?</h1>
-            <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+            <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto leading-relaxed mb-4">
               Whether you're a guest, a host, or just exploring, we're here to help.
             </p>
+            <a
+              href="mailto:hello@alignworkspaces.com"
+              className="inline-flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              hello@alignworkspaces.com
+            </a>
           </motion.div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-          {/* Contact Form */}
+          {/* Left Column: Contact + Feedback */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
+            className="space-y-6"
           >
             <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-6">
@@ -294,7 +302,7 @@ export default function SupportPage() {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="How can we help you?"
-                      rows={5}
+                      rows={4}
                       disabled={sendMutation.isPending}
                       className="resize-none bg-gray-50 border-gray-200 text-sm"
                       data-testid="input-support-message"
@@ -320,41 +328,7 @@ export default function SupportPage() {
               )}
             </div>
 
-            {/* Direct email */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-gray-400 mb-1">Or reach us directly at</p>
-              <a
-                href="mailto:hello@alignworkspaces.com"
-                className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <Mail className="w-3.5 h-3.5" />
-                hello@alignworkspaces.com
-              </a>
-            </div>
-          </motion.div>
-
-          {/* FAQ */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <h2 className="font-serif text-lg text-gray-900 mb-6">Frequently Asked Questions</h2>
-            <div className="bg-white rounded-2xl border border-gray-200 px-6">
-              {faqs.map((faq) => (
-                <FAQItem key={faq.q} q={faq.q} a={faq.a} />
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Feedback Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-12 sm:mt-16 max-w-2xl mx-auto"
-        >
+            {/* Feedback */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
@@ -412,7 +386,22 @@ export default function SupportPage() {
               </div>
             )}
           </div>
-        </motion.div>
+          </motion.div>
+
+          {/* Right Column: FAQ */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <h2 className="font-serif text-lg text-gray-900 mb-6">Frequently Asked Questions</h2>
+            <div className="bg-white rounded-2xl border border-gray-200 px-6">
+              {faqs.map((faq) => (
+                <FAQItem key={faq.q} q={faq.q} a={faq.a} />
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </main>
 
       <SiteFooter hideNewsletter />

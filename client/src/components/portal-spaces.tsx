@@ -1016,6 +1016,7 @@ function SavedTab() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   const { data: wishlists = [], isLoading: wlLoading } = useQuery<{ id: string; name: string; items: any[]; itemCount: number }[]>({
     queryKey: ["/api/wishlists"],
@@ -1279,20 +1280,41 @@ function SavedTab() {
                     </div>
                     {renamingId !== wl.id && (
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setRenamingId(wl.id); setRenameValue(wl.name); }}
-                          className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                          data-testid={`button-rename-${wl.id}`}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(wl.id); }}
-                          className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                          data-testid={`button-delete-collection-${wl.id}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {confirmingDeleteId === wl.id ? (
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <span className="text-[11px] text-red-500 font-medium">Delete?</span>
+                            <button
+                              onClick={() => { deleteMutation.mutate(wl.id); setConfirmingDeleteId(null); }}
+                              className="px-2 py-0.5 rounded-md bg-red-500 text-white text-[11px] font-medium hover:bg-red-600 transition-colors"
+                              data-testid={`button-confirm-delete-${wl.id}`}
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setConfirmingDeleteId(null)}
+                              className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[11px] font-medium hover:bg-stone-200 transition-colors"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setRenamingId(wl.id); setRenameValue(wl.name); }}
+                              className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                              data-testid={`button-rename-${wl.id}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(wl.id); }}
+                              className="p-1.5 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                              data-testid={`button-delete-collection-${wl.id}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === wl.id ? null : wl.id); }}
                           className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
