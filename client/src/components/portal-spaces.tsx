@@ -476,7 +476,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Space Name</label>
-                  <Input value={formData.name} onChange={(e) => update("name", e.target.value)} data-testid={`edit-input-name-${space.id}`} />
+                  <Input value={formData.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid={`edit-input-name-${space.id}`} />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Space Category</label>
@@ -486,24 +486,24 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
-                  <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} data-testid={`edit-input-host-${space.id}`} />
+                  <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Maria S." data-testid={`edit-input-host-${space.id}`} />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Address</label>
-                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} data-testid={`edit-input-address-${space.id}`} />
+                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile, Coral Gables, FL 33134" data-testid={`edit-input-address-${space.id}`} />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
-                  <Input value={formData.neighborhood} onChange={(e) => update("neighborhood", e.target.value)} data-testid={`edit-input-neighborhood-${space.id}`} />
+                  <Input value={formData.neighborhood} onChange={(e) => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid={`edit-input-neighborhood-${space.id}`} />
                 </div>
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
-                <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} data-testid={`edit-input-short-desc-${space.id}`} />
+                <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} placeholder="e.g. A calm, private suite perfect for therapy sessions" data-testid={`edit-input-short-desc-${space.id}`} />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Description</label>
-                <Textarea value={formData.description} onChange={(e) => update("description", e.target.value)} rows={3} data-testid={`edit-input-description-${space.id}`} />
+                <Textarea value={formData.description} onChange={(e) => update("description", e.target.value)} rows={3} placeholder="e.g. Fully furnished therapy room with natural light, sound insulation, and a private waiting area. Ideal for therapists, counselors, and coaches." data-testid={`edit-input-description-${space.id}`} />
               </div>
             </div>
           )}
@@ -621,7 +621,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
             <div className="space-y-4">
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Amenities (comma-separated)</label>
-                <Input value={formData.amenities} onChange={(e) => update("amenities", e.target.value)} data-testid={`edit-input-amenities-${space.id}`} />
+                <Input value={formData.amenities} onChange={(e) => update("amenities", e.target.value)} placeholder="e.g. Wi-Fi, Parking, Sound Insulated, White Noise Machine" data-testid={`edit-input-amenities-${space.id}`} />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
