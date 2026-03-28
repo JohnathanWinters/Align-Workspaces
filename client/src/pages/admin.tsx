@@ -3447,7 +3447,9 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
   const brandLabels: Record<string, string> = { assured: "Welcoming", empathy: "Warm", confidence: "Confident", motivation: "Motivated" };
   const moodLabels: Record<string, string> = { cozy: "Comfortable", bright: "Inspired", powerful: "Reassured" };
 
-  const filteredAdminPhotos = photos.filter(p => (p.category || "people") === adminCategory);
+  const filteredAdminPhotos = photos
+    .filter(p => (p.category || "people") === adminCategory)
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   const onDropUpload = useCallback((e: React.DragEvent) => {
     e.preventDefault();
