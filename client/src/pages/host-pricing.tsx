@@ -180,17 +180,26 @@ export default function HostPricingPage() {
           </div>
 
           {/* Referral toggle */}
-          <div className="flex items-center gap-3 mb-8 p-3 rounded-lg bg-stone-50">
+          <div className="grid grid-cols-2 gap-3 mb-8">
             <button
-              onClick={() => setIsReferred(!isReferred)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${isReferred ? "bg-emerald-500" : "bg-stone-300"}`}
+              onClick={() => setIsReferred(false)}
+              className={`rounded-xl p-4 text-left transition-all border-2 ${!isReferred ? "border-stone-900 bg-white shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-300"}`}
             >
-              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isReferred ? "translate-x-5" : "translate-x-0.5"}`} />
+              <p className={`text-sm font-semibold mb-0.5 ${!isReferred ? "text-stone-900" : "text-stone-500"}`}>Standard</p>
+              <p className="text-xs text-stone-400">12.5% host fee</p>
+              <p className={`text-lg font-bold mt-2 ${!isReferred ? "text-stone-900" : "text-stone-400"}`}>Keep 87.5%</p>
             </button>
-            <div>
-              <p className="text-sm font-medium text-stone-700">Referred bookings (8% fee)</p>
-              <p className="text-xs text-stone-400">Toggle to see earnings with your referral link</p>
-            </div>
+            <button
+              onClick={() => setIsReferred(true)}
+              className={`rounded-xl p-4 text-left transition-all border-2 ${isReferred ? "border-emerald-600 bg-emerald-50 shadow-sm" : "border-stone-200 bg-stone-50 hover:border-stone-300"}`}
+            >
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className={`text-sm font-semibold ${isReferred ? "text-emerald-800" : "text-stone-500"}`}>With Referral Link</p>
+                <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Save More</span>
+              </div>
+              <p className="text-xs text-stone-400">8% host fee</p>
+              <p className={`text-lg font-bold mt-2 ${isReferred ? "text-emerald-700" : "text-stone-400"}`}>Keep 92%</p>
+            </button>
           </div>
 
           {/* Results */}
