@@ -3789,11 +3789,12 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
                 {tagForm.category === "people" && (
                   <div>
                     <Label className="text-sm font-medium text-gray-700 mb-1 block">Subject Bio</Label>
-                    <input
+                    <Textarea
                       value={tagForm.subjectBio}
                       onChange={e => setTagForm(prev => ({ ...prev, subjectBio: e.target.value }))}
-                      placeholder="e.g. A therapist whose clients need to feel at ease the moment they walk in."
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-400"
+                      placeholder="e.g. A therapist who creates a safe space for neurodivergent, LGBTQ+, and Latine clients, she wanted her professional headshot to reflect the same warmth her clients feel walking through her door."
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-gray-400 resize-none"
+                      rows={3}
                       data-testid="input-subject-bio"
                     />
                   </div>
