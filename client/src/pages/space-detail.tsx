@@ -1024,7 +1024,7 @@ function BookingCard({
         <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
           <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
           <span className="text-xs text-emerald-700 font-medium">
-            Save {(space as any).recurringDiscountPercent}% with a recurring booking
+            ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr with recurring booking
             {(space as any).recurringDiscountAfter > 0 && (
               <span className="text-emerald-600 font-normal"> (after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""})</span>
             )}
@@ -1558,7 +1558,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                   <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
                     <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                     <span className="text-xs text-emerald-700 font-medium">
-                      Save {(space as any).recurringDiscountPercent}% with a recurring booking
+                      ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr with recurring booking
                       {(space as any).recurringDiscountAfter > 0 && (
                         <span className="text-emerald-600 font-normal"> (after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""})</span>
                       )}

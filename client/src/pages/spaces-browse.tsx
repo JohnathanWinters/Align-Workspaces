@@ -572,7 +572,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </div>
           {(space as any).recurringDiscountPercent > 0 && (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm leading-tight">
-              -{(space as any).recurringDiscountPercent}% recurring
+              ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             </span>
           )}
         </div>
