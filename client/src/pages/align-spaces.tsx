@@ -657,7 +657,7 @@ export default function AlignSpacesPage() {
                     data-testid={`featured-pro-${pro.id}`}
                   >
                     <div className="relative">
-                      <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
+                      <div className="aspect-[4/5] overflow-hidden bg-stone-100 relative">
                         {pro.portraitImageUrl ? (() => {
                           const crop = pro.portraitCropPosition as any;
                           const x = crop?.x ?? 50;
@@ -677,16 +677,10 @@ export default function AlignSpacesPage() {
                         )}
                       </div>
                       {pro.spaceImageUrl && (
-                        <div className="absolute -bottom-4 left-3 h-[60px] rounded-lg ring-[3px] ring-white shadow-lg z-20 overflow-hidden flex">
+                        <div className="absolute -bottom-4 left-3 w-[110px] h-[75px] rounded-lg ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
                           <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
-                            className="h-full w-auto object-cover"
+                            className="w-full h-full object-cover"
                           />
-                          {pro.spaceName && (
-                            <div className="absolute bottom-1 right-1 bg-black/50 backdrop-blur-sm text-white text-[7px] font-medium px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                              <Building2 className="w-2 h-2" />
-                              {pro.spaceName}
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
@@ -723,7 +717,7 @@ export default function AlignSpacesPage() {
                   data-testid={`featured-pro-${pro.id}`}
                 >
                   <div className="relative">
-                    <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
+                    <div className="aspect-[3/4] overflow-hidden bg-stone-100 relative">
                       {pro.portraitImageUrl ? (() => {
                         const crop = pro.portraitCropPosition as any;
                         const x = crop?.x ?? 50;
@@ -743,20 +737,14 @@ export default function AlignSpacesPage() {
                       )}
                     </div>
                     {pro.spaceImageUrl && (
-                      <div className="absolute -bottom-5 left-4 h-[72px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden flex">
+                      <div className="absolute -bottom-6 left-4 w-[130px] h-[90px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
                         <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
-                          className="h-full w-auto object-cover"
+                          className="w-full h-full object-cover"
                         />
-                        {pro.spaceName && (
-                          <div className="absolute bottom-1.5 right-1.5 bg-black/50 backdrop-blur-sm text-white text-[8px] font-medium px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                            <Building2 className="w-2 h-2" />
-                            {pro.spaceName}
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
-                  <div className={`p-4 sm:p-5 ${pro.spaceImageUrl ? "pt-8" : ""}`}>
+                  <div className={`p-4 sm:p-5 ${pro.spaceImageUrl ? "pt-9" : ""}`}>
                     <h3 className="font-serif text-lg font-semibold text-stone-900 mb-0.5">{pro.name}</h3>
                     <p className="text-sm text-[#c4956a] font-medium mb-2">{pro.profession}</p>
                     {pro.quote && (
