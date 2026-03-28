@@ -677,7 +677,7 @@ export default function AlignSpacesPage() {
                         )}
                       </div>
                       {pro.spaceImageUrl && (
-                        <div className="absolute -bottom-6 left-3 w-[180px] h-[125px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
+                        <div className="absolute -bottom-6 left-3 w-[180px] h-[125px] rounded-xl ring-[3px] ring-stone-900 shadow-lg z-20 overflow-hidden">
                           <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
                             className="w-full h-full object-cover"
                           />
@@ -737,7 +737,7 @@ export default function AlignSpacesPage() {
                       )}
                     </div>
                     {pro.spaceImageUrl && (
-                      <div className="absolute -bottom-6 left-4 w-[180px] h-[125px] rounded-xl ring-[3px] ring-white shadow-lg z-20 overflow-hidden">
+                      <div className="absolute -bottom-6 left-4 w-[180px] h-[125px] rounded-xl ring-[3px] ring-stone-900 shadow-lg z-20 overflow-hidden">
                         <img src={pro.spaceImageUrl} alt={pro.spaceName || "Their workspace"}
                           className="w-full h-full object-cover"
                         />
