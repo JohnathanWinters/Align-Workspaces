@@ -385,6 +385,11 @@ export default function AlignSpacesPage() {
                       <HelpCircle className="w-4 h-4" />
                       Support
                     </button>
+                    <div className="border-t border-stone-100 my-1" />
+                    <button onClick={() => { setShowListModal(true); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-[#c4956a] hover:text-[#b3845d] hover:bg-[#c4956a]/5 transition-colors flex items-center gap-3 font-medium" data-testid="link-list-space-menu">
+                      <Plus className="w-4 h-4" />
+                      List Your Space
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>

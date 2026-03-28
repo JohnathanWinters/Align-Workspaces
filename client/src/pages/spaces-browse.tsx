@@ -44,6 +44,7 @@ import {
   History,
   Timer,
   HelpCircle,
+  Plus,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -1613,6 +1614,11 @@ export default function SpacesBrowsePage() {
                   <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-support-browse">
                     <HelpCircle className="w-4 h-4" />
                     Support
+                  </button>
+                  <div className="border-t border-stone-100 my-1" />
+                  <button onClick={() => { setShowListModal(true); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-[#c4956a] hover:text-[#b3845d] hover:bg-[#c4956a]/5 transition-colors flex items-center gap-3 font-medium" data-testid="link-list-space-browse">
+                    <Plus className="w-4 h-4" />
+                    List Your Space
                   </button>
                 </motion.div>
               )}
