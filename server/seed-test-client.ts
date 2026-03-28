@@ -88,6 +88,12 @@ function futureTimestamp(daysFromNow: number): Date {
 }
 
 export async function seedTestClient() {
+  // Always clean up seeded admin messages (removed from seed)
+  try {
+    await db.delete(adminMessages).where(eq(adminMessages.conversationId, TEST_ADMIN_CONV));
+    await db.delete(adminConversations).where(eq(adminConversations.id, TEST_ADMIN_CONV));
+  } catch {}
+
   // Find the test user
   const [user] = await db.select().from(users).where(eq(users.email, TEST_EMAIL));
   if (!user) {
