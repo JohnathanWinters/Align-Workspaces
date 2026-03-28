@@ -64,7 +64,7 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-lg py-3 px-4 min-w-[220px] z-[9999]"
+            className={`absolute top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-lg py-3 px-4 min-w-[220px] z-[9999] ${isLight ? "left-0" : "right-0"}`}
           >
             <div className="mb-3">
               <p className="text-sm font-medium text-stone-900 truncate" data-testid="text-user-name">
