@@ -271,7 +271,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
             <img src={pro.portraitImageUrl} alt={pro.name}
               className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
               fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
-              style={{ objectPosition: `${pro.heroCropPosition?.x ?? pro.portraitCropPosition?.x ?? 50}% ${pro.heroCropPosition?.y ?? pro.portraitCropPosition?.y ?? 50}%` }}
+              style={{ objectPosition: `${pro.portraitCropPosition?.x ?? 50}% ${pro.portraitCropPosition?.y ?? 50}%` }}
             />
           </div>
         )}
@@ -1145,10 +1145,10 @@ function ProfilePage({ slug }: { slug: string }) {
         </div>
         {/* Portrait pip — outside overflow container */}
         {pro.spaceImageUrl && pro.portraitImageUrl && (
-          <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-20 h-24 sm:w-32 sm:h-40 rounded-xl ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-6 left-4 sm:-bottom-8 sm:left-6 w-28 h-36 sm:w-48 sm:h-60 rounded-xl ring-[3px] ring-white shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
-              style={{ objectPosition: `${pro.heroCropPosition?.x ?? pro.portraitCropPosition?.x ?? 50}% ${pro.heroCropPosition?.y ?? pro.portraitCropPosition?.y ?? 50}%` }}
+              style={{ objectPosition: `${pro.portraitCropPosition?.x ?? 50}% ${pro.portraitCropPosition?.y ?? 50}%` }}
             />
           </div>
         )}
