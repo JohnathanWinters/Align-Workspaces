@@ -231,7 +231,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPortfolioPhotos(): Promise<PortfolioPhoto[]> {
-    return db.select().from(portfolioPhotos).orderBy(asc(portfolioPhotos.displayOrder), asc(portfolioPhotos.createdAt));
+    return db.select().from(portfolioPhotos).orderBy(desc(portfolioPhotos.createdAt));
   }
 
   async getPortfolioPhoto(id: string): Promise<PortfolioPhoto | undefined> {
