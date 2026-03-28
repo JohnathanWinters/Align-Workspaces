@@ -1,3 +1,4 @@
+import { Component, type ReactNode } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -60,19 +61,48 @@ function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#faf9f7] flex flex-col items-center justify-center gap-4 px-6 text-center">
+          <h1 className="font-serif text-2xl text-stone-800">Something went wrong</h1>
+          <p className="text-sm text-stone-500 max-w-sm">An unexpected error occurred. Please refresh the page to try again.</p>
+          <button
+            onClick={() => { this.setState({ hasError: false }); window.location.href = "/"; }}
+            className="px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-black transition-colors"
+          >
+            Go Home
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AnalyticsWrapper>
-            <Toaster />
-            <Router />
-            <GlobalMessenger />
-          </AnalyticsWrapper>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <AnalyticsWrapper>
+              <Toaster />
+              <Router />
+              <GlobalMessenger />
+            </AnalyticsWrapper>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
