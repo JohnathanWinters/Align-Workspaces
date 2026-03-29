@@ -21,9 +21,26 @@ import {
   User,
   HelpCircle,
   Compass,
+  Eye,
+  Shirt,
+  RefreshCw,
 } from "lucide-react";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
+import type { ColorSwatch } from "@shared/schema";
+
+interface PortfolioPhoto {
+  id: string;
+  imageUrl: string;
+  category: string;
+  cropPosition: { x: number; y: number; zoom: number } | null;
+  environments: string[];
+  brandMessages: string[];
+  emotionalImpacts: string[];
+  colorPalette: ColorSwatch[];
+  subjectName: string | null;
+  subjectProfession: string | null;
+}
 
 function useDragScroll() {
   const ref = useRef<HTMLDivElement>(null);
@@ -54,12 +71,55 @@ function useDragScroll() {
   return { ref, onDragStart, onMouseDown, onMouseMove, onMouseUp, onMouseLeave, preventClickIfDragged };
 }
 
+function PhotoCard({ photo }: { photo: PortfolioPhoto }) {
+  const crop = photo.cropPosition || { x: 50, y: 50, zoom: 1 };
+  const palette = (photo.colorPalette || []).slice(0, 3);
+  const env = photo.environments?.[0];
+  const brand = photo.brandMessages?.[0];
+
+  return (
+    <div className="group relative rounded-xl overflow-hidden bg-white border border-stone-100">
+      <div className="aspect-[3/4] overflow-hidden">
+        <img
+          src={photo.imageUrl}
+          alt={photo.subjectName ? `${photo.subjectName} — ${photo.subjectProfession || "Professional"}` : "Professional portrait"}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
+        />
+      </div>
+      {(palette.length > 0 || env || brand) && (
+        <div className="px-3.5 py-3 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            {(env || brand) && (
+              <p className="text-[10px] text-stone-400 uppercase tracking-wide truncate">
+                {[env, brand].filter(Boolean).join(" · ")}
+              </p>
+            )}
+          </div>
+          {palette.length > 0 && (
+            <div className="flex gap-1 flex-shrink-0">
+              {palette.map((swatch, i) => (
+                <div
+                  key={i}
+                  className="w-4.5 h-4.5 rounded-full border border-stone-200"
+                  style={{ backgroundColor: swatch.hex }}
+                  title={swatch.keyword}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PortraitLandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
   const photosCarousel = useDragScroll();
 
-  const { data: portfolioPhotos = [] } = useQuery<Array<{ id: string; imageUrl: string; category: string; cropPosition: any }>>({
+  const { data: portfolioPhotos = [] } = useQuery<PortfolioPhoto[]>({
     queryKey: ["/api/portfolio-photos"],
     queryFn: async () => {
       const res = await fetch("/api/portfolio-photos");
@@ -145,22 +205,22 @@ export default function PortraitLandingPage() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero — repositioned: pain-first, outcome-oriented */}
       <section className="pt-16 sm:pt-24 pb-14 sm:pb-20">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-4">Portrait Builder</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-4">Your Image Is Your First Session</p>
             <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2a2a2a] leading-tight mb-5">
-              Your Portrait Is Your<br className="hidden sm:block" /> First Impression
+              Design the First Impression<br className="hidden sm:block" /> Your Clients Deserve
             </h1>
             <p className="text-stone-500 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
-              Design a photoshoot that aligns your work, character, and the impression you want your clients to feel. In about two minutes.
+              You've invested in your credentials, your space, your practice. Your image should match. Tell us your setting and your energy — we'll design the rest. In about two minutes.
             </p>
             <Link
               href="/portrait-builder"
               className="inline-flex items-center gap-2 bg-stone-900 text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
             >
-              Start the Builder
+              Build Your Shoot Concept
               <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
@@ -171,15 +231,18 @@ export default function PortraitLandingPage() {
         <div className="h-px bg-stone-200/80" />
       </div>
 
-      {/* Portfolio */}
+      {/* Portfolio — now shows design context per photo */}
       {portraitPhotos.length > 0 && (
         <section className="py-14 sm:py-20">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10 sm:mb-14 px-5 sm:px-8">
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Portfolio</p>
               <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
-                First Impressions We've Built
+                Every Portrait Was Designed, Not Just Shot
               </h2>
+              <p className="text-stone-400 text-sm mt-3 max-w-lg mx-auto">
+                Each session starts with the builder — setting, energy, palette. The photo is the last step, not the first.
+              </p>
             </div>
             {/* Mobile: carousel with drag scroll */}
             <div className="sm:hidden">
@@ -193,32 +256,18 @@ export default function PortraitLandingPage() {
                 onClickCapture={photosCarousel.preventClickIfDragged}
                 className="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-5 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
               >
-                {portraitPhotos.map((photo, i) => {
-                  const crop = photo.cropPosition || { x: 50, y: 50, zoom: 1 };
-                  return (
-                    <div key={photo.id} className="snap-start flex-shrink-0 w-[65%] aspect-[3/4] rounded-lg overflow-hidden">
-                      <img src={photo.imageUrl} alt="Portrait" className="w-full h-full object-cover"
-                        style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
-                        loading={i < 3 ? "eager" : "lazy"} draggable={false}
-                      />
-                    </div>
-                  );
-                })}
+                {portraitPhotos.map((photo) => (
+                  <div key={photo.id} className="snap-start flex-shrink-0 w-[70%]">
+                    <PhotoCard photo={photo} />
+                  </div>
+                ))}
               </div>
             </div>
             {/* Desktop: grid */}
-            <div className="hidden sm:grid grid-cols-3 gap-3 px-5 sm:px-8">
-              {portraitPhotos.map((photo, i) => {
-                const crop = photo.cropPosition || { x: 50, y: 50, zoom: 1 };
-                return (
-                  <div key={photo.id} className="aspect-[3/4] rounded-lg overflow-hidden">
-                    <img src={photo.imageUrl} alt="Portrait" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
-                      loading={i < 3 ? "eager" : "lazy"}
-                    />
-                  </div>
-                );
-              })}
+            <div className="hidden sm:grid grid-cols-3 gap-4 px-5 sm:px-8">
+              {portraitPhotos.map((photo) => (
+                <PhotoCard key={photo.id} photo={photo} />
+              ))}
             </div>
             <div className="text-center mt-8 px-5 sm:px-8">
               <Link
@@ -238,7 +287,7 @@ export default function PortraitLandingPage() {
         <div className="h-px bg-stone-200/80" />
       </div>
 
-      {/* What You Get */}
+      {/* What You Get — reframed as value themes, not deliverables */}
       <section className="py-14 sm:py-20">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
           <motion.div
@@ -250,18 +299,18 @@ export default function PortraitLandingPage() {
           >
             <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">What You Get</p>
             <h2 className="font-serif text-2xl sm:text-3xl text-[#2a2a2a]">
-              Everything for One Session
+              A Visual Identity, Not Just Photos
             </h2>
           </motion.div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
             {[
-              { icon: Clock, title: "1-Hour Session", desc: "Focused and tailored to your brand and vision" },
-              { icon: Image, title: "15+ Edited Photos", desc: "High-resolution, professionally retouched" },
-              { icon: Sparkles, title: "2 Yearly Edit Tokens", desc: "Refresh or refine your images anytime" },
-              { icon: Palette, title: "Personal Mood Board", desc: "Curated from your builder choices" },
-              { icon: Camera, title: "Wardrobe Guidance", desc: "Outfit recommendations for your session" },
-              { icon: CheckCircle2, title: "Online Gallery", desc: "Private gallery to view and share" },
+              { icon: Eye, title: "Your Direction, Designed", desc: "Creative direction built from your setting, energy, and the feeling you want clients to have" },
+              { icon: Shirt, title: "Show Up Prepared", desc: "Wardrobe guidance and a color palette so nothing is left to chance" },
+              { icon: Clock, title: "1-Hour Focused Session", desc: "Every minute tailored to the concept you built — no filler, no guesswork" },
+              { icon: Image, title: "15+ Edited Photos", desc: "High-resolution portraits that match the identity you designed" },
+              { icon: CheckCircle2, title: "Private Online Gallery", desc: "View, download, and share your images from one place" },
+              { icon: RefreshCw, title: "Evolve Over Time", desc: "2 yearly edit tokens to refresh your images as your practice grows" },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
@@ -282,7 +331,7 @@ export default function PortraitLandingPage() {
         <div className="h-px bg-stone-200/80" />
       </div>
 
-      {/* The Idea */}
+      {/* Bottom CTA — repositioned */}
       <section className="py-14 sm:py-20">
         <div className="max-w-xl mx-auto px-5 sm:px-8 text-center">
           <motion.div
@@ -292,17 +341,17 @@ export default function PortraitLandingPage() {
             transition={{ duration: 0.5 }}
           >
             <p className="text-[#3d3d3d] font-serif text-lg sm:text-xl leading-[1.7] mb-3">
-              How you see yourself and how others see you aren't always the same thing.
+              Most professionals guess at how they come across. This replaces the guessing.
             </p>
             <p className="text-stone-400 text-sm leading-relaxed mb-10 max-w-md mx-auto">
-              The builder closes that gap — giving you a shoot plan designed around the experience you want clients to walk away with.
+              Tell us your setting, your energy, and what you want clients to feel. We'll design a shoot concept with creative direction, wardrobe guidance, and a color palette — ready to book on the spot.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/portrait-builder"
                 className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
               >
-                Start the Builder
+                Build Your Shoot Concept
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link

@@ -675,7 +675,7 @@ export default function AlignSpacesPage() {
                     />
                   </div>
                   <div className="flex gap-1.5 sm:gap-2">
-                    {["#A8C4D4", "#F5EDE3", "#8B7355", "#3A3A3A"].map((color, i) => (
+                    {["#A8C4D4", "#F5EDE3", "#8B7355"].map((color, i) => (
                       <div
                         key={i}
                         className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white/40"
