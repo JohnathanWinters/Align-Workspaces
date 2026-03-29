@@ -277,7 +277,7 @@ export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
-  const [showExplore, setShowExplore] = useState(false);
+  const [_showExplore, _setShowExplore] = useState(false);
   const spacesCarousel = useDragScroll();
   const prosCarousel = useDragScroll();
 
@@ -520,64 +520,54 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-professional-categories">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Find Your Fit</span>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Spaces Designed for Your Profession</h2>
-            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Every workspace on Align can be certified for specific professional needs. Find the space that fits the way you work.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+      <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-professional-categories">
+        <div className="max-w-5xl mx-auto text-center">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-3">Find Your Fit</span>
+          <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight mb-6">Spaces Certified for Your Profession</h2>
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
             {[
-              { icon: Heart, title: "Clinical Ready", desc: "Soundproofed, private, no surveillance. For therapists, counselors, psychologists, and social workers who need confidential session space.", color: "bg-blue-50 text-blue-600" },
-              { icon: Briefcase, title: "Consultation Ready", desc: "Professional, client-facing meeting rooms with closable doors. For real estate agents, financial advisors, coaches, consultants, and attorneys.", color: "bg-amber-50 text-amber-600" },
-              { icon: Leaf, title: "Wellness Ready", desc: "Proper ventilation, sanitizable surfaces, changing areas. For bodyworkers, acupuncturists, yoga instructors, and massage therapists.", color: "bg-emerald-50 text-emerald-600" },
-              { icon: Scissors, title: "Service Ready", desc: "Running water, ventilation, electrical capacity. For barbers, stylists, estheticians, nail technicians, and tattoo artists.", color: "bg-rose-50 text-rose-600" },
-              { icon: Building2, title: "General Professional", desc: "Clean, reliable workspaces with internet and power. For photographers, podcasters, freelancers, tutors, and remote workers.", color: "bg-stone-100 text-stone-600" },
+              { icon: Heart, title: "Clinical Ready", color: "bg-blue-50 text-blue-600 border-blue-100" },
+              { icon: Briefcase, title: "Consultation Ready", color: "bg-amber-50 text-amber-600 border-amber-100" },
+              { icon: Leaf, title: "Wellness Ready", color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
+              { icon: Scissors, title: "Service Ready", color: "bg-rose-50 text-rose-600 border-rose-100" },
+              { icon: Building2, title: "General Professional", color: "bg-stone-50 text-stone-600 border-stone-200" },
             ].map((cat, i) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={i}
                   href="/workspaces"
-                  className="group bg-white rounded-xl border border-stone-100 p-5 sm:p-6 hover:shadow-md hover:border-stone-200 transition-all flex flex-col"
+                  className={`group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border ${cat.color} hover:shadow-sm transition-all`}
                   data-testid={`category-${i}`}
                 >
-                  <div className={`w-10 h-10 rounded-lg ${cat.color} flex items-center justify-center mb-4`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase tracking-[0.1em] text-stone-800 mb-2">{cat.title}</h3>
-                  <p className="text-stone-500 text-sm leading-relaxed flex-1">{cat.desc}</p>
-                  <div className="mt-3 flex items-center gap-1 text-xs font-medium text-[#c4956a] group-hover:translate-x-0.5 transition-transform">
-                    Browse spaces <ArrowRight className="w-3 h-3" />
-                  </div>
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{cat.title}</span>
                 </Link>
               );
             })}
           </div>
-
-          <p className="text-center text-xs text-stone-400 mt-6 max-w-lg mx-auto">
-            Certifications describe the space, not the person booking it. Any professional can book any space.
+          <p className="text-[11px] text-stone-400 mt-4">
+            Certifications describe the space, not the person booking it.{" "}
+            <Link href="/trust" className="text-[#c4956a] hover:underline">Learn more</Link>
           </p>
         </div>
       </section>
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-how-it-works">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-why-align">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
             <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Why Align</span>
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Built for the Way You Work</h2>
+            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Industrial-level tools and protections designed for independent professionals. No other workspace marketplace offers this.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
-              { icon: Clock, title: "Rent Hourly", desc: "Book by the hour with transparent pricing. No leases, no contracts, no hidden fees — just the time you need." },
-              { icon: Sparkles, title: "Curated Spaces", desc: "Every workspace is designed for client-facing professionals. Walk into a space that elevates your sessions." },
-              { icon: Building2, title: "Made for Your Practice", desc: "Therapy offices, coaching rooms, wellness studios, creative spaces — find the setting that fits your work." },
-              { icon: CalendarDays, title: "On-Demand Access", desc: "Browse availability in real time and book instantly. Your calendar syncs so you're always up to date." },
+              { icon: ShieldCheck, title: "Verified Host Insurance", desc: "Every host maintains $1M+ liability coverage. Listings are suspended if insurance lapses. Your safety is non-negotiable." },
               { icon: Repeat, title: "Recurring Bookings", desc: "Lock in a weekly time slot for your regulars. Set it once, and your space is guaranteed every week." },
-              { icon: Shield, title: "Flexible Cancellations", desc: "Plans change — cancel within the policy window and you're covered. No penalties, no hassle." },
+              { icon: BadgeCheck, title: "Certified Spaces", desc: "Hosts self-certify across five tiers, from Clinical Ready for therapists to Service Ready for barbers. Know what you're walking into." },
+              { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Hosts confirm their space is accurate and insured. Guests confirm professional responsibility." },
+              { icon: Building2, title: "Made for Your Practice", desc: "Therapy offices, coaching rooms, wellness studios, creative spaces. Find the setting that fits your work." },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
@@ -592,9 +582,9 @@ export default function AlignSpacesPage() {
             })}
           </div>
 
-          {!spacesLoading && allSpaces.length > 0 && (
-            <div className="mt-10 space-y-6">
-              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-4 rounded-xl px-5 py-4 bg-[#faf6f1] border border-[#e8ddd0]/60" data-testid="section-post-space-cta">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            {!spacesLoading && allSpaces.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-4 rounded-xl px-5 py-4 bg-[#faf6f1] border border-[#e8ddd0]/60 w-full" data-testid="section-post-space-cta">
                 <p className="text-sm text-foreground/60 text-center sm:text-left">
                   <span className="font-medium text-foreground/80">Have a workspace to share?</span>{" "}
                   <span className="hidden sm:inline">Join a growing network of Miami workspaces.</span>
@@ -608,67 +598,15 @@ export default function AlignSpacesPage() {
                   Post your workspace
                 </button>
               </div>
-
-              <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 justify-center" data-testid="section-neighborhoods">
-                <span className="text-[11px] text-stone-400 uppercase tracking-wider font-medium whitespace-nowrap">Explore Miami</span>
-                <div className="hidden sm:block w-px h-4 bg-stone-300/60" />
-                <div className="flex flex-wrap justify-center gap-2">
-                  {(() => {
-                    const neighborhoods = [...new Set((spaces || []).map(s => s.neighborhood).filter(Boolean))];
-                    const allNeighborhoods = neighborhoods.length > 0 ? neighborhoods : ["Wynwood", "Coral Gables", "Brickell", "Coconut Grove"];
-                    return allNeighborhoods.map((hood) => (
-                      <Link
-                        key={hood}
-                        href="/workspaces"
-                        className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 border border-stone-200/80 hover:border-[#c4956a]/40 hover:bg-white transition-all duration-300"
-                        data-testid={`neighborhood-${hood?.toLowerCase().replace(/\s+/g, "-")}`}
-                      >
-                        <MapPin className="w-3 h-3 text-[#c4956a]" />
-                        <span className="text-xs font-medium text-stone-600 group-hover:text-stone-900 transition-colors">{hood}</span>
-                      </Link>
-                    ));
-                  })()}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-trust-safety">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Trust & Safety</span>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Built to Protect Your Practice</h2>
-            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Industrial-level protections designed for independent professionals. No other workspace marketplace offers this.</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-            {[
-              { icon: ShieldCheck, title: "Verified Host Insurance", desc: "Every host maintains $1M+ liability coverage. Listings are suspended if insurance lapses. Your safety is non-negotiable." },
-              { icon: BadgeCheck, title: "Professional Use Certifications", desc: "Hosts self-certify spaces across five tiers, from Clinical Ready for therapists to Service Ready for barbers. Know what you're walking into." },
-              { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Hosts confirm their space is accurate and insured. Guests confirm professional responsibility." },
-              { icon: Shield, title: "Damage Protection", desc: "Host Protection Plan covers eligible property damage. A 48-hour reporting tool, photo documentation, and structured resolution process keep everyone protected." },
-            ].map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div key={i} className="bg-white rounded-xl border border-stone-100 p-6 sm:p-7 hover:shadow-md hover:border-stone-200 transition-all" data-testid={`trust-${i}`}>
-                  <div className="w-11 h-11 rounded-lg bg-stone-900 flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-sm font-bold uppercase tracking-[0.1em] text-stone-800 mb-2">{item.title}</h3>
-                  <p className="text-stone-500 text-sm leading-relaxed">{item.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 text-center">
+          <div className="mt-4 text-center">
             <Link
-              href="/terms"
+              href="/trust"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-400 hover:text-stone-600 transition-colors"
             >
-              Read our full Terms of Service <ArrowRight className="w-3 h-3" />
+              Learn more about Trust & Safety <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
         </div>
@@ -912,14 +850,24 @@ export default function AlignSpacesPage() {
             <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-stone-100">
               <p className="text-stone-600 font-serif text-base sm:text-lg mb-2">Your space, your image, your practice.</p>
               <p className="text-stone-400 text-sm mb-5">All in one place.</p>
-              <button
-                onClick={() => setShowExplore(true)}
-                data-testid="button-featured-find-space"
-                className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
-              >
-                Explore what Align offers
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/workspaces"
+                  data-testid="button-featured-browse"
+                  className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
+                >
+                  Browse Workspaces
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={() => setShowListModal(true)}
+                  data-testid="button-featured-list"
+                  className="inline-flex items-center gap-2 border border-stone-300 text-stone-700 px-6 py-2.5 rounded-full text-sm font-medium hover:bg-white/60 hover:border-stone-400 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  List Your Space
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -933,52 +881,7 @@ export default function AlignSpacesPage() {
         {showListModal && <ListSpaceModal onClose={() => setShowListModal(false)} />}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showExplore && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-            onClick={() => setShowExplore(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
-            >
-              <div className="p-6 text-center border-b border-stone-100">
-                <h3 className="font-serif text-xl text-[#2a2a2a]">What are you looking for?</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-0">
-                <Link
-                  href="/workspaces"
-                  className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors border-r border-stone-100"
-                >
-                  <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
-                    <Building2 className="w-6 h-6 text-[#c4956a]" />
-                  </div>
-                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Workspaces</span>
-                  <span className="text-xs text-stone-400">Find your space</span>
-                </Link>
-                <Link
-                  href="/portrait-builder"
-                  className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors"
-                >
-                  <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
-                    <Camera className="w-6 h-6 text-[#c4956a]" />
-                  </div>
-                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Portrait Builder</span>
-                  <span className="text-xs text-stone-400">Build your image</span>
-                </Link>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Explore modal removed, replaced with direct CTAs */}
     </div>
   );
 }
