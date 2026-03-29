@@ -657,24 +657,46 @@ export default function AlignSpacesPage() {
             Your space is only half the picture.
           </p>
           <div className="bg-white border border-stone-200/60 rounded-2xl overflow-hidden flex flex-col md:flex-row">
-            <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden">
+            <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden relative">
               <img
-                src="/images/hero-bg-bright.webp"
-                alt="Professional portrait session"
+                src="/images/portfolio-office-assured-bright-2.webp"
+                alt="Professional portrait with creative direction"
                 className="w-full h-full object-cover"
-                style={{ objectPosition: "43% 25%" }}
+                style={{ objectPosition: "50% 20%" }}
               />
+              {/* Mood board overlay — shows the design output, not just the photo */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
+                <div className="flex items-end justify-between gap-3">
+                  <div className="flex-shrink-0">
+                    <img
+                      src="/images/env-office-bright.webp"
+                      alt="Office environment mood"
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover border-2 border-white/30"
+                    />
+                  </div>
+                  <div className="flex gap-1.5 sm:gap-2">
+                    {["#A8C4D4", "#F5EDE3", "#8B7355", "#3A3A3A"].map((color, i) => (
+                      <div
+                        key={i}
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white/40"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[10px] text-white/60 mt-2 tracking-wide uppercase">Oat & Sage — Welcoming, Bright</p>
+              </div>
             </div>
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
-              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">See Yourself Clearly</span>
+              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Your Image Is Your First Session</span>
               <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight leading-tight mb-4">
-                Portrait Builder
+                Design the First Impression<br />Your Clients Deserve
               </h2>
               <p className="text-stone-500 text-base sm:text-[17px] leading-relaxed mb-5 max-w-md font-serif italic">
-                How you see yourself and how others see you aren't always the same thing.
+                Most professionals guess at how they come across. This replaces the guessing.
               </p>
               <p className="text-stone-400 text-sm leading-relaxed mb-2 max-w-md">
-                Answer a few questions about your environment and your presence and the feeling you want clients to walk away with. We'll match you with a creative direction and a wardrobe guide and a color palette, then build a shoot concept you can book on the spot.
+                You've invested in your credentials, your space, your practice. But your image is still a phone selfie or a generic headshot that could belong to anyone. Tell us your setting, your energy, and what you want clients to feel — we'll hand you a shoot concept with creative direction, wardrobe guidance, and a color palette. Book it on the spot.
               </p>
               <p className="text-stone-400/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
                 Takes about 2 minutes. Ends with a complete shoot plan built around you.
@@ -685,7 +707,7 @@ export default function AlignSpacesPage() {
                   data-testid="button-portraits-cta"
                   className="inline-flex items-center gap-2 px-6 py-2.5 transition-all duration-300 rounded-lg text-sm font-medium bg-stone-900 text-white hover:bg-stone-800"
                 >
-                  Start the Builder
+                  Build Your Shoot Concept
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
