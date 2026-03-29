@@ -139,32 +139,6 @@ const portfolioData = [
 
 const spacePortfolioData = [
   {
-    imageUrl: "/images/spaces/space-1a6691c3-64dc-4fcc-ad25-ecf6c5acf9a4.webp",
-    category: "spaces" as const,
-    environments: ["creative"],
-    brandMessages: ["confidence"],
-    emotionalImpacts: ["bright"],
-    colorPalette: [
-      { hex: "#F8F8F8", keyword: "Studio White" },
-      { hex: "#1C1C1C", keyword: "Shadow Black" },
-      { hex: "#B8A08A", keyword: "Warm Neutral" },
-    ],
-    locationSpaceId: "sample-space-armando-host",
-  },
-  {
-    imageUrl: "/images/spaces/space-72ca8bac-1570-422f-a1c5-ce37b7db06ed.webp",
-    category: "spaces" as const,
-    environments: ["creative"],
-    brandMessages: ["assured"],
-    emotionalImpacts: ["powerful"],
-    colorPalette: [
-      { hex: "#F8F8F8", keyword: "Studio White" },
-      { hex: "#1C1C1C", keyword: "Shadow Black" },
-      { hex: "#B8A08A", keyword: "Warm Neutral" },
-    ],
-    locationSpaceId: "sample-space-armando-host",
-  },
-  {
     imageUrl: "/images/spaces/space-7fae5817-d983-4e10-95bc-6d7ea4319dcb.webp",
     category: "spaces" as const,
     environments: ["wellness", "workshop"],
@@ -233,6 +207,18 @@ export async function seedPortfolioIfEmpty() {
         }
       }
       if (spacesAdded > 0) console.log(`Added ${spacesAdded} space portfolio photos`);
+
+      // Remove deprecated seed space photos linked to sample host
+      const deprecatedSpaceImages = [
+        "/images/spaces/space-1a6691c3-64dc-4fcc-ad25-ecf6c5acf9a4.webp",
+        "/images/spaces/space-72ca8bac-1570-422f-a1c5-ce37b7db06ed.webp",
+      ];
+      let removed = 0;
+      for (const imgUrl of deprecatedSpaceImages) {
+        const result = await db.delete(portfolioPhotos).where(sql`${portfolioPhotos.imageUrl} = ${imgUrl}`);
+        if (result.rowCount && result.rowCount > 0) removed++;
+      }
+      if (removed > 0) console.log(`Removed ${removed} deprecated seed space photos`);
     }
   } catch (error) {
     console.error("Failed to seed portfolio photos (non-fatal):", error);
