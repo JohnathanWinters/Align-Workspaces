@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { setPageMeta } from "@/lib/seo";
-import { Menu, X, Camera, Star, Info, Compass, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle } from "lucide-react";
+import { Menu, X, Camera, Star, Info, Compass, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle, Heart, Briefcase, Leaf, Scissors, BadgeCheck, FileCheck, ShieldCheck, Percent } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
@@ -421,15 +421,16 @@ export default function AlignSpacesPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-stone-500 text-sm sm:text-base mt-3 max-w-lg mx-auto leading-relaxed"
+            className="text-stone-500 text-sm sm:text-base mt-3 max-w-xl mx-auto leading-relaxed"
           >
-            Workspaces, portraits, and community for Miami's independent professionals.
+            Therapists. Coaches. Barbers. Wellness practitioners. Real estate agents.
+            Book spaces designed for how you work, by the hour, with no lease.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="mt-5"
+            className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3"
           >
             <Link
               href="/workspaces"
@@ -439,14 +440,30 @@ export default function AlignSpacesPage() {
               <Search className="w-4 h-4" />
               Browse Workspaces
             </Link>
+            <button
+              onClick={() => setShowListModal(true)}
+              data-testid="button-hero-list-space"
+              className="inline-flex items-center gap-2 border border-stone-300 text-stone-700 px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-white/60 hover:border-stone-400 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              List Your Space
+            </button>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="mt-5 flex items-center justify-center gap-4 sm:gap-6 text-[11px] text-stone-400"
+          >
+            <span className="flex items-center gap-1.5"><Shield className="w-3 h-3 text-[#c4956a]" /> Verified Insurance</span>
+            <span className="flex items-center gap-1.5"><BadgeCheck className="w-3 h-3 text-[#c4956a]" /> Certified Spaces</span>
+            <span className="hidden sm:flex items-center gap-1.5"><Percent className="w-3 h-3 text-[#c4956a]" /> Hosts Keep 87.5%</span>
           </motion.div>
         </div>
       </section>
 
-      <div className="text-center px-4 sm:px-6 pb-6 sm:pb-8">
-        <p className="text-stone-400 text-sm italic font-serif" data-testid="text-hero-bridge">
-          Every workspace is selected for the professionals who work in it.
-        </p>
+      <div className="text-center px-4 sm:px-6 pb-4 sm:pb-6">
+        <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold">Available Now</span>
       </div>
 
       <section className="pb-12 sm:pb-16" data-testid="section-spaces-grid">
@@ -500,6 +517,49 @@ export default function AlignSpacesPage() {
               <SpaceCard key={space.id} space={space} />
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-professional-categories">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Find Your Fit</span>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Spaces Designed for Your Profession</h2>
+            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Every workspace on Align can be certified for specific professional needs. Find the space that fits the way you work.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {[
+              { icon: Heart, title: "Clinical Ready", desc: "Soundproofed, private, no surveillance. For therapists, counselors, psychologists, and social workers who need confidential session space.", color: "bg-blue-50 text-blue-600" },
+              { icon: Briefcase, title: "Consultation Ready", desc: "Professional, client-facing meeting rooms with closable doors. For real estate agents, financial advisors, coaches, consultants, and attorneys.", color: "bg-amber-50 text-amber-600" },
+              { icon: Leaf, title: "Wellness Ready", desc: "Proper ventilation, sanitizable surfaces, changing areas. For bodyworkers, acupuncturists, yoga instructors, and massage therapists.", color: "bg-emerald-50 text-emerald-600" },
+              { icon: Scissors, title: "Service Ready", desc: "Running water, ventilation, electrical capacity. For barbers, stylists, estheticians, nail technicians, and tattoo artists.", color: "bg-rose-50 text-rose-600" },
+              { icon: Building2, title: "General Professional", desc: "Clean, reliable workspaces with internet and power. For photographers, podcasters, freelancers, tutors, and remote workers.", color: "bg-stone-100 text-stone-600" },
+            ].map((cat, i) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={i}
+                  href="/workspaces"
+                  className="group bg-white rounded-xl border border-stone-100 p-5 sm:p-6 hover:shadow-md hover:border-stone-200 transition-all flex flex-col"
+                  data-testid={`category-${i}`}
+                >
+                  <div className={`w-10 h-10 rounded-lg ${cat.color} flex items-center justify-center mb-4`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase tracking-[0.1em] text-stone-800 mb-2">{cat.title}</h3>
+                  <p className="text-stone-500 text-sm leading-relaxed flex-1">{cat.desc}</p>
+                  <div className="mt-3 flex items-center gap-1 text-xs font-medium text-[#c4956a] group-hover:translate-x-0.5 transition-transform">
+                    Browse spaces <ArrowRight className="w-3 h-3" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          <p className="text-center text-xs text-stone-400 mt-6 max-w-lg mx-auto">
+            Certifications describe the space, not the person booking it. Any professional can book any space.
+          </p>
         </div>
       </section>
 
@@ -572,6 +632,83 @@ export default function AlignSpacesPage() {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-trust-safety">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Trust & Safety</span>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">Built to Protect Your Practice</h2>
+            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Industrial-level protections designed for independent professionals. No other workspace marketplace offers this.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            {[
+              { icon: ShieldCheck, title: "Verified Host Insurance", desc: "Every host maintains $1M+ liability coverage. Listings are suspended if insurance lapses. Your safety is non-negotiable." },
+              { icon: BadgeCheck, title: "Professional Use Certifications", desc: "Hosts self-certify spaces across five tiers, from Clinical Ready for therapists to Service Ready for barbers. Know what you're walking into." },
+              { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Hosts confirm their space is accurate and insured. Guests confirm professional responsibility." },
+              { icon: Shield, title: "Damage Protection", desc: "Host Protection Plan covers eligible property damage. A 48-hour reporting tool, photo documentation, and structured resolution process keep everyone protected." },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div key={i} className="bg-white rounded-xl border border-stone-100 p-6 sm:p-7 hover:shadow-md hover:border-stone-200 transition-all" data-testid={`trust-${i}`}>
+                  <div className="w-11 h-11 rounded-lg bg-stone-900 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase tracking-[0.1em] text-stone-800 mb-2">{item.title}</h3>
+                  <p className="text-stone-500 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/terms"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-400 hover:text-stone-600 transition-colors"
+            >
+              Read our full Terms of Service <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-pricing-signal">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Transparent Pricing</span>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">No Lease. No Membership. No Surprises.</h2>
+            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Pay only for the hours you use. The lowest marketplace fees in the industry.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
+            <div className="bg-white rounded-xl border border-stone-100 p-6 text-center">
+              <p className="text-3xl sm:text-4xl font-serif text-stone-900 mb-1">87.5%</p>
+              <p className="text-sm font-medium text-stone-600 mb-2">Hosts Keep</p>
+              <p className="text-xs text-stone-400 leading-relaxed">Just 12.5% service fee. Bring your own clients and keep 92%.</p>
+            </div>
+            <div className="bg-white rounded-xl border border-stone-100 p-6 text-center">
+              <p className="text-3xl sm:text-4xl font-serif text-stone-900 mb-1">7%</p>
+              <p className="text-sm font-medium text-stone-600 mb-2">Guest Service Fee</p>
+              <p className="text-xs text-stone-400 leading-relaxed">Repeat guests pay just 5%. No hidden charges, no deposits.</p>
+            </div>
+            <div className="bg-white rounded-xl border border-stone-100 p-6 text-center">
+              <p className="text-3xl sm:text-4xl font-serif text-stone-900 mb-1">$0</p>
+              <p className="text-sm font-medium text-stone-600 mb-2">To Get Started</p>
+              <p className="text-xs text-stone-400 leading-relaxed">No setup fees, no listing fees, no monthly subscription. Just book or list.</p>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/host-pricing"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
+              data-testid="link-pricing-details"
+            >
+              See full pricing details <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -788,7 +925,7 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6 hidden" data-testid="section-testimonials">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-testimonials">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
             <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Trusted by Miami Professionals</h2>
