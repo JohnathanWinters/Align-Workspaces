@@ -659,10 +659,10 @@ export default function AlignSpacesPage() {
           <div className="bg-white border border-stone-200/60 rounded-2xl overflow-hidden flex flex-col md:flex-row">
             <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden relative">
               <img
-                src="/images/portfolio-office-assured-bright-2.webp"
+                src="/images/portrait-hero-homepage.webp"
                 alt="Professional portrait with creative direction"
                 className="w-full h-full object-cover"
-                style={{ objectPosition: "50% 20%" }}
+                style={{ objectPosition: "50% 25%" }}
               />
               {/* Mood board overlay — shows the design output, not just the photo */}
               <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
