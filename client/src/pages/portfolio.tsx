@@ -203,10 +203,10 @@ function PhotoLightbox({ photo, onClose, spaceMap }: { photo: PortfolioPhoto | n
 
   return (
     <Dialog open={!!photo} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-4xl w-[95vw] p-0 gap-0 overflow-hidden border-none bg-black/95 max-h-[90vh]" data-testid="photo-lightbox-full" aria-describedby={undefined}>
+      <DialogContent className="max-w-6xl w-[95vw] p-0 gap-0 overflow-hidden border-none bg-black/95 max-h-[92vh]" data-testid="photo-lightbox-full" aria-describedby={undefined}>
         <DialogTitle className="sr-only">Photo Details</DialogTitle>
-        <div className="flex flex-col md:flex-row max-h-[90vh]">
-          <div className="relative flex-1 min-h-[300px] md:min-h-[500px]">
+        <div className="flex flex-col md:flex-row max-h-[92vh]">
+          <div className="relative flex-1 min-h-[350px] md:min-h-[600px]">
             {photo && (
               <img
                 src={photo.imageUrl}
@@ -546,7 +546,7 @@ export default function PortfolioPage() {
                     filteredPhotos.length === 2 ? "grid-cols-1 sm:grid-cols-2" :
                     "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                   }`
-                : "grid grid-cols-2 sm:grid-cols-3 gap-4"
+                : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
               }
               data-testid="portfolio-full-grid"
             >
