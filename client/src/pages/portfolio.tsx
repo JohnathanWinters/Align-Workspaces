@@ -460,7 +460,7 @@ export default function PortfolioPage() {
                 <span className="text-[#c9a96e]/50 font-serif not-italic">&ldquo;</span>I was nervous about getting professional photos done, but the whole process felt like a conversation, not a photoshoot. When I saw the final images I thought, that&rsquo;s actually how I want people to see me.<span className="text-[#c9a96e]/50 font-serif not-italic">&rdquo;</span>
               </p>
               <footer className="mt-3 text-xs text-stone-400 tracking-wide uppercase">
-                Edith C. · Therapist, Miami
+                Brenna D. · Therapist, Miami
               </footer>
             </blockquote>
           </motion.div>
