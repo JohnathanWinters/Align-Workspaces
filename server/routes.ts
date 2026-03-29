@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -71,6 +71,22 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error("Only image files are allowed"));
+    }
+  },
+});
+
+const documentUpload = multer({
+  storage: multer.diskStorage({
+    destination: tmpUploadDir,
+    filename: (_req, _file, cb) => cb(null, `${randomUUID()}`),
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|gif|webp|pdf)$/i;
+    if (allowed.test(path.extname(file.originalname))) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image and PDF files are allowed"));
     }
   },
 });
@@ -7085,6 +7101,286 @@ ${featuredSection}
       res.json({ message: "Test client re-seeded successfully" });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // TRUST & SAFETY FRAMEWORK
+  // ══════════════════════════════════════════════════════════════════
+
+  // ── Host Insurance Verification (2A) ────────────────────────────
+
+  app.get("/api/host/insurance", isAuthenticated, async (req: any, res) => {
+    try {
+      const [record] = await db.select().from(hostInsuranceRecords)
+        .where(eq(hostInsuranceRecords.userId, req.user.id))
+        .orderBy(desc(hostInsuranceRecords.createdAt))
+        .limit(1);
+      res.json(record || null);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch insurance record" });
+    }
+  });
+
+  app.post("/api/host/insurance", isAuthenticated, documentUpload.single("document"), async (req: any, res) => {
+    try {
+      const { carrierName, policyNumber, coverageType, coverageAmount, policyExpirationDate } = req.body;
+      if (!carrierName || !policyNumber || !coverageType || !coverageAmount || !policyExpirationDate) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+      const amount = parseInt(coverageAmount, 10);
+      if (isNaN(amount) || amount < 1000000) {
+        return res.status(400).json({ error: "Minimum coverage amount is $1,000,000" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "Insurance document upload is required" });
+      }
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const contentType = ext === ".pdf" ? "application/pdf" : `image/${ext.slice(1)}`;
+      const documentUrl = await uploadFile(req.file.path, contentType);
+
+      await db.update(hostInsuranceRecords)
+        .set({ status: "replaced", updatedAt: new Date() })
+        .where(and(eq(hostInsuranceRecords.userId, req.user.id), eq(hostInsuranceRecords.status, "active")));
+
+      const [record] = await db.insert(hostInsuranceRecords).values({
+        userId: req.user.id, carrierName, policyNumber, coverageType,
+        coverageAmount: amount, policyExpirationDate, documentUrl,
+        documentFilename: req.file.originalname, status: "active", verifiedAt: new Date(),
+      }).returning();
+      res.json(record);
+    } catch (e) {
+      console.error("Insurance upload error:", e);
+      res.status(500).json({ error: "Failed to save insurance record" });
+    }
+  });
+
+  app.get("/api/host/insurance/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const [record] = await db.select().from(hostInsuranceRecords)
+        .where(and(eq(hostInsuranceRecords.userId, req.user.id), eq(hostInsuranceRecords.status, "active")))
+        .limit(1);
+      if (!record) return res.json({ hasInsurance: false, status: "none" });
+      const expDate = new Date(record.policyExpirationDate);
+      const daysUntilExpiry = Math.ceil((expDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      let status = "active";
+      if (daysUntilExpiry <= 0) status = "expired";
+      else if (daysUntilExpiry <= 30) status = "expiring_soon";
+      if (status !== record.status) {
+        await db.update(hostInsuranceRecords).set({ status, updatedAt: new Date() }).where(eq(hostInsuranceRecords.id, record.id));
+      }
+      res.json({ hasInsurance: status !== "expired", status, daysUntilExpiry, expirationDate: record.policyExpirationDate, carrierName: record.carrierName, coverageAmount: record.coverageAmount });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to check insurance status" });
+    }
+  });
+
+  app.get("/api/admin/insurance", isAdminOrEmployee, async (_req, res) => {
+    try {
+      const records = await db.select().from(hostInsuranceRecords).orderBy(desc(hostInsuranceRecords.createdAt));
+      res.json(records);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch insurance records" });
+    }
+  });
+
+  // ── Professional Use Certifications (2B) ────────────────────────
+
+  app.get("/api/spaces/:id/certifications", async (req, res) => {
+    try {
+      const certs = await db.select().from(spaceCertifications)
+        .where(and(eq(spaceCertifications.spaceId, req.params.id), eq(spaceCertifications.status, "active"), eq(spaceCertifications.allItemsChecked, 1)));
+      res.json(certs);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch certifications" });
+    }
+  });
+
+  app.post("/api/spaces/:id/certifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const { certificationTier, checklistItems } = req.body;
+      const spaceId = req.params.id;
+      const validTiers = ["clinical_ready", "consultation_ready", "wellness_ready", "service_ready", "general_professional"];
+      if (!validTiers.includes(certificationTier)) return res.status(400).json({ error: "Invalid certification tier" });
+      if (!Array.isArray(checklistItems) || checklistItems.length === 0) return res.status(400).json({ error: "Checklist items are required" });
+      const allChecked = checklistItems.every((item: any) => item.checked === true) ? 1 : 0;
+
+      await db.update(spaceCertifications)
+        .set({ status: "removed", removedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(spaceCertifications.spaceId, spaceId), eq(spaceCertifications.certificationTier, certificationTier), eq(spaceCertifications.status, "active")));
+
+      const [cert] = await db.insert(spaceCertifications).values({
+        spaceId, userId: req.user.id, certificationTier, checklistItems, allItemsChecked: allChecked,
+      }).returning();
+      res.json(cert);
+    } catch (e) {
+      console.error("Certification save error:", e);
+      res.status(500).json({ error: "Failed to save certification" });
+    }
+  });
+
+  app.delete("/api/spaces/:spaceId/certifications/:certId", isAuthenticated, async (req: any, res) => {
+    try {
+      await db.update(spaceCertifications)
+        .set({ status: "removed", removedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(spaceCertifications.id, req.params.certId), eq(spaceCertifications.userId, req.user.id)));
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to remove certification" });
+    }
+  });
+
+  // ── Booking Agreements (2C) ─────────────────────────────────────
+
+  app.post("/api/space-bookings/:id/agreement", isAuthenticated, async (req: any, res) => {
+    try {
+      const { agreementVersion } = req.body;
+      const bookingId = req.params.id;
+      const [booking] = await db.select().from(spaceBookings).where(eq(spaceBookings.id, bookingId)).limit(1);
+      if (!booking) return res.status(404).json({ error: "Booking not found" });
+      const userRole = booking.userId === req.user.id ? "guest" : "host";
+
+      const [agreement] = await db.insert(bookingAgreements).values({
+        bookingId, userId: req.user.id, userRole,
+        agreementVersion: agreementVersion || "2026-03-29-v1",
+        ipAddress: req.ip || req.headers["x-forwarded-for"]?.toString() || null,
+        userAgent: req.headers["user-agent"] || null,
+      }).returning();
+      res.json(agreement);
+    } catch (e) {
+      console.error("Agreement save error:", e);
+      res.status(500).json({ error: "Failed to record agreement" });
+    }
+  });
+
+  app.get("/api/space-bookings/:id/agreement", isAuthenticated, async (req: any, res) => {
+    try {
+      const agreements = await db.select().from(bookingAgreements).where(eq(bookingAgreements.bookingId, req.params.id));
+      const guestAgreed = agreements.some(a => a.userRole === "guest");
+      const hostAgreed = agreements.some(a => a.userRole === "host");
+      res.json({ guestAgreed, hostAgreed, agreements });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to check agreement" });
+    }
+  });
+
+  // ── Damage Reports (2D) ─────────────────────────────────────────
+
+  app.post("/api/space-bookings/:id/damage-report", isAuthenticated, upload.array("photos", 10), async (req: any, res) => {
+    try {
+      const bookingId = req.params.id;
+      const { issueType, description, estimatedCost } = req.body;
+      const [booking] = await db.select().from(spaceBookings).where(eq(spaceBookings.id, bookingId)).limit(1);
+      if (!booking) return res.status(404).json({ error: "Booking not found" });
+      if (booking.status !== "completed") return res.status(400).json({ error: "Can only report issues on completed bookings" });
+
+      const bookingDate = new Date(booking.bookingDate || "");
+      const daysSince = Math.ceil((Date.now() - bookingDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSince > 14) return res.status(400).json({ error: "Damage reports must be submitted within 14 days of booking" });
+
+      if (!req.files || (req.files as Express.Multer.File[]).length < 2) return res.status(400).json({ error: "At least 2 photos are required" });
+
+      const validTypes = ["property_damage", "cleanliness", "policy_violation", "other"];
+      if (!validTypes.includes(issueType)) return res.status(400).json({ error: "Invalid issue type" });
+
+      const photoUrls: string[] = [];
+      for (const file of req.files as Express.Multer.File[]) {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const contentType = `image/${ext.slice(1) === "jpg" ? "jpeg" : ext.slice(1)}`;
+        const url = await uploadFile(file.path, contentType);
+        photoUrls.push(url);
+      }
+
+      const [report] = await db.insert(damageReports).values({
+        bookingId, spaceId: booking.spaceId || "", reporterId: req.user.id,
+        guestId: booking.userId || "", issueType, description,
+        estimatedCost: estimatedCost ? parseInt(estimatedCost, 10) : null, photoUrls, status: "pending",
+      }).returning();
+      res.json(report);
+    } catch (e) {
+      console.error("Damage report error:", e);
+      res.status(500).json({ error: "Failed to create damage report" });
+    }
+  });
+
+  app.get("/api/space-bookings/:id/damage-report", isAuthenticated, async (req: any, res) => {
+    try {
+      const reports = await db.select().from(damageReports).where(eq(damageReports.bookingId, req.params.id));
+      res.json(reports);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch damage reports" });
+    }
+  });
+
+  app.post("/api/damage-reports/:id/respond", isAuthenticated, async (req: any, res) => {
+    try {
+      const { response } = req.body;
+      const [report] = await db.update(damageReports)
+        .set({ guestResponse: response, guestRespondedAt: new Date(), status: "guest_responded", updatedAt: new Date() })
+        .where(and(eq(damageReports.id, req.params.id), eq(damageReports.guestId, req.user.id)))
+        .returning();
+      if (!report) return res.status(404).json({ error: "Report not found" });
+      res.json(report);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to respond to report" });
+    }
+  });
+
+  app.get("/api/admin/damage-reports", isAdminOrEmployee, async (_req, res) => {
+    try {
+      const reports = await db.select().from(damageReports).orderBy(desc(damageReports.createdAt));
+      res.json(reports);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch damage reports" });
+    }
+  });
+
+  app.patch("/api/admin/damage-reports/:id", isAdminOrEmployee, async (req: any, res) => {
+    try {
+      const { status, resolution } = req.body;
+      const [report] = await db.update(damageReports)
+        .set({ status, resolution, resolvedAt: status === "resolved" ? new Date() : undefined, resolvedBy: status === "resolved" ? "admin" : undefined, escalatedAt: status === "escalated" ? new Date() : undefined, updatedAt: new Date() })
+        .where(eq(damageReports.id, req.params.id))
+        .returning();
+      if (!report) return res.status(404).json({ error: "Report not found" });
+      res.json(report);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to update report" });
+    }
+  });
+
+  // ── Guest Professional Profile (2F) ─────────────────────────────
+
+  app.get("/api/guest/professional-profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const [profile] = await db.select().from(guestProfessionalProfiles).where(eq(guestProfessionalProfiles.userId, req.user.id)).limit(1);
+      res.json(profile || null);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
+  app.put("/api/guest/professional-profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const { professionalTitle, industry, licenseNumber, licensingState, insuranceCarrier, insurancePolicyNumber } = req.body;
+      const isComplete = (professionalTitle && industry) ? 1 : 0;
+
+      const [existing] = await db.select().from(guestProfessionalProfiles).where(eq(guestProfessionalProfiles.userId, req.user.id)).limit(1);
+      if (existing) {
+        const [profile] = await db.update(guestProfessionalProfiles)
+          .set({ professionalTitle, industry, licenseNumber, licensingState, insuranceCarrier, insurancePolicyNumber, isComplete, updatedAt: new Date() })
+          .where(eq(guestProfessionalProfiles.userId, req.user.id))
+          .returning();
+        return res.json(profile);
+      }
+
+      const [profile] = await db.insert(guestProfessionalProfiles).values({
+        userId: req.user.id, professionalTitle, industry, licenseNumber, licensingState, insuranceCarrier, insurancePolicyNumber, isComplete,
+      }).returning();
+      res.json(profile);
+    } catch (e) {
+      console.error("Professional profile error:", e);
+      res.status(500).json({ error: "Failed to save profile" });
     }
   });
 

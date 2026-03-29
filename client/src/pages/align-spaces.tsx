@@ -925,53 +925,7 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-testimonials">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10 sm:mb-14">
-            <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight">Trusted by Miami Professionals</h2>
-            <p className="text-stone-500 text-sm mt-2 max-w-md mx-auto">Join therapists, coaches, and creators who use Align every day</p>
-          </div>
-
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-5">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="break-inside-avoid mb-4 sm:mb-5"
-                data-testid={`testimonial-${i}`}
-              >
-                <div className="bg-white rounded-2xl border border-stone-100 p-6 sm:p-7">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-serif text-3xl text-stone-300 leading-none select-none">&ldquo;</span>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, s) => (
-                        <Star key={s} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-stone-700 text-sm leading-relaxed mb-5"
-                    dangerouslySetInnerHTML={{
-                      __html: t.quote.replace(/\*\*(.*?)\*\*/g, '<strong class="text-stone-900 font-semibold">$1</strong>')
-                    }}
-                  />
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-stone-200 to-stone-100 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-stone-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-stone-900">{t.name}</p>
-                      <p className="text-[11px] text-stone-400">{t.title}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Testimonials section: will display once real reviews are collected */}
 
       <SiteFooter />
 

@@ -940,3 +940,112 @@ export const externalCalendarBlocks = pgTable("external_calendar_blocks", {
 
 export type ExternalCalendarBlock = typeof externalCalendarBlocks.$inferSelect;
 export type InsertExternalCalendarBlock = typeof externalCalendarBlocks.$inferInsert;
+
+// ══════════════════════════════════════════════════════════════════════
+// TRUST & SAFETY FRAMEWORK
+// ══════════════════════════════════════════════════════════════════════
+
+// ── Host Insurance Records ─────────────────────────────────────────
+export const hostInsuranceRecords = pgTable("host_insurance_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  carrierName: text("carrier_name").notNull(),
+  policyNumber: text("policy_number").notNull(),
+  coverageType: text("coverage_type").notNull(),             // 'general_liability' | 'professional_liability' | 'property' | 'bop' | 'other'
+  coverageAmount: integer("coverage_amount").notNull(),      // in dollars, minimum 1000000
+  policyExpirationDate: text("policy_expiration_date").notNull(), // 'YYYY-MM-DD'
+  documentUrl: text("document_url").notNull(),               // R2 URL for declarations page
+  documentFilename: text("document_filename"),
+  status: text("status").notNull().default("active"),        // 'active' | 'expiring_soon' | 'expired' | 'suspended'
+  verifiedAt: timestamp("verified_at"),
+  suspendedAt: timestamp("suspended_at"),
+  reminderSent30Day: integer("reminder_sent_30_day").default(0),
+  reminderSent7Day: integer("reminder_sent_7_day").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type HostInsuranceRecord = typeof hostInsuranceRecords.$inferSelect;
+export type InsertHostInsuranceRecord = typeof hostInsuranceRecords.$inferInsert;
+
+export const insertHostInsuranceSchema = createInsertSchema(hostInsuranceRecords).omit({
+  id: true, createdAt: true, updatedAt: true, status: true,
+  verifiedAt: true, suspendedAt: true, reminderSent30Day: true, reminderSent7Day: true,
+});
+
+// ── Professional Use Certifications ────────────────────────────────
+export const spaceCertifications = pgTable("space_certifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull(),
+  userId: text("user_id").notNull(),
+  certificationTier: text("certification_tier").notNull(),   // 'clinical_ready' | 'consultation_ready' | 'wellness_ready' | 'service_ready' | 'general_professional'
+  checklistItems: jsonb("checklist_items").notNull(),         // array of { key, label, checked: boolean }
+  allItemsChecked: integer("all_items_checked").default(0),   // 1 if all checked, badge shows
+  status: text("status").notNull().default("active"),        // 'active' | 'removed'
+  removedAt: timestamp("removed_at"),
+  removedReason: text("removed_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type SpaceCertification = typeof spaceCertifications.$inferSelect;
+export type InsertSpaceCertification = typeof spaceCertifications.$inferInsert;
+
+// ── Booking Agreements ─────────────────────────────────────────────
+export const bookingAgreements = pgTable("booking_agreements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull(),
+  userId: text("user_id").notNull(),
+  userRole: text("user_role").notNull(),                     // 'guest' | 'host'
+  agreementVersion: text("agreement_version").notNull(),     // e.g. '2026-03-29-v1'
+  acceptedAt: timestamp("accepted_at").notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+export type BookingAgreement = typeof bookingAgreements.$inferSelect;
+export type InsertBookingAgreement = typeof bookingAgreements.$inferInsert;
+
+// ── Damage Reports ─────────────────────────────────────────────────
+export const damageReports = pgTable("damage_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull(),
+  spaceId: varchar("space_id").notNull(),
+  reporterId: text("reporter_id").notNull(),                 // host userId
+  guestId: text("guest_id").notNull(),
+  issueType: text("issue_type").notNull(),                   // 'property_damage' | 'cleanliness' | 'policy_violation' | 'other'
+  description: text("description").notNull(),
+  estimatedCost: integer("estimated_cost"),                  // in cents
+  photoUrls: jsonb("photo_urls").notNull(),                  // string array, min 2 max 10
+  status: text("status").notNull().default("pending"),       // 'pending' | 'guest_notified' | 'guest_responded' | 'escalated' | 'resolved'
+  guestResponse: text("guest_response"),
+  guestRespondedAt: timestamp("guest_responded_at"),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: text("resolved_by"),                           // 'host' | 'guest' | 'admin'
+  escalatedAt: timestamp("escalated_at"),
+  guestNotifiedAt: timestamp("guest_notified_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type DamageReport = typeof damageReports.$inferSelect;
+export type InsertDamageReport = typeof damageReports.$inferInsert;
+
+// ── Guest Professional Profiles ────────────────────────────────────
+export const guestProfessionalProfiles = pgTable("guest_professional_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull().unique(),
+  professionalTitle: text("professional_title"),
+  industry: text("industry"),
+  licenseNumber: text("license_number"),
+  licensingState: text("licensing_state"),
+  insuranceCarrier: text("insurance_carrier"),
+  insurancePolicyNumber: text("insurance_policy_number"),
+  isComplete: integer("is_complete").default(0),             // 1 if enough fields filled for badge
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type GuestProfessionalProfile = typeof guestProfessionalProfiles.$inferSelect;
+export type InsertGuestProfessionalProfile = typeof guestProfessionalProfiles.$inferInsert;
