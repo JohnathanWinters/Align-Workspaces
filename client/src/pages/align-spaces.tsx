@@ -568,6 +568,7 @@ export default function AlignSpacesPage() {
               { icon: BadgeCheck, title: "Certified Spaces", desc: "Hosts self-certify across five tiers, from Clinical Ready for therapists to Service Ready for barbers. Know what you're walking into." },
               { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Hosts confirm their space is accurate and insured. Guests confirm professional responsibility." },
               { icon: Building2, title: "Made for Your Practice", desc: "Therapy offices, coaching rooms, wellness studios, creative spaces. Find the setting that fits your work." },
+              { icon: Compass, title: "Obvious Fit, Every Time", desc: "Every workspace is positioned by practice type so the right professionals find the right space. No guesswork, no wasted visits." },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
