@@ -28,25 +28,10 @@ export default function TermsPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
-        <p className="text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-3">Align Workspaces</p>
-        <h1 className="font-serif text-3xl sm:text-4xl text-[#2a2a2a] mb-2">Trust, Safety & Legal Framework</h1>
-        <p className="text-base text-stone-500 mb-1">Revised Terms of Service & Platform Implementation Strategy</p>
-        <p className="text-sm text-stone-400 mb-2">Prepared: March 2026 &nbsp;|&nbsp; Version 2.1</p>
+        <h1 className="font-serif text-3xl sm:text-4xl text-[#2a2a2a] mb-2">Terms of Service</h1>
         <p className="text-sm text-stone-400 mb-10">Last updated: March 2026</p>
 
         <div className="prose prose-stone prose-sm max-w-none [&_h2]:font-serif [&_h2]:text-xl [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[#2a2a2a] [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-wider [&_h3]:text-stone-500 [&_h3]:mt-6 [&_h3]:mb-2 [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:text-[#2a2a2a] [&_h4]:mt-4 [&_h4]:mb-2 [&_p]:text-stone-600 [&_p]:leading-relaxed [&_p]:mb-4 [&_ul]:text-stone-600 [&_li]:mb-1 [&_ol]:text-stone-600">
-
-          {/* Document Purpose */}
-          <div className="bg-stone-100/60 border border-stone-200/60 rounded-lg p-5 mb-10">
-            <h3 className="!mt-0">Document Purpose</h3>
-            <p className="!mb-0">This document contains two parts. <strong>Part A</strong> is a revised Terms of Service that addresses insurance verification, booking level agreements, professional use certifications across five industry tiers (Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, and General Professional), and damage protection. The framework is designed to scale across all small business professionals, from therapists to barbers to real estate agents. <strong>Part B</strong> outlines the platform implementation strategy for rolling these protections into the Align Workspaces product.</p>
-          </div>
-
-          {/* PART A Header */}
-          <div className="border-b-2 border-[#c4956a]/30 pb-4 mb-8">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-1">Part A</p>
-            <h2 className="!mt-0 !mb-0 font-serif text-2xl">Revised Terms of Service</h2>
-          </div>
 
           <h2>1. Acceptance of Terms</h2>
           <p>By accessing or using Align Workspaces ("Platform"), <strong>you agree to be bound by these Terms of Service ("Terms")</strong>. If you do not agree to these Terms, do not use the Platform. <strong>You must be at least 18 years of age to use the Platform.</strong></p>
@@ -115,9 +100,6 @@ export default function TermsPage() {
 
           <h4>Mutual Acknowledgment</h4>
           <p>Both parties acknowledge that Align Workspaces is a marketplace facilitator and is not a party to the Booking Agreement. The Host bears responsibility for premises liability and the condition of the space. The Guest bears responsibility for professional liability, regulatory compliance, and their use of the space. Neither party may hold Align Workspaces liable for the actions, omissions, or representations of the other party.</p>
-
-          <h4>Implementation Note</h4>
-          <p>The Booking Agreement is presented as a confirmation step during the booking flow. Both parties click to confirm before the Booking is finalized. This is not a separate document but a transactional acknowledgment layered on top of these Terms. The Booking Agreement applies universally to every booking regardless of the Guest's profession or the space's certification status.</p>
 
           <h2>8. Payments and Processing</h2>
           <p>All payments are processed through Stripe, our third-party payment processor. Align Workspaces acts as the Host's limited payment collection agent solely for the purpose of accepting payments from Guests on the Host's behalf.</p>
@@ -285,161 +267,7 @@ export default function TermsPage() {
 
           <h2>23. Contact</h2>
           <p>For questions about these Terms, contact us at <a href="mailto:hello@alignworkspaces.com">hello@alignworkspaces.com</a>.</p>
-          <p>Align Workspaces<br />Miami, FL</p>
-
-          {/* PART B Header */}
-          <div className="border-b-2 border-[#c4956a]/30 pb-4 mb-8 mt-16">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-1">Part B</p>
-            <h2 className="!mt-0 !mb-0 font-serif text-2xl">Platform Implementation Strategy</h2>
-          </div>
-
-          <p>This section outlines how to build the trust and safety framework into the Align Workspaces product. The strategy is sequenced into three phases: foundation (what to build now), expansion (what to add as you scale), and long-term (what to plan for as Align enters new professional verticals and geographic markets).</p>
-
-          {/* Phase 1 */}
-          <h2>Phase 1: Foundation (Build Now)</h2>
-          <p>These features should ship before or alongside the updated Terms of Service. They enforce the new policy framework and create the trust signals that convert hesitant hosts and guests across all professional categories.</p>
-
-          <h3>1.1 Insurance Verification Gate</h3>
-          <p>Add an insurance upload step to the Host onboarding flow. This is a hard gate: no Host can publish a listing without completing this step.</p>
-          <p><strong>Data to collect:</strong> insurance carrier name, policy number, coverage type (General Liability, Professional Liability, Property Insurance, Business Owner's Policy, or Other), coverage amount (minimum $1,000,000 general liability required), policy expiration date, and upload of the declarations page as a PDF or image.</p>
-          <p>Build an automated expiration tracker that sends email reminders at 30 days and 7 days before expiration. If a policy expires without renewal documentation, automatically suspend all of that Host's listings with a clear notification explaining why and how to reinstate. Display a "Verified Insurance" badge on all listings belonging to Hosts with current documentation. Include a status indicator in the Host dashboard: Active (green), Expiring Soon (yellow, within 30 days), Expired (red).</p>
-
-          <h3>1.2 Booking Agreement</h3>
-          <p>Replace the current one-click booking confirmation with a two-step confirmation that includes the Booking Agreement. The flow: Guest selects date, time, and duration (existing flow), then a confirmation screen displays the Booking Agreement summary showing what the Host has confirmed and what the Guest is confirming, the Guest checks a single confirmation box, and then proceeds to payment. The Booking Agreement applies universally to every booking regardless of who the Guest is or what the space is certified for.</p>
-          <p>Store the agreement acceptance as a timestamped record tied to each Booking, including who accepted, when, and which version of the agreement was in effect. This creates an audit trail for dispute resolution.</p>
-
-          <h3>1.3 Professional Use Certifications (Host Portal)</h3>
-          <p>In the Host portal, under listing management, add a "Professional Suitability" section. Let Hosts self-select from five certification categories: Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, and General Professional. For each category, display the certification criteria as a checklist. The Host checks each item to confirm compliance. When all items are checked, the certification badge appears on their listing.</p>
-          <p>Display badges prominently on listing cards in search results and on the listing detail page. Let Guests filter search results by certification type. Include the certification disclaimer beneath each checklist.</p>
-
-          <h3>1.4 Damage Reporting Tool</h3>
-          <p>Build a damage reporting flow accessible from the Host's booking history. The Host selects the Booking where damage occurred, selects an issue type (Property Damage, Cleanliness Issue, Policy Violation, or Other), uploads photos (minimum 2, maximum 10), provides a written description and optional estimated repair cost, and submits. The system notifies the Guest through the platform messaging system with a 72-hour response window. If unresolved, the report escalates to Align support. All reports and resolutions are stored as part of the Booking record.</p>
-
-          {/* Phase 2 */}
-          <h2>Phase 2: Expansion (Build as You Scale)</h2>
-          <p>These features add revenue and stickiness but are not required for launch.</p>
-
-          <h3>2.1 Host Protection Plan</h3>
-          <p>Offer optional damage protection as a paid add-on for Hosts. Start with a self-funded reserve model (allocate 1 to 2% of service fees into a reserve fund to cover verified damage claims up to $10K per incident). Transition to an embedded insurance partner once booking volume supports it. The embedded model transfers underwriting risk off your balance sheet and creates a direct revenue stream through referral fees or built-in margin.</p>
-
-          <h3>2.2 Guest Professional Verification</h3>
-          <p>Add an optional "Professional Credentials" section to the Guest profile. Fields: professional title or industry, license number, licensing state, professional liability insurance carrier, and policy number. If completed, display a "Verified Professional" badge on the Guest's profile visible to Hosts. This is not a gate. Guests can book freely without completing it. It is a trust signal that helps Guests get approved faster for spaces in regulated categories.</p>
-
-          <h3>2.3 Review System Enhancements</h3>
-          <p>Add structured review categories tied to Professional Use Certifications. For Clinical Ready spaces, prompt Guests to rate soundproofing, privacy, and session suitability separately from general cleanliness and amenities. For Service Ready spaces, prompt ratings on ventilation, water access, and sanitation. Aggregate these into certification-specific trust scores.</p>
-
-          <h3>2.4 Compliance Resource Library</h3>
-          <p>Provide downloadable compliance checklists and guides by profession and state. Examples: Florida therapy office requirements under Chapter 491, Florida barbering and cosmetology space standards under Chapter 476 and 477, real estate office requirements, and general small business workspace compliance. These are educational resources with clear disclaimers that they do not constitute legal advice.</p>
-
-          {/* Phase 3 */}
-          <h2>Phase 3: Long-Term (Plan For)</h2>
-
-          <h3>3.1 Multi-State Compliance Framework</h3>
-          <p>As Align expands geographically, licensing and space requirements vary by state. Build the Professional Use Certification system to be modular so criteria can be customized per jurisdiction. Florida's therapy office regulations differ from California's. Barbering space requirements in Miami-Dade differ from those in New York City. The certification checklists need to adapt accordingly.</p>
-
-          <h3>3.2 Expanded Industry Verticals</h3>
-          <p>As the platform grows, new certification tiers may be needed. Potential additions: Legal Ready (for attorneys conducting client consultations), Financial Ready (for CPAs, financial planners, tax preparers), Creative Ready (for photographers, videographers, podcasters needing studio-grade environments), Medical Ready (for telehealth providers, nutritionists, or practitioners needing clinical-grade environments), and Food Service Ready (for caterers, bakers, or culinary professionals needing commercial kitchen access). Build the certification system to be extensible from the start so adding new categories does not require restructuring the data model.</p>
-
-          <h3>3.3 Integrated Background Checks</h3>
-          <p>Consider optional background checks through a dedicated provider, particularly for Hosts and Guests in high-trust categories. Make this a voluntary trust signal, not a mandatory gate, unless a specific professional vertical requires it.</p>
-
-          <h3>3.4 Automated Insurance Monitoring</h3>
-          <p>Partner with a certificate tracking service for real-time insurance status monitoring. This replaces manual upload and expiration tracking with continuous automated verification. This becomes important at scale when manual processes break down.</p>
-
-          {/* Implementation Priority Matrix */}
-          <h2>Implementation Priority Matrix</h2>
-          <div className="overflow-x-auto -mx-5 sm:mx-0">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-stone-300">
-                  <th className="text-left py-2 pr-4 font-semibold text-[#2a2a2a]">Feature</th>
-                  <th className="text-left py-2 pr-4 font-semibold text-[#2a2a2a]">Phase</th>
-                  <th className="text-left py-2 pr-4 font-semibold text-[#2a2a2a]">Priority</th>
-                  <th className="text-left py-2 font-semibold text-[#2a2a2a]">Revenue Impact</th>
-                </tr>
-              </thead>
-              <tbody className="text-stone-600">
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Insurance Verification Gate</td>
-                  <td className="py-2 pr-4">1</td>
-                  <td className="py-2 pr-4"><strong>Critical</strong></td>
-                  <td className="py-2">Indirect (trust)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Booking Agreement</td>
-                  <td className="py-2 pr-4">1</td>
-                  <td className="py-2 pr-4"><strong>Critical</strong></td>
-                  <td className="py-2">Indirect (trust)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Professional Use Certs (5 tiers)</td>
-                  <td className="py-2 pr-4">1</td>
-                  <td className="py-2 pr-4">High</td>
-                  <td className="py-2">Indirect (conversion)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Damage Reporting Tool</td>
-                  <td className="py-2 pr-4">1</td>
-                  <td className="py-2 pr-4">High</td>
-                  <td className="py-2">Indirect (retention)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Host Protection Plan</td>
-                  <td className="py-2 pr-4">2</td>
-                  <td className="py-2 pr-4">High</td>
-                  <td className="py-2">Direct (premium fees)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Guest Verification</td>
-                  <td className="py-2 pr-4">2</td>
-                  <td className="py-2 pr-4">Medium</td>
-                  <td className="py-2">Indirect (trust)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Review Enhancements</td>
-                  <td className="py-2 pr-4">2</td>
-                  <td className="py-2 pr-4">Medium</td>
-                  <td className="py-2">Indirect (conversion)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Compliance Resource Library</td>
-                  <td className="py-2 pr-4">2</td>
-                  <td className="py-2 pr-4">Low</td>
-                  <td className="py-2">Indirect (SEO/content)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Multi-State Framework</td>
-                  <td className="py-2 pr-4">3</td>
-                  <td className="py-2 pr-4">Future</td>
-                  <td className="py-2">Enables expansion</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Expanded Verticals</td>
-                  <td className="py-2 pr-4">3</td>
-                  <td className="py-2 pr-4">Future</td>
-                  <td className="py-2">Enables expansion</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Background Checks</td>
-                  <td className="py-2 pr-4">3</td>
-                  <td className="py-2 pr-4">Future</td>
-                  <td className="py-2">Direct (premium fees)</td>
-                </tr>
-                <tr className="border-b border-stone-200">
-                  <td className="py-2 pr-4">Auto Insurance Monitoring</td>
-                  <td className="py-2 pr-4">3</td>
-                  <td className="py-2 pr-4">Future</td>
-                  <td className="py-2">Operational savings</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Important Legal Notice */}
-          <div className="bg-amber-50/60 border border-amber-200/60 rounded-lg p-5 mt-10">
-            <h3 className="!mt-0">Important Legal Notice</h3>
-            <p className="!mb-0">This document provides a policy framework and product strategy. It is not legal advice. Align Workspaces should have these revised Terms reviewed by a Florida-licensed attorney with experience in marketplace platform liability, insurance law, professional licensing regulations, and health department compliance before publishing them. This is especially important given the breadth of professional categories served, as different industries (barbering, therapy, real estate, cosmetology, bodywork) are regulated by different state boards and agencies with distinct space requirements.</p>
-          </div>
+          <p className="mt-6">Align Workspaces<br />Miami, FL</p>
 
         </div>
       </main>
