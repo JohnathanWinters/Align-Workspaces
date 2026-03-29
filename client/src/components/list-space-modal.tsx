@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, User, Check, Loader2 } from "lucide-react";
+import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -190,16 +190,149 @@ const LIST_SPACE_TYPES = [
   { value: "creative", label: "Creative Studio" },
 ];
 
+const COVERAGE_TYPES = [
+  { value: "general_liability", label: "General Liability" },
+  { value: "professional_liability", label: "Professional Liability" },
+  { value: "property", label: "Property Insurance" },
+  { value: "bop", label: "Business Owner's Policy" },
+  { value: "other", label: "Other" },
+];
+
+function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => void; onGetCovered: () => void }) {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({
+    carrierName: "", policyNumber: "", coverageType: "general_liability",
+    coverageAmount: "1000000", policyExpirationDate: "",
+  });
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleSubmit = async () => {
+    if (!form.carrierName || !form.policyNumber || !form.coverageType || !form.coverageAmount || !form.policyExpirationDate || !file) {
+      toast({ title: "All fields required", description: "Please fill out every field and upload your declarations page.", variant: "destructive" });
+      return;
+    }
+    const amount = parseInt(form.coverageAmount, 10);
+    if (isNaN(amount) || amount < 1000000) {
+      toast({ title: "Coverage too low", description: "Minimum coverage amount is $1,000,000.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("carrierName", form.carrierName);
+      fd.append("policyNumber", form.policyNumber);
+      fd.append("coverageType", form.coverageType);
+      fd.append("coverageAmount", form.coverageAmount);
+      fd.append("policyExpirationDate", form.policyExpirationDate);
+      fd.append("document", file);
+      const res = await fetch("/api/host/insurance", { method: "POST", body: fd });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Upload failed");
+      }
+      toast({ title: "Insurance verified", description: "Your coverage has been recorded. You can now list your space." });
+      queryClient.invalidateQueries({ queryKey: ["/api/host/insurance/status"] });
+      onComplete();
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="text-center mb-2">
+        <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+          <Shield className="w-7 h-7 text-[#c4956a]" />
+        </div>
+        <h3 className="font-serif text-lg font-semibold mb-1">Insurance Verification</h3>
+        <p className="text-xs text-foreground/50 max-w-sm mx-auto leading-relaxed">
+          All hosts must maintain $1M+ general liability insurance. Upload your declarations page to get started.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs text-foreground/50 mb-1 block">Insurance Carrier *</label>
+          <Input value={form.carrierName} onChange={e => setForm(f => ({ ...f, carrierName: e.target.value }))} placeholder="e.g. State Farm, GEICO" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-foreground/50 mb-1 block">Policy Number *</label>
+            <Input value={form.policyNumber} onChange={e => setForm(f => ({ ...f, policyNumber: e.target.value }))} placeholder="Policy #" />
+          </div>
+          <div>
+            <label className="text-xs text-foreground/50 mb-1 block">Coverage Type *</label>
+            <select
+              value={form.coverageType}
+              onChange={e => setForm(f => ({ ...f, coverageType: e.target.value }))}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              {COVERAGE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-foreground/50 mb-1 block">Coverage Amount ($) *</label>
+            <Input type="number" value={form.coverageAmount} onChange={e => setForm(f => ({ ...f, coverageAmount: e.target.value }))} placeholder="1000000" min="1000000" />
+          </div>
+          <div>
+            <label className="text-xs text-foreground/50 mb-1 block">Expiration Date *</label>
+            <Input type="date" value={form.policyExpirationDate} onChange={e => setForm(f => ({ ...f, policyExpirationDate: e.target.value }))} />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs text-foreground/50 mb-1 block">Declarations Page (PDF or image, max 10MB) *</label>
+          <label className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] cursor-pointer transition-colors bg-stone-50/50">
+            <Upload className="w-4 h-4 text-stone-400" />
+            <span className="text-sm text-stone-500">{file ? file.name : "Choose file..."}</span>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+          </label>
+        </div>
+      </div>
+
+      <Button onClick={handleSubmit} disabled={uploading} className="w-full bg-foreground text-background hover:opacity-90 py-3">
+        {uploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Uploading...</> : <><ShieldCheck className="w-4 h-4 mr-2" /> Verify Insurance</>}
+      </Button>
+
+      <div className="relative py-2">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200" /></div>
+        <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-stone-400">or</span></div>
+      </div>
+
+      <button
+        onClick={onGetCovered}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-[#c4956a]/30 text-[#c4956a] hover:bg-[#c4956a]/5 transition-colors text-sm font-medium"
+      >
+        <ExternalLink className="w-4 h-4" />
+        Get covered instantly from $17/mo
+      </button>
+      <p className="text-[10px] text-foreground/30 text-center leading-relaxed">
+        Don't have insurance? Get a quote in seconds through our partner Thimble. Policies start at $17/month with $1M+ coverage.
+      </p>
+    </div>
+  );
+}
+
 export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [showListMagicLink, setShowListMagicLink] = useState(false);
+  const [insuranceBypassed, setInsuranceBypassed] = useState(false);
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     amenities: "", targetProfession: "", availableHours: "", hostName: "",
   });
   const [amenitiesTags, setAmenitiesTags] = useState<string[]>([]);
+
+  const { data: insuranceStatus, isLoading: insuranceLoading } = useQuery<{ hasInsurance: boolean; status: string }>({
+    queryKey: ["/api/host/insurance/status"],
+    enabled: isAuthenticated,
+  });
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -272,8 +405,25 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               />
             )}
           </div>
+        ) : insuranceLoading ? (
+          <div className="p-10 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+          </div>
+        ) : !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
+          <InsuranceUploadStep
+            onComplete={() => setInsuranceBypassed(true)}
+            onGetCovered={() => {
+              window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
+            }}
+          />
         ) : (
           <div className="p-6 space-y-4">
+            {insuranceStatus?.hasInsurance && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 mb-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-medium text-emerald-700">Insurance verified</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-foreground/50 mb-1 block">Space Name *</label>
