@@ -268,7 +268,7 @@ function HeroFeature({ pro }: { pro: FeaturedProfessional }) {
         </div>
         {/* Portrait pip — outside overflow container */}
         {hasSpace && pro.portraitImageUrl && (
-          <div className="absolute -bottom-4 left-4 sm:-bottom-5 sm:left-6 w-20 h-24 sm:w-28 sm:h-36 rounded-xl ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-5 left-4 sm:-bottom-6 sm:left-6 w-[100px] sm:w-[140px] md:w-[160px] aspect-[3/4] rounded-xl ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className={`w-full h-full object-cover ${heroLoaded ? "opacity-100" : "opacity-0"}`}
               fetchPriority="high" decoding="sync" onLoad={() => setHeroLoaded(true)}
@@ -371,7 +371,7 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
         </div>
         {/* Portrait pip — outside overflow container */}
         {hasSpace && pro.portraitImageUrl && (
-          <div className="absolute -bottom-4 left-3 w-16 h-20 sm:w-20 sm:h-28 rounded-lg ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-4 left-3 w-[80px] sm:w-[100px] aspect-[3/4] rounded-lg ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className="w-full h-full object-cover"
               loading={index < 6 ? "eager" : "lazy"}
