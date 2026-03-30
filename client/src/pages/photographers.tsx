@@ -234,9 +234,9 @@ export default function PhotographersPage() {
                     className="w-full bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden text-left"
                     data-testid={`card-photographer-page-${i}`}
                   >
-                    <div className="flex gap-0">
+                    <div className="flex items-start gap-0">
                       {photoSrc && (
-                        <div className="w-[35%] flex-shrink-0 overflow-hidden">
+                        <div className="w-28 h-28 flex-shrink-0 overflow-hidden rounded-br-lg">
                           <img src={photoSrc} alt={member.name} className="w-full h-full object-cover" draggable={false}
                             style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
                             loading="lazy" decoding="async"
