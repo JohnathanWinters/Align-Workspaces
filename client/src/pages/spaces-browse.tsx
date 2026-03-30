@@ -516,7 +516,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
       onMouseLeave={() => onLeave?.()}
     >
       <div
-        className="relative h-48 bg-stone-100 overflow-hidden group"
+        className="relative aspect-[4/3] bg-stone-100 overflow-hidden group"
         data-testid={`image-space-${space.id}`}
       >
         {space.imageUrls && space.imageUrls.length > 0 ? (
