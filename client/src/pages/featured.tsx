@@ -1209,7 +1209,7 @@ function ProfilePage({ slug }: { slug: string }) {
         </div>
         {/* Portrait pip — outside overflow container */}
         {pro.spaceImageUrl && pro.portraitImageUrl && (
-          <div className="absolute -bottom-6 left-4 sm:-bottom-8 sm:left-6 w-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px] aspect-[3/4] max-w-[240px] rounded-xl ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
+          <div className="absolute -bottom-8 left-4 sm:-bottom-10 sm:left-6 w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] aspect-[3/4] max-w-[320px] rounded-xl ring-[3px] ring-[#faf9f7] shadow-xl z-20 overflow-hidden">
             <img src={pro.portraitImageUrl} alt={pro.name}
               className="w-full h-full object-cover" fetchPriority="high" decoding="sync"
               style={{ objectPosition: `${pro.portraitCropPosition?.x ?? 50}% ${pro.portraitCropPosition?.y ?? 50}%` }}
@@ -1220,7 +1220,7 @@ function ProfilePage({ slug }: { slug: string }) {
       </section>
 
       {/* Profile info — unified for mobile + desktop */}
-      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12">
+      <section className="max-w-3xl mx-auto px-5 sm:px-6 pt-12 sm:pt-14">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#c4956a] font-semibold mb-2">{pro.profession}</p>
           <h1 className="font-serif text-[2rem] sm:text-5xl md:text-6xl font-semibold leading-[1.05] mb-2 sm:mb-3 text-foreground" data-testid="text-profile-name">
