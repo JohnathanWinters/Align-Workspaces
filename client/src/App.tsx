@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
-import HostPricingPage from "@/pages/host-pricing";
+import PricingPage from "@/pages/host-pricing";
 import HomePage from "@/pages/home";
 import PortfolioPage from "@/pages/portfolio";
 import AboutPage from "@/pages/photographers";
@@ -48,7 +48,8 @@ function Router() {
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />
       <Route path="/admin" component={AdminPage} />
-      <Route path="/host-pricing" component={HostPricingPage} />
+      <Route path="/pricing" component={PricingPage} />
+      <Route path="/host-pricing">{() => { window.location.replace("/pricing"); return null; }}</Route>
       <Route path="/team" component={EmployeePage} />
       <Route path="/auth-success">{() => {
         if (window.opener) { window.close(); }

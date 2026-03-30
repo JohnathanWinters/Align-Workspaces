@@ -382,7 +382,7 @@ export default function AlignSpacesPage() {
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
-                    <button onClick={() => { setLocation("/host-pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
+                    <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
                       <DollarSign className="w-4 h-4" />
                       Pricing
                     </button>
@@ -641,7 +641,7 @@ export default function AlignSpacesPage() {
 
           <div className="mt-8 text-center">
             <Link
-              href="/host-pricing"
+              href="/pricing"
               className="inline-flex items-center gap-2 text-sm font-medium text-[#c4956a] hover:text-[#b3845d] transition-colors"
               data-testid="link-pricing-details"
             >

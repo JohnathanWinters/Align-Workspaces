@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, DollarSign, Users, TrendingUp, Shield, Building2 } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, TrendingUp, Shield, Building2, Heart } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
-export default function HostPricingPage() {
+export default function PricingPage() {
   const [hourlyRate, setHourlyRate] = useState(35);
   const [hoursPerWeek, setHoursPerWeek] = useState(20);
   const [isReferred, setIsReferred] = useState(false);
 
   useEffect(() => {
-    document.title = "Host Pricing | Align Workspaces";
+    document.title = "Pricing | Align Workspaces";
     window.scrollTo(0, 0);
   }, []);
 
@@ -39,16 +39,16 @@ export default function HostPricingPage() {
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Home</span>
           </Link>
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Host Info</span>
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Pricing</span>
           <div className="w-9" />
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
         <div className="text-center mb-12">
-          <h1 className="font-serif text-3xl sm:text-4xl text-stone-900 mb-3">Hosting on Align</h1>
+          <h1 className="font-serif text-3xl sm:text-4xl text-stone-900 mb-3">Simple, Transparent Pricing</h1>
           <p className="text-stone-500 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-            Transparent pricing with no hidden fees. See exactly what you earn and what your guests pay.
+            No hidden fees for anyone. Hosts keep more, guests pay less, and everyone sees exactly what they're getting.
           </p>
         </div>
 
@@ -61,21 +61,21 @@ export default function HostPricingPage() {
               </div>
               <div>
                 <h2 className="font-serif text-lg text-stone-900">Host Fees</h2>
-                <p className="text-xs text-stone-400">What Align charges you</p>
+                <p className="text-xs text-stone-400">What Align charges hosts per booking</p>
               </div>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b border-stone-100">
                 <div>
                   <p className="text-sm font-medium text-stone-800">Standard Rate</p>
-                  <p className="text-xs text-stone-400">You keep 87.5% of every booking</p>
+                  <p className="text-xs text-stone-400">Hosts keep 87.5% of every booking</p>
                 </div>
                 <span className="text-lg font-bold text-stone-900">12.5%</span>
               </div>
               <div className="flex items-center justify-between py-3 border-b border-stone-100">
                 <div>
                   <p className="text-sm font-medium text-emerald-700">Referred Booking Rate</p>
-                  <p className="text-xs text-stone-400">When you refer a client via your link, you keep 92%</p>
+                  <p className="text-xs text-stone-400">Hosts who refer their own clients keep 92%</p>
                 </div>
                 <span className="text-lg font-bold text-emerald-600">8%</span>
               </div>
@@ -96,7 +96,7 @@ export default function HostPricingPage() {
               </div>
               <div>
                 <h2 className="font-serif text-lg text-stone-900">Guest Fees</h2>
-                <p className="text-xs text-stone-400">What your guests pay on top</p>
+                <p className="text-xs text-stone-400">What guests pay on top of the listed rate</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -109,8 +109,8 @@ export default function HostPricingPage() {
               </div>
               <div className="flex items-center justify-between py-3 border-b border-stone-100">
                 <div>
-                  <p className="text-sm font-medium text-stone-800">Repeat Guest Service Fee</p>
-                  <p className="text-xs text-stone-400">Guests who book regularly pay less</p>
+                  <p className="text-sm font-medium text-stone-800">Repeat Guest Fee</p>
+                  <p className="text-xs text-stone-400">Book regularly and pay less</p>
                 </div>
                 <span className="text-lg font-bold text-stone-900">5%</span>
               </div>
@@ -133,7 +133,7 @@ export default function HostPricingPage() {
             </div>
             <div>
               <h2 className="font-serif text-lg text-stone-900">Earnings Calculator</h2>
-              <p className="text-xs text-stone-400">See what you'll earn based on your pricing</p>
+              <p className="text-xs text-stone-400">See what hosts earn and what guests pay</p>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export default function HostPricingPage() {
           <div className="grid sm:grid-cols-2 gap-6 mb-8">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-stone-700">Your Hourly Rate</label>
+                <label className="text-sm font-medium text-stone-700">Hourly Rate</label>
                 <span className="text-lg font-bold text-stone-900">${hourlyRate}/hr</span>
               </div>
               <input
@@ -187,7 +187,7 @@ export default function HostPricingPage() {
             >
               <p className={`text-sm font-semibold mb-0.5 ${!isReferred ? "text-stone-900" : "text-stone-500"}`}>Standard</p>
               <p className="text-xs text-stone-400">12.5% host fee</p>
-              <p className={`text-lg font-bold mt-2 ${!isReferred ? "text-stone-900" : "text-stone-400"}`}>Keep 87.5%</p>
+              <p className={`text-lg font-bold mt-2 ${!isReferred ? "text-stone-900" : "text-stone-400"}`}>Host keeps 87.5%</p>
             </button>
             <button
               onClick={() => setIsReferred(true)}
@@ -198,7 +198,7 @@ export default function HostPricingPage() {
                 <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Save More</span>
               </div>
               <p className="text-xs text-stone-400">8% host fee</p>
-              <p className={`text-lg font-bold mt-2 ${isReferred ? "text-emerald-700" : "text-stone-400"}`}>Keep 92%</p>
+              <p className={`text-lg font-bold mt-2 ${isReferred ? "text-emerald-700" : "text-stone-400"}`}>Host keeps 92%</p>
             </button>
           </div>
 
@@ -207,7 +207,7 @@ export default function HostPricingPage() {
             <div className="bg-stone-50 rounded-xl p-4 text-center">
               <p className="text-[10px] text-stone-400 uppercase tracking-wider mb-1">Per Hour</p>
               <p className="text-xl sm:text-2xl font-bold text-stone-900">${hostEarningsPerHour.toFixed(2)}</p>
-              <p className="text-[10px] text-stone-400">you earn</p>
+              <p className="text-[10px] text-stone-400">host earns</p>
             </div>
             <div className="bg-stone-50 rounded-xl p-4 text-center">
               <p className="text-[10px] text-stone-400 uppercase tracking-wider mb-1">Weekly</p>
@@ -229,11 +229,11 @@ export default function HostPricingPage() {
           {/* Breakdown Table */}
           <div className="border border-stone-200/60 rounded-xl overflow-hidden">
             <div className="bg-stone-50 px-4 py-2.5 border-b border-stone-200/60">
-              <p className="text-xs font-semibold text-stone-600 uppercase tracking-wider">Per-Hour Breakdown</p>
+              <p className="text-xs font-semibold text-stone-600 uppercase tracking-wider">What Hosts Earn Per Hour</p>
             </div>
             <div className="divide-y divide-stone-100">
               <div className="flex justify-between px-4 py-3">
-                <span className="text-sm text-stone-600">Your listed rate</span>
+                <span className="text-sm text-stone-600">Host listed rate</span>
                 <span className="text-sm font-medium text-stone-900">${basePerBooking.toFixed(2)}</span>
               </div>
               <div className="flex justify-between px-4 py-3">
@@ -241,16 +241,16 @@ export default function HostPricingPage() {
                 <span className="text-sm font-medium text-red-500">-${hostFeePerHour.toFixed(2)}</span>
               </div>
               <div className="flex justify-between px-4 py-3 bg-emerald-50/50">
-                <span className="text-sm font-semibold text-emerald-800">You receive</span>
+                <span className="text-sm font-semibold text-emerald-800">Host receives</span>
                 <span className="text-sm font-bold text-emerald-700">${hostEarningsPerHour.toFixed(2)}</span>
               </div>
             </div>
             <div className="bg-stone-50 px-4 py-2.5 border-t border-stone-200/60 border-b border-stone-200/60">
-              <p className="text-xs font-semibold text-stone-600 uppercase tracking-wider">What Your Guest Pays</p>
+              <p className="text-xs font-semibold text-stone-600 uppercase tracking-wider">What Guests Pay Per Hour</p>
             </div>
             <div className="divide-y divide-stone-100">
               <div className="flex justify-between px-4 py-3">
-                <span className="text-sm text-stone-600">Your listed rate</span>
+                <span className="text-sm text-stone-600">Host listed rate</span>
                 <span className="text-sm font-medium text-stone-900">${basePerBooking.toFixed(2)}</span>
               </div>
               <div className="flex justify-between px-4 py-3">
@@ -269,34 +269,42 @@ export default function HostPricingPage() {
           </div>
         </div>
 
-        {/* Why Host */}
+        {/* Why Align */}
         <div className="grid sm:grid-cols-3 gap-4 mb-12">
           <div className="bg-white rounded-xl border border-stone-200/60 p-5">
             <Shield className="w-5 h-5 text-[#c4956a] mb-3" />
             <h3 className="text-sm font-semibold text-stone-900 mb-1">No Hidden Fees</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">What you see is what you get. No monthly subscription, no listing fees, no setup costs.</p>
+            <p className="text-xs text-stone-400 leading-relaxed">What you see is what you get. No monthly subscription, no listing fees, no setup costs for hosts or guests.</p>
           </div>
           <div className="bg-white rounded-xl border border-stone-200/60 p-5">
             <DollarSign className="w-5 h-5 text-[#c4956a] mb-3" />
             <h3 className="text-sm font-semibold text-stone-900 mb-1">Automatic Payouts</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">Earnings deposited directly to your bank via Stripe. No invoicing, no chasing payments.</p>
+            <p className="text-xs text-stone-400 leading-relaxed">Host earnings deposited directly via Stripe. Guests get clear receipts. No invoicing, no chasing payments.</p>
           </div>
           <div className="bg-white rounded-xl border border-stone-200/60 p-5">
-            <TrendingUp className="w-5 h-5 text-[#c4956a] mb-3" />
-            <h3 className="text-sm font-semibold text-stone-900 mb-1">Earn More with Referrals</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">Share your referral link and drop your fee from 12.5% to just 8% on those bookings.</p>
+            <Heart className="w-5 h-5 text-[#c4956a] mb-3" />
+            <h3 className="text-sm font-semibold text-stone-900 mb-1">Repeat Guests Pay Less</h3>
+            <p className="text-xs text-stone-400 leading-relaxed">Guest service fees drop from 7% to 5% on repeat bookings. The more you use Align, the more you save.</p>
           </div>
         </div>
 
         {/* CTA */}
         <div className="text-center">
-          <p className="text-stone-500 text-sm mb-4">Ready to start earning from your space?</p>
-          <Link
-            href="/portal?tab=spaces"
-            className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
-          >
-            List Your Workspace
-          </Link>
+          <p className="text-stone-500 text-sm mb-4">Ready to get started?</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/workspaces"
+              className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-stone-800 transition-colors"
+            >
+              Browse Workspaces
+            </Link>
+            <Link
+              href="/portal?tab=spaces"
+              className="inline-flex items-center gap-2 border border-stone-200 text-stone-700 px-6 py-3 rounded-lg text-sm font-medium hover:bg-stone-50 transition-colors"
+            >
+              List Your Workspace
+            </Link>
+          </div>
         </div>
       </main>
 

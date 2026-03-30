@@ -2528,7 +2528,7 @@ function EarningsTab() {
       {/* Understand Your Fees */}
       <div className="border-t border-stone-200 pt-5 mt-2">
         <a
-          href="/host-pricing"
+          href="/pricing"
           target="_blank"
           className="block rounded-xl border border-[#c4956a]/20 bg-gradient-to-r from-[#c4956a]/5 to-transparent p-5 hover:border-[#c4956a]/40 transition-all group"
         >
