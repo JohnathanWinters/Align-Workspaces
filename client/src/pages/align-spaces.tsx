@@ -671,7 +671,7 @@ export default function AlignSpacesPage() {
                     <img
                       src="/images/env-office-bright.webp"
                       alt="Office environment mood"
-                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover border-2 border-white/30"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border-2 border-white/30"
                     />
                   </div>
                   <div className="flex gap-1.5 sm:gap-2">
