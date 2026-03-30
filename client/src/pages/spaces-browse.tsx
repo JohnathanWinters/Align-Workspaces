@@ -1608,9 +1608,9 @@ export default function SpacesBrowsePage() {
               className="lg:hidden flex items-center gap-1.5 text-[11px] uppercase tracking-[0.15em] font-semibold px-3.5 py-2 rounded-full border border-[#c4956a]/40 text-[#c4956a] hover:bg-[#c4956a] hover:text-white hover:border-[#c4956a] transition-colors bg-white shadow-sm"
             >
               {mobileView === "list" ? (
-                <><MapIcon className="w-3.5 h-3.5" /> Map</>
+                <><MapIcon className="w-3.5 h-3.5" /><span className="hidden sm:inline"> Map</span></>
               ) : (
-                <><List className="w-3.5 h-3.5" /> List ({filtered.length})</>
+                <><List className="w-3.5 h-3.5" /><span className="hidden sm:inline"> List ({filtered.length})</span></>
               )}
             </button>
           </div>
