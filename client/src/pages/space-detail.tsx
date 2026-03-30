@@ -93,26 +93,26 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  therapy: "bg-blue-50 text-blue-700",
-  coaching: "bg-amber-50 text-amber-700",
-  wellness: "bg-emerald-50 text-emerald-700",
-  workshop: "bg-purple-50 text-purple-700",
-  creative: "bg-rose-50 text-rose-700",
-  office: "bg-blue-50 text-blue-700",
-  studio: "bg-rose-50 text-rose-700",
-  gym: "bg-emerald-50 text-emerald-700",
-  meeting: "bg-amber-50 text-amber-700",
-  art_studio: "bg-purple-50 text-purple-700",
-  photo_studio: "bg-rose-50 text-rose-700",
+  therapy: "bg-[#f0ebe6] text-[#7a6e62]",
+  coaching: "bg-[#f5ede3] text-[#946b4a]",
+  wellness: "bg-[#eef0eb] text-[#687362]",
+  workshop: "bg-[#eeebf0] text-[#706580]",
+  creative: "bg-[#f2ebe8] text-[#8a6560]",
+  office: "bg-[#f0ebe6] text-[#7a6e62]",
+  studio: "bg-[#f2ebe8] text-[#8a6560]",
+  gym: "bg-[#eef0eb] text-[#687362]",
+  meeting: "bg-[#f5ede3] text-[#946b4a]",
+  art_studio: "bg-[#eeebf0] text-[#706580]",
+  photo_studio: "bg-[#f2ebe8] text-[#8a6560]",
 };
 
 const BADGE_COLORS: Record<string, string> = {
-  new: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  superhost: "bg-amber-50 text-amber-700 border-amber-200",
-  verified: "bg-blue-50 text-blue-700 border-blue-200",
-  top_rated: "bg-purple-50 text-purple-700 border-purple-200",
-  responsive: "bg-teal-50 text-teal-700 border-teal-200",
-  experienced: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  new: "bg-[#eef0eb] text-[#687362] border-[#dde2d8]",
+  superhost: "bg-[#f5ede3] text-[#946b4a] border-[#e8ddd0]",
+  verified: "bg-[#f0ebe6] text-[#7a6e62] border-[#e0d6cc]",
+  top_rated: "bg-[#eeebf0] text-[#706580] border-[#ddd8e2]",
+  responsive: "bg-[#eef0eb] text-[#687362] border-[#dde2d8]",
+  experienced: "bg-[#f0ebe6] text-[#7a6e62] border-[#e0d6cc]",
 };
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
@@ -380,8 +380,8 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
           )}
           {magicStep === "sent" && (
             <div className="space-y-4 text-center py-2">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-                <Check className="w-7 h-7 text-emerald-500" />
+              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                <Check className="w-7 h-7 text-[#c4956a]" />
               </div>
               <h3 className="font-serif text-lg font-semibold">Check your email</h3>
               <p className="text-sm text-stone-500 max-w-xs mx-auto">
@@ -403,8 +403,8 @@ function StepCheckmark({ onComplete }: { onComplete: () => void }) {
   }, [onComplete]);
   return (
     <motion.div className="flex items-center justify-center py-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.1 }}>
-      <motion.div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-        <Check className="w-7 h-7 text-emerald-500" strokeWidth={3} />
+      <motion.div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+        <Check className="w-7 h-7 text-[#c4956a]" strokeWidth={3} />
       </motion.div>
     </motion.div>
   );
@@ -608,7 +608,7 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                 <div className="flex flex-col items-center flex-1">
                   <motion.div
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ${
-                      i < stepIndex ? "bg-emerald-500 text-white" :
+                      i < stepIndex ? "bg-[#c4956a]/100 text-white" :
                       i === stepIndex ? "bg-[#c4956a] text-white shadow-lg shadow-[#c4956a]/30" :
                       "bg-stone-100 text-stone-400"
                     }`}
@@ -621,7 +621,7 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                 </div>
                 {i < steps.length - 1 && (
                   <div className="flex-1 h-0.5 mx-1 mb-5 rounded-full overflow-hidden bg-stone-100">
-                    <motion.div className="h-full bg-emerald-500 rounded-full" initial={{ width: "0%" }} animate={{ width: i < stepIndex ? "100%" : "0%" }} transition={{ duration: 0.4, ease: "easeOut" }} />
+                    <motion.div className="h-full bg-[#c4956a]/100 rounded-full" initial={{ width: "0%" }} animate={{ width: i < stepIndex ? "100%" : "0%" }} transition={{ duration: 0.4, ease: "easeOut" }} />
                   </div>
                 )}
               </div>
@@ -637,9 +637,9 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                   {dateCount === 0 ? "When would you like to visit?" : `${dateCount} date${dateCount !== 1 ? "s" : ""} selected`}
                 </p>
                 {discountPercent > 0 && dateCount <= 1 && (
-                  <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 mx-auto bg-emerald-50/80 rounded-full border border-emerald-100 w-fit">
-                    <Repeat className="w-3 h-3 text-emerald-600" />
-                    <span className="text-[11px] text-emerald-700 font-medium">
+                  <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 mx-auto bg-[#c4956a]/10 rounded-full border border-[#e8ddd0] w-fit">
+                    <Repeat className="w-3 h-3 text-[#946b4a]" />
+                    <span className="text-[11px] text-[#7a5638] font-medium">
                       Select multiple dates to save {discountPercent}%
                     </span>
                   </div>
@@ -678,9 +678,9 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                     </div>
                   )}
                   {dateCount > 1 && discountPercent > 0 && discountEligibleCount > 0 && (
-                    <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                      <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                      <span className="text-xs text-emerald-700 font-medium">
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
+                      <Repeat className="w-3.5 h-3.5 text-[#946b4a] flex-shrink-0" />
+                      <span className="text-xs text-[#7a5638] font-medium">
                         {discountPercent}% off {discountEligibleCount} of {dateCount} dates
                       </span>
                     </div>
@@ -820,8 +820,8 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                       <span className="text-stone-700"><AnimatedPrice value={perDateTax * dateCount} /></span>
                     </div>
                     {isRepeatGuest && loyaltySavings > 0 && (
-                      <div className="bg-emerald-50 rounded-lg px-3 py-2 -mx-1">
-                        <div className="flex justify-between text-sm text-emerald-700">
+                      <div className="bg-[#c4956a]/10 rounded-lg px-3 py-2 -mx-1">
+                        <div className="flex justify-between text-sm text-[#7a5638]">
                           <span className="flex items-center gap-1 font-medium">
                             <Check className="w-3 h-3" /> Loyalty discount
                           </span>
@@ -830,14 +830,14 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                       </div>
                     )}
                     {hasRecurringDiscount && discountEligibleCount > 0 && (
-                      <div className="bg-emerald-50 rounded-lg px-3 py-2 -mx-1">
-                        <div className="flex justify-between text-sm text-emerald-700">
+                      <div className="bg-[#c4956a]/10 rounded-lg px-3 py-2 -mx-1">
+                        <div className="flex justify-between text-sm text-[#7a5638]">
                           <span className="flex items-center gap-1 font-medium">
                             <Repeat className="w-3 h-3" /> Recurring discount ({discountPercent}%)
                           </span>
                           <span className="font-semibold">-<AnimatedPrice value={discountSavings} /></span>
                         </div>
-                        <p className="text-[10px] text-emerald-600 mt-0.5">
+                        <p className="text-[10px] text-[#946b4a] mt-0.5">
                           Applied to {discountEligibleCount} of {dateCount} dates
                           {discountAfter > 0 && <> (kicks in after {discountAfter})</>}
                         </p>
@@ -935,8 +935,8 @@ function ContactHostModal({ space, onClose }: { space: Space; onClose: () => voi
 
           {sent ? (
             <div className="space-y-4 text-center py-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-                <Check className="w-7 h-7 text-emerald-500" />
+              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                <Check className="w-7 h-7 text-[#c4956a]" />
               </div>
               <h3 className="font-serif text-lg font-semibold">Message sent!</h3>
               <p className="text-sm text-stone-500 max-w-xs mx-auto">
@@ -1019,12 +1019,12 @@ function BookingCard({
         <p className="text-sm text-stone-400 mb-1">${space.pricePerDay}/day also available</p>
       )}
       {(space as any).recurringDiscountPercent > 0 && (
-        <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
-          <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-          <span className="text-xs text-emerald-700 font-medium">
+        <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
+          <Repeat className="w-3.5 h-3.5 text-[#946b4a] flex-shrink-0" />
+          <span className="text-xs text-[#7a5638] font-medium">
             ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             {(space as any).recurringDiscountAfter > 0 && (
-              <span className="text-emerald-600 font-normal"> · after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""}</span>
+              <span className="text-[#946b4a] font-normal"> · after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""}</span>
             )}
           </span>
         </div>
@@ -1592,12 +1592,12 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                   )}
                 </div>
                 {(space as any).recurringDiscountPercent > 0 && (
-                  <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                    <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs text-emerald-700 font-medium">
+                  <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
+                    <Repeat className="w-3.5 h-3.5 text-[#946b4a] flex-shrink-0" />
+                    <span className="text-xs text-[#7a5638] font-medium">
                       ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
                       {(space as any).recurringDiscountAfter > 0 && (
-                        <span className="text-emerald-600 font-normal"> · after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""}</span>
+                        <span className="text-[#946b4a] font-normal"> · after {(space as any).recurringDiscountAfter} booking{(space as any).recurringDiscountAfter !== 1 ? "s" : ""}</span>
                       )}
                     </span>
                   </div>
@@ -1882,7 +1882,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 ) : (
                   <div className="flex items-center gap-3 py-4">
                     <p className="text-sm text-stone-500">No reviews yet</p>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-[#c4956a]/10 text-[#946b4a] border border-[#e8ddd0]">
                       New
                     </span>
                   </div>

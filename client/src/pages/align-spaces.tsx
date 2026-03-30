@@ -263,7 +263,7 @@ function SpaceCard({ space }: { space: Space }) {
             <span className="text-xs text-stone-400">${space.pricePerDay}/day</span>
           )}
           {(space as any).recurringDiscountPercent > 0 && (
-            <span className="text-xs text-emerald-600 font-medium">
+            <span className="text-xs text-[#946b4a] font-medium">
               ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             </span>
           )}
@@ -526,10 +526,10 @@ export default function AlignSpacesPage() {
           <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight mb-6">Spaces Certified for Your Profession</h2>
           <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
             {[
-              { icon: Heart, title: "Clinical Ready", color: "bg-blue-50 text-blue-600 border-blue-100" },
-              { icon: Briefcase, title: "Consultation Ready", color: "bg-amber-50 text-amber-600 border-amber-100" },
-              { icon: Leaf, title: "Wellness Ready", color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
-              { icon: Scissors, title: "Service Ready", color: "bg-rose-50 text-rose-600 border-rose-100" },
+              { icon: Heart, title: "Clinical Ready", color: "bg-[#f0ebe6] text-[#7a6e62] border-[#e0d6cc]" },
+              { icon: Briefcase, title: "Consultation Ready", color: "bg-[#f5ede3] text-[#946b4a] border-[#e8ddd0]" },
+              { icon: Leaf, title: "Wellness Ready", color: "bg-[#eef0eb] text-[#687362] border-[#dde2d8]" },
+              { icon: Scissors, title: "Service Ready", color: "bg-[#f2ebe8] text-[#8a6560] border-[#e5d8d4]" },
               { icon: Building2, title: "General Professional", color: "bg-stone-50 text-stone-600 border-stone-200" },
             ].map((cat, i) => {
               const Icon = cat.icon;

@@ -174,25 +174,25 @@ const TYPE_ICONS: Record<string, any> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  therapy: "bg-blue-50 text-blue-700",
-  coaching: "bg-amber-50 text-amber-700",
-  wellness: "bg-emerald-50 text-emerald-700",
-  workshop: "bg-purple-50 text-purple-700",
-  creative: "bg-rose-50 text-rose-700",
-  office: "bg-blue-50 text-blue-700",
-  studio: "bg-rose-50 text-rose-700",
-  gym: "bg-emerald-50 text-emerald-700",
-  meeting: "bg-amber-50 text-amber-700",
-  art_studio: "bg-purple-50 text-purple-700",
-  photo_studio: "bg-rose-50 text-rose-700",
+  therapy: "bg-[#f0ebe6] text-[#7a6e62]",
+  coaching: "bg-[#f5ede3] text-[#946b4a]",
+  wellness: "bg-[#eef0eb] text-[#687362]",
+  workshop: "bg-[#eeebf0] text-[#706580]",
+  creative: "bg-[#f2ebe8] text-[#8a6560]",
+  office: "bg-[#f0ebe6] text-[#7a6e62]",
+  studio: "bg-[#f2ebe8] text-[#8a6560]",
+  gym: "bg-[#eef0eb] text-[#687362]",
+  meeting: "bg-[#f5ede3] text-[#946b4a]",
+  art_studio: "bg-[#eeebf0] text-[#706580]",
+  photo_studio: "bg-[#f2ebe8] text-[#8a6560]",
 };
 
 const PIN_COLORS: Record<string, { bg: string; text: string; border: string; activeBg: string; activeBorder: string }> = {
-  therapy: { bg: "#eff6ff", text: "#1d4ed8", border: "#93c5fd", activeBg: "#2563eb", activeBorder: "#1d4ed8" },
-  coaching: { bg: "#fffbeb", text: "#b45309", border: "#fcd34d", activeBg: "#d97706", activeBorder: "#b45309" },
-  wellness: { bg: "#ecfdf5", text: "#047857", border: "#6ee7b7", activeBg: "#059669", activeBorder: "#047857" },
-  workshop: { bg: "#faf5ff", text: "#7c3aed", border: "#c4b5fd", activeBg: "#7c3aed", activeBorder: "#6d28d9" },
-  creative: { bg: "#fff1f2", text: "#be123c", border: "#fda4af", activeBg: "#e11d48", activeBorder: "#be123c" },
+  therapy: { bg: "#f0ebe6", text: "#7a6e62", border: "#d4c9be", activeBg: "#7a6e62", activeBorder: "#5e5448" },
+  coaching: { bg: "#f5ede3", text: "#946b4a", border: "#d4b896", activeBg: "#946b4a", activeBorder: "#7a5638" },
+  wellness: { bg: "#eef0eb", text: "#687362", border: "#c4ccbf", activeBg: "#687362", activeBorder: "#515a4c" },
+  workshop: { bg: "#eeebf0", text: "#706580", border: "#c4bfcc", activeBg: "#706580", activeBorder: "#5a5068" },
+  creative: { bg: "#f2ebe8", text: "#8a6560", border: "#d4c0bb", activeBg: "#8a6560", activeBorder: "#704e49" },
 };
 
 function getPinColor(type: string, tags?: string[] | null) {
@@ -573,7 +573,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
         </span>
         {/* Verified / Sample badge — frosted glass, top-right */}
         {space.isSample ? (
-          <div className="absolute top-3 right-3 bg-amber-500/80 backdrop-blur-[8px] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-amber-400/30 z-10">
+          <div className="absolute top-3 right-3 bg-[#946b4a]/80 backdrop-blur-[8px] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-[#946b4a]/30 z-10">
             Sample
           </div>
         ) : (
@@ -589,7 +589,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             <span className="text-white/70 text-xs font-medium ml-0.5">/hr</span>
           </div>
           {(space as any).recurringDiscountPercent > 0 && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white backdrop-blur-sm leading-tight">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#c4956a]/90 text-white backdrop-blur-sm leading-tight">
               ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             </span>
           )}
@@ -758,12 +758,12 @@ function StepCheckmark({ onComplete }: { onComplete: () => void }) {
       transition={{ duration: 0.1 }}
     >
       <motion.div
-        className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center"
+        className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center"
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <Check className="w-7 h-7 text-emerald-500" strokeWidth={3} />
+        <Check className="w-7 h-7 text-[#c4956a]" strokeWidth={3} />
       </motion.div>
     </motion.div>
   );
@@ -947,7 +947,7 @@ function BookingPopup({
                 <div className="flex flex-col items-center flex-1">
                   <motion.div
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ${
-                      i < stepIndex ? "bg-emerald-500 text-white" :
+                      i < stepIndex ? "bg-[#c4956a] text-white" :
                       i === stepIndex ? "bg-[#c4956a] text-white shadow-lg shadow-[#c4956a]/30" :
                       "bg-stone-100 text-stone-400"
                     }`}
@@ -961,7 +961,7 @@ function BookingPopup({
                 {i < steps.length - 1 && (
                   <div className="flex-1 h-0.5 mx-1 mb-5 rounded-full overflow-hidden bg-stone-100">
                     <motion.div
-                      className="h-full bg-emerald-500 rounded-full"
+                      className="h-full bg-[#c4956a] rounded-full"
                       initial={{ width: "0%" }}
                       animate={{ width: i < stepIndex ? "100%" : "0%" }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
@@ -1149,7 +1149,7 @@ function BookingPopup({
                     <AnimatedPrice value={taxAmount} />
                   </div>
                   {isRepeatGuest && loyaltySavings > 0 && (
-                    <div className="flex justify-between text-sm text-emerald-600 font-medium">
+                    <div className="flex justify-between text-sm text-[#946b4a] font-medium">
                       <span>Loyalty discount</span>
                       <span>-<AnimatedPrice value={loyaltySavings} /></span>
                     </div>
@@ -1231,7 +1231,7 @@ function CancellationPolicy() {
             <div className="px-3 pb-3 space-y-2">
               <ul className="space-y-1.5">
                 <li className="flex items-start gap-2 text-[11px] text-foreground/60">
-                  <Check className="w-3 h-3 mt-0.5 text-emerald-500 flex-shrink-0" />
+                  <Check className="w-3 h-3 mt-0.5 text-[#c4956a] flex-shrink-0" />
                   <span>Full refund if canceled 24+ hours before booking</span>
                 </li>
                 <li className="flex items-start gap-2 text-[11px] text-foreground/60">
@@ -1719,7 +1719,7 @@ export default function SpacesBrowsePage() {
               data-testid="toggle-available-today"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all duration-200 border ${
                 availableToday
-                  ? "bg-emerald-600 text-white border-emerald-600"
+                  ? "bg-[#c4956a] text-white border-[#c4956a]"
                   : "bg-white text-foreground/50 border-dashed border-stone-300 hover:border-stone-400"
               }`}
             >
@@ -1953,7 +1953,7 @@ export default function SpacesBrowsePage() {
               <p className="text-sm text-foreground/50">
                 <span className="font-semibold text-foreground">{filtered.length}</span> {filtered.length === 1 ? "space" : "spaces"} in Miami
                 {availSearchActive && (
-                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-[#946b4a] font-medium">
                     <Search className="w-3 h-3" />
                     available {availDate} at {availStartTime} for {availHours}h
                   </span>
