@@ -385,6 +385,12 @@ export default function PortfolioPage() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                   >
+                    <Link href="/">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-home-portfolio">
+                        <Building2 className="w-4 h-4" />
+                        Home
+                      </button>
+                    </Link>
                     <Link href="/portal">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-portfolio">
                         <Users className="w-4 h-4" />
