@@ -214,7 +214,7 @@ export default function PhotographersPage() {
 
       <section className="py-14 sm:py-20">
         <div className="max-w-4xl mx-auto px-5 sm:px-8">
-          {/* Mobile: always visible, clickable for full bio */}
+          {/* Mobile: cards with photo + summary, tap "Read more" for bio popup */}
           <div className="md:hidden">
             <div className="text-center mb-8">
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">The Team</p>
@@ -226,17 +226,15 @@ export default function PhotographersPage() {
                 const photoSrc = member.photoUrl?.startsWith("/") || member.photoUrl?.startsWith("http")
                   ? member.photoUrl
                   : member.photoUrl ? `/objects/${member.photoUrl}` : null;
-                const isExpanded = expandedFounder === member.id;
                 return (
-                  <button
+                  <div
                     key={member.id}
-                    onClick={() => setExpandedFounder(isExpanded ? null : member.id)}
                     className="w-full bg-white rounded-xl border border-stone-200/80 shadow-sm overflow-hidden text-left"
                     data-testid={`card-photographer-page-${i}`}
                   >
-                    <div className="flex items-start gap-0">
+                    <div className="flex gap-0">
                       {photoSrc && (
-                        <div className="w-28 h-28 flex-shrink-0 overflow-hidden rounded-br-lg">
+                        <div className="w-[35%] flex-shrink-0 overflow-hidden">
                           <img src={photoSrc} alt={member.name} className="w-full h-full object-cover" draggable={false}
                             style={{ objectPosition: `${crop.x}% ${crop.y}%`, ...(crop.zoom !== 1 ? { transform: `scale(${crop.zoom})`, transformOrigin: `${crop.x}% ${crop.y}%` } : {}) }}
                             loading="lazy" decoding="async"
@@ -252,17 +250,68 @@ export default function PhotographersPage() {
                           </p>
                         )}
                         {member.bio && (
-                          <p className={`text-[12px] text-stone-500 leading-[1.6] ${isExpanded ? "" : "line-clamp-2"}`}>
-                            {isExpanded ? member.bio : member.bio.split("\n").filter(Boolean)[0]}
+                          <p className="text-[12px] text-stone-500 leading-[1.6] line-clamp-2">
+                            {member.bio.split("\n").filter(Boolean)[0]}
                           </p>
                         )}
-                        <p className="text-[11px] text-[#c4956a] mt-2 font-medium">{isExpanded ? "Show less" : "Read more"}</p>
+                        {member.bio && (
+                          <button
+                            onClick={() => setExpandedFounder(member.id)}
+                            className="text-[11px] text-[#c4956a] mt-2 font-medium text-left"
+                          >
+                            Read more
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
+
+            {/* Bio popup modal */}
+            <AnimatePresence>
+              {expandedFounder && (() => {
+                const member = members.find(m => m.id === expandedFounder);
+                if (!member) return null;
+                return (
+                  <motion.div
+                    key="bio-modal"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-end justify-center px-4 pb-4"
+                    onClick={() => setExpandedFounder(null)}
+                  >
+                    <motion.div
+                      initial={{ y: 100, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 100, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="bg-white rounded-2xl w-full max-w-lg max-h-[75vh] overflow-y-auto shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="sticky top-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between rounded-t-2xl">
+                        <div>
+                          <h3 className="font-serif text-lg text-[#2a2a2a]">{member.name}</h3>
+                          <p className="text-[12px] text-[#c4956a] font-medium">{member.role}</p>
+                        </div>
+                        <button
+                          onClick={() => setExpandedFounder(null)}
+                          className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-colors"
+                        >
+                          <X className="w-4 h-4 text-stone-500" />
+                        </button>
+                      </div>
+                      <div className="px-5 py-5">
+                        <p className="text-[13px] text-stone-600 leading-[1.8] whitespace-pre-line">{member.bio}</p>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
           </div>
 
           {/* Desktop: always visible grid */}
