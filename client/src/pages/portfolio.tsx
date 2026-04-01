@@ -463,10 +463,10 @@ export default function PortfolioPage() {
           >
             <blockquote>
               <p className="text-[15px] sm:text-base text-stone-600 italic leading-relaxed">
-                <span className="text-[#c9a96e]/50 font-serif not-italic">&ldquo;</span>I was nervous about getting professional photos done, but the whole process felt like a conversation, not a photoshoot. When I saw the final images I thought, that&rsquo;s actually how I want people to see me.<span className="text-[#c9a96e]/50 font-serif not-italic">&rdquo;</span>
+                <span className="text-[#c9a96e]/50 font-serif not-italic">&ldquo;</span>I get shy when taking pictures, but Armando made it so natural, supportive, and engaging. The pictures feel reflective of the moment together and I wanted clients to feel that presence too!<span className="text-[#c9a96e]/50 font-serif not-italic">&rdquo;</span>
               </p>
               <footer className="mt-3 text-xs text-stone-400 tracking-wide uppercase">
-                Brenna D. · Therapist, Miami
+                Sebrina C. · Therapist, Miami
               </footer>
             </blockquote>
           </motion.div>
