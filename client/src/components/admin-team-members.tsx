@@ -220,7 +220,7 @@ export default function AdminTeamMembers({ token, onBack }: { token: string; onB
             <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
-            <p className="font-serif text-lg text-gray-900">Our Vision — Team Members</p>
+            <p className="font-serif text-lg text-gray-900">Our Vision, Team Members</p>
           </div>
           <Button size="sm" className="bg-[#1a1a1a] text-white" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-1" /> Add Member

@@ -109,7 +109,7 @@ function PortfolioCard({ photo, index, onPhotoClick, linkedSpace }: { photo: Por
     >
       <img
         src={photo.imageUrl}
-        alt={subjectName ? `${subjectName} — portrait by Align Miami` : isSpaces ? "Creative workspace by Align Miami" : "Personal branding portrait by Align Miami"}
+        alt={subjectName ? `${subjectName}, portrait by Align Miami` : isSpaces ? "Creative workspace by Align Miami" : "Personal branding portrait by Align Miami"}
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         style={{
           objectPosition: `${crop.x}% ${crop.y}%`,

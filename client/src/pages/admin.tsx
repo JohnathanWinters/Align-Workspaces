@@ -4683,14 +4683,14 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
                   <SelectItem value="__custom">Custom name...</SelectItem>
                   {allWorkspaces.map(ws => (
                     <SelectItem key={ws.id} value={ws.id}>
-                      {ws.name}{ws.neighborhood ? ` — ${ws.neighborhood}` : ""}
+                      {ws.name}{ws.neighborhood ? `, ${ws.neighborhood}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             {(!allWorkspaces.find(w => w.name === form.spaceName) || !form.spaceName) && (
-              <div><Label>Workspace Name</Label><Input value={form.spaceName} onChange={e => setForm({ ...form, spaceName: e.target.value })} placeholder="e.g. Align Studio — Coral Gables" /></div>
+              <div><Label>Workspace Name</Label><Input value={form.spaceName} onChange={e => setForm({ ...form, spaceName: e.target.value })} placeholder="e.g. Align Studio, Coral Gables" /></div>
             )}
             {(() => {
               const selectedWs = allWorkspaces.find(w => w.name === form.spaceName);
@@ -6390,7 +6390,7 @@ function AnalyticsManager({ token, onBack }: { token: string; onBack: () => void
                   <p className="text-[10px] text-gray-400 mt-0.5">Per page view</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white border-gray-100 cursor-help" title="Percentage of visitors who leave after viewing only one page. Lower is better — means people are exploring.">
+              <Card className="bg-white border-gray-100 cursor-help" title="Percentage of visitors who leave after viewing only one page. Lower is better, means people are exploring.">
                 <CardContent className="pt-5 pb-4">
                   <p className="text-[10px] text-gray-500 uppercase tracking-wider">Bounce Rate</p>
                   <p className="text-2xl font-serif text-gray-900 mt-1" data-testid="text-bounce-rate">{data.bounceRate}%</p>

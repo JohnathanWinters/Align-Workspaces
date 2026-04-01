@@ -600,9 +600,9 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
                 <select value={formData.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-cancellation-${space.id}`}>
-                  <option value="flexible">Flexible — Full refund up to 24 hours before</option>
-                  <option value="moderate">Moderate — Full refund up to 5 days, 50% after</option>
-                  <option value="strict">Strict — 50% refund up to 7 days, none after</option>
+                  <option value="flexible">Flexible, full refund up to 24 hours before</option>
+                  <option value="moderate">Moderate, full refund up to 5 days, 50% after</option>
+                  <option value="strict">Strict, 50% refund up to 7 days, none after</option>
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">
                   {formData.cancellationPolicy === "flexible"
@@ -939,7 +939,7 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-gray-900 mb-1">Set up payouts to receive earnings</h3>
             <p className="text-xs text-gray-500 leading-relaxed mb-3">
-              Connect your bank account to receive payments when guests book your space. Keep 87.5% of every booking — or 92% when you refer clients.
+              Connect your bank account to receive payments when guests book your space. Keep 87.5% of every booking, or 92% when you refer clients.
             </p>
             <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
               <ShieldCheck className="w-4 h-4 text-stone-500 flex-shrink-0" />
@@ -2331,7 +2331,7 @@ function EarningsTab() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-stone-800">Master referral link</p>
-                    <p className="text-xs text-stone-400">One link for all your listings — lower service fee on referred bookings</p>
+                    <p className="text-xs text-stone-400">One link for all your listings, lower service fee on referred bookings</p>
                   </div>
                 </button>
               )}
@@ -2432,8 +2432,8 @@ function EarningsTab() {
         <div className="bg-stone-50 rounded-lg p-4 space-y-2">
           <p className="text-xs font-semibold text-stone-600">How referral links work</p>
           <ul className="text-xs text-stone-500 space-y-1.5">
-            <li>Share your link with clients — when they book through it, your service fee is lower</li>
-            <li>Your clients pay the same fee either way — the savings are yours</li>
+            <li>Share your link with clients, when they book through it, your service fee is lower</li>
+            <li>Your clients pay the same fee either way, the savings are yours</li>
             <li>Referral credit lasts 30 days after a client clicks your link</li>
             <li>If a client clicks your link but books a different space from you, the savings still apply</li>
           </ul>
@@ -2652,12 +2652,12 @@ function HostGuideContent() {
           description: "Create a listing with photos, pricing, amenities, and availability. Once submitted, our team reviews and approves it.",
           status: hasListing ? "complete" : "action-needed",
           details: [
-            "Set your own hourly and daily rates — you control the pricing",
+            "Set your own hourly and daily rates, you control the pricing",
             "Showcase your space with multiple photos via simple drag & drop",
             "Set your weekly availability so guests only book when you're open",
-            "Avoid back-to-back stress — add buffer time between bookings (5–60 min)",
+            "Avoid back-to-back stress, add buffer time between bookings (5–60 min)",
             "Protect yourself with the right cancellation policy: Flexible, Moderate, or Strict",
-            "Attract your ideal guests — target specific professions like therapists or photographers",
+            "Attract your ideal guests, target specific professions like therapists or photographers",
           ],
         },
         {
@@ -2665,12 +2665,12 @@ function HostGuideContent() {
           title: "Earnings & Fees",
           description: "You keep the majority of every booking. Align takes a small platform fee so we can keep running.",
           details: [
-            "Keep 87.5% of every booking — our standard host fee is just 12.5%",
-            "Save even more with referrals — your host fee drops to 8% on referred bookings",
+            "Keep 87.5% of every booking, our standard host fee is just 12.5%",
+            "Save even more with referrals, your host fee drops to 8% on referred bookings",
             "Offer recurring booking discounts (up to 50% off) to attract weekly regulars",
-            "Your payout is never affected by guest fees — they pay a separate 5–7% + tax",
+            "Your payout is never affected by guest fees, they pay a separate 5–7% + tax",
             "Get paid directly to your bank account through Stripe Connect",
-            "Stay on top of your income — track earnings, payouts, and savings in the Earnings tab",
+            "Stay on top of your income, track earnings, payouts, and savings in the Earnings tab",
           ],
         },
         {
@@ -2679,9 +2679,9 @@ function HostGuideContent() {
           description: "Connect your Stripe account to receive payouts directly to your bank. This is required to receive payments.",
           status: stripeConnected ? "complete" : "action-needed",
           details: [
-            "Get set up in minutes — one-time onboarding through Stripe's secure flow",
+            "Get set up in minutes, one-time onboarding through Stripe's secure flow",
             "Receive payouts on Stripe's standard schedule, directly to your bank",
-            "Hands-off payments — guests pay and you receive funds automatically",
+            "Hands-off payments, guests pay and you receive funds automatically",
             "No Stripe account yet? Align holds your funds and transfers them after the booking completes",
           ],
         },
@@ -2697,11 +2697,11 @@ function HostGuideContent() {
           title: "Booking Management",
           description: "Manage all your incoming bookings from the My Spaces tab. Communicate with guests before and after booking.",
           details: [
-            "Answer questions before they book — guests can message you with direct inquiries",
-            "Know exactly when guests arrive and leave — overtime is flagged automatically",
-            "Stay in control of schedule changes — approve or decline reschedule requests",
-            "Protect your time — mark no-shows so you have a record if a guest doesn't arrive",
-            "Never miss an appointment — bookings auto-sync to your Google Calendar",
+            "Answer questions before they book, guests can message you with direct inquiries",
+            "Know exactly when guests arrive and leave, overtime is flagged automatically",
+            "Stay in control of schedule changes, approve or decline reschedule requests",
+            "Protect your time, mark no-shows so you have a record if a guest doesn't arrive",
+            "Never miss an appointment, bookings auto-sync to your Google Calendar",
           ],
         },
         {
@@ -2709,12 +2709,12 @@ function HostGuideContent() {
           title: "Recurring Bookings & Discounts",
           description: "Build steady income with weekly recurring bookings. Offer a discount to reward loyal guests who commit to a regular schedule.",
           details: [
-            "Guests or hosts can propose a recurring weekly booking — the other party confirms or declines",
+            "Guests or hosts can propose a recurring weekly booking, the other party confirms or declines",
             "Individual bookings are auto-created each week, so both sides have full visibility",
             "Set a recurring discount (up to 50%) in your space settings to incentivize regulars",
-            "Control when the discount kicks in — immediately, or after 1, 2, 3, 5, or 10 completed bookings",
+            "Control when the discount kicks in, immediately, or after 1, 2, 3, 5, or 10 completed bookings",
             "Guests see the discount on your listing page and in their recurring booking card",
-            "Pause or cancel a recurring series anytime — both host and guest have full control",
+            "Pause or cancel a recurring series anytime, both host and guest have full control",
             "If a guest has 3 consecutive unpaid bookings, the series auto-pauses to protect you",
           ],
         },
@@ -2724,7 +2724,7 @@ function HostGuideContent() {
           description: "Help guests find your space with step-by-step visual directions, WiFi credentials, and access codes. On the day of their booking, guests automatically receive the guide by email.",
           status: hasArrivalGuide ? "complete" : "action-needed",
           details: [
-            "Add up to 6 photo steps — show parking, entrance, wayfinding, and your door",
+            "Add up to 6 photo steps, show parking, entrance, wayfinding, and your door",
             "Share WiFi name, password, and door/gate codes securely with confirmed guests",
             "Include extra notes for anything guests should know before arriving",
             "Guests receive the arrival guide by email on the morning of their booking",
@@ -2739,8 +2739,8 @@ function HostGuideContent() {
           details: [
             "Connect your Google Calendar to automatically block times when you're busy",
             "Import iCal feeds from Peerspace, Airbnb, or any platform that exports .ics URLs",
-            "Your Align calendar exports as a feed — paste the URL into other platforms to sync both ways",
-            "External events sync every 15 minutes — no manual updates needed",
+            "Your Align calendar exports as a feed, paste the URL into other platforms to sync both ways",
+            "External events sync every 15 minutes, no manual updates needed",
             "Blocked times from external calendars show as unavailable to guests booking your space",
           ],
         },
@@ -2749,11 +2749,11 @@ function HostGuideContent() {
           title: "Reviews & Badges",
           description: "After completed bookings, guests can leave reviews. High performance earns you badges that appear on your listing.",
           details: [
-            "Build relationships — respond to guest reviews directly from your portal",
+            "Build relationships, respond to guest reviews directly from your portal",
             "Stand out with earned badges: Superhost (90%+ response rate + 5 bookings), Responsive, Experienced",
-            "Showcase quality — earn the Top Rated badge with 4.5+ stars and 3+ reviews",
-            "Build instant credibility — all approved listings get a Verified badge",
-            "Get noticed as a newcomer — the New badge shows automatically for your first 30 days",
+            "Showcase quality, earn the Top Rated badge with 4.5+ stars and 3+ reviews",
+            "Build instant credibility, all approved listings get a Verified badge",
+            "Get noticed as a newcomer, the New badge shows automatically for your first 30 days",
           ],
         },
         {
@@ -2761,10 +2761,10 @@ function HostGuideContent() {
           title: "Analytics Dashboard",
           description: "Track your performance across all your spaces in the Analytics tab.",
           details: [
-            "See the full picture — total bookings, completions, and cancellations at a glance",
-            "Know what's working — view revenue breakdown per space",
-            "Track your reputation — monitor your average rating and review count",
-            "Optimize your schedule — occupancy rate estimates show your space's demand",
+            "See the full picture, total bookings, completions, and cancellations at a glance",
+            "Know what's working, view revenue breakdown per space",
+            "Track your reputation, monitor your average rating and review count",
+            "Optimize your schedule, occupancy rate estimates show your space's demand",
           ],
         },
       ],
@@ -2781,10 +2781,10 @@ function HostGuideContent() {
           status: hasReferralLink ? "complete" : "action-needed",
           details: [
             "Share one link for all your spaces or create links for specific listings",
-            "Promote anywhere — social media, email, or embed on your own website",
-            "Keep more of each booking — referred bookings cost you only 8% (vs 12.5% standard)",
-            "See what's working — track clicks, bookings, and revenue per link",
-            "Guests have 30 days to book after clicking your link — you still get credit",
+            "Promote anywhere, social media, email, or embed on your own website",
+            "Keep more of each booking, referred bookings cost you only 8% (vs 12.5% standard)",
+            "See what's working, track clicks, bookings, and revenue per link",
+            "Guests have 30 days to book after clicking your link, you still get credit",
           ],
         },
         {
@@ -2792,11 +2792,11 @@ function HostGuideContent() {
           title: "Visibility & Discovery",
           description: "Your space is discoverable by guests through search, map view, and recommendations.",
           details: [
-            "Get found when it matters — guests can search by date and time availability",
-            "Show up on the map — your space appears with a location pin filtered by type",
-            "Get recommended — your space shows in \"You might also like\" on similar listings",
-            "Stay top of mind — guests can save your space to wishlists and favorites",
-            "Build trust with speed — your response time shows on your listing, and fast replies rank higher",
+            "Get found when it matters, guests can search by date and time availability",
+            "Show up on the map, your space appears with a location pin filtered by type",
+            "Get recommended, your space shows in \"You might also like\" on similar listings",
+            "Stay top of mind, guests can save your space to wishlists and favorites",
+            "Build trust with speed, your response time shows on your listing, and fast replies rank higher",
           ],
         },
       ],
@@ -3042,7 +3042,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
             <p className="text-xs text-stone-500">
               You get a lower service fee on every booking
               {loyaltyData.lifetimeSavings > 0 && (
-                <> — you've saved <strong>${(loyaltyData.lifetimeSavings / 100).toFixed(2)}</strong> so far</>
+                <>, you've saved <strong>${(loyaltyData.lifetimeSavings / 100).toFixed(2)}</strong> so far</>
               )}
             </p>
           </div>

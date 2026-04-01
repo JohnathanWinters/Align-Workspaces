@@ -82,7 +82,7 @@ function PhotoCard({ photo }: { photo: PortfolioPhoto }) {
       <div className="aspect-[3/4] overflow-hidden">
         <img
           src={photo.imageUrl}
-          alt={photo.subjectName ? `${photo.subjectName} — ${photo.subjectProfession || "Professional"}` : "Professional portrait"}
+          alt={photo.subjectName ? `${photo.subjectName}, ${photo.subjectProfession || "Professional"}` : "Professional portrait"}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
         />
@@ -214,7 +214,7 @@ export default function PortraitLandingPage() {
               Design the First Impression<br className="hidden sm:block" /> Your Clients Deserve
             </h1>
             <p className="text-stone-500 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
-              You've invested in your credentials, your space, your practice. Your image should match. Tell us your setting and your energy — we'll design the rest. In about two minutes.
+              You've invested in your credentials, your space, your practice. Your image should match. Tell us your setting and your energy, we'll design the rest. In about two minutes.
             </p>
             <Link
               href="/portrait-builder"
@@ -241,7 +241,7 @@ export default function PortraitLandingPage() {
                 Every Portrait Was Designed, Not Just Shot
               </h2>
               <p className="text-stone-400 text-sm mt-3 max-w-lg mx-auto">
-                Each session starts with the builder — setting, energy, palette. The photo is the last step, not the first.
+                Each session starts with the builder, setting, energy, palette. The photo is the last step, not the first.
               </p>
             </div>
             {/* Mobile: carousel with drag scroll */}
@@ -307,7 +307,7 @@ export default function PortraitLandingPage() {
             {[
               { icon: Eye, title: "Your Direction, Designed", desc: "Creative direction built from your setting, energy, and the feeling you want clients to have" },
               { icon: Shirt, title: "Show Up Prepared", desc: "Wardrobe guidance and a color palette so nothing is left to chance" },
-              { icon: Clock, title: "1-Hour Focused Session", desc: "Every minute tailored to the concept you built — no filler, no guesswork" },
+              { icon: Clock, title: "1-Hour Focused Session", desc: "Every minute tailored to the concept you built, no filler, no guesswork" },
               { icon: Image, title: "15+ Edited Photos", desc: "High-resolution portraits that match the identity you designed" },
               { icon: CheckCircle2, title: "Private Online Gallery", desc: "View, download, and share your images from one place" },
               { icon: RefreshCw, title: "Evolve Over Time", desc: "2 yearly edit tokens to refresh your images as your practice grows" },
@@ -344,7 +344,7 @@ export default function PortraitLandingPage() {
               Most professionals guess at how they come across. This replaces the guessing.
             </p>
             <p className="text-stone-400 text-sm leading-relaxed mb-10 max-w-md mx-auto">
-              Tell us your setting, your energy, and what you want clients to feel. We'll design a shoot concept with creative direction, wardrobe guidance, and a color palette — ready to book on the spot.
+              Tell us your setting, your energy, and what you want clients to feel. We'll design a shoot concept with creative direction, wardrobe guidance, and a color palette, ready to book on the spot.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link

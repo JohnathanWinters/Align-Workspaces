@@ -423,7 +423,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-xl mx-auto leading-relaxed"
           >
-            For professionals who see clients. Insured, certified, and built for your work — by the hour, no lease.
+            For professionals who see clients. Insured, certified, and built for your work, by the hour, no lease.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -683,7 +683,7 @@ export default function AlignSpacesPage() {
                     ))}
                   </div>
                 </div>
-                <p className="text-[10px] text-white/60 mt-2 tracking-wide uppercase">Oat & Sage — Welcoming, Bright</p>
+                <p className="text-[10px] text-white/60 mt-2 tracking-wide uppercase">Oat & Sage, Welcoming, Bright</p>
               </div>
             </div>
             <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
@@ -695,7 +695,7 @@ export default function AlignSpacesPage() {
                 Most professionals guess at how they come across. This replaces the guessing.
               </p>
               <p className="text-stone-400 text-sm leading-relaxed mb-2 max-w-md">
-                You've invested in your credentials, your space, your practice. But your image is still a phone selfie or a generic headshot that could belong to anyone. Tell us your setting, your energy, and what you want clients to feel — we'll hand you a shoot concept with creative direction, wardrobe guidance, and a color palette. Book it on the spot.
+                You've invested in your credentials, your space, your practice. But your image is still a phone selfie or a generic headshot that could belong to anyone. Tell us your setting, your energy, and what you want clients to feel, we'll hand you a shoot concept with creative direction, wardrobe guidance, and a color palette. Book it on the spot.
               </p>
               <p className="text-stone-400/70 text-[13px] leading-relaxed mb-6 max-w-md italic">
                 Takes about 2 minutes. Ends with a complete shoot plan built around you.

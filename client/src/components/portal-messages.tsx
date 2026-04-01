@@ -816,7 +816,7 @@ export function ConversationView({
                     ) : (
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                     )}
-                    {isHost ? "Confirm Guest Arrival" : "I'm Here — Check In"}
+                    {isHost ? "Confirm Guest Arrival" : "I'm Here, Check In"}
                   </Button>
                 </div>
               )}

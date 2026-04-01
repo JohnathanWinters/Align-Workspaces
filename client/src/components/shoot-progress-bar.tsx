@@ -74,7 +74,7 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
     // Shot — session complete, now the work begins
     return (
       <p className="text-xs text-gray-500 leading-relaxed">
-        Session complete — now we bring your photos to life with color correction, retouching, and final polish.
+        Session complete, now we bring your photos to life with color correction, retouching, and final polish.
       </p>
     );
   }
@@ -85,7 +85,7 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
     return (
       <p className="text-xs text-gray-500 leading-relaxed">
         {hasPhotos
-          ? `${shoot.galleryCount} photo${shoot.galleryCount === 1 ? "" : "s"} ready to preview — more may be added as editing continues.`
+          ? `${shoot.galleryCount} photo${shoot.galleryCount === 1 ? "" : "s"} ready to preview, more may be added as editing continues.`
           : "Your photos are being color-graded and retouched to match your vision."}
       </p>
     );
@@ -97,7 +97,7 @@ function StageDetail({ shoot, stage }: { shoot: ShootWithGallery; stage: number 
     return (
       <p className="text-xs text-gray-500 leading-relaxed">
         {count > 0
-          ? `Your gallery is ready — ${count} photo${count === 1 ? "" : "s"} to view and download.`
+          ? `Your gallery is ready, ${count} photo${count === 1 ? "" : "s"} to view and download.`
           : "Your gallery is ready."}
       </p>
     );

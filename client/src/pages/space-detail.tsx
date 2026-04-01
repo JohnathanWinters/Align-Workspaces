@@ -713,7 +713,7 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
                         </motion.span>
                       ) : (
                         <motion.span key="next" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }} className="flex items-center gap-2">
-                          Next — Pick a Time
+                          Next, Pick a Time
                           <ChevronRight className="w-5 h-5" />
                         </motion.span>
                       )}
@@ -960,7 +960,7 @@ function ContactHostModal({ space, onClose }: { space: Space; onClose: () => voi
               <div>
                 <h3 className="font-serif text-lg font-semibold">Contact {space.hostName || "the host"}</h3>
                 <p className="text-sm text-stone-500 mt-1">
-                  Ask about {space.name} — availability, amenities, or anything else
+                  Ask about {space.name}, availability, amenities, or anything else
                 </p>
               </div>
               <Textarea
@@ -2091,7 +2091,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
         {portfolioCarouselOpen && portfolioPhotos.length > 0 && (
           <PhotoCarousel
             images={portfolioPhotos.map(p => p.imageUrl)}
-            spaceName={`${space.name} — Sessions`}
+            spaceName={`${space.name}, Sessions`}
             onClose={() => setPortfolioCarouselOpen(false)}
             initialIndex={portfolioCarouselIndex}
           />
