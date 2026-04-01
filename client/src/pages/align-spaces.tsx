@@ -415,7 +415,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5 }}
             className="font-serif text-3xl sm:text-4xl md:text-5xl text-stone-900 tracking-tight leading-tight"
           >
-            Where Your Work <span className="italic font-normal">and Space</span> Align
+            Practice-Ready <span className="italic font-normal">Workspaces</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 8 }}
@@ -423,8 +423,7 @@ export default function AlignSpacesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-stone-500 text-sm sm:text-base mt-3 max-w-xl mx-auto leading-relaxed"
           >
-            Therapists. Coaches. Barbers. Wellness practitioners. Real estate agents.
-            Book spaces designed for how you work, by the hour, with no lease.
+            For professionals who see clients. Insured, certified, and built for your work — by the hour, no lease.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
