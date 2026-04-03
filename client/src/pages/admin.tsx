@@ -5202,6 +5202,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
     try {
       const body: any = { ...form };
       if (form.nextFollowUp) body.nextFollowUp = new Date(form.nextFollowUp).toISOString();
+      else if (!editingContact) body.nextFollowUp = new Date().toISOString();
       else body.nextFollowUp = null;
       body.spaceId = form.spaceId || null;
       body.shootId = form.shootId || null;
@@ -5758,26 +5759,20 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-phone" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Instagram</Label>
-                    <Input value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" className="h-9 text-sm" data-testid="input-contact-instagram" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Source</Label>
-                    <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
-                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-source"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="website">Website</SelectItem>
-                        <SelectItem value="referral">Referral</SelectItem>
-                        <SelectItem value="social">Social Media</SelectItem>
-                        <SelectItem value="walk-in">Walk-in</SelectItem>
-                        <SelectItem value="event">Event</SelectItem>
-                        <SelectItem value="import">Import</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Source</Label>
+                  <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
+                    <SelectTrigger className="h-9 text-sm" data-testid="select-contact-source"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="website">Website</SelectItem>
+                      <SelectItem value="referral">Referral</SelectItem>
+                      <SelectItem value="social">Social Media</SelectItem>
+                      <SelectItem value="walk-in">Walk-in</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="import">Import</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -5799,10 +5794,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-500">Next Follow-up</Label>
-                  <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -5828,7 +5819,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Notes</Label>
-                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-20 text-sm" data-testid="input-contact-notes" />
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Do they know anything about Align?" className="h-20 text-sm" data-testid="input-contact-notes" />
                 </div>
               </div>
               <div className="flex justify-end gap-2 px-6 py-4 border-t border-stone-100 flex-shrink-0">
@@ -5865,25 +5856,21 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} className="h-9 text-sm" />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Instagram</Label>
-                  <Input value={form.instagram} onChange={e => setForm(p => ({ ...p, instagram: e.target.value }))} placeholder="@handle" className="h-9 text-sm" />
+                  <Label className="text-xs text-gray-500">Source</Label>
+                  <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="website">Website</SelectItem>
+                      <SelectItem value="referral">Referral</SelectItem>
+                      <SelectItem value="social">Social Media</SelectItem>
+                      <SelectItem value="walk-in">Walk-in</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="import">Import</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-500">Source</Label>
-                    <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
-                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="website">Website</SelectItem>
-                        <SelectItem value="referral">Referral</SelectItem>
-                        <SelectItem value="social">Social Media</SelectItem>
-                        <SelectItem value="walk-in">Walk-in</SelectItem>
-                        <SelectItem value="event">Event</SelectItem>
-                        <SelectItem value="import">Import</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div>
                     <Label className="text-xs text-gray-500">Category</Label>
                     <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
@@ -5894,8 +5881,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs text-gray-500">Stage</Label>
                     <Select value={form.stage} onValueChange={v => setForm(p => ({ ...p, stage: v }))}>
@@ -5904,10 +5889,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         {PIPELINE_STAGES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">Follow-up</Label>
-                    <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
                   </div>
                 </div>
                 <div>
@@ -5932,7 +5913,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Notes</Label>
-                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-16 text-sm" />
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Do they know anything about Align?" className="h-16 text-sm" />
                 </div>
               </div>
               <div className="flex justify-end gap-2 px-5 py-3 border-t border-stone-100 flex-shrink-0">
