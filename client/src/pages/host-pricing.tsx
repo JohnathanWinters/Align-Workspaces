@@ -16,7 +16,7 @@ export default function PricingPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  const hostFeePercent = isReferred ? 0.08 : 0.125;
+  const hostFeePercent = isReferred ? 0.105 : 0.125;
   const guestFeePercent = 0.07;
   const taxRate = 0.07;
 
@@ -149,9 +149,9 @@ export default function PricingPage() {
               <div className="flex items-center justify-between py-3 border-b border-stone-100">
                 <div>
                   <p className="text-sm font-medium text-emerald-700">Referred Booking Rate</p>
-                  <p className="text-xs text-stone-400">Hosts who refer their own clients keep 92%</p>
+                  <p className="text-xs text-stone-400">Hosts who refer their own clients keep 89.5%</p>
                 </div>
-                <span className="text-lg font-bold text-emerald-600">8%</span>
+                <span className="text-lg font-bold text-emerald-600">10.5%</span>
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
@@ -271,8 +271,8 @@ export default function PricingPage() {
                 <p className={`text-sm font-semibold ${isReferred ? "text-emerald-800" : "text-stone-500"}`}>With Referral Link</p>
                 <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Save More</span>
               </div>
-              <p className="text-xs text-stone-400">8% host fee</p>
-              <p className={`text-lg font-bold mt-2 ${isReferred ? "text-emerald-700" : "text-stone-400"}`}>Host keeps 92%</p>
+              <p className="text-xs text-stone-400">10.5% host fee</p>
+              <p className={`text-lg font-bold mt-2 ${isReferred ? "text-emerald-700" : "text-stone-400"}`}>Host keeps 89.5%</p>
             </button>
           </div>
 

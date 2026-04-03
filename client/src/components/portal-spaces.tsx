@@ -939,7 +939,7 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-gray-900 mb-1">Set up payouts to receive earnings</h3>
             <p className="text-xs text-gray-500 leading-relaxed mb-3">
-              Connect your bank account to receive payments when guests book your space. Keep 87.5% of every booking, or 92% when you refer clients.
+              Connect your bank account to receive payments when guests book your space. Keep 87.5% of every booking, or 89.5% when you refer clients.
             </p>
             <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
               <ShieldCheck className="w-4 h-4 text-stone-500 flex-shrink-0" />
@@ -2629,7 +2629,7 @@ function EarningsTab() {
           <div className="flex items-center gap-4 mt-3 ml-[52px]">
             <span className="text-[11px] text-stone-500">Standard: <strong className="text-stone-700">12.5%</strong></span>
             <span className="text-[11px] text-stone-300">|</span>
-            <span className="text-[11px] text-emerald-600">Referred: <strong>8%</strong></span>
+            <span className="text-[11px] text-emerald-600">Referred: <strong>10.5%</strong></span>
             <span className="text-[11px] text-stone-300">|</span>
             <span className="text-[11px] text-stone-500">No monthly fees</span>
           </div>
@@ -2748,7 +2748,7 @@ function HostGuideContent() {
           description: "You keep the majority of every booking. Align takes a small platform fee so we can keep running.",
           details: [
             "Keep 87.5% of every booking, our standard host fee is just 12.5%",
-            "Save even more with referrals, your host fee drops to 8% on referred bookings",
+            "Save even more with referrals, your host fee drops to 10.5% on referred bookings",
             "Offer recurring booking discounts (up to 50% off) to attract weekly regulars",
             "Your payout is never affected by guest fees, they pay a separate 5–7% + tax",
             "Get paid directly to your bank account through Stripe Connect",
@@ -2865,7 +2865,7 @@ function HostGuideContent() {
           details: [
             "Share one link for all your spaces or create links for specific listings",
             "Promote anywhere, social media, email, or embed on your own website",
-            "Keep more of each booking, referred bookings cost you only 8% (vs 12.5% standard)",
+            "Keep more of each booking, referred bookings cost you only 10.5% (vs 12.5% standard)",
             "See what's working, track clicks, bookings, and revenue per link",
             "Guests have 30 days to book after clicking your link, you still get credit",
           ],

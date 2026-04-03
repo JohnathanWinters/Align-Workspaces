@@ -42,7 +42,7 @@ async function syncBookings(stripe: any): Promise<{ synced: number; skipped: num
         let guestFeePercent = 0.07, hostFeePercent = 0.125;
         const taxRate = 0.07;
         if (feeTier === "repeat_guest") guestFeePercent = 0.05;
-        else if (feeTier === "host_referred") hostFeePercent = 0.08;
+        else if (feeTier === "host_referred") hostFeePercent = 0.105;
 
         const totalMultiplier = 1 + guestFeePercent + taxRate;
         const basePriceCents = Math.round(amountTotal / totalMultiplier);

@@ -624,7 +624,7 @@ export default function AlignSpacesPage() {
             <div className="bg-white rounded-xl border border-stone-100 p-6 text-center">
               <p className="text-3xl sm:text-4xl font-serif text-stone-900 mb-1">87.5%</p>
               <p className="text-sm font-medium text-stone-600 mb-2">Hosts Keep</p>
-              <p className="text-xs text-stone-400 leading-relaxed">Just 12.5% service fee. Bring your own clients and keep 92%.</p>
+              <p className="text-xs text-stone-400 leading-relaxed">Just 12.5% service fee. Bring your own clients and keep 89.5%.</p>
             </div>
             <div className="bg-white rounded-xl border border-stone-100 p-6 text-center">
               <p className="text-3xl sm:text-4xl font-serif text-stone-900 mb-1">7%</p>

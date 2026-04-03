@@ -3502,9 +3502,9 @@ export async function registerRoutes(
           spaceSlug = space?.slug || "";
         }
 
-        // Calculate savings from referral tier (8%) vs standard (12.5%)
+        // Calculate savings from referral tier (10.5%) vs standard (12.5%)
         const standardFeeOnRevenue = Math.round((link.totalRevenueGenerated || 0) * (0.125 / 0.13));
-        const referralFeeOnRevenue = Math.round((link.totalRevenueGenerated || 0) * (0.08 / 0.13));
+        const referralFeeOnRevenue = Math.round((link.totalRevenueGenerated || 0) * (0.105 / 0.13));
         const savedAmount = standardFeeOnRevenue - referralFeeOnRevenue;
 
         return {

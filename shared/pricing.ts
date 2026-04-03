@@ -23,7 +23,7 @@ export const FEE_TIERS: Record<FeeTier, { hostFeePercent: number; guestFeePercen
     guestFeePercent: 0.07,   // 7%
   },
   host_referred: {
-    hostFeePercent: 0.08,    // 8%
+    hostFeePercent: 0.105,   // 10.5%
     guestFeePercent: 0.07,   // 7%
   },
   repeat_guest: {
@@ -32,7 +32,7 @@ export const FEE_TIERS: Record<FeeTier, { hostFeePercent: number; guestFeePercen
   },
 };
 
-// Total platform take: standard=17.5%, host_referred=13%, repeat_guest=15.5%
+// Total platform take: standard=17.5%, host_referred=15.5%, repeat_guest=15.5%
 
 export const TAX_RATES: Record<string, { rate: number; label: string }> = {
   "FL-MIAMI-DADE": { rate: 0.07, label: "Sales tax (FL 6% + Miami-Dade 1%)" },
@@ -52,7 +52,7 @@ export function resolveFeeTier(opts: {
   const { isRepeatGuest, isHostReferred } = opts;
 
   if (isRepeatGuest && isHostReferred) {
-    // host_referred has lower total take (13% vs 15.5%)
+    // host_referred and repeat_guest have same total take (15.5%), prefer host_referred for host benefit
     return "host_referred";
   }
   if (isHostReferred) return "host_referred";
