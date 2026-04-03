@@ -5819,14 +5819,26 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             );
           })()}
 
-          {/* All contacts list */}
-          {filteredContacts.length > 0 && (
+          {/* Contacts list (excludes those already in Needs Attention / Upcoming) */}
+          {(() => {
+            const now = new Date();
+            const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+            const attentionIds = new Set(filteredContacts.filter(c =>
+              (c.nextFollowUp && new Date(c.nextFollowUp) <= now) ||
+              (c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000)
+            ).map(c => c.id));
+            const upcomingIds = new Set(filteredContacts.filter(c =>
+              c.nextFollowUp && new Date(c.nextFollowUp) > now && new Date(c.nextFollowUp) <= weekEnd
+            ).map(c => c.id));
+            const rest = filteredContacts.filter(c => !attentionIds.has(c.id) && !upcomingIds.has(c.id));
+            if (rest.length === 0) return null;
+            return (
             <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-gray-400" /> All Contacts <span className="text-gray-400 font-normal">({filteredContacts.length})</span>
+                <Users className="w-3.5 h-3.5 text-gray-400" /> Contacts <span className="text-gray-400 font-normal">({rest.length})</span>
               </h3>
               <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-                {filteredContacts.map(c => (
+                {rest.map(c => (
                   <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
                     data-testid={`all-contact-${c.id}`}>
                     <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
@@ -5859,7 +5871,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 ))}
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
       <AnimatePresence>
