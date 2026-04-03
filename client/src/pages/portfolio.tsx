@@ -392,10 +392,10 @@ export default function PortfolioPage() {
                         Home
                       </button>
                     </Link>
-                    <Link href="/portal">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-portfolio">
-                        <Users className="w-4 h-4" />
-                        Client Portal
+                    <Link href="/workspaces">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-portfolio">
+                        <MapPin className="w-4 h-4" />
+                        Align Workspaces
                       </button>
                     </Link>
                     <Link href="/portraits">
@@ -404,21 +404,15 @@ export default function PortfolioPage() {
                         Portraits
                       </button>
                     </Link>
-                    <Link href="/workspaces">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-portfolio">
-                        <MapPin className="w-4 h-4" />
-                        Align Workspaces
-                      </button>
+                    <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                      <CalendarDays className="w-4 h-4" />
+                      Community Events
                     </Link>
                     <Link href="/featured">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-portfolio">
                         <Star className="w-4 h-4" />
                         Featured Pros
                       </button>
-                        <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                          <CalendarDays className="w-4 h-4" />
-                          Community Events
-                        </Link>
                     </Link>
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-portfolio">
@@ -430,6 +424,12 @@ export default function PortfolioPage() {
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-portfolio">
                         <HelpCircle className="w-4 h-4" />
                         Support
+                      </button>
+                    </Link>
+                    <Link href="/portal">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-portfolio">
+                        <Users className="w-4 h-4" />
+                        Client Portal
                       </button>
                     </Link>
                   </motion.div>

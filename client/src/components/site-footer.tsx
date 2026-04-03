@@ -14,12 +14,12 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
   const dividerColor = isDark ? "border-white/10" : "border-stone-200 dark:border-white/10";
 
   const navLinks = [
-    { label: "Portraits", href: "/portraits" },
     { label: "Workspaces", href: "/workspaces" },
-    { label: "Featured Pros", href: "/featured" },
+    { label: "Portraits", href: "/portraits" },
     { label: "Community Events", href: "/#events" },
-    { label: "Our Vision", href: "/our-vision" },
+    { label: "Featured Pros", href: "/featured" },
     { label: "Portfolio", href: "/portfolio" },
+    { label: "Our Vision", href: "/our-vision" },
     { label: "Support", href: "/support" },
     { label: "Client Portal", href: "/portal" },
   ];

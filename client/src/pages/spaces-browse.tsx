@@ -1655,26 +1655,22 @@ export default function SpacesBrowsePage() {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 top-full mt-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg py-2 min-w-[200px] z-[9000]"
                 >
-                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
-                    <User className="w-4 h-4" />
-                    Client Portal
-                  </button>
                   <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
                     <Camera className="w-4 h-4" />
                     Portraits
                   </button>
-                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portfolio-browse">
-                    <Images className="w-4 h-4" />
-                    Portfolio
+                  <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-events-browse">
+                    <CalendarDays className="w-4 h-4" />
+                    Community Events
                   </button>
                   <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-featured-browse">
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
-                    <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-events-browse">
-                      <CalendarDays className="w-4 h-4" />
-                      Community Events
-                    </button>
+                  <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portfolio-browse">
+                    <Images className="w-4 h-4" />
+                    Portfolio
+                  </button>
                   <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-pricing-browse">
                     <DollarSign className="w-4 h-4" />
                     Pricing
@@ -1686,6 +1682,10 @@ export default function SpacesBrowsePage() {
                   <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-support-browse">
                     <HelpCircle className="w-4 h-4" />
                     Support
+                  </button>
+                  <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portal-browse">
+                    <User className="w-4 h-4" />
+                    Client Portal
                   </button>
                   <div className="border-t border-stone-100 my-1" />
                   <button onClick={() => { setShowListModal(true); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-[#c4956a] hover:text-[#b3845d] hover:bg-[#c4956a]/5 transition-colors flex items-center gap-3 font-medium" data-testid="link-list-space-browse">

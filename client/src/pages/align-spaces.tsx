@@ -425,10 +425,6 @@ export default function AlignSpacesPage() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                   >
-                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-menu">
-                      <User className="w-4 h-4" />
-                      Client Portal
-                    </button>
                     <button onClick={() => { setLocation("/workspaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-browse-menu">
                       <Building2 className="w-4 h-4" />
                       Workspaces
@@ -437,17 +433,17 @@ export default function AlignSpacesPage() {
                       <Camera className="w-4 h-4" />
                       Portraits
                     </button>
-                    <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
-                      <Images className="w-4 h-4" />
-                      Portfolio
+                    <button onClick={() => { document.querySelector('[data-testid="section-community-events"]')?.scrollIntoView({ behavior: "smooth" }); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-menu">
+                      <CalendarDays className="w-4 h-4" />
+                      Community Events
                     </button>
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-menu">
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
-                    <button onClick={() => { document.querySelector('[data-testid="section-community-events"]')?.scrollIntoView({ behavior: "smooth" }); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-menu">
-                      <CalendarDays className="w-4 h-4" />
-                      Community Events
+                    <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
+                      <Images className="w-4 h-4" />
+                      Portfolio
                     </button>
                     <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
                       <DollarSign className="w-4 h-4" />
@@ -460,6 +456,10 @@ export default function AlignSpacesPage() {
                     <button onClick={() => { setLocation("/support"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-support-menu">
                       <HelpCircle className="w-4 h-4" />
                       Support
+                    </button>
+                    <button onClick={() => { setLocation("/portal"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portal-menu">
+                      <User className="w-4 h-4" />
+                      Client Portal
                     </button>
                     <div className="border-t border-stone-100 my-1" />
                     <button onClick={() => { setShowListModal(true); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-[#c4956a] hover:text-[#b3845d] hover:bg-[#c4956a]/5 transition-colors flex items-center gap-3 font-medium" data-testid="link-list-space-menu">
