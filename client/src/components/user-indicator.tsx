@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { User, LogOut, ChevronDown, LifeBuoy, FileText } from "lucide-react";
+import { User, LogIn, LogOut, ChevronDown, LifeBuoy, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface UserIndicatorProps {
@@ -35,7 +35,7 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
         className="flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2 text-[#d4c4a8] hover:text-[#f0e6d0] whitespace-nowrap"
         data-testid="link-sign-in"
       >
-        <User className="w-4 h-4" />
+        <LogIn className="w-4 h-4" />
         Sign In
       </Link>
     ) : (
@@ -45,7 +45,7 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
         data-testid="link-sign-in"
       >
         <div className="w-7 h-7 rounded-full border border-foreground/20 flex items-center justify-center">
-          <User className="w-3.5 h-3.5" />
+          <LogIn className="w-3.5 h-3.5" />
         </div>
       </Link>
     );
