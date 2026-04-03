@@ -1930,36 +1930,25 @@ function PortalContent() {
   const isSpaceHost = mySpaces.length > 0;
   const isNewUser = !isPhotoClient && !isSpaceHost;
 
-  // Smart default tab: user preference > auto-detect from data > shoots
+  // Apply user's saved default tab preference (falls back to overview)
   useEffect(() => {
     if (tabResolved) return;
     if (isLoading) return;
 
-    // User has a saved preference
     if (user?.defaultPortalTab) {
       const saved = user.defaultPortalTab;
       if (saved === "my-spaces") {
         setActiveTab("spaces");
         setSpacesSubTab("my-spaces");
-        setTabResolved(true);
-        return;
-      }
-      if (saved === "past-spaces") {
+      } else if (saved === "past-spaces") {
         setActiveTab("spaces");
         setSpacesSubTab("my-bookings");
-        setTabResolved(true);
-        return;
-      }
-      if (["overview", "shoots", "edits", "messages", "spaces"].includes(saved)) {
+      } else if (["overview", "shoots", "edits", "messages", "spaces"].includes(saved)) {
         setActiveTab(saved as typeof activeTab);
-        setTabResolved(true);
-        return;
       }
     }
-
-    // Default to overview
     setTabResolved(true);
-  }, [isLoading, shoots, editRequests, spaceBookings, user, tabResolved]);
+  }, [isLoading, user, tabResolved]);
 
   if (selectedShoot) {
     return (

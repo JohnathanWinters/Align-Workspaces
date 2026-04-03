@@ -453,10 +453,10 @@ function NameSection({ user }: { user: AuthUser }) {
 function DefaultTabSection({ user }: { user: AuthUser }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const currentTab = user.defaultPortalTab || "auto";
+  const currentTab = user.defaultPortalTab || "overview";
 
   const options = [
-    { value: "auto", label: "Auto-detect" },
+    { value: "overview", label: "Overview" },
     { value: "shoots", label: "Shoots" },
     { value: "edits", label: "Edits" },
     { value: "my-spaces", label: "My Workspaces" },
@@ -472,7 +472,7 @@ function DefaultTabSection({ user }: { user: AuthUser }) {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tab: value === "auto" ? null : value }),
+        body: JSON.stringify({ tab: value }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -502,7 +502,7 @@ function DefaultTabSection({ user }: { user: AuthUser }) {
             onClick={() => handleSelect(opt.value)}
             disabled={saving}
             className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-              currentTab === opt.value || (opt.value === "auto" && !user.defaultPortalTab)
+              currentTab === opt.value
                 ? "border-gray-800 bg-gray-800 text-white"
                 : "border-gray-200 text-gray-500 hover:border-gray-300"
             } disabled:opacity-50`}
