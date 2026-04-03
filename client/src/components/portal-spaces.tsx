@@ -3093,10 +3093,10 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
   const isHost = mySpaces.length > 0;
 
   const tabs = [
-    { key: "saved" as const, label: "Saved", icon: Heart },
     { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
     { key: "my-spaces" as const, label: "My Workspaces", icon: Building2 },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
+    { key: "saved" as const, label: "Saved", icon: Heart },
   ];
 
   const { data: loyaltyData } = useQuery<{
