@@ -655,6 +655,8 @@ export const pipelineContacts = pgTable("pipeline_contacts", {
   lastContactDate: timestamp("last_contact_date"),
   leadId: varchar("lead_id"),
   bookingId: varchar("booking_id"),
+  spaceId: varchar("space_id"),
+  shootId: varchar("shoot_id"),
   estimatedValue: integer("estimated_value"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

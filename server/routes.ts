@@ -6783,7 +6783,12 @@ ${featuredSection}
   app.get("/api/admin/pipeline", isAdmin, async (_req, res) => {
     try {
       const contacts = await storage.getPipelineContacts();
-      res.json(contacts);
+      // Normalize legacy stages to current stage set
+      const normalized = contacts.map(c => ({
+        ...c,
+        stage: c.stage === "follow-up" ? "contacted" : c.stage,
+      }));
+      res.json(normalized);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

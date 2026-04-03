@@ -73,6 +73,7 @@ import {
   DollarSign,
   ArrowLeft,
   RefreshCw,
+  Home,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -5128,10 +5129,9 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
 
 const PIPELINE_STAGES = [
   { key: "new", label: "New", color: "bg-blue-100 text-blue-700" },
-  { key: "contacted", label: "Reached Out", color: "bg-purple-100 text-purple-700" },
-  { key: "follow-up", label: "Following Up", color: "bg-yellow-100 text-yellow-800" },
+  { key: "contacted", label: "Contact", color: "bg-purple-100 text-purple-700" },
   { key: "booked", label: "Scheduled", color: "bg-green-100 text-green-700" },
-  { key: "completed", label: "Active Client", color: "bg-emerald-100 text-emerald-700" },
+  { key: "completed", label: "Active", color: "bg-emerald-100 text-emerald-700" },
   { key: "lost", label: "Inactive", color: "bg-stone-200 text-stone-500" },
 ];
 
@@ -5163,10 +5163,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const fileRef = useRef<HTMLInputElement>(null);
   const [expandedListContact, setExpandedListContact] = useState<string | null>(null);
   const [showActions, setShowActions] = useState(false);
+  const [allSpaces, setAllSpaces] = useState<any[]>([]);
+  const [allShoots, setAllShoots] = useState<any[]>([]);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
     category: "portraits", stage: "new", notes: "",
-    nextFollowUp: "",
+    nextFollowUp: "", spaceId: "", shootId: "",
   });
 
   const adminFetch = useCallback(async (url: string, opts: RequestInit = {}) => {
@@ -5183,6 +5185,11 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
 
   useEffect(() => { loadContacts(); }, [loadContacts]);
 
+  useEffect(() => {
+    adminFetch("/api/admin/spaces/all").then(r => r.ok ? r.json() : []).then(d => setAllSpaces(Array.isArray(d) ? d : [])).catch(() => {});
+    adminFetch("/api/admin/shoots").then(r => r.ok ? r.json() : []).then(d => setAllShoots(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [adminFetch]);
+
   const loadActivities = async (contactId: string) => {
     try {
       const res = await adminFetch(`/api/admin/pipeline/${contactId}/activities`);
@@ -5196,6 +5203,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       const body: any = { ...form };
       if (form.nextFollowUp) body.nextFollowUp = new Date(form.nextFollowUp).toISOString();
       else body.nextFollowUp = null;
+      body.spaceId = form.spaceId || null;
+      body.shootId = form.shootId || null;
       if (editingContact) {
         const res = await adminFetch(`/api/admin/pipeline/${editingContact.id}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -5212,7 +5221,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         if (res.ok) { toast({ title: "Contact added" }); }
       }
       setShowForm(false); setEditingContact(null);
-      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "" });
+      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "", spaceId: "", shootId: "" });
       await loadContacts();
     } catch { toast({ title: "Save failed", variant: "destructive" }); }
   };
@@ -5324,6 +5333,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       category: contact.category || "portraits", stage: contact.stage,
       notes: contact.notes || "",
       nextFollowUp: contact.nextFollowUp ? new Date(contact.nextFollowUp).toISOString().split("T")[0] : "",
+      spaceId: (contact as any).spaceId || "", shootId: (contact as any).shootId || "",
     });
     setShowForm(true);
   };
@@ -5416,6 +5426,20 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.source}</span>
                 <span className="flex items-center gap-1.5 capitalize"><Camera className="w-3.5 h-3.5 text-gray-400" /> {selectedContact.category}</span>
               </div>
+
+              {/* Linked workspace / photoshoot */}
+              {((selectedContact as any).spaceId || (selectedContact as any).shootId) && (
+                <div className="flex flex-wrap gap-2 text-sm">
+                  {(selectedContact as any).spaceId && (() => {
+                    const space = allSpaces.find((s: any) => s.id === (selectedContact as any).spaceId);
+                    return space ? <span className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium"><Home className="w-3 h-3" /> {space.name}</span> : null;
+                  })()}
+                  {(selectedContact as any).shootId && (() => {
+                    const shoot = allShoots.find((s: any) => s.id === (selectedContact as any).shootId);
+                    return shoot ? <span className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 text-violet-700 rounded-full text-xs font-medium"><Camera className="w-3 h-3" /> {shoot.title}</span> : null;
+                  })()}
+                </div>
+              )}
 
               {/* Follow-up + last contact */}
               <div className="flex flex-wrap gap-3 text-sm">
@@ -5569,7 +5593,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               )}
             </AnimatePresence>
           </div>
-          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "" }); }} data-testid="button-add-contact">
+          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "", spaceId: "", shootId: "" }); }} data-testid="button-add-contact">
             <Plus className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Add Contact</span>
           </Button>
         </div>
@@ -5614,7 +5638,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         </div>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mb-4 sm:mb-5">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mb-4 sm:mb-5">
         {PIPELINE_STAGES.map(stage => {
           const allContacts = contacts.filter(c => {
             if (filter !== "all" && c.category !== filter) return false;
@@ -5802,6 +5826,28 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   <Label className="text-xs text-gray-500">Next Follow-up</Label>
                   <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" data-testid="input-contact-followup" />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-gray-500">Linked Workspace</Label>
+                    <Select value={form.spaceId || "__none__"} onValueChange={v => setForm(p => ({ ...p, spaceId: v === "__none__" ? "" : v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-space"><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {allSpaces.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Linked Photoshoot</Label>
+                    <Select value={form.shootId || "__none__"} onValueChange={v => setForm(p => ({ ...p, shootId: v === "__none__" ? "" : v }))}>
+                      <SelectTrigger className="h-9 text-sm" data-testid="select-contact-shoot"><SelectValue placeholder="None" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {allShoots.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div>
                   <Label className="text-xs text-gray-500">Notes</Label>
                   <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="h-20 text-sm" data-testid="input-contact-notes" />
@@ -5885,6 +5931,26 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     <Label className="text-xs text-gray-500">Follow-up</Label>
                     <Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({ ...p, nextFollowUp: e.target.value }))} className="h-9 text-sm" />
                   </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Linked Workspace</Label>
+                  <Select value={form.spaceId || "__none__"} onValueChange={v => setForm(p => ({ ...p, spaceId: v === "__none__" ? "" : v }))}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {allSpaces.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Linked Photoshoot</Label>
+                  <Select value={form.shootId || "__none__"} onValueChange={v => setForm(p => ({ ...p, shootId: v === "__none__" ? "" : v }))}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {allShoots.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Notes</Label>
