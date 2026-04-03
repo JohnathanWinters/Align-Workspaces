@@ -7455,6 +7455,36 @@ ${featuredSection}
     }
   });
 
+  app.post("/api/community-events/upload-image", isAuthenticated, upload.single("image"), async (req: any, res) => {
+    try {
+      const file = req.file;
+      if (!file) return res.status(400).json({ message: "No image provided" });
+      const raw = await fs.promises.readFile(file.path);
+      const buffer = await sharp(raw).resize(1200, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+      await fs.promises.unlink(file.path).catch(() => {});
+      const imageUrl = await uploadBufferToObjectStorage(buffer, "image/webp");
+      res.json({ imageUrl });
+    } catch (err: any) {
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  app.patch("/api/community-events/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const event = await storage.getCommunityEventById(req.params.id);
+      if (!event || event.userId !== req.user.id) return res.status(403).json({ message: "Not authorized" });
+      const updates = req.body;
+      // Re-require approval if image changes on an approved event
+      if (updates.imageUrl && updates.imageUrl !== event.imageUrl && event.approvalStatus === "approved") {
+        updates.approvalStatus = "pending";
+      }
+      const updated = await storage.updateCommunityEvent(req.params.id, updates);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.get("/api/my-events", isAuthenticated, async (req: any, res) => {
     try {
       const events = await storage.getCommunityEventsByUser(req.user.id);

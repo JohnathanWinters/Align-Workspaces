@@ -286,7 +286,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative",
 };
 
-function EventCard({ event }: { event: { id: string; title: string; category: string; eventDate: string; eventTime: string; endTime: string | null; location: string | null; hostName: string; rsvpCount: number } }) {
+function EventCard({ event }: { event: { id: string; title: string; category: string; eventDate: string; eventTime: string; endTime: string | null; location: string | null; hostName: string; rsvpCount: number; imageUrl?: string | null } }) {
   const date = new Date(event.eventDate + "T00:00:00");
   const month = date.toLocaleDateString(undefined, { month: "short" }).toUpperCase();
   const day = date.getDate();
@@ -294,7 +294,11 @@ function EventCard({ event }: { event: { id: string; title: string; category: st
   const timeStr = new Date(`2000-01-01T${event.eventTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div className="snap-start shrink-0 w-[72%] sm:w-auto bg-white rounded-xl border border-stone-100 p-4 hover:shadow-md transition-shadow">
+    <div className="snap-start shrink-0 w-[72%] sm:w-auto bg-white rounded-xl border border-stone-100 overflow-hidden hover:shadow-md transition-shadow">
+      {event.imageUrl && (
+        <img src={event.imageUrl} alt={event.title} className="w-full h-28 object-cover" />
+      )}
+      <div className="p-4">
       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${EVENT_TYPE_COLORS[event.category] || "bg-stone-100 text-stone-500"}`}>
         {EVENT_TYPE_LABELS[event.category] || event.category}
       </span>
@@ -315,6 +319,7 @@ function EventCard({ event }: { event: { id: string; title: string; category: st
             <p className="text-[10px] text-[#c4956a] font-medium mt-1.5">{event.rsvpCount} attending</p>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
@@ -342,6 +347,7 @@ export default function AlignSpacesPage() {
     id: string; title: string; description: string; category: string;
     eventDate: string; eventTime: string; endTime: string | null;
     location: string | null; hostName: string; rsvpCount: number;
+    imageUrl: string | null;
   }[]>({
     queryKey: ["/api/community-events"],
   });

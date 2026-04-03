@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Loader2, CheckCircle, Calendar, MapPin, Clock } from "lucide-react";
+import { X, Mail, Loader2, CheckCircle, Calendar, MapPin, Clock, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,9 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
   const [authStep, setAuthStep] = useState<"email" | "name" | "sent">("email");
   const [authLoading, setAuthLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -39,9 +42,24 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
 
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/community-events/upload-image", { method: "POST", credentials: "include", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setImageUrl(data.imageUrl);
+      }
+    } catch {} finally { setUploading(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
+
   const createMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/community-events", form);
+      await apiRequest("POST", "/api/community-events", { ...form, imageUrl: imageUrl || undefined });
     },
     onSuccess: () => {
       setSubmitted(true);
@@ -188,6 +206,28 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
             <div>
               <label className="text-xs text-stone-500 mb-1 block">Location</label>
               <Input value={form.location} onChange={e => update("location", e.target.value)} placeholder="e.g., Wynwood, Miami or Virtual" className="h-10" />
+            </div>
+
+            <div>
+              <label className="text-xs text-stone-500 mb-1 block">Banner Photo</label>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              {imageUrl ? (
+                <div className="relative rounded-lg overflow-hidden">
+                  <img src={imageUrl} alt="Event banner" className="w-full h-32 object-cover rounded-lg" />
+                  <button onClick={() => setImageUrl("")} className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center hover:bg-black/70 transition-colors">
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full h-24 border-2 border-dashed border-stone-200 rounded-lg flex flex-col items-center justify-center gap-1 hover:border-stone-300 transition-colors text-stone-400 hover:text-stone-500"
+                >
+                  {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
+                  <span className="text-xs">{uploading ? "Uploading..." : "Add a banner photo"}</span>
+                </button>
+              )}
             </div>
 
             <div>
