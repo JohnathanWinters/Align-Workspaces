@@ -5,6 +5,13 @@ import { z } from "zod";
 
 export * from "./models/auth";
 
+// Session table managed by connect-pg-simple — defined here so drizzle-kit push doesn't drop it
+export const sessions = pgTable("sessions", {
+  sid: varchar("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
+});
+
 export const leads = pgTable("leads", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
