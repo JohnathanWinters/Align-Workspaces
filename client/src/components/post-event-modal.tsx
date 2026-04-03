@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Loader2, CheckCircle, Calendar, MapPin, Clock, ImagePlus } from "lucide-react";
+import { X, Mail, Loader2, CheckCircle, Calendar, MapPin, Clock, ImagePlus, Download, Copy, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,118 @@ const EVENT_CATEGORIES = [
   { key: "creative", label: "Creative Studios", color: "bg-[#f2ebe8] text-[#8a6560] border-[#d4c0bb]" },
 ];
 
+const CAT_LABELS: Record<string, string> = {
+  therapy: "Therapy & Counseling", coaching: "Coaching & Consulting", wellness: "Wellness & Holistic",
+  workshop: "Workshops & Classes", creative: "Creative Studios",
+};
+
+function generateShareCard(event: { title: string; eventDate: string; eventTime: string; location?: string | null; hostName: string; category: string }): Promise<Blob> {
+  return new Promise((resolve) => {
+    const w = 1080, h = 1080;
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d")!;
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, "#faf6f1");
+    grad.addColorStop(1, "#f0ebe6");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Accent bar
+    ctx.fillStyle = "#c4956a";
+    ctx.fillRect(0, 0, w, 8);
+
+    // "ALIGN" branding
+    ctx.fillStyle = "#c4956a";
+    ctx.font = "bold 14px sans-serif";
+    ctx.letterSpacing = "6px";
+    ctx.fillText("ALIGN WORKSPACES", 80, 80);
+
+    // "FREE EVENT" badge
+    ctx.fillStyle = "#2a2a2a";
+    ctx.font = "bold 13px sans-serif";
+    const badgeText = "FREE EVENT";
+    const badgeW = ctx.measureText(badgeText).width + 24;
+    const badgeX = w - 80 - badgeW;
+    ctx.beginPath();
+    ctx.roundRect(badgeX, 62, badgeW, 28, 14);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(badgeText, badgeX + 12, 81);
+
+    // Date block
+    const date = new Date(event.eventDate + "T00:00:00");
+    const month = date.toLocaleDateString(undefined, { month: "short" }).toUpperCase();
+    const day = String(date.getDate());
+    const weekday = date.toLocaleDateString(undefined, { weekday: "long" });
+
+    ctx.fillStyle = "#c4956a";
+    ctx.font = "600 28px sans-serif";
+    ctx.fillText(month, 80, 200);
+    ctx.fillStyle = "#2a2a2a";
+    ctx.font = "bold 120px serif";
+    ctx.fillText(day, 80, 320);
+    ctx.fillStyle = "#8a7e72";
+    ctx.font = "500 24px sans-serif";
+    ctx.fillText(weekday, 80, 360);
+
+    // Title
+    ctx.fillStyle = "#2a2a2a";
+    ctx.font = "bold 48px serif";
+    const words = event.title.split(" ");
+    let line = "", y = 460;
+    for (const word of words) {
+      const test = line + (line ? " " : "") + word;
+      if (ctx.measureText(test).width > w - 160 && line) {
+        ctx.fillText(line, 80, y);
+        line = word; y += 60;
+      } else { line = test; }
+    }
+    if (line) { ctx.fillText(line, 80, y); y += 60; }
+
+    // Category
+    y += 10;
+    ctx.fillStyle = "#c4956a";
+    ctx.font = "500 22px sans-serif";
+    ctx.fillText(CAT_LABELS[event.category] || event.category, 80, y);
+    y += 50;
+
+    // Time
+    const timeStr = new Date(`2000-01-01T${event.eventTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    ctx.fillStyle = "#5a5248";
+    ctx.font = "500 26px sans-serif";
+    ctx.fillText(timeStr, 80, y);
+    y += 40;
+
+    // Location
+    if (event.location) {
+      ctx.fillStyle = "#8a7e72";
+      ctx.font = "400 24px sans-serif";
+      ctx.fillText(event.location, 80, y);
+      y += 40;
+    }
+
+    // Host
+    y = Math.max(y + 20, h - 140);
+    ctx.fillStyle = "#8a7e72";
+    ctx.font = "400 22px sans-serif";
+    ctx.fillText(`Hosted by ${event.hostName}`, 80, y);
+
+    // Bottom bar
+    ctx.fillStyle = "#c4956a";
+    ctx.fillRect(0, h - 8, w, 8);
+
+    // Footer URL
+    ctx.fillStyle = "#b8a08a";
+    ctx.font = "400 18px sans-serif";
+    ctx.fillText("alignworkspaces.com", 80, h - 30);
+
+    canvas.toBlob(blob => resolve(blob!), "image/png");
+  });
+}
+
 export function PostEventModal({ onClose }: { onClose: () => void }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -25,9 +137,11 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
   const [authName, setAuthName] = useState("");
   const [authStep, setAuthStep] = useState<"email" | "name" | "sent">("email");
   const [authLoading, setAuthLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedEvent, setSubmittedEvent] = useState<{ id: string; title: string; eventDate: string; eventTime: string; location: string; hostName: string; category: string } | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [cardGenerating, setCardGenerating] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
@@ -59,10 +173,21 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/community-events", { ...form, imageUrl: imageUrl || undefined });
+      const res = await fetch("/api/community-events", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, imageUrl: imageUrl || undefined }),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || "Failed"); }
+      return res.json();
     },
-    onSuccess: () => {
-      setSubmitted(true);
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/community-events"] });
+      setSubmittedEvent({
+        id: data.id, title: form.title, eventDate: form.eventDate, eventTime: form.eventTime,
+        location: form.location, hostName: user?.firstName || "Anonymous", category: form.category,
+      });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -92,6 +217,53 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
 
   const canSubmit = form.title.trim() && form.category && form.eventDate && form.eventTime && form.description.trim();
 
+  // Share helpers
+  const getEventUrl = useCallback(() => {
+    return submittedEvent ? `${window.location.origin}/events/${submittedEvent.id}` : "";
+  }, [submittedEvent]);
+
+  const getShareText = useCallback(() => {
+    if (!submittedEvent) return "";
+    const date = new Date(submittedEvent.eventDate + "T00:00:00");
+    const dateStr = date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    const timeStr = new Date(`2000-01-01T${submittedEvent.eventTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    const loc = submittedEvent.location ? ` at ${submittedEvent.location}` : "";
+    return `Join me for "${submittedEvent.title}" on ${dateStr} at ${timeStr}${loc}! Free for professionals.\n\nRSVP: ${getEventUrl()}`;
+  }, [submittedEvent, getEventUrl]);
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const handleDownloadCard = async () => {
+    if (!submittedEvent) return;
+    setCardGenerating(true);
+    try {
+      const blob = await generateShareCard(submittedEvent);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${submittedEvent.title.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase()}-align.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {} finally { setCardGenerating(false); }
+  };
+
+  const handleNativeShare = async () => {
+    if (!navigator.share) return;
+    try {
+      await navigator.share({ title: submittedEvent?.title, text: getShareText(), url: getEventUrl() });
+    } catch {}
+  };
+
+  const shareToLinkedIn = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(getEventUrl())}`, "_blank");
+  const shareToTwitter = () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getShareText())}`, "_blank");
+  const shareToWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(getShareText())}`, "_blank");
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -109,20 +281,71 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-          <h2 className="font-serif text-lg font-semibold">Post a Free Event</h2>
+          <h2 className="font-serif text-lg font-semibold">{submittedEvent ? "Share Your Event" : "Post a Free Event"}</h2>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-700 p-1"><X className="w-5 h-5" /></button>
         </div>
 
-        {submitted ? (
-          <div className="p-8 text-center">
-            <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-7 h-7 text-green-600" />
+        {submittedEvent ? (
+          <div className="p-6 space-y-5">
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-7 h-7 text-green-600" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold mb-1">Event Submitted!</h3>
+              <p className="text-sm text-stone-500">Pending approval. Share it now so people know it's coming!</p>
             </div>
-            <h3 className="font-serif text-lg font-semibold mb-2">Event Submitted!</h3>
-            <p className="text-sm text-stone-500 max-w-sm mx-auto mb-6">
-              Your event is pending approval. We'll review it and it will appear on the site once approved.
-            </p>
-            <Button onClick={onClose} className="bg-stone-900 text-white hover:bg-stone-800">Done</Button>
+
+            {/* Download share card */}
+            <button
+              onClick={handleDownloadCard}
+              disabled={cardGenerating}
+              className="w-full flex items-center gap-3 p-4 bg-[#faf6f1] rounded-xl border border-stone-200 hover:border-[#c4956a]/50 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-lg bg-[#c4956a]/10 flex items-center justify-center shrink-0">
+                {cardGenerating ? <Loader2 className="w-5 h-5 animate-spin text-[#c4956a]" /> : <Download className="w-5 h-5 text-[#c4956a]" />}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-stone-900">Download Share Card</p>
+                <p className="text-xs text-stone-500">Branded image ready for Instagram, LinkedIn, stories</p>
+              </div>
+            </button>
+
+            {/* Copy share text */}
+            <button
+              onClick={handleCopyText}
+              className="w-full flex items-center gap-3 p-4 bg-white rounded-xl border border-stone-200 hover:border-stone-300 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5 text-stone-500" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-stone-900">{copied ? "Copied!" : "Copy Share Text"}</p>
+                <p className="text-xs text-stone-500 truncate">{getShareText().split("\n")[0]}</p>
+              </div>
+            </button>
+
+            {/* Share buttons */}
+            <div>
+              <p className="text-xs text-stone-500 mb-2">Share directly</p>
+              <div className="flex gap-2">
+                {typeof navigator !== "undefined" && navigator.share && (
+                  <button onClick={handleNativeShare} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 transition-colors">
+                    <Share2 className="w-3.5 h-3.5" /> Share
+                  </button>
+                )}
+                <button onClick={shareToLinkedIn} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#0077B5] text-white text-xs font-medium hover:opacity-90 transition-opacity">
+                  LinkedIn
+                </button>
+                <button onClick={shareToTwitter} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#1DA1F2] text-white text-xs font-medium hover:opacity-90 transition-opacity">
+                  Twitter
+                </button>
+                <button onClick={shareToWhatsApp} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[#25D366] text-white text-xs font-medium hover:opacity-90 transition-opacity">
+                  WhatsApp
+                </button>
+              </div>
+            </div>
+
+            <Button onClick={onClose} variant="outline" className="w-full">Done</Button>
           </div>
         ) : !isAuthenticated ? (
           <div className="p-6 space-y-5">

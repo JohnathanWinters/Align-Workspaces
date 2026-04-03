@@ -294,7 +294,7 @@ function EventCard({ event }: { event: { id: string; title: string; category: st
   const timeStr = new Date(`2000-01-01T${event.eventTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   return (
-    <div className="snap-start shrink-0 w-[72%] sm:w-auto bg-white rounded-xl border border-stone-100 overflow-hidden hover:shadow-md transition-shadow">
+    <Link href={`/events/${event.id}`} className="snap-start shrink-0 w-[72%] sm:w-auto bg-white rounded-xl border border-stone-100 overflow-hidden hover:shadow-md transition-shadow block">
       {event.imageUrl && (
         <img src={event.imageUrl} alt={event.title} className="w-full h-28 object-cover" />
       )}
@@ -321,7 +321,7 @@ function EventCard({ event }: { event: { id: string; title: string; category: st
         </div>
       </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -723,7 +723,7 @@ export default function AlignSpacesPage() {
             Your space is only half the picture.
           </p>
           <div className="bg-white border border-stone-200/60 rounded-2xl overflow-hidden flex flex-col md:flex-row">
-            <div className="md:w-2/5 aspect-[4/3] md:aspect-auto overflow-hidden relative">
+            <div className="md:w-1/2 aspect-[3/4] sm:aspect-[4/3] md:aspect-auto overflow-hidden relative">
               <img
                 src="/images/portrait-hero-homepage.webp"
                 alt="Professional portrait with creative direction"
@@ -731,29 +731,29 @@ export default function AlignSpacesPage() {
                 style={{ objectPosition: "50% 25%" }}
               />
               {/* Mood board overlay — shows the design output, not just the photo */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
                 <div className="flex items-end justify-between gap-3">
                   <div className="flex-shrink-0">
                     <img
                       src="/images/env-office-bright.webp"
                       alt="Office environment mood"
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border-2 border-white/30"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border-2 border-white/30 shadow-lg"
                     />
                   </div>
-                  <div className="flex gap-1.5 sm:gap-2">
+                  <div className="flex gap-2">
                     {["#A8C4D4", "#F5EDE3", "#8B7355"].map((color, i) => (
                       <div
                         key={i}
-                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white/40"
+                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white/40 shadow-md"
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
                 </div>
-                <p className="text-[10px] text-white/60 mt-2 tracking-wide uppercase">Oat & Sage, Welcoming, Bright</p>
+                <p className="text-[11px] text-white/70 mt-2.5 tracking-wide uppercase font-medium">Oat & Sage, Welcoming, Bright</p>
               </div>
             </div>
-            <div className="md:w-3/5 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
+            <div className="md:w-1/2 p-8 sm:p-10 md:p-12 flex flex-col justify-center">
               <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold mb-3">Your Image Is Your First Session</span>
               <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight leading-tight mb-4">
                 Design the First Impression<br />Your Clients Deserve

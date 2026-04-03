@@ -18,6 +18,7 @@ import AlignSpacesPage from "@/pages/align-spaces";
 import SpacesBrowsePage from "@/pages/spaces-browse";
 import SpaceDetailPage from "@/pages/space-detail";
 import SupportPage from "@/pages/support";
+import EventDetailPage from "@/pages/event-detail";
 import PortraitLandingPage from "@/pages/portrait-landing";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/portrait-builder" component={BuildMyPhoto} />
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/our-vision" component={AboutPage} />
+      <Route path="/events/:id" component={EventDetailPage} />
       <Route path="/support" component={SupportPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />

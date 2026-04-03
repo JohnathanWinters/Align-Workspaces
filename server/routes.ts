@@ -7494,6 +7494,15 @@ ${featuredSection}
     }
   });
 
+  app.get("/api/community-events/:id/my-rsvp", isAuthenticated, async (req: any, res) => {
+    try {
+      const existing = await storage.getRsvpByUserAndEvent(req.user.id, req.params.id);
+      res.json({ rsvped: !!existing });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   app.post("/api/community-events/:id/rsvp", isAuthenticated, async (req: any, res) => {
     try {
       const existing = await storage.getRsvpByUserAndEvent(req.user.id, req.params.id);
