@@ -629,12 +629,12 @@ export default function AlignSpacesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
-              { icon: ShieldCheck, title: "Verified Host Insurance", desc: "Every host maintains $1M+ liability coverage. Listings are suspended if insurance lapses. Your safety is non-negotiable." },
-              { icon: Repeat, title: "Recurring Bookings", desc: "Lock in a weekly time slot for your regulars. Set it once, and your space is guaranteed every week." },
-              { icon: BadgeCheck, title: "Certified Spaces", desc: "Hosts self-certify across five tiers, from Clinical Ready for therapists to Service Ready for barbers. Know what you're walking into." },
-              { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Hosts confirm their space is accurate and insured. Guests confirm professional responsibility." },
-              { icon: Building2, title: "Made for Your Practice", desc: "Therapy offices, coaching rooms, wellness studios, creative spaces. Find the setting that fits your work." },
-              { icon: Compass, title: "Obvious Fit, Every Time", desc: "Every workspace is positioned by practice type so the right professionals find the right space. No guesswork, no wasted visits." },
+              { icon: Building2, title: "Spaces Built for You", desc: "Therapy offices, coaching rooms, wellness studios, creative spaces — every listing is designed for how professionals actually work." },
+              { icon: Compass, title: "Find Your Fit Instantly", desc: "Spaces are organized by practice type so you find the right room in seconds. No scrolling through coworking desks and conference rooms." },
+              { icon: Repeat, title: "Lock In Your Weekly Slot", desc: "Book a recurring time for your regulars. Set it once, your space is guaranteed every week — no scrambling before each session." },
+              { icon: BadgeCheck, title: "Certified Spaces", desc: "Hosts certify their spaces across readiness tiers, from Clinical Ready for therapists to Service Ready for barbers. Know what you're walking into." },
+              { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Hosts confirm their space is accurate, guests confirm professional responsibility." },
+              { icon: ShieldCheck, title: "Host Insurance Verified", desc: "Every host maintains $1M+ liability coverage. Listings are suspended if insurance lapses — your safety is built into the platform." },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
