@@ -29,26 +29,19 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
 
   if (!isAuthenticated || !user) {
     const isLight = variant === "light";
-    return isLight ? (
-      <Link
+    return (
+      <a
         href="/portal"
-        className="flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2 text-[#d4c4a8] hover:text-[#f0e6d0] whitespace-nowrap"
+        className={`inline-flex items-center gap-2 whitespace-nowrap transition-colors duration-300 ${
+          isLight
+            ? "text-xs tracking-[0.2em] uppercase font-semibold px-3 py-2 text-[#d4c4a8] hover:text-[#f0e6d0]"
+            : "text-foreground/40 hover:text-foreground/70"
+        }`}
         data-testid="link-sign-in"
       >
-        <LogIn className="w-4 h-4" />
-        Sign In
-      </Link>
-    ) : (
-      <Link
-        href="/portal"
-        className="flex items-center gap-2 text-foreground/40 hover:text-foreground/70 transition-colors whitespace-nowrap"
-        data-testid="link-sign-in"
-      >
-        <div className="w-7 h-7 rounded-full border border-foreground/20 flex items-center justify-center">
-          <LogIn className="w-3.5 h-3.5" />
-        </div>
-        <span className="text-xs font-medium">Sign In</span>
-      </Link>
+        <LogIn className={isLight ? "w-4 h-4" : "w-4 h-4"} />
+        <span className={isLight ? "" : "text-xs font-medium"}>Sign In</span>
+      </a>
     );
   }
 
