@@ -5818,6 +5818,48 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               </div>
             );
           })()}
+
+          {/* All contacts list */}
+          {filteredContacts.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-gray-400" /> All Contacts <span className="text-gray-400 font-normal">({filteredContacts.length})</span>
+              </h3>
+              <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+                {filteredContacts.map(c => (
+                  <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
+                    data-testid={`all-contact-${c.id}`}>
+                    <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                      <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                        {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                      {c.nextFollowUp && (
+                        <span className={`text-[10px] shrink-0 hidden sm:inline ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
+                          {new Date(c.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
+                        </span>
+                      )}
+                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={e => quickLog(c, "call", e)} className="w-7 h-7 rounded-full hover:bg-blue-50 flex items-center justify-center transition-colors" title="Log call">
+                        <Phone className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" />
+                      </button>
+                      <button onClick={e => quickLog(c, "email", e)} className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
+                        <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
+                      </button>
+                      <button onClick={e => snoozeFollowUp(c, 1, e)} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Snooze 1 day">
+                        <Clock className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
       <AnimatePresence>
