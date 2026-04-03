@@ -1957,25 +1957,7 @@ function PortalContent() {
       }
     }
 
-    // Auto-detect: prioritize most recent activity
-    const latestShoot = shoots.length > 0
-      ? Math.max(...shoots.map(s => new Date(s.createdAt || 0).getTime()))
-      : 0;
-    const latestEdit = editRequests.length > 0
-      ? Math.max(...editRequests.map(e => new Date(e.createdAt || 0).getTime()))
-      : 0;
-    const allSpaceBookings = [...(spaceBookings?.guestBookings || []), ...(spaceBookings?.hostBookings || [])];
-    const latestSpace = allSpaceBookings.length > 0
-      ? Math.max(...allSpaceBookings.map(b => new Date(b.createdAt || b.bookingDate || 0).getTime()))
-      : 0;
-
-    const most = Math.max(latestShoot, latestEdit, latestSpace);
-    if (most > 0) {
-      if (most === latestSpace) setActiveTab("spaces");
-      else if (most === latestEdit) setActiveTab("edits");
-      else setActiveTab("shoots");
-    }
-
+    // Default to overview
     setTabResolved(true);
   }, [isLoading, shoots, editRequests, spaceBookings, user, tabResolved]);
 
@@ -2156,24 +2138,6 @@ function PortalContent() {
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
             <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide" data-testid="portal-tabs">
-              <button
-                onClick={() => setActiveTab("overview")}
-                data-testid="tab-overview"
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "overview"
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Overview
-                {activeTab === "overview" && (
-                  <motion.div
-                    layoutId="portal-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                  />
-                )}
-              </button>
               {(isPhotoClient || isNewUser) && (
                 <button
                   onClick={() => setActiveTab("shoots")}
@@ -2214,6 +2178,24 @@ function PortalContent() {
                   )}
                 </button>
               )}
+              <button
+                onClick={() => setActiveTab("overview")}
+                data-testid="tab-overview"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "overview"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Overview
+                {activeTab === "overview" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
               <button
                 onClick={() => setActiveTab("spaces")}
                 data-testid="tab-my-spaces"
