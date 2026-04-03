@@ -166,10 +166,10 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
                         Workspaces
                       </button>
                     </Link>
-                    <Link href="/portrait-builder">
+                    <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Camera className="w-4 h-4" />
-                        Portrait Builder
+                        Portraits
                       </button>
                     </Link>
                     <Link href="/portfolio">
@@ -585,7 +585,7 @@ function NominationModal({ open, onClose }: { open: boolean; onClose: () => void
               Share Their Story
             </Button>
             <p className="text-[11px] text-stone-400 text-center mt-4 italic">
-              Brought to you by Portrait Builder, telling the stories behind your work.
+              Brought to you by Portraits, telling the stories behind your work.
             </p>
           </form>
         )}
@@ -738,7 +738,7 @@ function ShareYourStoryModal({ open, onClose }: { open: boolean; onClose: () => 
                 Share Your Story
               </Button>
               <p className="text-[11px] text-stone-400 text-center mt-3 italic">
-                Brought to you by Portrait Builder, telling the stories behind your work.
+                Brought to you by Portraits, telling the stories behind your work.
               </p>
             </form>
           </>

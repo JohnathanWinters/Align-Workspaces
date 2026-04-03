@@ -26,6 +26,10 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { useAuth } from "@/hooks/use-auth";
 import GlobalMessenger from "@/components/global-messenger";
 
+function PortraitsPage() {
+  return <HomePage />;
+}
+
 function BuildMyPhoto() {
   return <HomePage autoStart />;
 }
@@ -36,7 +40,7 @@ function Router() {
       <Route path="/" component={AlignSpacesPage} />
       <Route path="/workspaces" component={SpacesBrowsePage} />
       <Route path="/spaces/:slug" component={SpaceDetailPage} />
-      <Route path="/portraits" component={PortraitLandingPage} />
+      <Route path="/portraits" component={PortraitsPage} />
       <Route path="/portrait-builder" component={BuildMyPhoto} />
       <Route path="/portfolio" component={PortfolioPage} />
       <Route path="/our-vision" component={AboutPage} />

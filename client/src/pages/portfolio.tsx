@@ -397,10 +397,10 @@ export default function PortfolioPage() {
                         Client Portal
                       </button>
                     </Link>
-                    <Link href="/portrait-builder">
+                    <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-portfolio">
                         <Camera className="w-4 h-4" />
-                        Portrait Builder
+                        Portraits
                       </button>
                     </Link>
                     <Link href="/workspaces">
@@ -584,7 +584,7 @@ export default function PortfolioPage() {
               <p className="text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
                 Tell us how you want clients to feel. We'll build the session around it, from color palette to setting to emotion.
               </p>
-              <Link href="/portrait-builder">
+              <Link href="/portraits">
                 <button
                   data-testid="button-cta-builder"
                   className="inline-flex items-center gap-2 text-sm tracking-widest uppercase bg-stone-900 text-white px-8 py-3.5 rounded-full hover:bg-stone-800 transition-all duration-300 font-medium"

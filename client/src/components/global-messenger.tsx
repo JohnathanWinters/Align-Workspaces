@@ -206,7 +206,7 @@ export default function GlobalMessenger() {
       const hidden =
         (path === "/portal" && tab === "messages") ||
         path === "/" ||
-        path === "/portrait-builder" ||
+        path === "/portraits" ||
         path === "/workspaces" ||
         path.startsWith("/featured");
       setIsHiddenPage(hidden);

@@ -83,7 +83,36 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
   const [portalLinkPending, setPortalLinkPending] = useState(false);
   const [portalLinked, setPortalLinked] = useState(false);
   const [fabricPreview, setFabricPreview] = useState<string | null>(null);
-  const [state, setState] = useState<ConfiguratorState>({ ...initialState });
+  const [state, setState] = useState<ConfiguratorState>(() => {
+    try {
+      const saved = localStorage.getItem("align_configurator_state");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.environment) return parsed;
+      }
+    } catch {}
+    return { ...initialState };
+  });
+  const [showResumeBanner, setShowResumeBanner] = useState(() => {
+    if (autoStart) return false;
+    try {
+      const saved = localStorage.getItem("align_configurator_state");
+      const step = localStorage.getItem("align_configurator_step");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return !!(parsed && parsed.environment && step && parseInt(step) > 0);
+      }
+    } catch {}
+    return false;
+  });
+
+  // Save configurator progress to localStorage
+  useEffect(() => {
+    if (currentStep > 0 && state.environment) {
+      localStorage.setItem("align_configurator_state", JSON.stringify(state));
+      localStorage.setItem("align_configurator_step", String(currentStep));
+    }
+  }, [state, currentStep]);
 
   const configuratorRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -101,6 +130,8 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
     const payment = params.get("payment");
     if (payment === "success") {
       setIsBooked(true);
+      localStorage.removeItem("align_configurator_state");
+      localStorage.removeItem("align_configurator_step");
       const savedBooking = localStorage.getItem("align_booking_data");
       if (savedBooking) {
         try { setBookingData(JSON.parse(savedBooking)); } catch {}
@@ -352,6 +383,22 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
       {currentStep === 0 && (
         <>
           <HeroSection onStart={handleStart} />
+          {showResumeBanner && (
+            <div className="max-w-xl mx-auto px-4 -mt-6 mb-8 relative z-10">
+              <div className="flex items-center justify-between gap-4 p-4 bg-white/90 backdrop-blur-sm rounded-xl border border-stone-200 shadow-sm">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-stone-900">You have an unfinished concept</p>
+                  <p className="text-xs text-stone-500">Pick up where you left off</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => { setShowResumeBanner(false); localStorage.removeItem("align_configurator_state"); localStorage.removeItem("align_configurator_step"); setState({ ...initialState }); }}
+                    className="text-xs text-stone-400 hover:text-stone-600 transition-colors">Discard</button>
+                  <button onClick={() => { setShowResumeBanner(false); const step = parseInt(localStorage.getItem("align_configurator_step") || "1"); setCurrentStep(step); setTimeout(() => configuratorRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }}
+                    className="px-4 py-2 text-xs font-medium bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors">Resume</button>
+                </div>
+              </div>
+            </div>
+          )}
           <TestimonialsSection />
         </>
       )}
@@ -370,7 +417,7 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                   <span className="hidden sm:inline">Back</span>
                 </button>
                 <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
-                  Portrait Builder
+                  Portraits
                 </span>
                 <div className="flex items-center gap-3 ml-auto z-10">
                   <UserIndicator />

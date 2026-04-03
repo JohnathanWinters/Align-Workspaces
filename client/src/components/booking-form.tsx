@@ -542,6 +542,7 @@ export function BookingForm({ onSubmit, onCheckout, isPending, isCheckoutPending
                     <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto mb-5" data-testid="text-collaborate-success-message">
                       Your concept has been saved and we've been notified. We'll review your vision and reach out soon to refine it together.
                     </p>
+                    <p className="text-xs text-muted-foreground/70 mb-4">We typically respond within 24 hours.</p>
                     <Link href="/portal">
                       <Button size="lg" className="w-full" data-testid="button-go-to-portal">
                         <LogIn className="w-4 h-4 mr-2" />

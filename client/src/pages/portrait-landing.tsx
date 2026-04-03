@@ -217,7 +217,7 @@ export default function PortraitLandingPage() {
               You've invested in your credentials, your space, your practice. Your image should match. Tell us your setting and your energy, we'll design the rest. In about two minutes.
             </p>
             <Link
-              href="/portrait-builder"
+              href="/portraits"
               className="inline-flex items-center gap-2 bg-stone-900 text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
             >
               Build Your Shoot Concept
@@ -348,7 +348,7 @@ export default function PortraitLandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/portrait-builder"
+                href="/portraits"
                 className="inline-flex items-center gap-2 bg-stone-900 text-white px-7 py-3 rounded-full text-sm font-medium hover:bg-stone-800 transition-colors"
               >
                 Build Your Shoot Concept

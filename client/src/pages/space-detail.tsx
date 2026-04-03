@@ -982,7 +982,7 @@ function ContactHostModal({ space, onClose }: { space: Space; onClose: () => voi
                 Send message
               </button>
               <p className="text-[10px] text-stone-400 text-center">
-                You'll be able to continue the conversation in your portal
+                Hosts typically respond within a few hours. You'll be able to continue the conversation in your portal.
               </p>
             </div>
           )}

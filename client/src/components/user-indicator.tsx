@@ -25,7 +25,25 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
     }
   }, [open]);
 
-  if (isLoading || !isAuthenticated || !user) return null;
+  if (isLoading) return null;
+
+  if (!isAuthenticated || !user) {
+    const isLight = variant === "light";
+    return (
+      <Link
+        href="/portal"
+        className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+          isLight
+            ? "text-[#d4c4a8] hover:text-[#f0e6d0]"
+            : "text-foreground/40 hover:text-foreground/70"
+        }`}
+        data-testid="link-sign-in"
+      >
+        <User className="w-4 h-4" />
+        Sign In
+      </Link>
+    );
+  }
 
   const isLight = variant === "light";
 

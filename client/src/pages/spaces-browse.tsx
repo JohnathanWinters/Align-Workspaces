@@ -1277,13 +1277,19 @@ export default function SpacesBrowsePage() {
     return params.get("list") === "true";
   });
   
-  const [searchQuery, setSearchQuery] = useState("");
-  const [priceMin, setPriceMin] = useState<string>("");
-  const [priceMax, setPriceMax] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get("q") || "");
+  const [priceMin, setPriceMin] = useState<string>(() => new URLSearchParams(window.location.search).get("priceMin") || "");
+  const [priceMax, setPriceMax] = useState<string>(() => new URLSearchParams(window.location.search).get("priceMax") || "");
   const [zipCode, setZipCode] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">("default");
+  const [sortBy, setSortBy] = useState<"default" | "price-low" | "price-high" | "distance">(() => {
+    const s = new URLSearchParams(window.location.search).get("sort");
+    return (s === "price-low" || s === "price-high" || s === "distance") ? s : "default";
+  });
   const [availableToday, setAvailableToday] = useState(false);
-  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
+  const [amenityFilters, setAmenityFilters] = useState<string[]>(() => {
+    const a = new URLSearchParams(window.location.search).get("amenities");
+    return a ? a.split(",").filter(Boolean) : [];
+  });
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -1292,6 +1298,19 @@ export default function SpacesBrowsePage() {
   const [availStartTime, setAvailStartTime] = useState<string>("");
   const [availHours, setAvailHours] = useState<string>("");
   const availSearchActive = !!(availDate && availStartTime && availHours);
+
+  // Sync filters to URL params
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const set = (k: string, v: string) => v ? url.searchParams.set(k, v) : url.searchParams.delete(k);
+    set("type", activeType === "all" ? "" : activeType);
+    set("q", searchQuery);
+    set("priceMin", priceMin);
+    set("priceMax", priceMax);
+    set("sort", sortBy === "default" ? "" : sortBy);
+    set("amenities", amenityFilters.join(","));
+    window.history.replaceState({}, "", url.toString());
+  }, [activeType, searchQuery, priceMin, priceMax, sortBy, amenityFilters]);
 
   // Recently viewed state
   const [recentEntries, setRecentEntries] = useState<RecentlyViewedEntry[]>(() => getRecentlyViewed());
@@ -1639,9 +1658,9 @@ export default function SpacesBrowsePage() {
                     <User className="w-4 h-4" />
                     Client Portal
                   </button>
-                  <button onClick={() => { setLocation("/portrait-builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
+                  <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-browse">
                     <Camera className="w-4 h-4" />
-                    Portrait Builder
+                    Portraits
                   </button>
                   <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portfolio-browse">
                     <Images className="w-4 h-4" />

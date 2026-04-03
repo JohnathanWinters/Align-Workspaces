@@ -109,10 +109,10 @@ export default function PhotographersPage() {
                           Client Portal
                         </button>
                       </Link>
-                      <Link href="/portrait-builder">
+                      <Link href="/portraits">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-photographers">
                           <Camera className="w-4 h-4" />
-                          Portrait Builder
+                          Portraits
                         </button>
                       </Link>
                       <Link href="/portfolio">
@@ -430,14 +430,14 @@ export default function PhotographersPage() {
                   <span className="text-xs text-stone-400">Find your space</span>
                 </Link>
                 <Link
-                  href="/portrait-builder"
+                  href="/portraits"
                   className="group flex flex-col items-center justify-center p-8 sm:p-10 hover:bg-stone-50 transition-colors"
                   data-testid="link-explore-portraits"
                 >
                   <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mb-4 group-hover:bg-[#c4956a]/20 transition-colors">
                     <Camera className="w-6 h-6 text-[#c4956a]" />
                   </div>
-                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Portrait Builder</span>
+                  <span className="font-serif text-lg text-[#2a2a2a] mb-1">Portraits</span>
                   <span className="text-xs text-stone-400">Build your image</span>
                 </Link>
               </div>

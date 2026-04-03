@@ -49,6 +49,7 @@ import {
   Info,
   Compass,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
@@ -1872,14 +1873,13 @@ function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
   const [spacesSubTab, setSpacesSubTab] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTabState] = useState<"shoots" | "edits" | "messages" | "spaces" | "settings">(() => {
+  const [activeTab, setActiveTabState] = useState<"overview" | "shoots" | "edits" | "messages" | "spaces" | "settings">(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    if (tab === "messages" || tab === "edits" || tab === "spaces" || tab === "settings" || tab === "shoots") return tab;
-    // Will be resolved by useEffect once data loads
-    return "shoots";
+    if (tab === "overview" || tab === "messages" || tab === "edits" || tab === "spaces" || tab === "settings" || tab === "shoots") return tab;
+    return "overview";
   });
-  const setActiveTab = useCallback((tab: "shoots" | "edits" | "messages" | "spaces" | "settings") => {
+  const setActiveTab = useCallback((tab: "overview" | "shoots" | "edits" | "messages" | "spaces" | "settings") => {
     setActiveTabState(tab);
     const url = new URL(window.location.href);
     url.searchParams.set("tab", tab);
@@ -1950,7 +1950,7 @@ function PortalContent() {
         setTabResolved(true);
         return;
       }
-      if (["shoots", "edits", "messages", "spaces"].includes(saved)) {
+      if (["overview", "shoots", "edits", "messages", "spaces"].includes(saved)) {
         setActiveTab(saved as typeof activeTab);
         setTabResolved(true);
         return;
@@ -2075,10 +2075,10 @@ function PortalContent() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-3 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                   >
-                    <Link href="/portrait-builder">
+                    <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-portal">
                         <Camera className="w-4 h-4" />
-                        Portrait Builder
+                        Portraits
                       </button>
                     </Link>
                     <Link href="/portfolio">
@@ -2156,6 +2156,24 @@ function PortalContent() {
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
             <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide" data-testid="portal-tabs">
+              <button
+                onClick={() => setActiveTab("overview")}
+                data-testid="tab-overview"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "overview"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Overview
+                {activeTab === "overview" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
               {(isPhotoClient || isNewUser) && (
                 <button
                   onClick={() => setActiveTab("shoots")}
@@ -2275,7 +2293,109 @@ function PortalContent() {
             </motion.div>
           )}
 
-          {activeTab === "settings" ? (
+          {activeTab === "overview" ? (
+            <div className="space-y-6">
+              {/* Upcoming shoots */}
+              {(() => {
+                const upcoming = shoots.filter(s => s.shootDate && new Date(s.shootDate) >= new Date()).sort((a, b) => new Date(a.shootDate!).getTime() - new Date(b.shootDate!).getTime());
+                return upcoming.length > 0 ? (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-[#c4956a]" /> Upcoming Sessions</h3>
+                    <div className="space-y-2">
+                      {upcoming.slice(0, 3).map(s => (
+                        <button key={s.id} onClick={() => setSelectedShoot(s)} className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors text-left">
+                          <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
+                            <Camera className="w-5 h-5 text-[#c4956a]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{s.title}</p>
+                            <p className="text-xs text-gray-500">{new Date(s.shootDate!).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{s.shootTime ? ` at ${s.shootTime}` : ""}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Upcoming workspace bookings */}
+              {(() => {
+                const guestBookings = (spaceBookings?.guestBookings || []).filter((b: any) => b.bookingDate && new Date(b.bookingDate) >= new Date()).sort((a: any, b: any) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
+                return guestBookings.length > 0 ? (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#c4956a]" /> Upcoming Workspace Bookings</h3>
+                    <div className="space-y-2">
+                      {guestBookings.slice(0, 3).map((b: any) => (
+                        <div key={b.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 text-left">
+                          <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
+                            <Building2 className="w-5 h-5 text-[#c4956a]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{b.spaceName || "Workspace"}</p>
+                            <p className="text-xs text-gray-500">{new Date(b.bookingDate).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{b.bookingStartTime ? ` at ${b.bookingStartTime}` : ""}</p>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "confirmed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{b.status || "pending"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Unread messages */}
+              {unreadCount > 0 && (
+                <button onClick={() => setActiveTab("messages")} className="w-full flex items-center gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-200 transition-colors text-left">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                    <MessageCircle className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">You have {unreadCount} unread message{unreadCount > 1 ? "s" : ""}</p>
+                    <p className="text-xs text-gray-500">Tap to view your conversations</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-blue-400 shrink-0" />
+                </button>
+              )}
+
+              {/* Quick actions */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Actions</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <Link href="/portraits">
+                    <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
+                      <Camera className="w-5 h-5 text-[#c4956a]" />
+                      <span className="text-xs font-medium text-gray-700">Book a Shoot</span>
+                    </div>
+                  </Link>
+                  <Link href="/workspaces">
+                    <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
+                      <Building2 className="w-5 h-5 text-[#c4956a]" />
+                      <span className="text-xs font-medium text-gray-700">Browse Workspaces</span>
+                    </div>
+                  </Link>
+                  <button onClick={() => setActiveTab("messages")} className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+                    <MessageCircle className="w-5 h-5 text-[#c4956a]" />
+                    <span className="text-xs font-medium text-gray-700">Messages</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Empty state for brand new users */}
+              {shoots.length === 0 && !spaceBookings?.guestBookings?.length && unreadCount === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500 mb-4">Welcome to Align! Here's what you can do:</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link href="/portraits">
+                      <Button className="bg-[#1a1a1a] text-white hover:bg-black"><Camera className="w-4 h-4 mr-2" /> Design Your Portrait</Button>
+                    </Link>
+                    <Link href="/workspaces">
+                      <Button variant="outline"><Building2 className="w-4 h-4 mr-2" /> Explore Workspaces</Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : activeTab === "settings" ? (
             <PortalSettings />
           ) : activeTab === "messages" ? (
             <PortalMessagesSection userId={user?.id || ""} />
@@ -2326,7 +2446,7 @@ function PortalContent() {
                       <p className="text-xs text-[#8a7e72] mt-0.5">View, favorite, and download your photos</p>
                     </div>
                   </div>
-                  <Link href="/portrait-builder">
+                  <Link href="/portraits">
                     <Button
                       size="lg"
                       data-testid="button-design-shoot-empty"
@@ -2471,7 +2591,7 @@ function PortalContent() {
           {/* Design shoot CTA at bottom of shoots tab */}
           {activeTab === "shoots" && shoots.length > 0 && (
             <div className="mt-6 text-center">
-              <Link href="/portrait-builder">
+              <Link href="/portraits">
                 <Button
                   data-testid="button-design-shoot"
                   className="bg-[#1a1a1a] text-white hover:bg-black"

@@ -370,9 +370,9 @@ export default function AlignSpacesPage() {
                       <Building2 className="w-4 h-4" />
                       Workspaces
                     </button>
-                    <button onClick={() => { setLocation("/portrait-builder"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
+                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
                       <Camera className="w-4 h-4" />
-                      Portrait Builder
+                      Portraits
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
                       <Images className="w-4 h-4" />
@@ -702,7 +702,7 @@ export default function AlignSpacesPage() {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Link
-                  href="/portrait-builder"
+                  href="/portraits"
                   data-testid="button-portraits-cta"
                   className="inline-flex items-center gap-2 px-6 py-2.5 transition-all duration-300 rounded-lg text-sm font-medium bg-stone-900 text-white hover:bg-stone-800"
                 >
