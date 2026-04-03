@@ -32,7 +32,7 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
     return isLight ? (
       <Link
         href="/portal"
-        className="flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2 text-[#d4c4a8] hover:text-[#f0e6d0]"
+        className="flex items-center gap-2 text-xs tracking-[0.2em] uppercase font-semibold transition-colors duration-300 px-3 py-2 text-[#d4c4a8] hover:text-[#f0e6d0] whitespace-nowrap"
         data-testid="link-sign-in"
       >
         <User className="w-4 h-4" />
