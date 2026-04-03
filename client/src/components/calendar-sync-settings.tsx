@@ -206,7 +206,7 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
             )}
           </div>
 
-          <p className="text-xs text-stone-500">Import iCal feeds from Peerspace, Airbnb, or any platform to block those times here.</p>
+          <p className="text-xs text-stone-500">Import iCal feeds from Peerspace, Airbnb, or any platform to block those times here. All events from each feed will block your availability.</p>
 
           <AnimatePresence>
             {showAddFeed && (
@@ -268,7 +268,7 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
             <CalendarDays className="w-4 h-4 text-stone-500" />
             <span className="text-sm font-medium text-stone-700">Export Calendar</span>
           </div>
-          <p className="text-xs text-stone-500">Share this URL with other platforms so they see your Align bookings.</p>
+          <p className="text-xs text-stone-500">Share this URL with other platforms so they see your Align bookings as busy times, preventing double bookings.</p>
           <div className="flex items-center gap-2">
             <input
               readOnly
