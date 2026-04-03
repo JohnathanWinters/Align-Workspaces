@@ -5130,7 +5130,7 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
 const PIPELINE_STAGES = [
   { key: "new", label: "New", color: "bg-blue-100 text-blue-700" },
   { key: "contacted", label: "Contact", color: "bg-purple-100 text-purple-700" },
-  { key: "booked", label: "Scheduled", color: "bg-green-100 text-green-700" },
+  { key: "booked", label: "Scheduled", color: "bg-yellow-100 text-yellow-700" },
   { key: "completed", label: "Active", color: "bg-emerald-100 text-emerald-700" },
   { key: "lost", label: "Inactive", color: "bg-stone-200 text-stone-500" },
 ];
@@ -5613,28 +5613,6 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search contacts..."
             className="h-8 text-xs pl-8" data-testid="input-pipeline-search" />
-        </div>
-      </div>
-
-      {/* Stats + Pipeline stages unified */}
-      <div className="grid grid-cols-3 gap-2 mb-3" data-testid="stat-total-contacts">
-        <div className="bg-white rounded-lg border border-gray-100 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Contacts</span>
-            <span className="text-lg font-bold text-gray-900">{filteredContacts.length}</span>
-          </div>
-        </div>
-        <div className={`rounded-lg border px-3 py-2 ${followUpsDue > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100"}`} data-testid="stat-follow-ups">
-          <div className="flex items-center justify-between">
-            <span className={`text-[10px] uppercase tracking-wider ${followUpsDue > 0 ? "text-amber-500" : "text-gray-400"}`}>Follow-ups</span>
-            <span className={`text-lg font-bold ${followUpsDue > 0 ? "text-amber-600" : "text-gray-900"}`}>{followUpsDue}</span>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-100 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Cold</span>
-            <span className="text-lg font-bold text-gray-900">{filteredContacts.filter(c => c.lastContactDate && (Date.now() - new Date(c.lastContactDate).getTime()) > 30 * 24 * 60 * 60 * 1000).length}</span>
-          </div>
         </div>
       </div>
 
