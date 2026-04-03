@@ -1868,6 +1868,87 @@ function MyBookingsTab() {
   );
 }
 
+function CalendarSyncSection({ hasSpaces }: { hasSpaces: boolean }) {
+  const { data: gcalStatus } = useQuery<{
+    connected: boolean;
+    syncEnabled?: boolean;
+    lastSyncAt?: string | null;
+  }>({
+    queryKey: ["/api/calendar/google/status"],
+    queryFn: async () => {
+      const res = await fetch("/api/calendar/google/status", { credentials: "include" });
+      if (!res.ok) return { connected: false };
+      return res.json();
+    },
+  });
+
+  const connectGcal = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("GET", "/api/calendar/google/authorize");
+      const data = await res.json();
+      window.location.href = data.url;
+    },
+  });
+
+  if (!hasSpaces) return null;
+
+  if (gcalStatus?.connected) {
+    return (
+      <Card className="border-emerald-200 bg-emerald-50/30">
+        <CardContent className="flex items-center justify-between py-4 px-5">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-emerald-800">Calendar synced</p>
+              <p className="text-xs text-emerald-600">
+                {gcalStatus.syncEnabled ? "Syncing every 15 minutes" : "Sync paused"}
+                {gcalStatus.lastSyncAt && ` · Last sync: ${new Date(gcalStatus.lastSyncAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
+              </p>
+            </div>
+          </div>
+          <Badge className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">Connected</Badge>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-stone-200 bg-gradient-to-br from-white to-stone-50">
+      <CardContent className="py-6 px-5">
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+            <CalendarDays className="w-5 h-5 text-stone-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Prevent double bookings with calendar sync</h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-1">
+              Connect a Google Calendar to automatically block its events from your availability and sync new Align bookings back to your calendar.
+            </p>
+            <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
+              We recommend using a calendar dedicated to your workspace. All events on the connected calendar will block booking times, including personal events.
+            </p>
+            <Button
+              onClick={() => connectGcal.mutate()}
+              disabled={connectGcal.isPending}
+              size="sm"
+              className="bg-stone-900 text-white hover:bg-stone-800 text-xs"
+            >
+              {connectGcal.isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              ) : (
+                <CalendarDays className="w-3 h-3 mr-1" />
+              )}
+              Connect Google Calendar
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function MySpacesTab() {
   const [showForm, setShowForm] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -1890,6 +1971,7 @@ function MySpacesTab() {
   return (
     <div className="space-y-6">
       <StripeConnectSection hasSpaces={mySpaces.length > 0} />
+      <CalendarSyncSection hasSpaces={mySpaces.length > 0} />
 
       {/* Host Guide — prominent button near the top */}
       {mySpaces.length > 0 && (
@@ -2738,6 +2820,7 @@ function HostGuideContent() {
           description: "Connect your Google Calendar or import iCal feeds from other platforms to prevent double bookings. Your Align bookings also export as a feed for other platforms.",
           details: [
             "Connect your Google Calendar to automatically block times when you're busy",
+            "All events on your connected calendar will block availability, including personal events, so we recommend using a dedicated calendar for your workspace",
             "Import iCal feeds from Peerspace, Airbnb, or any platform that exports .ics URLs",
             "Your Align calendar exports as a feed, paste the URL into other platforms to sync both ways",
             "External events sync every 15 minutes, no manual updates needed",
