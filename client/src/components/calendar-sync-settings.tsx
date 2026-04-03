@@ -19,6 +19,7 @@ import {
   RefreshCw,
   ExternalLink,
   X,
+  Info,
 } from "lucide-react";
 
 export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
@@ -27,6 +28,10 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
   const [feedUrl, setFeedUrl] = useState("");
   const [feedName, setFeedName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [dismissedTip, setDismissedTip] = useState(false);
+
+  // Check if we just connected Google Calendar (redirect from OAuth)
+  const justConnected = new URLSearchParams(window.location.search).get("calendarConnected") === "true";
 
   // Google Calendar status
   const { data: gcalStatus } = useQuery<{
@@ -145,6 +150,20 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
                 {gcalStatus.syncEnabled ? "Syncing every 15 minutes" : "Sync paused"}
                 {gcalStatus.lastSyncAt && ` · Last sync: ${new Date(gcalStatus.lastSyncAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`}
               </p>
+              <p className="text-[11px] text-stone-400">All events on this calendar will block your availability.</p>
+              {justConnected && !dismissedTip && (
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+                  <Info className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Every event on your connected calendar will block booking times, including personal events. For better control, consider creating a dedicated Google Calendar for this workspace.
+                    </p>
+                  </div>
+                  <button onClick={() => setDismissedTip(true)} className="p-0.5 rounded hover:bg-amber-100 text-amber-400 hover:text-amber-600 flex-shrink-0">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
               {gcalStatus.lastSyncError && (
                 <p className="text-xs text-red-500 flex items-center gap-1">
                   <XCircle className="w-3 h-3" /> {gcalStatus.lastSyncError}
@@ -161,7 +180,8 @@ export function CalendarSyncSettings({ spaceId }: { spaceId: string }) {
             </div>
           ) : (
             <div>
-              <p className="text-xs text-stone-500 mb-2">Connect to automatically block times from your Google Calendar and sync new bookings.</p>
+              <p className="text-xs text-stone-500 mb-1">Connect a Google Calendar to automatically block its events from your availability and sync new bookings.</p>
+              <p className="text-[11px] text-stone-400 mb-2">We recommend using a calendar dedicated to this workspace, as all events will block booking times.</p>
               <Button size="sm" className="h-7 text-xs bg-stone-900 text-white hover:bg-stone-800" onClick={() => connectGcal.mutate()} disabled={connectGcal.isPending}>
                 {connectGcal.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <ExternalLink className="w-3 h-3 mr-1" />}
                 Connect Google Calendar
