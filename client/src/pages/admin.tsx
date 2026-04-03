@@ -5155,6 +5155,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [activities, setActivities] = useState<any[]>([]);
   const [newActivity, setNewActivity] = useState({ type: "call", note: "", followUpDays: 0 });
   const [activityJustLogged, setActivityJustLogged] = useState(false);
+  const [stageSuggestion, setStageSuggestion] = useState<{ contactId: string; from: string; to: string; label: string } | null>(null);
   const [filter, setFilter] = useState<"all" | "portraits" | "spaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<string | null>(null);
@@ -5163,6 +5164,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const fileRef = useRef<HTMLInputElement>(null);
   const [expandedListContact, setExpandedListContact] = useState<string | null>(null);
   const [showActions, setShowActions] = useState(false);
+  const [sortBy, setSortBy] = useState<"follow-up" | "last-contact" | "date-added">("follow-up");
   const [allSpaces, setAllSpaces] = useState<any[]>([]);
   const [allShoots, setAllShoots] = useState<any[]>([]);
   const [form, setForm] = useState({
@@ -5246,8 +5248,33 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
     } catch {}
   };
 
+  const quickLog = async (contact: PipelineContact, type: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await adminFetch(`/api/admin/pipeline/${contact.id}/activities`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }),
+      });
+      await loadContacts();
+      toast({ title: `${type === "call" ? "Call" : type === "email" ? "Email" : "Text"} logged` });
+    } catch {}
+  };
+
+  const snoozeFollowUp = async (contact: PipelineContact, days: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const next = new Date();
+    next.setDate(next.getDate() + days);
+    try {
+      await adminFetch(`/api/admin/pipeline/${contact.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nextFollowUp: next.toISOString() }),
+      });
+      await loadContacts();
+      toast({ title: `Follow-up snoozed ${days} day${days > 1 ? "s" : ""}` });
+    } catch {}
+  };
+
   const logActivity = async () => {
-    if (!selectedContact || !newActivity.note.trim()) return;
+    if (!selectedContact) return;
     try {
       const payload: any = { type: newActivity.type, note: newActivity.note };
       if (newActivity.followUpDays > 0) payload.followUpDays = newActivity.followUpDays;
@@ -5258,6 +5285,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         const data = await res.json();
         if (data.contact) setSelectedContact(data.contact);
       }
+      const actType = newActivity.type;
       setNewActivity({ type: "call", note: "", followUpDays: 0 });
       setActivityJustLogged(true);
       setTimeout(() => setActivityJustLogged(false), 3000);
@@ -5265,6 +5293,13 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       await loadContacts();
       const followUpMsg = newActivity.followUpDays > 0 ? ` · Follow-up set in ${newActivity.followUpDays} days` : "";
       toast({ title: `Activity logged${followUpMsg}` });
+      // Suggest stage move based on current stage + activity type
+      const stage = selectedContact.stage;
+      if (stage === "new" && ["call", "text", "email"].includes(actType)) {
+        setStageSuggestion({ contactId: selectedContact.id, from: "new", to: "contacted", label: "Contact" });
+      } else if (stage === "contacted" && actType === "meeting") {
+        setStageSuggestion({ contactId: selectedContact.id, from: "contacted", to: "booked", label: "Scheduled" });
+      }
     } catch {}
   };
 
@@ -5352,6 +5387,18 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       return (c.name || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").includes(q);
     }
     return true;
+  }).sort((a, b) => {
+    if (sortBy === "follow-up") {
+      const aDate = a.nextFollowUp ? new Date(a.nextFollowUp).getTime() : Infinity;
+      const bDate = b.nextFollowUp ? new Date(b.nextFollowUp).getTime() : Infinity;
+      return aDate - bDate;
+    }
+    if (sortBy === "last-contact") {
+      const aDate = a.lastContactDate ? new Date(a.lastContactDate).getTime() : 0;
+      const bDate = b.lastContactDate ? new Date(b.lastContactDate).getTime() : 0;
+      return aDate - bDate; // coldest first
+    }
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
   });
 
   const getStageContacts = (stage: string) => filteredContacts.filter(c => c.stage === stage);
@@ -5411,7 +5458,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openEdit(selectedContact)} data-testid="button-edit-contact-detail"><Edit className="w-3 h-3 mr-1" /> Edit</Button>
-                <button onClick={() => setSelectedContact(null)} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors">
+                <button onClick={() => { setSelectedContact(null); setStageSuggestion(null); }} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors">
                   <X className="w-4 h-4 text-stone-500" />
                 </button>
               </div>
@@ -5482,6 +5529,18 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               <div className="bg-stone-50 rounded-xl p-4 space-y-3">
                 <h4 className="text-sm font-medium text-gray-700">Log Activity</h4>
                 <AnimatePresence>
+                  {stageSuggestion && stageSuggestion.contactId === selectedContact.id && (
+                    <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                      className="flex items-center justify-between gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm font-medium" data-testid="stage-suggestion-banner">
+                      <span>Move to <strong>{stageSuggestion.label}</strong>?</span>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => { moveStage(selectedContact, stageSuggestion.to); setSelectedContact({ ...selectedContact, stage: stageSuggestion.to }); setStageSuggestion(null); }}
+                          className="px-2.5 py-1 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors" data-testid="button-accept-stage-suggestion">Yes</button>
+                        <button onClick={() => setStageSuggestion(null)}
+                          className="px-2.5 py-1 bg-white text-blue-600 rounded-md text-xs font-medium hover:bg-blue-100 border border-blue-200 transition-colors">No</button>
+                      </div>
+                    </motion.div>
+                  )}
                   {activityJustLogged && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                       className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium" data-testid="activity-success-banner">
@@ -5546,7 +5605,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => { handleDelete(selectedContact.id); }} data-testid="button-delete-contact-detail">
                 <Trash2 className="w-3 h-3 mr-1" /> Delete
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setSelectedContact(null)}>Close</Button>
+              <Button size="sm" variant="outline" onClick={() => { setSelectedContact(null); setStageSuggestion(null); }}>Close</Button>
             </div>
           </motion.div>
         </motion.div>
@@ -5615,6 +5674,16 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search contacts..."
             className="h-8 text-xs pl-8" data-testid="input-pipeline-search" />
         </div>
+        <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
+          <SelectTrigger className="h-8 w-auto text-xs gap-1.5" data-testid="select-sort">
+            <ArrowUpDown className="w-3 h-3 text-gray-400" /><SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="follow-up">Follow-up date</SelectItem>
+            <SelectItem value="last-contact">Coldest first</SelectItem>
+            <SelectItem value="date-added">Newest first</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mb-4 sm:mb-5">
@@ -5661,26 +5730,37 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </h3>
                 <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
                   {needsAttention.map(c => (
-                    <button key={c.id} onClick={() => openDetail(c)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+                    <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
                       data-testid={`attention-contact-${c.id}`}>
-                      <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-medium text-red-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                      <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                        <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-medium text-red-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                          <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && (
+                            <p className="text-[11px] text-red-500 font-medium">Overdue</p>
+                          )}
+                          {c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000 && (
+                            <p className="text-[11px] text-amber-600 font-medium">No action yet</p>
+                          )}
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={e => quickLog(c, "call", e)} className="w-7 h-7 rounded-full hover:bg-blue-50 flex items-center justify-center transition-colors" title="Log call">
+                          <Phone className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" />
+                        </button>
+                        <button onClick={e => quickLog(c, "email", e)} className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
+                          <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
+                        </button>
+                        <button onClick={e => snoozeFollowUp(c, 1, e)} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Snooze 1 day">
+                          <Clock className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                        <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                      </div>
-                      <div className="text-right shrink-0">
-                        {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && (
-                          <p className="text-[11px] text-red-500 font-medium">Follow-up overdue</p>
-                        )}
-                        {c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000 && (
-                          <p className="text-[11px] text-amber-600 font-medium">New, no action yet</p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -5688,31 +5768,51 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
           })()}
 
           {(() => {
-            const recent = [...filteredContacts]
-              .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-              .slice(0, 5);
-            if (recent.length === 0) return null;
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            const weekEnd = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const upcoming = filteredContacts
+              .filter(c => c.nextFollowUp && new Date(c.nextFollowUp) > now && new Date(c.nextFollowUp) <= weekEnd)
+              .sort((a, b) => new Date(a.nextFollowUp!).getTime() - new Date(b.nextFollowUp!).getTime());
+            if (upcoming.length === 0) return null;
+            const getLabel = (d: Date) => {
+              const dt = new Date(d.toString().split("T")[0] + "T00:00:00");
+              if (dt.getTime() === today.getTime()) return "Today";
+              if (dt.getTime() === tomorrow.getTime()) return "Tomorrow";
+              return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+            };
             return (
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-gray-400" /> Recently Added
+                  <CalendarDays className="w-3.5 h-3.5 text-blue-500" /> Upcoming Follow-ups
                 </h3>
                 <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-                  {recent.map(c => (
-                    <button key={c.id} onClick={() => openDetail(c)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
-                      data-testid={`recent-contact-${c.id}`}>
-                      <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                  {upcoming.map(c => (
+                    <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
+                      data-testid={`upcoming-contact-${c.id}`}>
+                      <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-medium text-blue-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                          <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                        </div>
+                        <span className="text-[11px] text-blue-600 font-medium shrink-0">{getLabel(new Date(c.nextFollowUp!))}</span>
+                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={e => quickLog(c, "call", e)} className="w-7 h-7 rounded-full hover:bg-blue-50 flex items-center justify-center transition-colors" title="Log call">
+                          <Phone className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" />
+                        </button>
+                        <button onClick={e => quickLog(c, "email", e)} className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
+                          <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
+                        </button>
+                        <button onClick={e => snoozeFollowUp(c, 1, e)} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Snooze 1 day">
+                          <Clock className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                        {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
-                      </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                      <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
