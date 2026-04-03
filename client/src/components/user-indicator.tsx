@@ -41,12 +41,13 @@ export function UserIndicator({ variant = "dark" }: UserIndicatorProps) {
     ) : (
       <Link
         href="/portal"
-        className="flex items-center gap-1.5 text-foreground/40 hover:text-foreground/70 transition-colors"
+        className="flex items-center gap-2 text-foreground/40 hover:text-foreground/70 transition-colors whitespace-nowrap"
         data-testid="link-sign-in"
       >
         <div className="w-7 h-7 rounded-full border border-foreground/20 flex items-center justify-center">
           <LogIn className="w-3.5 h-3.5" />
         </div>
+        <span className="text-xs font-medium">Sign In</span>
       </Link>
     );
   }
