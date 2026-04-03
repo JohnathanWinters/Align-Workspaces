@@ -7635,14 +7635,229 @@ function ShootsManager({ token, onBack, onEditShoot, onOpenGallery, onInvoiceSho
   );
 }
 
+function CommunityEventsManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const loadEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await adminFetch("/api/admin/community-events", token);
+      if (res.ok) {
+        setEvents(await res.json());
+      } else {
+        toast({ title: "Failed to load events", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setLoading(false);
+  }, [token, toast]);
+
+  useEffect(() => { loadEvents(); }, [loadEvents]);
+
+  const handleAction = async (id: string, action: "approve" | "reject" | "delete") => {
+    if (action === "delete" && !confirm("Delete this event? This cannot be undone.")) return;
+    setActionLoading(`${id}-${action}`);
+    try {
+      const url = action === "delete"
+        ? `/api/admin/community-events/${id}`
+        : `/api/admin/community-events/${id}/${action}`;
+      const res = await adminFetch(url, token, { method: action === "delete" ? "DELETE" : "POST" });
+      if (res.ok) {
+        toast({ title: `Event ${action === "delete" ? "deleted" : action + "d"}` });
+        loadEvents();
+      } else {
+        const err = await res.json().catch(() => ({ message: "Unknown error" }));
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(null);
+  };
+
+  const categoryColors: Record<string, string> = {
+    therapy: "#7a6e62",
+    coaching: "#946b4a",
+    wellness: "#687362",
+    workshop: "#706580",
+    creative: "#8a6560",
+  };
+
+  const statusBadge = (status: string) => {
+    if (status === "approved") return "bg-emerald-100 text-emerald-700";
+    if (status === "rejected") return "bg-red-100 text-red-700";
+    return "bg-amber-100 text-amber-700";
+  };
+
+  const counts = useMemo(() => ({
+    all: events.length,
+    pending: events.filter(e => e.status === "pending").length,
+    approved: events.filter(e => e.status === "approved").length,
+    rejected: events.filter(e => e.status === "rejected").length,
+  }), [events]);
+
+  const filtered = useMemo(() => {
+    return events.filter(e => {
+      if (filter !== "all" && e.status !== filter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const title = (e.title || "").toLowerCase();
+        const host = (e.hostName || e.host?.name || "").toLowerCase();
+        return title.includes(q) || host.includes(q);
+      }
+      return true;
+    });
+  }, [events, filter, searchQuery]);
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7]">
+      <header className="border-b border-black/5 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="font-serif text-xl font-semibold">Community Events ({filtered.length})</h1>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Search by title or host..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          <div className="flex gap-1.5">
+            {(["all", "pending", "approved", "rejected"] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  filter === f ? "bg-stone-800 text-white" : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20 text-gray-400 text-sm">
+            {searchQuery || filter !== "all" ? "No events match your filters." : "No community events yet."}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(event => {
+              const catColor = categoryColors[event.category] || "#888";
+              const hostName = event.hostName || event.host?.name || "Unknown Host";
+              const eventDate = event.date ? new Date(event.date) : null;
+              return (
+                <div key={event.id} className="bg-white rounded-xl border border-stone-200/60 p-4 sm:p-5 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                        <h3 className="font-serif font-semibold text-stone-800 text-sm sm:text-base truncate">{event.title}</h3>
+                        <span
+                          className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium text-white"
+                          style={{ backgroundColor: catColor }}
+                        >
+                          {event.category}
+                        </span>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadge(event.status)}`}>
+                          {event.status}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500">
+                        {eventDate && (
+                          <span className="flex items-center gap-1">
+                            <CalendarDays className="w-3 h-3" />
+                            {eventDate.toLocaleDateString()} {event.time || ""}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {hostName}
+                        </span>
+                        {event.rsvpCount != null && (
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {event.rsvpCount} RSVP{event.rsvpCount !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {event.status !== "approved" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2.5 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                          disabled={actionLoading === `${event.id}-approve`}
+                          onClick={() => handleAction(event.id, "approve")}
+                        >
+                          {actionLoading === `${event.id}-approve` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                          <span className="ml-1">Approve</span>
+                        </Button>
+                      )}
+                      {event.status !== "rejected" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2.5 text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
+                          disabled={actionLoading === `${event.id}-reject`}
+                          onClick={() => handleAction(event.id, "reject")}
+                        >
+                          {actionLoading === `${event.id}-reject` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                          <span className="ml-1">Reject</span>
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                        disabled={actionLoading === `${event.id}-delete`}
+                        onClick={() => handleAction(event.id, "delete")}
+                      >
+                        {actionLoading === `${event.id}-delete` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 function AdminDashboard({ token }: { token: string }) {
   const { toast } = useToast();
   const { status: pushStatus, subscribe: subscribePush } = usePushNotifications("admin");
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  type AdminView = "clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members";
-  const validViews: AdminView[] = ["clients", "create", "edit", "gallery", "tokens", "shoots", "employees", "featured", "nominations", "portfolio", "spaces", "analytics", "pipeline", "tax", "revenue", "reviews", "messages", "team-members"];
+  type AdminView = "clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members" | "community-events";
+  const validViews: AdminView[] = ["clients", "create", "edit", "gallery", "tokens", "shoots", "employees", "featured", "nominations", "portfolio", "spaces", "analytics", "pipeline", "tax", "revenue", "reviews", "messages", "team-members", "community-events"];
   const getInitialView = (): AdminView => {
     const hash = window.location.hash.replace("#", "");
     return validViews.includes(hash as AdminView) ? (hash as AdminView) : "clients";
@@ -7699,6 +7914,7 @@ function AdminDashboard({ token }: { token: string }) {
         { id: "featured" as const, label: "Featured", icon: Star },
         { id: "nominations" as const, label: "Nominations", icon: Heart },
         { id: "team-members" as const, label: "Our Vision", icon: Users },
+        { id: "community-events" as const, label: "Events", icon: CalendarDays },
       ],
     },
     {
@@ -8058,6 +8274,10 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "pipeline") {
       return <PipelineManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "community-events") {
+      return <CommunityEventsManager token={token} onBack={() => setView("clients")} />;
     }
 
     if (view === "messages") {

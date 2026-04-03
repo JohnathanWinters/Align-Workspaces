@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks, type CommunityEvent, type InsertCommunityEvent, communityEvents, type EventRsvp, eventRsvps } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -213,6 +213,19 @@ export interface IStorage {
   getExternalBlocksBySpaceAndDate(spaceId: string, date: string): Promise<ExternalCalendarBlock[]>;
   deleteExternalBlocksBySource(sourceId: string): Promise<void>;
   cleanupExpiredExternalBlocks(): Promise<number>;
+
+  // Community Events
+  getApprovedUpcomingEvents(opts?: { category?: string; limit?: number }): Promise<CommunityEvent[]>;
+  getAllCommunityEvents(): Promise<CommunityEvent[]>;
+  getCommunityEventById(id: string): Promise<CommunityEvent | undefined>;
+  getCommunityEventsByUser(userId: string): Promise<CommunityEvent[]>;
+  createCommunityEvent(data: InsertCommunityEvent): Promise<CommunityEvent>;
+  updateCommunityEvent(id: string, data: Partial<InsertCommunityEvent>): Promise<CommunityEvent>;
+  deleteCommunityEvent(id: string): Promise<void>;
+  getEventRsvps(eventId: string): Promise<EventRsvp[]>;
+  getRsvpByUserAndEvent(userId: string, eventId: string): Promise<EventRsvp | undefined>;
+  createEventRsvp(eventId: string, userId: string, userName: string, userEmail: string): Promise<EventRsvp>;
+  deleteEventRsvp(eventId: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1454,6 +1467,64 @@ export class DatabaseStorage implements IStorage {
       .where(sql`${externalCalendarBlocks.blockDate} < ${yesterdayStr}`)
       .returning();
     return result.length;
+  }
+
+  // ── Community Events ──────────────────────────────────────────
+  async getApprovedUpcomingEvents(opts?: { category?: string; limit?: number }): Promise<CommunityEvent[]> {
+    const today = new Date().toISOString().split("T")[0];
+    const conditions = [eq(communityEvents.approvalStatus, "approved"), sql`${communityEvents.eventDate} >= ${today}`];
+    if (opts?.category) conditions.push(eq(communityEvents.category, opts.category));
+    let query = db.select().from(communityEvents).where(and(...conditions)).orderBy(asc(communityEvents.eventDate), asc(communityEvents.eventTime));
+    if (opts?.limit) query = query.limit(opts.limit) as any;
+    return query;
+  }
+
+  async getAllCommunityEvents(): Promise<CommunityEvent[]> {
+    return db.select().from(communityEvents).orderBy(desc(communityEvents.createdAt));
+  }
+
+  async getCommunityEventById(id: string): Promise<CommunityEvent | undefined> {
+    const [result] = await db.select().from(communityEvents).where(eq(communityEvents.id, id));
+    return result;
+  }
+
+  async getCommunityEventsByUser(userId: string): Promise<CommunityEvent[]> {
+    return db.select().from(communityEvents).where(eq(communityEvents.userId, userId)).orderBy(desc(communityEvents.createdAt));
+  }
+
+  async createCommunityEvent(data: InsertCommunityEvent): Promise<CommunityEvent> {
+    const [result] = await db.insert(communityEvents).values(data).returning();
+    return result;
+  }
+
+  async updateCommunityEvent(id: string, data: Partial<InsertCommunityEvent>): Promise<CommunityEvent> {
+    const [result] = await db.update(communityEvents).set(data).where(eq(communityEvents.id, id)).returning();
+    return result;
+  }
+
+  async deleteCommunityEvent(id: string): Promise<void> {
+    await db.delete(eventRsvps).where(eq(eventRsvps.eventId, id));
+    await db.delete(communityEvents).where(eq(communityEvents.id, id));
+  }
+
+  async getEventRsvps(eventId: string): Promise<EventRsvp[]> {
+    return db.select().from(eventRsvps).where(eq(eventRsvps.eventId, eventId)).orderBy(desc(eventRsvps.createdAt));
+  }
+
+  async getRsvpByUserAndEvent(userId: string, eventId: string): Promise<EventRsvp | undefined> {
+    const [result] = await db.select().from(eventRsvps).where(and(eq(eventRsvps.userId, userId), eq(eventRsvps.eventId, eventId)));
+    return result;
+  }
+
+  async createEventRsvp(eventId: string, userId: string, userName: string, userEmail: string): Promise<EventRsvp> {
+    const [result] = await db.insert(eventRsvps).values({ eventId, userId, userName, userEmail }).returning();
+    await db.update(communityEvents).set({ rsvpCount: sql`COALESCE(${communityEvents.rsvpCount}, 0) + 1` }).where(eq(communityEvents.id, eventId));
+    return result;
+  }
+
+  async deleteEventRsvp(eventId: string, userId: string): Promise<void> {
+    await db.delete(eventRsvps).where(and(eq(eventRsvps.eventId, eventId), eq(eventRsvps.userId, userId)));
+    await db.update(communityEvents).set({ rsvpCount: sql`GREATEST(COALESCE(${communityEvents.rsvpCount}, 0) - 1, 0)` }).where(eq(communityEvents.id, eventId));
   }
 }
 

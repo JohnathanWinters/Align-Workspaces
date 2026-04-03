@@ -1051,3 +1051,43 @@ export const guestProfessionalProfiles = pgTable("guest_professional_profiles", 
 
 export type GuestProfessionalProfile = typeof guestProfessionalProfiles.$inferSelect;
 export type InsertGuestProfessionalProfile = typeof guestProfessionalProfiles.$inferInsert;
+
+// ── Community Events ──────────────────────────────────────────────
+export const communityEvents = pgTable("community_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  eventDate: text("event_date").notNull(),
+  eventTime: text("event_time").notNull(),
+  endTime: text("end_time"),
+  location: text("location"),
+  imageUrl: text("image_url"),
+  hostName: text("host_name").notNull(),
+  hostEmail: text("host_email"),
+  approvalStatus: text("approval_status").default("pending"),
+  rsvpCount: integer("rsvp_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertCommunityEventSchema = createInsertSchema(communityEvents).omit({
+  id: true,
+  approvalStatus: true,
+  rsvpCount: true,
+  createdAt: true,
+});
+
+export type InsertCommunityEvent = z.infer<typeof insertCommunityEventSchema>;
+export type CommunityEvent = typeof communityEvents.$inferSelect;
+
+export const eventRsvps = pgTable("event_rsvps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").notNull(),
+  userId: text("user_id").notNull(),
+  userName: text("user_name"),
+  userEmail: text("user_email"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type EventRsvp = typeof eventRsvps.$inferSelect;

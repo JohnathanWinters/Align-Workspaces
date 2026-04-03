@@ -7420,5 +7420,103 @@ ${featuredSection}
   // Run once on startup after a delay
   setTimeout(cleanupMessageImages, 30000);
 
+  // ── Community Events ──────────────────────────────────────────
+  app.get("/api/community-events", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      const events = await storage.getApprovedUpcomingEvents({ category, limit: 20 });
+      res.json(events);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/community-events/:id", async (req, res) => {
+    try {
+      const event = await storage.getCommunityEventById(req.params.id);
+      if (!event || event.approvalStatus !== "approved") return res.status(404).json({ message: "Not found" });
+      res.json(event);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/community-events", isAuthenticated, async (req: any, res) => {
+    try {
+      const event = await storage.createCommunityEvent({
+        ...req.body,
+        userId: req.user.id,
+        hostName: req.user.firstName || req.body.hostName || "Anonymous",
+        hostEmail: req.user.email || "",
+      });
+      res.json(event);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.get("/api/my-events", isAuthenticated, async (req: any, res) => {
+    try {
+      const events = await storage.getCommunityEventsByUser(req.user.id);
+      res.json(events);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/community-events/:id/rsvp", isAuthenticated, async (req: any, res) => {
+    try {
+      const existing = await storage.getRsvpByUserAndEvent(req.user.id, req.params.id);
+      if (existing) {
+        await storage.deleteEventRsvp(req.params.id, req.user.id);
+        const updated = await storage.getCommunityEventById(req.params.id);
+        res.json({ rsvped: false, rsvpCount: updated?.rsvpCount || 0 });
+      } else {
+        await storage.createEventRsvp(req.params.id, req.user.id, req.user.firstName || "", req.user.email || "");
+        const updated = await storage.getCommunityEventById(req.params.id);
+        res.json({ rsvped: true, rsvpCount: updated?.rsvpCount || 0 });
+      }
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  // Admin event management
+  app.get("/api/admin/community-events", isAdmin, async (_req, res) => {
+    try {
+      const events = await storage.getAllCommunityEvents();
+      res.json(events);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/community-events/:id/approve", isAdmin, async (req, res) => {
+    try {
+      const event = await storage.updateCommunityEvent(req.params.id, { approvalStatus: "approved" } as any);
+      res.json(event);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/community-events/:id/reject", isAdmin, async (req, res) => {
+    try {
+      const event = await storage.updateCommunityEvent(req.params.id, { approvalStatus: "rejected" } as any);
+      res.json(event);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/community-events/:id", isAdmin, async (req, res) => {
+    try {
+      await storage.deleteCommunityEvent(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   return httpServer;
 }

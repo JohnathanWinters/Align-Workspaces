@@ -7,6 +7,7 @@ import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
 import { UserIndicator } from "@/components/user-indicator";
 import { ListSpaceModal } from "@/components/list-space-modal";
+import { PostEventModal } from "@/components/post-event-modal";
 
 interface Space {
   id: string;
@@ -273,13 +274,61 @@ function SpaceCard({ space }: { space: Space }) {
   );
 }
 
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  therapy: "bg-[#f0ebe6] text-[#7a6e62]",
+  coaching: "bg-[#f5ede3] text-[#946b4a]",
+  wellness: "bg-[#eef0eb] text-[#687362]",
+  workshop: "bg-[#eeebf0] text-[#706580]",
+  creative: "bg-[#f2ebe8] text-[#8a6560]",
+};
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  therapy: "Therapy", coaching: "Coaching", wellness: "Wellness", workshop: "Workshop", creative: "Creative",
+};
+
+function EventCard({ event }: { event: { id: string; title: string; category: string; eventDate: string; eventTime: string; endTime: string | null; location: string | null; hostName: string; rsvpCount: number } }) {
+  const date = new Date(event.eventDate + "T00:00:00");
+  const month = date.toLocaleDateString(undefined, { month: "short" }).toUpperCase();
+  const day = date.getDate();
+  const weekday = date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
+  const timeStr = new Date(`2000-01-01T${event.eventTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  return (
+    <div className="snap-start shrink-0 w-[72%] sm:w-auto bg-white rounded-xl border border-stone-100 p-4 hover:shadow-md transition-shadow">
+      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${EVENT_TYPE_COLORS[event.category] || "bg-stone-100 text-stone-500"}`}>
+        {EVENT_TYPE_LABELS[event.category] || event.category}
+      </span>
+      <div className="flex gap-3 mt-3">
+        <div className="text-center shrink-0 w-12">
+          <p className="text-[10px] text-[#c4956a] font-semibold tracking-wider">{month}</p>
+          <p className="text-2xl font-bold text-stone-900 leading-none">{day}</p>
+          <p className="text-[10px] text-stone-400 font-medium">{weekday}</p>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold text-stone-900 leading-snug line-clamp-2">{event.title}</h3>
+          <p className="text-xs text-stone-500 mt-1">{event.hostName}</p>
+          <div className="flex items-center gap-3 mt-2 text-[11px] text-stone-400">
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {timeStr}</span>
+            {event.location && <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3" /> {event.location}</span>}
+          </div>
+          {event.rsvpCount > 0 && (
+            <p className="text-[10px] text-[#c4956a] font-medium mt-1.5">{event.rsvpCount} attending</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
+  const [showPostEventModal, setShowPostEventModal] = useState(false);
   const [_showExplore, _setShowExplore] = useState(false);
   const spacesCarousel = useDragScroll();
   const prosCarousel = useDragScroll();
+  const eventsCarousel = useDragScroll();
 
   const { data: spaces, isLoading: spacesLoading } = useQuery<Space[]>({
     queryKey: ["/api/spaces"],
@@ -287,6 +336,14 @@ export default function AlignSpacesPage() {
 
   const { data: featuredPros } = useQuery<FeaturedPro[]>({
     queryKey: ["/api/featured"],
+  });
+
+  const { data: communityEvents } = useQuery<{
+    id: string; title: string; description: string; category: string;
+    eventDate: string; eventTime: string; endTime: string | null;
+    location: string | null; hostName: string; rsvpCount: number;
+  }[]>({
+    queryKey: ["/api/community-events"],
   });
 
   useEffect(() => {
@@ -895,12 +952,79 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      {/* Testimonials section: will display once real reviews are collected */}
+      {/* ─── Community Events ─── */}
+      {communityEvents && communityEvents.length > 0 && (
+        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-community-events">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-8">
+              <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
+              <h2 className="font-serif text-2xl sm:text-3xl text-stone-900">Upcoming Events</h2>
+              <p className="text-stone-500 text-sm mt-2 max-w-md mx-auto">Free events by professionals, for professionals.</p>
+            </div>
+
+            {/* Mobile carousel */}
+            <div className="sm:hidden -mx-4">
+              <div
+                ref={eventsCarousel.ref}
+                onMouseDown={eventsCarousel.onMouseDown}
+                onMouseMove={eventsCarousel.onMouseMove}
+                onMouseUp={eventsCarousel.onMouseUp}
+                onMouseLeave={eventsCarousel.onMouseLeave}
+                onDragStart={eventsCarousel.onDragStart}
+                className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 scrollbar-hide"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {communityEvents.slice(0, 6).map(evt => (
+                  <EventCard key={evt.id} event={evt} />
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop grid */}
+            <div className="hidden sm:grid grid-cols-3 gap-5">
+              {communityEvents.slice(0, 3).map(evt => (
+                <EventCard key={evt.id} event={evt} />
+              ))}
+            </div>
+
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setShowPostEventModal(true)}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors"
+                data-testid="button-post-event"
+              >
+                <CalendarDays className="w-4 h-4" />
+                Post an Event
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Empty state: show Post CTA even with no events */}
+      {(!communityEvents || communityEvents.length === 0) && (
+        <section className="py-10 px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto text-center">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
+            <h2 className="font-serif text-xl sm:text-2xl text-stone-900 mb-2">Community Events</h2>
+            <p className="text-stone-500 text-sm mb-5">Know of a free event for professionals? Share it with the community.</p>
+            <button
+              onClick={() => setShowPostEventModal(true)}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors"
+              data-testid="button-post-event-empty"
+            >
+              <CalendarDays className="w-4 h-4" />
+              Post an Event
+            </button>
+          </div>
+        </section>
+      )}
 
       <SiteFooter />
 
       <AnimatePresence>
         {showListModal && <ListSpaceModal onClose={() => setShowListModal(false)} />}
+        {showPostEventModal && <PostEventModal onClose={() => setShowPostEventModal(false)} />}
       </AnimatePresence>
 
       {/* Explore modal removed, replaced with direct CTAs */}
