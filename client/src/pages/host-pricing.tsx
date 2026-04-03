@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, DollarSign, Users, TrendingUp, Shield, Building2, Heart, Menu, X, Camera, Images, Compass, HelpCircle, User } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, TrendingUp, Shield, Building2, Heart, Menu, X, Camera, Images, Compass, HelpCircle, User, CalendarDays,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SiteFooter } from "@/components/site-footer";
 import { UserIndicator } from "@/components/user-indicator";
@@ -85,6 +86,10 @@ export default function PricingPage() {
                         <Heart className="w-4 h-4" />
                         Featured Pros
                       </button>
+                        <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                          <CalendarDays className="w-4 h-4" />
+                          Community Events
+                        </Link>
                     </Link>
                     <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">

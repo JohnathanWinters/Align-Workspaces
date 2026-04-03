@@ -17,6 +17,7 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
     { label: "Portraits", href: "/portraits" },
     { label: "Workspaces", href: "/workspaces" },
     { label: "Featured Pros", href: "/featured" },
+    { label: "Community Events", href: "/#events" },
     { label: "Our Vision", href: "/our-vision" },
     { label: "Portfolio", href: "/portfolio" },
     { label: "Support", href: "/support" },

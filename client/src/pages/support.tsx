@@ -22,6 +22,7 @@ import {
   MessageCircle,
   ChevronDown,
   Lightbulb,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,6 +206,10 @@ export default function SupportPage() {
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
+                      <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-support">
+                        <CalendarDays className="w-4 h-4" />
+                        Community Events
+                      </button>
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-support">
                       <Compass className="w-4 h-4" />
                       Our Vision

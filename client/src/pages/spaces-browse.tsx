@@ -47,6 +47,7 @@ import {
   Timer,
   HelpCircle,
   Plus,
+  CalendarDays,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -1670,6 +1671,10 @@ export default function SpacesBrowsePage() {
                     <Star className="w-4 h-4" />
                     Featured Pros
                   </button>
+                    <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-events-browse">
+                      <CalendarDays className="w-4 h-4" />
+                      Community Events
+                    </button>
                   <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-pricing-browse">
                     <DollarSign className="w-4 h-4" />
                     Pricing

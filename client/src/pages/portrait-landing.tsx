@@ -24,6 +24,7 @@ import {
   Eye,
   Shirt,
   RefreshCw,
+  CalendarDays,
 } from "lucide-react";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
@@ -191,6 +192,9 @@ export default function PortraitLandingPage() {
                   </button>
                   <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                     <Star className="w-4 h-4" /> Featured Pros
+                  </button>
+                  <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                    <CalendarDays className="w-4 h-4" /> Community Events
                   </button>
                   <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                     <Compass className="w-4 h-4" /> Our Vision

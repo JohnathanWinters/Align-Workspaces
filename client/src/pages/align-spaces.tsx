@@ -439,6 +439,10 @@ export default function AlignSpacesPage() {
                       <Star className="w-4 h-4" />
                       Featured Pros
                     </button>
+                    <button onClick={() => { document.querySelector('[data-testid="section-community-events"]')?.scrollIntoView({ behavior: "smooth" }); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-menu">
+                      <CalendarDays className="w-4 h-4" />
+                      Community Events
+                    </button>
                     <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
                       <DollarSign className="w-4 h-4" />
                       Pricing

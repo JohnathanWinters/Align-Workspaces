@@ -50,6 +50,7 @@ import {
   Compass,
   Settings,
   LayoutDashboard,
+  CalendarDays,
 } from "lucide-react";
 import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
@@ -2069,6 +2070,10 @@ function PortalContent() {
                         <Star className="w-4 h-4" />
                         Featured Pros
                       </button>
+                        <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                          <CalendarDays className="w-4 h-4" />
+                          Community Events
+                        </Link>
                     </Link>
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-about-portal">

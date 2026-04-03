@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { setPageMeta } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, Compass, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle, ChevronDown } from "lucide-react";
+import { ArrowLeft, Camera, Sparkles, X, Menu, MapPin, Star, Users, Info, Compass, ArrowRight, Building2, Image, Heart, Images, Loader2, HelpCircle, ChevronDown, CalendarDays,
+} from "lucide-react";
 import { Link } from "wouter";
 import { UserIndicator } from "@/components/user-indicator";
 import { SiteFooter } from "@/components/site-footer";
@@ -132,6 +133,10 @@ export default function PhotographersPage() {
                           <Star className="w-4 h-4" />
                           Featured Pros
                         </button>
+                          <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                            <CalendarDays className="w-4 h-4" />
+                            Community Events
+                          </Link>
                       </Link>
                       <Link href="/our-vision">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-photographers">
