@@ -96,6 +96,7 @@ export interface IStorage {
   deleteSpace(id: string): Promise<void>;
   createSpaceBooking(data: InsertSpaceBooking): Promise<SpaceBooking>;
   getSpaceBookingsByUser(userId: string): Promise<SpaceBooking[]>;
+  getAllSpaceBookingUserIds(): Promise<string[]>;
   getSpaceBookingsBySpace(spaceId: string): Promise<SpaceBooking[]>;
   getSpaceBookingsBySpaceAndDate(spaceId: string, date: string): Promise<SpaceBooking[]>;
   getSpaceBookingById(id: string): Promise<SpaceBooking | undefined>;
@@ -848,6 +849,11 @@ export class DatabaseStorage implements IStorage {
 
   async getSpaceBookingsByUser(userId: string): Promise<SpaceBooking[]> {
     return db.select().from(spaceBookings).where(eq(spaceBookings.userId, userId)).orderBy(desc(spaceBookings.createdAt));
+  }
+
+  async getAllSpaceBookingUserIds(): Promise<string[]> {
+    const rows = await db.selectDistinct({ userId: spaceBookings.userId }).from(spaceBookings);
+    return rows.map(r => r.userId);
   }
 
   async getSpaceBookingsBySpace(spaceId: string): Promise<SpaceBooking[]> {

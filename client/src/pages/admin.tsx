@@ -7889,7 +7889,8 @@ function AdminDashboard({ token }: { token: string }) {
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [clientSort, setClientSort] = useState<"name" | "shoots" | "recent">("name");
-  const [clientFilter, setClientFilter] = useState<"all" | "has-shoots" | "no-shoots">("all");
+  const [clientFilter, setClientFilter] = useState<"all" | "photography" | "workspaces">("all");
+  const [bookingUserIds, setBookingUserIds] = useState<Set<string>>(new Set());
   const [clientPage, setClientPage] = useState(1);
   const CLIENTS_PER_PAGE = 25;
   const [debugOpen, setDebugOpen] = useState(false);
@@ -7901,7 +7902,7 @@ function AdminDashboard({ token }: { token: string }) {
     {
       label: "CRM",
       items: [
-        { id: "clients" as const, label: "Clients", icon: Users },
+        { id: "clients" as const, label: "Members", icon: Users },
         { id: "shoots" as const, label: "Shoots", icon: Camera },
         { id: "messages" as const, label: "Messages", icon: MessageCircle },
         { id: "pipeline" as const, label: "Contacts", icon: FileSpreadsheet },
@@ -7956,11 +7957,11 @@ function AdminDashboard({ token }: { token: string }) {
         if (!email.includes(q) && !name.includes(q)) return false;
       }
       // Quick filter
-      if (clientFilter === "has-shoots") {
+      if (clientFilter === "photography") {
         return shoots.some((s) => s.userId === u.id);
       }
-      if (clientFilter === "no-shoots") {
-        return !shoots.some((s) => s.userId === u.id);
+      if (clientFilter === "workspaces") {
+        return bookingUserIds.has(u.id);
       }
       return true;
     });
@@ -7984,7 +7985,7 @@ function AdminDashboard({ token }: { token: string }) {
     });
 
     return result;
-  }, [users, searchQuery, clientFilter, clientSort, shoots]);
+  }, [users, searchQuery, clientFilter, clientSort, shoots, bookingUserIds]);
 
   const totalClientPages = Math.max(1, Math.ceil(filteredUsers.length / CLIENTS_PER_PAGE));
   const paginatedUsers = useMemo(() => {
@@ -8009,14 +8010,16 @@ function AdminDashboard({ token }: { token: string }) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, shootsRes, tokensRes] = await Promise.all([
+      const [usersRes, shootsRes, tokensRes, bookingIdsRes] = await Promise.all([
         adminFetch("/api/admin/users", token),
         adminFetch("/api/admin/shoots", token),
         adminFetch("/api/admin/all-edit-tokens", token),
+        adminFetch("/api/admin/booking-user-ids", token),
       ]);
       if (usersRes.ok) setUsers(await usersRes.json());
       if (shootsRes.ok) setShoots(await shootsRes.json());
       if (tokensRes.ok) setAllEditTokens(await tokensRes.json());
+      if (bookingIdsRes.ok) setBookingUserIds(new Set(await bookingIdsRes.json()));
     } catch {
       toast({ title: "Error", description: "Failed to load data", variant: "destructive" });
     } finally {
@@ -8502,7 +8505,7 @@ function AdminDashboard({ token }: { token: string }) {
       );
     }
 
-    // Default: Clients view
+    // Default: Members view
     return (
       <div className="min-h-screen bg-[#faf9f7]">
         <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
@@ -8510,7 +8513,7 @@ function AdminDashboard({ token }: { token: string }) {
             <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6">
               <Bell className="w-5 h-5 text-blue-500 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-blue-900">Get notified when clients message you</p>
+                <p className="text-sm font-medium text-blue-900">Get notified when members message you</p>
                 <p className="text-xs text-blue-600">Receive push notifications on this device</p>
               </div>
               <Button
@@ -8529,7 +8532,7 @@ function AdminDashboard({ token }: { token: string }) {
             {users.length > 0 && (
               <div className="grid grid-cols-3 gap-3 mb-6">
                 <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
-                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Total Clients</p>
+                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Total Members</p>
                   <p className="text-xl font-semibold text-gray-900">{users.length}</p>
                 </div>
                 <div className="bg-white rounded-lg border border-gray-100 px-4 py-3">
@@ -8544,7 +8547,7 @@ function AdminDashboard({ token }: { token: string }) {
             )}
 
             <div className="flex items-baseline gap-2 mb-4">
-              <h2 className="font-serif text-2xl text-gray-900">Clients</h2>
+              <h2 className="font-serif text-2xl text-gray-900">Members</h2>
               {users.length > 0 && (
                 <span className="text-sm text-gray-400 font-medium">({filteredUsers.length}{searchQuery || clientFilter !== "all" ? ` of ${users.length}` : ""})</span>
               )}
@@ -8555,7 +8558,7 @@ function AdminDashboard({ token }: { token: string }) {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search clients by email or name..."
+                placeholder="Search members by email or name..."
                 data-testid="input-search-clients"
                 className="pl-10 bg-white"
               />
@@ -8575,8 +8578,8 @@ function AdminDashboard({ token }: { token: string }) {
               <div className="flex gap-1.5">
                 {([
                   { id: "all" as const, label: "All" },
-                  { id: "has-shoots" as const, label: "Has Shoots" },
-                  { id: "no-shoots" as const, label: "No Shoots" },
+                  { id: "photography" as const, label: "Photography" },
+                  { id: "workspaces" as const, label: "Workspaces" },
                 ] as const).map((f) => (
                   <button
                     key={f.id}
@@ -8611,9 +8614,9 @@ function AdminDashboard({ token }: { token: string }) {
               <Card className="border-dashed border-2 border-gray-200 bg-white/50">
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                   <Search className="w-10 h-10 text-gray-300 mb-3" />
-                  <h3 className="font-serif text-lg text-gray-900 mb-1">No clients found</h3>
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No members found</h3>
                   <p className="text-gray-500 text-sm">
-                    No clients match "{searchQuery}". Try a different search.
+                    No members match "{searchQuery}". Try a different search.
                   </p>
                 </CardContent>
               </Card>
@@ -8621,9 +8624,9 @@ function AdminDashboard({ token }: { token: string }) {
               <Card className="border-dashed border-2 border-gray-200 bg-white/50">
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                   <Users className="w-10 h-10 text-gray-300 mb-3" />
-                  <h3 className="font-serif text-lg text-gray-900 mb-1">No clients yet</h3>
+                  <h3 className="font-serif text-lg text-gray-900 mb-1">No members yet</h3>
                   <p className="text-gray-500 text-sm">
-                    Clients will appear here after they sign in to the Client Portal.
+                    Members will appear here after they sign in to the Client Portal.
                   </p>
                 </CardContent>
               </Card>

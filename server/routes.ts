@@ -1326,6 +1326,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/booking-user-ids", isAdmin, async (_req, res) => {
+    try {
+      const ids = await storage.getAllSpaceBookingUserIds();
+      res.json(ids);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch booking user IDs" });
+    }
+  });
+
   // Admin: create shoot for a user
   app.post("/api/admin/shoots", isAdminOrEmployee, requirePermission("create_shoots"), async (req, res) => {
     try {
