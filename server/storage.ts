@@ -114,6 +114,8 @@ export interface IStorage {
   deletePipelineContact(id: string): Promise<void>;
   getPipelineActivities(contactId: string): Promise<PipelineActivity[]>;
   createPipelineActivity(data: InsertPipelineActivity): Promise<PipelineActivity>;
+  updatePipelineActivity(id: string, data: { note?: string; editHistory?: { note: string; editedAt: string }[] }): Promise<PipelineActivity>;
+  deletePipelineActivity(id: string): Promise<void>;
   getSpaceFavorites(userId: string): Promise<SpaceFavorite[]>;
   addSpaceFavorite(userId: string, spaceId: string): Promise<SpaceFavorite>;
   removeSpaceFavorite(userId: string, spaceId: string): Promise<void>;
@@ -939,6 +941,15 @@ export class DatabaseStorage implements IStorage {
   async createPipelineActivity(data: InsertPipelineActivity): Promise<PipelineActivity> {
     const [result] = await db.insert(pipelineActivities).values(data).returning();
     return result;
+  }
+
+  async updatePipelineActivity(id: string, data: { note?: string; editHistory?: { note: string; editedAt: string }[] }): Promise<PipelineActivity> {
+    const [result] = await db.update(pipelineActivities).set(data).where(eq(pipelineActivities.id, id)).returning();
+    return result;
+  }
+
+  async deletePipelineActivity(id: string): Promise<void> {
+    await db.delete(pipelineActivities).where(eq(pipelineActivities.id, id));
   }
 
   async getSpaceFavorites(userId: string): Promise<SpaceFavorite[]> {

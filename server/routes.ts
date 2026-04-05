@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles, pipelineActivities } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -6878,6 +6878,32 @@ ${featuredSection}
       await storage.updatePipelineContact(req.params.id, updates);
       const updated = await storage.getPipelineContact(req.params.id);
       res.json({ activity, contact: updated });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.patch("/api/admin/pipeline/activities/:activityId", isAdmin, async (req, res) => {
+    try {
+      const { activityId } = req.params;
+      const { note } = req.body;
+      const [activity] = await db.select().from(pipelineActivities).where(eq(pipelineActivities.id, activityId));
+      if (!activity) return res.status(404).json({ message: "Activity not found" });
+      const history = (activity.editHistory as { note: string; editedAt: string }[] || []);
+      if (activity.note) {
+        history.push({ note: activity.note, editedAt: new Date().toISOString() });
+      }
+      const updated = await storage.updatePipelineActivity(activityId, { note, editHistory: history });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.delete("/api/admin/pipeline/activities/:activityId", isAdmin, async (req, res) => {
+    try {
+      await storage.deletePipelineActivity(req.params.activityId);
+      res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }

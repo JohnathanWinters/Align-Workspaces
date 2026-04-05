@@ -699,6 +699,7 @@ export const pipelineActivities = pgTable("pipeline_activities", {
   type: text("type").notNull(),
   note: text("note"),
   referredContactId: varchar("referred_contact_id"),
+  editHistory: jsonb("edit_history").$type<{ note: string; editedAt: string }[]>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -75,6 +75,8 @@ import {
   RefreshCw,
   Home,
   UserPlus,
+  History,
+  Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -5170,6 +5172,10 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [sortBy, setSortBy] = useState<"follow-up" | "last-contact" | "date-added">("follow-up");
   const [allSpaces, setAllSpaces] = useState<any[]>([]);
   const [allShoots, setAllShoots] = useState<any[]>([]);
+  const [editingActivity, setEditingActivity] = useState<{ id: string; note: string } | null>(null);
+  const [confirmDeleteActivity, setConfirmDeleteActivity] = useState<string | null>(null);
+  const [confirmEditActivity, setConfirmEditActivity] = useState<boolean>(false);
+  const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
     category: "portraits", stage: "new", notes: "",
@@ -5318,6 +5324,35 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         setStageSuggestion({ contactId: selectedContact.id, from: "new", to: "contacted", label: "Contact" });
       } else if (stage === "contacted" && actType === "meeting") {
         setStageSuggestion({ contactId: selectedContact.id, from: "contacted", to: "booked", label: "Scheduled" });
+      }
+    } catch {}
+  };
+
+  const deleteActivity = async (activityId: string) => {
+    if (!selectedContact) return;
+    try {
+      const res = await adminFetch(`/api/admin/pipeline/activities/${activityId}`, { method: "DELETE" });
+      if (res.ok) {
+        setConfirmDeleteActivity(null);
+        await loadActivities(selectedContact.id);
+        toast({ title: "Activity deleted" });
+      }
+    } catch {}
+  };
+
+  const saveEditActivity = async () => {
+    if (!editingActivity || !selectedContact) return;
+    try {
+      const res = await adminFetch(`/api/admin/pipeline/activities/${editingActivity.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: editingActivity.note }),
+      });
+      if (res.ok) {
+        setEditingActivity(null);
+        setConfirmEditActivity(false);
+        await loadActivities(selectedContact.id);
+        toast({ title: "Activity updated" });
       }
     } catch {}
   };
@@ -5654,6 +5689,9 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     const at = ACTIVITY_TYPES.find(t => t.key === a.type);
                     const Icon = at?.icon || Edit;
                     const referredContact = a.referredContactId ? contacts.find(c => c.id === a.referredContactId) : null;
+                    const isEditing = editingActivity?.id === a.id;
+                    const isConfirmingDelete = confirmDeleteActivity === a.id;
+                    const hasEditHistory = a.editHistory && a.editHistory.length > 0;
                     return (
                       <div key={a.id} className="flex gap-3 items-start p-3 rounded-lg bg-gray-50" data-testid={`activity-${a.id}`}>
                         <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -5663,13 +5701,80 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-gray-700">{at?.label || a.type}</span>
                             <span className="text-[10px] text-gray-400">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                            {hasEditHistory && <span className="text-[10px] text-gray-400 italic">(edited)</span>}
+                            <div className="ml-auto flex items-center gap-1">
+                              {!isEditing && !isConfirmingDelete && (
+                                <>
+                                  <button onClick={() => setEditingActivity({ id: a.id, note: a.note || "" })} className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors" title="Edit">
+                                    <Pencil className="w-3 h-3" />
+                                  </button>
+                                  <button onClick={() => setConfirmDeleteActivity(a.id)} className="p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
                           </div>
                           {referredContact && (
                             <button onClick={() => openDetail(referredContact)} className="flex items-center gap-1.5 mt-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-100 transition-colors">
                               <UserPlus className="w-3 h-3" /> {referredContact.name}
                             </button>
                           )}
-                          {a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>}
+                          {/* Delete confirmation */}
+                          {isConfirmingDelete && (
+                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                              <p className="text-xs text-red-700 font-medium mb-2">Are you sure you want to delete this activity?</p>
+                              <div className="flex gap-2">
+                                <button onClick={() => deleteActivity(a.id)} className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors">Yes, delete</button>
+                                <button onClick={() => setConfirmDeleteActivity(null)} className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">Cancel</button>
+                              </div>
+                            </div>
+                          )}
+                          {/* Edit mode */}
+                          {isEditing && !confirmEditActivity ? (
+                            <div className="mt-1.5">
+                              <textarea
+                                value={editingActivity!.note}
+                                onChange={(e) => setEditingActivity({ id: editingActivity!.id, note: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded-md p-2 resize-none focus:outline-none focus:ring-1 focus:ring-stone-400"
+                                rows={2}
+                              />
+                              <div className="flex gap-2 mt-1.5">
+                                <button onClick={() => setConfirmEditActivity(true)} className="px-2 py-1 text-xs bg-stone-900 text-white rounded hover:bg-stone-800 transition-colors flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> Save
+                                </button>
+                                <button onClick={() => { setEditingActivity(null); setConfirmEditActivity(false); }} className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">Cancel</button>
+                              </div>
+                            </div>
+                          ) : isEditing && confirmEditActivity ? (
+                            <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                              <p className="text-xs text-amber-700 font-medium mb-2">Are you sure you want to save these changes?</p>
+                              <div className="flex gap-2">
+                                <button onClick={saveEditActivity} className="px-2 py-1 text-xs bg-stone-900 text-white rounded hover:bg-stone-800 transition-colors">Yes, save</button>
+                                <button onClick={() => setConfirmEditActivity(false)} className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">Go back</button>
+                              </div>
+                            </div>
+                          ) : (
+                            a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>
+                          )}
+                          {/* Edit history */}
+                          {hasEditHistory && !isEditing && (
+                            <div className="mt-1">
+                              <button onClick={() => setShowHistoryFor(showHistoryFor === a.id ? null : a.id)} className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
+                                <History className="w-3 h-3" /> {showHistoryFor === a.id ? "Hide history" : "Show history"}
+                              </button>
+                              {showHistoryFor === a.id && (
+                                <div className="mt-1.5 pl-3 border-l-2 border-gray-200 space-y-1.5">
+                                  {a.editHistory.map((h: { note: string; editedAt: string }, i: number) => (
+                                    <div key={i} className="text-xs">
+                                      <span className="text-gray-400">{new Date(h.editedAt).toLocaleDateString()} {new Date(h.editedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                      <p className="text-gray-500 line-through">{h.note}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
