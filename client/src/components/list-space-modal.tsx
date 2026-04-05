@@ -669,7 +669,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                               String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
                             }`}>
-                            {n === 1 ? "No minimum" : `${n} weeks`}
+                            {n === 1 ? "No minimum" : `${n} sessions`}
                           </button>
                         ))}
                       </div>

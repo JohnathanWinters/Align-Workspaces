@@ -591,7 +591,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
           </div>
           {(space as any).bookingTypes === "recurring" ? (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-600/90 text-white backdrop-blur-sm leading-tight flex items-center gap-1">
-              <Repeat className="w-2.5 h-2.5" /> Recurring Only{(space as any).recurringMinBookings > 1 && ` · ${(space as any).recurringMinBookings}wk min`}
+              <Repeat className="w-2.5 h-2.5" /> Recurring Only{(space as any).recurringMinBookings > 1 && ` · ${(space as any).recurringMinBookings} session min`}
             </span>
           ) : (space as any).recurringDiscountPercent > 0 ? (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#c4956a]/90 text-white backdrop-blur-sm leading-tight">
@@ -599,7 +599,7 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             </span>
           ) : (space as any).bookingTypes === "both" && (space as any).recurringMinBookings > 1 ? (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-600/80 text-white backdrop-blur-sm leading-tight flex items-center gap-1">
-              <Repeat className="w-2.5 h-2.5" /> {(space as any).recurringMinBookings}wk min
+              <Repeat className="w-2.5 h-2.5" /> {(space as any).recurringMinBookings} session min
             </span>
           ) : null}
         </div>
