@@ -6858,6 +6858,15 @@ ${featuredSection}
       };
       if (req.body.referredContactId) activityData.referredContactId = req.body.referredContactId;
       const activity = await storage.createPipelineActivity(activityData);
+      // Create reciprocal referral activity on the linked contact
+      if (req.body.type === "referral" && req.body.referredContactId) {
+        await storage.createPipelineActivity({
+          contactId: req.body.referredContactId,
+          type: "referral",
+          note: req.body.note,
+          referredContactId: req.params.id,
+        });
+      }
       const updates: any = { lastContactDate: new Date() };
       if (req.body.followUpDate) {
         updates.nextFollowUp = new Date(req.body.followUpDate);
