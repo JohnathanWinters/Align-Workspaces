@@ -491,11 +491,20 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
     return Math.max(1, Math.floor((closeMin - startMin) / 60));
   })() : 8;
 
+  const minBookings = (space as any).recurringMinBookings || 1;
   const weeklyTotal = space.pricePerHour * hours;
   const discountPercent = (space as any).recurringDiscountPercent || 0;
+  const discountAfter = (space as any).recurringDiscountAfter || 0;
   const discountedTotal = discountPercent > 0
     ? Math.round(weeklyTotal * (1 - discountPercent / 100))
     : weeklyTotal;
+
+  // Calculate minimum end date based on minBookings
+  const minEndDate = startDate && minBookings > 1 ? (() => {
+    const d = new Date(startDate + "T12:00:00");
+    d.setDate(d.getDate() + (minBookings - 1) * 7);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })() : startDate;
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -505,13 +514,14 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
   const submitRecurring = async () => {
     if (dayOfWeek === null || !startTime || !startDate) return;
     try {
+      const effectiveEndDate = endDate || (minBookings > 1 ? minEndDate : null);
       const res = await apiRequest("POST", "/api/recurring-bookings", {
         spaceId: space.id,
         dayOfWeek,
         startTime,
         hours,
         startDate,
-        endDate: endDate || null,
+        endDate: effectiveEndDate || null,
       });
       if (!res.ok) {
         const data = await res.json();
@@ -762,14 +772,19 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                   <div>
                     <label className="text-xs text-stone-500 mb-1 block font-medium">Starting from</label>
                     <input type="date" value={startDate} min={new Date().toISOString().split("T")[0]}
-                      onChange={e => setStartDate(e.target.value)}
+                      onChange={e => { setStartDate(e.target.value); if (endDate && endDate < e.target.value) setEndDate(""); }}
                       className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white" />
                   </div>
                   <div>
-                    <label className="text-xs text-stone-500 mb-1 block font-medium">End date <span className="text-stone-400 font-normal">(optional — leave blank for ongoing)</span></label>
-                    <input type="date" value={endDate} min={startDate}
+                    <label className="text-xs text-stone-500 mb-1 block font-medium">
+                      End date {minBookings <= 1 && <span className="text-stone-400 font-normal">(optional — leave blank for ongoing)</span>}
+                    </label>
+                    <input type="date" value={endDate || (minBookings > 1 ? minEndDate : "")} min={minEndDate}
                       onChange={e => setEndDate(e.target.value)}
                       className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white" />
+                    {minBookings > 1 && (
+                      <p className="text-[10px] text-stone-500 mt-1">Minimum {minBookings} weeks required by host</p>
+                    )}
                   </div>
                 </div>
 
@@ -785,9 +800,12 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                       <span className="font-medium">-${weeklyTotal - discountedTotal}</span>
                     </div>
                   )}
+                  {discountPercent > 0 && discountAfter > 0 && (
+                    <p className="text-[10px] text-stone-400">Discount applies after {discountAfter} booking{discountAfter !== 1 ? "s" : ""}</p>
+                  )}
                   <div className="flex justify-between text-sm font-semibold pt-2 border-t border-stone-100">
                     <span className="text-stone-800">Per week</span>
-                    <span className="text-emerald-600">${discountedTotal}/week</span>
+                    <span className="text-emerald-600">${discountPercent > 0 && discountAfter === 0 ? discountedTotal : weeklyTotal}/week</span>
                   </div>
                   <p className="text-[10px] text-stone-400">+ service fee & tax applied at checkout per session</p>
                 </div>
@@ -1400,11 +1418,20 @@ function BookingCard({
       {(space as any).bookingTypes === "recurring" && (
         <div className="flex items-center gap-1.5 mt-1.5 mb-2 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
           <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-          <span className="text-xs text-emerald-700 font-medium">Recurring bookings only</span>
+          <span className="text-xs text-emerald-700 font-medium">
+            Recurring bookings only
+            {(space as any).recurringMinBookings > 1 && <> · {(space as any).recurringMinBookings} week minimum</>}
+          </span>
+        </div>
+      )}
+      {(space as any).bookingTypes !== "recurring" && (space as any).recurringMinBookings > 1 && (
+        <div className="flex items-center gap-1.5 mt-1.5 mb-2 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+          <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+          <span className="text-xs text-emerald-700 font-medium">{(space as any).recurringMinBookings} week min for recurring</span>
         </div>
       )}
       {(space as any).recurringDiscountPercent > 0 && (
-        <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
+        <div className="flex items-center gap-1.5 mt-1.5 mb-2 px-2.5 py-1.5 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
           <Repeat className="w-3.5 h-3.5 text-[#946b4a] flex-shrink-0" />
           <span className="text-xs text-[#7a5638] font-medium">
             ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
@@ -1414,7 +1441,7 @@ function BookingCard({
           </span>
         </div>
       )}
-      {!space.pricePerDay && !((space as any).recurringDiscountPercent > 0) && (space as any).bookingTypes !== "recurring" && <div className="mb-5" />}
+      {!space.pricePerDay && !((space as any).recurringDiscountPercent > 0) && (space as any).bookingTypes !== "recurring" && (space as any).recurringMinBookings <= 1 && <div className="mb-5" />}
 
       {/* Hours */}
       {space.availableHours && (
@@ -1986,7 +2013,16 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 {(space as any).bookingTypes === "recurring" && (
                   <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
                     <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs text-emerald-700 font-medium">Recurring bookings only</span>
+                    <span className="text-xs text-emerald-700 font-medium">
+                      Recurring bookings only
+                      {(space as any).recurringMinBookings > 1 && <> · {(space as any).recurringMinBookings} week minimum</>}
+                    </span>
+                  </div>
+                )}
+                {(space as any).bookingTypes !== "recurring" && (space as any).recurringMinBookings > 1 && (
+                  <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs text-emerald-700 font-medium">{(space as any).recurringMinBookings} week min for recurring</span>
                   </div>
                 )}
                 {(space as any).recurringDiscountPercent > 0 && (

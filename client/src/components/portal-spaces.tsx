@@ -353,8 +353,9 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     hostName: space.hostName || "",
     bufferMinutes: String(space.bufferMinutes ?? 15),
     cancellationPolicy: (space as any).cancellationPolicy || "flexible",
+    recurringMinBookings: String((space as any).recurringMinBookings ?? "1"),
     recurringDiscountPercent: String((space as any).recurringDiscountPercent ?? "0"),
-    recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "3"),
+    recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "0"),
     bookingTypes: (space as any).bookingTypes || "both",
   });
   const [amenitiesTags, setAmenitiesTags] = useState<string[]>((space.amenities || []) as string[]);
@@ -369,6 +370,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
         pricePerHour: formData.pricePerHour ? Number(formData.pricePerHour) : undefined,
         pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
         bufferMinutes: Number(formData.bufferMinutes),
+        recurringMinBookings: Number(formData.recurringMinBookings) || 1,
         recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
         recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
         bookingTypes: formData.bookingTypes,
@@ -531,12 +533,16 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                           const current = formData.bookingTypes;
                           let next: string;
                           if (current === "both") {
+                            // Deselect this one, keep the other
                             next = opt.key === "hourly" ? "recurring" : "hourly";
                           } else if (current === opt.key) {
-                            // Can't deselect the only one — toggle to both
-                            next = "both";
+                            // Deselect the only active one — go to none
+                            next = "none";
+                          } else if (current === "none") {
+                            // Nothing selected, select this one
+                            next = opt.key;
                           } else {
-                            // Other type is selected, add this one
+                            // Other type is selected, add this one = both
                             next = "both";
                           }
                           update("bookingTypes", next);
@@ -561,6 +567,18 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                     );
                   })}
                 </div>
+                {formData.bookingTypes === "none" && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-lg border border-red-200 text-xs text-red-700">
+                    <X className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>You must select at least one booking type to save your changes.</span>
+                  </div>
+                )}
+                {formData.bookingTypes === "hourly" && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                    <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Your space will only accept single bookings. Renters can only book one-time hourly or daily sessions.</span>
+                  </div>
+                )}
                 {formData.bookingTypes === "recurring" && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
                     <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
@@ -610,12 +628,42 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </div>
               </div>
 
+              {/* Minimum Recurring Sessions — only when recurring enabled */}
+              {formData.bookingTypes !== "hourly" && (
+                <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                  <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                    <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
+                    Minimum Recurring Sessions
+                  </h4>
+                  <p className="text-[11px] text-stone-400 -mt-1">How many weekly sessions a renter must commit to</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4, 8, 12].map(n => (
+                      <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          String(n) === formData.recurringMinBookings
+                            ? "border-stone-900 bg-stone-900 text-white"
+                            : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
+                        }`}>
+                        {n === 1 ? "No minimum" : `${n} weeks`}
+                      </button>
+                    ))}
+                  </div>
+                  {Number(formData.recurringMinBookings) > 1 && (
+                    <p className="text-[11px] text-stone-500 bg-stone-50 rounded-lg px-3 py-2">
+                      Renters must book at least <strong>{formData.recurringMinBookings} weekly sessions</strong> to request a recurring booking.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Recurring Discount — separate section */}
               {formData.bookingTypes !== "hourly" && (
                 <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
                   <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
                     <Repeat className="w-3.5 h-3.5 text-emerald-600" />
                     Recurring Discount
                   </h4>
+                  <p className="text-[11px] text-stone-400 -mt-1">Reward loyal renters with a discount on their recurring rate</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
@@ -625,7 +673,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Kicks In After</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
                       <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-recurring-after-${space.id}`}>
                         <option value="0">Immediately</option>
                         <option value="1">After 1 booking</option>
@@ -636,6 +684,12 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       </select>
                     </div>
                   </div>
+                  {Number(formData.recurringDiscountPercent) > 0 && (
+                    <p className="text-[11px] text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
+                      Renters pay <strong>${recurringPrice}/hr</strong> instead of ${formData.pricePerHour}/hr
+                      {Number(formData.recurringDiscountAfter) > 0 && <> after {formData.recurringDiscountAfter} booking{Number(formData.recurringDiscountAfter) !== 1 ? "s" : ""}</>}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -721,7 +775,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
           </Button>
           <Button
             onClick={() => updateMutation.mutate()}
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || formData.bookingTypes === "none"}
             size="sm"
             className="bg-stone-900 text-white hover:bg-stone-800"
             data-testid={`button-save-edit-space-${space.id}`}

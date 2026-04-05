@@ -2755,7 +2755,7 @@ export async function registerRoutes(
   app.post("/api/spaces", isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user;
-      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName } = req.body;
+      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName, bookingTypes, recurringMinBookings, recurringDiscountPercent, recurringDiscountAfter } = req.body;
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -2790,6 +2790,10 @@ export async function registerRoutes(
         hostName: hostName || user.claims?.first_name || "Space Host",
         userId: user.claims.sub,
         approvalStatus: "pending",
+        bookingTypes: bookingTypes && ["hourly", "recurring", "both"].includes(bookingTypes) ? bookingTypes : "both",
+        recurringMinBookings: recurringMinBookings ? parseInt(recurringMinBookings) : 1,
+        recurringDiscountPercent: recurringDiscountPercent ? parseInt(recurringDiscountPercent) : null,
+        recurringDiscountAfter: recurringDiscountAfter ? parseInt(recurringDiscountAfter) : 0,
         isSample: 0,
         isActive: 1,
       });
@@ -2916,6 +2920,11 @@ export async function registerRoutes(
       }
       if (body.bookingTypes !== undefined && ["hourly", "recurring", "both"].includes(body.bookingTypes)) {
         updates.bookingTypes = body.bookingTypes;
+      }
+      if (body.recurringMinBookings !== undefined) {
+        const n = Number(body.recurringMinBookings);
+        if (isNaN(n) || n < 1 || n > 52) return res.status(400).json({ message: "Invalid recurring minimum bookings" });
+        updates.recurringMinBookings = n;
       }
       if (body.recurringDiscountPercent !== undefined) {
         const n = body.recurringDiscountPercent === null ? null : Number(body.recurringDiscountPercent);

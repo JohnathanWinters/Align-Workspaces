@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle } from "lucide-react";
+import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -317,15 +317,34 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
   );
 }
 
+type ListTab = "details" | "pricing" | "extras";
+
+function getListCompletionScore(formData: Record<string, any>, amenitiesTags: string[]) {
+  const checks = [
+    { label: "Space name", done: !!formData.name },
+    { label: "Address", done: !!formData.address },
+    { label: "Host name", done: !!formData.hostName },
+    { label: "Hourly price", done: !!formData.pricePerHour },
+    { label: "Description", done: !!formData.description },
+    { label: "Short description", done: !!formData.shortDescription },
+    { label: "Amenities", done: amenitiesTags.length > 0 },
+    { label: "Neighborhood", done: !!formData.neighborhood },
+  ];
+  const done = checks.filter(c => c.done).length;
+  return { checks, done, total: checks.length, percent: Math.round((done / checks.length) * 100) };
+}
+
 export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [showListMagicLink, setShowListMagicLink] = useState(false);
   const [insuranceBypassed, setInsuranceBypassed] = useState(false);
+  const [tab, setTab] = useState<ListTab>("details");
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     amenities: "", targetProfession: "", availableHours: "", hostName: "",
+    bookingTypes: "both", recurringMinBookings: "1", recurringDiscountPercent: "0", recurringDiscountAfter: "0",
   });
   const [amenitiesTags, setAmenitiesTags] = useState<string[]>([]);
 
@@ -334,9 +353,25 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
     enabled: isAuthenticated,
   });
 
+  const score = getListCompletionScore(formData, amenitiesTags);
+
+  const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
+    ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
+    : null;
+
   const createMutation = useMutation({
     mutationFn: async () => {
-      const payload = { ...formData, type: formData.tags[0] || formData.type, amenities: amenitiesTags };
+      const payload = {
+        ...formData,
+        type: formData.tags[0] || formData.type,
+        amenities: amenitiesTags,
+        pricePerHour: Number(formData.pricePerHour),
+        pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
+        recurringMinBookings: Number(formData.recurringMinBookings) || 1,
+        recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
+        recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
+        bookingTypes: formData.bookingTypes === "none" ? "both" : formData.bookingTypes,
+      };
       await apiRequest("POST", "/api/spaces", payload);
     },
     onSuccess: () => {
@@ -417,96 +452,294 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             }}
           />
         ) : (
-          <div className="p-6 space-y-4">
-            {insuranceStatus?.hasInsurance && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 mb-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-medium text-emerald-700">Insurance verified</span>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Space Name *</label>
-                <Input value={formData.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-list-name" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs text-foreground/50 mb-1.5 block">Categories *</label>
-                <div className="flex flex-wrap gap-2">
-                  {LIST_SPACE_TYPES.map(t => {
-                    const selected = formData.tags.includes(t.value);
-                    return (
-                      <button
-                        key={t.value}
-                        type="button"
-                        data-testid={`tag-list-${t.value}`}
-                        onClick={() => {
-                          const next = selected ? formData.tags.filter(x => x !== t.value) : [...formData.tags, t.value];
-                          setFormData(prev => ({ ...prev, tags: next, type: next[0] || prev.type }));
-                        }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selected ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"}`}
-                      >
-                        {t.label}
-                      </button>
-                    );
-                  })}
+          <div className="flex flex-col" style={{ maxHeight: "calc(85vh - 60px)" }}>
+            {/* Progress bar */}
+            <div className="px-6 pt-4 pb-2 flex-shrink-0">
+              {insuranceStatus?.hasInsurance && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 mb-3">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span className="text-xs font-medium text-emerald-700">Insurance verified</span>
                 </div>
+              )}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-stone-500">Listing completeness</span>
+                <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 60 ? "text-amber-500" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Your Name / Business *</label>
-                <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-list-host" />
+              <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-1">
+                <motion.div
+                  className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 60 ? "bg-amber-500" : "bg-stone-300"}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${score.percent}%` }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                />
               </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Address *</label>
-                <Input value={formData.address} onChange={e => update("address", e.target.value)} placeholder="Full address" data-testid="input-list-address" />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Neighborhood</label>
-                <Input value={formData.neighborhood} onChange={e => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid="input-list-neighborhood" />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Price per Hour ($) *</label>
-                <Input type="number" value={formData.pricePerHour} onChange={e => update("pricePerHour", e.target.value)} placeholder="35" data-testid="input-list-price" />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Price per Day ($)</label>
-                <Input type="number" value={formData.pricePerDay} onChange={e => update("pricePerDay", e.target.value)} placeholder="200" data-testid="input-list-price-day" />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Target Profession</label>
-                <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists" data-testid="input-list-target" />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/50 mb-1 block">Available Hours</label>
-                <Input value={formData.availableHours} onChange={e => update("availableHours", e.target.value)} placeholder="Mon-Fri 9am-5pm" data-testid="input-list-hours" />
-              </div>
+              {score.percent < 100 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {score.checks.filter(c => !c.done).map(c => (
+                    <span key={c.label} className="text-[10px] text-stone-400 bg-stone-50 border border-stone-100 px-1.5 py-0.5 rounded">{c.label}</span>
+                  ))}
+                </div>
+              )}
             </div>
-            <div>
-              <label className="text-xs text-foreground/50 mb-1 block">Short Description</label>
-              <Input value={formData.shortDescription} onChange={e => update("shortDescription", e.target.value)} placeholder="Brief one-liner" data-testid="input-list-short-desc" />
+
+            {/* Tabs */}
+            <div className="px-6 flex gap-1 border-b border-stone-100 flex-shrink-0">
+              {([
+                { id: "details" as const, label: "Details", icon: Building2 },
+                { id: "pricing" as const, label: "Pricing", icon: DollarSign },
+                { id: "extras" as const, label: "Extras", icon: Star },
+              ]).map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors ${
+                    tab === t.id ? "border-stone-900 text-stone-900" : "border-transparent text-stone-400 hover:text-stone-600"
+                  }`}
+                >
+                  <t.icon className="w-3.5 h-3.5" />
+                  {t.label}
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="text-xs text-foreground/50 mb-1 block">Description *</label>
-              <Textarea value={formData.description} onChange={e => update("description", e.target.value)} placeholder="Describe your space in detail..." rows={3} data-testid="input-list-description" />
+
+            {/* Tab content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {tab === "details" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-foreground/50 mb-1 block">Space Name *</label>
+                      <Input value={formData.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-list-name" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-foreground/50 mb-1 block">Your Name / Business *</label>
+                      <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-list-host" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-foreground/50 mb-1.5 block">Categories *</label>
+                    <div className="flex flex-wrap gap-2">
+                      {LIST_SPACE_TYPES.map(t => {
+                        const selected = formData.tags.includes(t.value);
+                        return (
+                          <button
+                            key={t.value}
+                            type="button"
+                            data-testid={`tag-list-${t.value}`}
+                            onClick={() => {
+                              const next = selected ? formData.tags.filter(x => x !== t.value) : [...formData.tags, t.value];
+                              setFormData(prev => ({ ...prev, tags: next, type: next[0] || prev.type }));
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selected ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"}`}
+                          >
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-foreground/50 mb-1 block">Address *</label>
+                      <Input value={formData.address} onChange={e => update("address", e.target.value)} placeholder="Full address" data-testid="input-list-address" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-foreground/50 mb-1 block">Neighborhood</label>
+                      <Input value={formData.neighborhood} onChange={e => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid="input-list-neighborhood" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-foreground/50 mb-1 block">Short Description</label>
+                    <Input value={formData.shortDescription} onChange={e => update("shortDescription", e.target.value)} placeholder="Brief one-liner" data-testid="input-list-short-desc" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-foreground/50 mb-1 block">Description *</label>
+                    <Textarea value={formData.description} onChange={e => update("description", e.target.value)} placeholder="Describe your space in detail..." rows={3} data-testid="input-list-description" />
+                  </div>
+                </div>
+              )}
+
+              {tab === "pricing" && (
+                <div className="space-y-5">
+                  {/* Booking Types */}
+                  <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                    <h4 className="text-sm font-medium text-stone-700">Accepted Booking Types</h4>
+                    <p className="text-[11px] text-stone-400 -mt-1">Choose how renters can book your space</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {([
+                        { key: "hourly" as const, icon: Clock, label: "Single Bookings", desc: "One-time hourly or daily sessions" },
+                        { key: "recurring" as const, icon: Repeat, label: "Recurring Bookings", desc: "Weekly repeating sessions" },
+                      ]).map(opt => {
+                        const active = formData.bookingTypes === opt.key || formData.bookingTypes === "both";
+                        return (
+                          <button key={opt.key} type="button"
+                            onClick={() => {
+                              const current = formData.bookingTypes;
+                              let next: string;
+                              if (current === "both") next = opt.key === "hourly" ? "recurring" : "hourly";
+                              else if (current === opt.key) next = "none";
+                              else if (current === "none") next = opt.key;
+                              else next = "both";
+                              update("bookingTypes", next);
+                            }}
+                            className={`relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${active ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-50 hover:opacity-75"}`}
+                          >
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${active ? "border-stone-900 bg-stone-900" : "border-stone-300"}`}>
+                              {active && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <opt.icon className="w-3.5 h-3.5 text-stone-500" />
+                                <span className="text-sm font-medium text-stone-800">{opt.label}</span>
+                              </div>
+                              <p className="text-[11px] text-stone-400 mt-0.5">{opt.desc}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {formData.bookingTypes === "none" && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-lg border border-red-200 text-xs text-red-700">
+                        <X className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>You must select at least one booking type to submit.</span>
+                      </div>
+                    )}
+                    {formData.bookingTypes === "hourly" && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>Your space will only accept single bookings. Renters can only book one-time hourly or daily sessions.</span>
+                      </div>
+                    )}
+                    {formData.bookingTypes === "recurring" && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                        <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>Your space will only accept recurring weekly bookings. Single sessions will not be available.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pricing cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className={`rounded-xl border-2 p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-40"}`}>
+                      <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Hourly Rate</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-stone-400 text-lg">$</span>
+                        <input type="number" value={formData.pricePerHour} onChange={e => update("pricePerHour", e.target.value)}
+                          className="w-20 text-center text-2xl font-bold text-stone-900 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0" data-testid="input-list-price" />
+                      </div>
+                      <p className="text-[10px] text-stone-400 mt-1">per hour</p>
+                    </div>
+                    <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-200 bg-white" : "border-stone-200 bg-white opacity-40"}`}>
+                      <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Daily Rate</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-stone-400 text-lg">$</span>
+                        <input type="number" value={formData.pricePerDay} onChange={e => update("pricePerDay", e.target.value)}
+                          className="w-20 text-center text-2xl font-bold text-stone-900 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0" data-testid="input-list-price-day" />
+                      </div>
+                      <p className="text-[10px] text-stone-400 mt-1">per day (optional)</p>
+                    </div>
+                    <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "hourly" ? "border-2 border-emerald-600 bg-emerald-50" : "border-stone-200 bg-white opacity-40"}`}>
+                      <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Recurring Rate</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-stone-400 text-lg">$</span>
+                        <span className="text-2xl font-bold text-emerald-600">{recurringPrice || (formData.pricePerHour || "0")}</span>
+                      </div>
+                      <p className="text-[10px] text-stone-400 mt-1">per hour for regulars</p>
+                    </div>
+                  </div>
+
+                  {/* Minimum Recurring Sessions */}
+                  {formData.bookingTypes !== "hourly" && (
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
+                        Minimum Recurring Sessions
+                      </h4>
+                      <p className="text-[11px] text-stone-400 -mt-1">How many weekly sessions a renter must commit to</p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 8, 12].map(n => (
+                          <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                              String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
+                            }`}>
+                            {n === 1 ? "No minimum" : `${n} weeks`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recurring Discount */}
+                  {formData.bookingTypes !== "hourly" && (
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                        <Repeat className="w-3.5 h-3.5 text-emerald-600" />
+                        Recurring Discount
+                      </h4>
+                      <p className="text-[11px] text-stone-400 -mt-1">Reward loyal renters with a discount on their recurring rate</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
+                          <div className="flex items-center gap-2">
+                            <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={e => update("recurringDiscountPercent", e.target.value)} />
+                            <span className="text-sm text-stone-400 flex-shrink-0">%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
+                          <select value={formData.recurringDiscountAfter} onChange={e => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
+                            <option value="0">Immediately</option>
+                            <option value="1">After 1 booking</option>
+                            <option value="2">After 2 bookings</option>
+                            <option value="3">After 3 bookings</option>
+                            <option value="5">After 5 bookings</option>
+                            <option value="10">After 10 bookings</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {tab === "extras" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs text-foreground/50 mb-1 block">Amenities</label>
+                    <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-foreground/50 mb-1 block">Target Profession</label>
+                      <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists" data-testid="input-list-target" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-foreground/50 mb-1 block">Available Hours</label>
+                      <Input value={formData.availableHours} onChange={e => update("availableHours", e.target.value)} placeholder="Mon-Fri 9am-5pm" data-testid="input-list-hours" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="text-xs text-foreground/50 mb-1 block">Amenities (comma-separated)</label>
-              <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-stone-100 flex-shrink-0 space-y-3">
+              <Button
+                onClick={() => createMutation.mutate()}
+                disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
+                className="w-full bg-foreground text-background hover:opacity-90 py-3"
+                data-testid="button-submit-list-space"
+              >
+                {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit for Approval"}
+              </Button>
+              <p className="text-[11px] text-foreground/30 text-center leading-relaxed">
+                By listing your workspace, you agree to our{" "}
+                <a href="/terms" target="_blank" className="underline hover:text-foreground/50">Terms of Service</a>{" "}and{" "}
+                <a href="/privacy" target="_blank" className="underline hover:text-foreground/50">Privacy Policy</a>.
+              </p>
             </div>
-            <Button
-              onClick={() => createMutation.mutate()}
-              disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending}
-              className="w-full bg-foreground text-background hover:opacity-90 py-3"
-              data-testid="button-submit-list-space"
-            >
-              {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit for Approval"}
-            </Button>
-            <p className="text-xs text-foreground/40 text-center">Your listing will be reviewed by our team before going live.</p>
-            <p className="text-[11px] text-foreground/30 text-center leading-relaxed">
-              By listing your workspace, you agree to our{" "}
-              <a href="/terms" target="_blank" className="underline hover:text-foreground/50">Terms of Service</a>,{" "}
-              <a href="/privacy" target="_blank" className="underline hover:text-foreground/50">Privacy Policy</a>,
-              and confirm you have the legal authority to list this space.
-            </p>
           </div>
         )}
       </motion.div>
