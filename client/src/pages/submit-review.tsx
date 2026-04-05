@@ -1,26 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Loader2, CheckCircle2, ArrowRight, ArrowLeft, User, MessageSquare, Sparkles } from "lucide-react";
+import { Star, Loader2, CheckCircle2, ArrowRight, ArrowLeft, User, MessageSquare, Sparkles, Building2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-interface SpaceInfo {
-  id: string;
-  name: string;
-  hostName: string;
-  imageUrls: string[];
-  type: string;
-}
-
 const STEP_LABELS = ["Rate", "Review", "You", "Done"];
 
+type ReviewType = "workspaces" | "photography";
+
+const CONFIG: Record<ReviewType, { title: string; subtitle: string; icon: typeof Building2; prompt: string; thankYou: string; gradient: string }> = {
+  workspaces: {
+    title: "Align Workspaces",
+    subtitle: "Share your workspace experience",
+    icon: Building2,
+    prompt: "How was your workspace experience?",
+    thankYou: "Your review helps professionals find great workspaces.",
+    gradient: "from-[#c4956a]/30 to-stone-200",
+  },
+  photography: {
+    title: "Align Photography",
+    subtitle: "Share your photography experience",
+    icon: Camera,
+    prompt: "How was your photography session?",
+    thankYou: "Your review helps others discover amazing photography.",
+    gradient: "from-violet-200/50 to-stone-200",
+  },
+};
+
 export default function SubmitReviewPage({ params }: { params: { slug: string } }) {
-  const slug = params.slug;
-  const [space, setSpace] = useState<SpaceInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState(0); // 0=rating, 1=review, 2=info, 3=done
+  const type: ReviewType = params.slug === "photography" ? "photography" : "workspaces";
+  const config = CONFIG[type];
+  const Icon = config.icon;
+
+  const [step, setStep] = useState(0);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
@@ -29,22 +42,17 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetch(`/api/review/${slug}`)
-      .then(r => { if (!r.ok) throw new Error("Not found"); return r.json(); })
-      .then(setSpace)
-      .catch(() => setError("Workspace not found"))
-      .finally(() => setLoading(false));
-  }, [slug]);
-
   const submit = async () => {
     if (!rating || !name) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/review/${slug}`, {
+      const endpoint = type === "photography" ? "/api/review/photography" : "/api/review/general";
+      const nameField = type === "photography" ? "clientName" : "guestName";
+      const emailField = type === "photography" ? "clientEmail" : "guestEmail";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, title, comment, guestName: name, guestEmail: email }),
+        body: JSON.stringify({ rating, title, comment, [nameField]: name, [emailField]: email }),
       });
       if (!res.ok) throw new Error((await res.json()).message);
       setStep(3);
@@ -58,30 +66,22 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
   const activeRating = hoverRating || rating;
   const progress = step === 3 ? 100 : Math.round(((step + (rating ? 0.5 : 0)) / 3) * 100);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-stone-50"><Loader2 className="w-6 h-6 animate-spin text-stone-400" /></div>;
-  if (error || !space) return <div className="min-h-screen flex items-center justify-center bg-stone-50"><p className="text-stone-500">{error || "Not found"}</p></div>;
-
-  const heroImage = space.imageUrls?.[0];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
       {/* Hero */}
-      <div className="relative h-40 sm:h-48 overflow-hidden bg-stone-200">
-        {heroImage ? (
-          <img src={heroImage} alt={space.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#c4956a]/30 to-stone-200" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-4 left-0 right-0 text-center">
-          <h1 className="font-serif text-xl sm:text-2xl font-bold text-white drop-shadow-md">{space.name}</h1>
-          <p className="text-white/80 text-xs mt-0.5">Hosted by {space.hostName}</p>
+      <div className={`relative h-40 sm:h-48 overflow-hidden bg-gradient-to-br ${config.gradient}`}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+          <div className="w-14 h-14 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center mb-3 shadow-sm">
+            <Icon className="w-7 h-7 text-[#c4956a]" />
+          </div>
+          <h1 className="font-serif text-xl sm:text-2xl font-bold text-stone-900">{config.title}</h1>
+          <p className="text-stone-600 text-xs mt-0.5">{config.subtitle}</p>
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 -mt-4 relative z-10">
-        {/* Progress bar */}
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+          {/* Progress */}
           <div className="px-5 pt-4 pb-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -109,8 +109,8 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
               {step === 0 && (
                 <motion.div key="step0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col items-center justify-center text-center">
                   <Sparkles className="w-5 h-5 text-[#c4956a] mb-2" />
-                  <h2 className="font-serif text-lg font-bold text-stone-900 mb-1">How was your experience?</h2>
-                  <p className="text-xs text-stone-400 mb-6">Tap a star to rate your visit</p>
+                  <h2 className="font-serif text-lg font-bold text-stone-900 mb-1">{config.prompt}</h2>
+                  <p className="text-xs text-stone-400 mb-6">Tap a star to rate</p>
 
                   <div className="flex items-center gap-2 mb-3">
                     {[1, 2, 3, 4, 5].map(s => (
@@ -150,7 +150,7 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
                     <MessageSquare className="w-4 h-4 text-[#c4956a]" />
                     <h2 className="font-serif text-lg font-bold text-stone-900">Tell us more</h2>
                   </div>
-                  <p className="text-xs text-stone-400 mb-4">Your feedback helps others find great workspaces</p>
+                  <p className="text-xs text-stone-400 mb-4">Your feedback helps us improve</p>
 
                   <div className="space-y-3 flex-1">
                     <div>
@@ -223,7 +223,7 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
                   <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                     className="font-serif text-xl font-bold text-stone-900 mb-2">Thank you, {name}!</motion.h2>
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                    className="text-sm text-stone-500">Your review helps {space.hostName} and others in the community.</motion.p>
+                    className="text-sm text-stone-500">{config.thankYou}</motion.p>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="flex items-center gap-1 mt-3">
                     {[1, 2, 3, 4, 5].map(s => (
                       <Star key={s} className={`w-5 h-5 ${s <= rating ? "fill-amber-400 text-amber-400" : "text-stone-200"}`} />

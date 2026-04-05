@@ -2216,7 +2216,6 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "hidden" | "flagged">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "photography" | "workspaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [allSpaces, setAllSpaces] = useState<any[]>([]);
   const [showSharePanel, setShowSharePanel] = useState(false);
 
   const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
@@ -2243,9 +2242,6 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   }, [adminFetchLocal]);
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
-  useEffect(() => {
-    adminFetchLocal("/api/admin/spaces/all").then(r => r.ok ? r.json() : []).then(d => setAllSpaces(Array.isArray(d) ? d : [])).catch(() => {});
-  }, [adminFetchLocal]);
 
   const updateStatus = async (id: string, status: "published" | "hidden" | "flagged", type: string) => {
     const endpoint = type === "photography" ? `/api/admin/shoot-reviews/${id}` : `/api/admin/reviews/${id}`;
@@ -2340,15 +2336,21 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                 <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Share a review link with your clients
                 </h3>
-                <p className="text-xs text-stone-400">Pick a workspace and share the link. Clients can leave a review without an account.</p>
+                <p className="text-xs text-stone-400">Send these links to clients so they can leave a review without an account.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {allSpaces.filter((s: any) => s.approvalStatus === "approved" && s.isActive).map((s: any) => {
-                    const url = `${window.location.origin}/review/${s.slug}`;
+                  {[
+                    { key: "workspaces", label: "Workspaces", desc: "For workspace clients", icon: Building2, slug: "workspaces" },
+                    { key: "photography", label: "Photography", desc: "For photography clients", icon: Camera, slug: "photography" },
+                  ].map(opt => {
+                    const url = `${window.location.origin}/review/${opt.slug}`;
                     return (
-                      <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-stone-100 bg-stone-50/50">
+                      <div key={opt.key} className="flex items-center gap-3 px-3 py-3 rounded-lg border border-stone-100 bg-stone-50/50">
+                        <div className="w-9 h-9 rounded-lg bg-[#c4956a]/10 flex items-center justify-center shrink-0">
+                          <opt.icon className="w-4.5 h-4.5 text-[#c4956a]" />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-stone-800 truncate">{s.name}</p>
-                          <p className="text-[10px] text-stone-400 truncate">/review/{s.slug}</p>
+                          <p className="text-sm font-medium text-stone-800">{opt.label}</p>
+                          <p className="text-[10px] text-stone-400">{opt.desc}</p>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <button onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Review link copied!" }); }}
@@ -2356,7 +2358,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                             <Copy className="w-3 h-3" /> Copy
                           </button>
                           <button onClick={() => {
-                            if (navigator.share) { navigator.share({ title: `Leave a review for ${s.name}`, url }).catch(() => {}); }
+                            if (navigator.share) { navigator.share({ title: `Leave a review for Align ${opt.label}`, url }).catch(() => {}); }
                             else { navigator.clipboard.writeText(url); toast({ title: "Review link copied!" }); }
                           }} className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors flex items-center gap-1">
                             <Send className="w-3 h-3" /> Share
@@ -2366,9 +2368,6 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     );
                   })}
                 </div>
-                {allSpaces.filter((s: any) => s.approvalStatus === "approved" && s.isActive).length === 0 && (
-                  <p className="text-xs text-stone-400 text-center py-2">No active workspaces found</p>
-                )}
               </div>
             </motion.div>
           )}
