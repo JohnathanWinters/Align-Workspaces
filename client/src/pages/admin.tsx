@@ -5544,15 +5544,41 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               )}
 
               {/* Follow-up + last contact */}
-              <div className="flex flex-wrap gap-3 text-sm">
-                {selectedContact.nextFollowUp && (
-                  <span className={`flex items-center gap-1.5 ${new Date(selectedContact.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                    <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp).toLocaleDateString()}
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-3 text-sm">
+                  <span className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 relative ${selectedContact.nextFollowUp && new Date(selectedContact.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : selectedContact.nextFollowUp ? "text-gray-500" : "text-gray-400"}`}
+                    onClick={() => {
+                      const input = document.getElementById("detail-followup-picker") as HTMLInputElement;
+                      if (input) { input.showPicker(); }
+                    }}>
+                    <CalendarDays className="w-3.5 h-3.5" /> {selectedContact.nextFollowUp ? `Follow-up: ${new Date(selectedContact.nextFollowUp).toLocaleDateString()}` : "Set follow-up"}
+                    <input id="detail-followup-picker" type="date" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" min={new Date().toISOString().split("T")[0]}
+                      value={selectedContact.nextFollowUp ? new Date(selectedContact.nextFollowUp).toISOString().split("T")[0] : ""}
+                      onChange={e => { setFollowUpDate(selectedContact, e.target.value); setSelectedContact({ ...selectedContact, nextFollowUp: e.target.value ? new Date(e.target.value + "T00:00:00").toISOString() : null }); }}
+                    />
                   </span>
-                )}
-                {selectedContact.lastContactDate && (
-                  <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {new Date(selectedContact.lastContactDate).toLocaleDateString()}</span>
-                )}
+                  {selectedContact.lastContactDate && (
+                    <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {new Date(selectedContact.lastContactDate).toLocaleDateString()}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: "Tomorrow", days: 1 },
+                    { label: "+2 days", days: 2 },
+                    { label: "+1 week", days: 7 },
+                    { label: "+2 weeks", days: 14 },
+                    { label: "+1 month", days: 30 },
+                  ].map(opt => {
+                    const d = new Date(); d.setDate(d.getDate() + opt.days);
+                    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                    return (
+                      <button key={opt.label} onClick={() => { setFollowUpDate(selectedContact, dateStr); setSelectedContact({ ...selectedContact, nextFollowUp: new Date(dateStr + "T00:00:00").toISOString() }); }}
+                        className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors">
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {selectedContact.notes && <p className="text-sm text-gray-600 bg-stone-50 rounded-lg p-3">{selectedContact.notes}</p>}
@@ -5657,27 +5683,52 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 )}
                 <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
                   placeholder={newActivity.type === "referral" ? "e.g. Beatriz advised me to reach out to Prince..." : "What happened? Quick notes..."} className="h-16 text-sm bg-white" data-testid="input-activity-note" />
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 flex items-center gap-2">
-                    <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <input
-                      type="date"
-                      value={newActivity.followUpDate}
-                      onChange={e => setNewActivity(p => ({ ...p, followUpDate: e.target.value }))}
-                      className="h-8 text-xs bg-white border border-gray-200 rounded-md px-2 flex-1 text-gray-700"
-                      data-testid="input-followup-date"
-                      min={new Date().toISOString().split("T")[0]}
-                      placeholder="Follow-up date"
-                    />
-                    {newActivity.followUpDate && (
-                      <button onClick={() => setNewActivity(p => ({ ...p, followUpDate: "" }))} className="text-gray-400 hover:text-gray-600">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 flex items-center gap-2">
+                      <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <input
+                        type="date"
+                        value={newActivity.followUpDate}
+                        onChange={e => setNewActivity(p => ({ ...p, followUpDate: e.target.value }))}
+                        className="h-8 text-xs bg-white border border-gray-200 rounded-md px-2 flex-1 text-gray-700"
+                        data-testid="input-followup-date"
+                        min={new Date().toISOString().split("T")[0]}
+                        placeholder="Follow-up date"
+                      />
+                      {newActivity.followUpDate && (
+                        <button onClick={() => setNewActivity(p => ({ ...p, followUpDate: "" }))} className="text-gray-400 hover:text-gray-600">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Log
+                    </Button>
                   </div>
-                  <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Log
-                  </Button>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-[10px] text-gray-400 self-center mr-0.5">Next follow-up:</span>
+                    {[
+                      { label: "Tomorrow", days: 1 },
+                      { label: "+2 days", days: 2 },
+                      { label: "+1 week", days: 7 },
+                      { label: "+2 weeks", days: 14 },
+                      { label: "+1 month", days: 30 },
+                    ].map(opt => {
+                      const d = new Date(); d.setDate(d.getDate() + opt.days);
+                      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                      return (
+                        <button key={opt.label} onClick={() => setNewActivity(p => ({ ...p, followUpDate: dateStr }))}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition-colors ${
+                            newActivity.followUpDate === dateStr
+                              ? "border-stone-900 bg-stone-900 text-white"
+                              : "border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
+                          }`}>
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
