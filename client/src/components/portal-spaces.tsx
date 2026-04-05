@@ -628,14 +628,14 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </div>
               </div>
 
-              {/* Minimum Recurring Sessions — only when recurring enabled */}
+              {/* Minimum Recurring Commitment — only when recurring enabled */}
               {formData.bookingTypes !== "hourly" && (
                 <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
                   <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
                     <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
-                    Minimum Recurring Sessions
+                    Minimum Recurring Commitment
                   </h4>
-                  <p className="text-[11px] text-stone-400 -mt-1">How many weekly sessions a renter must commit to</p>
+                  <p className="text-[11px] text-stone-400 -mt-1">How many weeks a renter must commit to (1 day per week)</p>
                   <div className="flex flex-wrap gap-2">
                     {[1, 2, 3, 4, 8, 12].map(n => (
                       <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
@@ -644,13 +644,13 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                             ? "border-stone-900 bg-stone-900 text-white"
                             : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
                         }`}>
-                        {n === 1 ? "No minimum" : `${n} sessions`}
+                        {n === 1 ? "No minimum" : `${n} weeks`}
                       </button>
                     ))}
                   </div>
                   {Number(formData.recurringMinBookings) > 1 && (
                     <p className="text-[11px] text-stone-500 bg-stone-50 rounded-lg px-3 py-2">
-                      Renters must book at least <strong>{formData.recurringMinBookings} weekly sessions</strong> to request a recurring booking.
+                      Renters must commit to at least <strong>{formData.recurringMinBookings} weeks</strong> (1 day per week) to request a recurring booking.
                     </p>
                   )}
                 </div>
@@ -676,18 +676,18 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
                       <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-recurring-after-${space.id}`}>
                         <option value="0">Immediately</option>
-                        <option value="1">After 1 booking</option>
-                        <option value="2">After 2 bookings</option>
-                        <option value="3">After 3 bookings</option>
-                        <option value="5">After 5 bookings</option>
-                        <option value="10">After 10 bookings</option>
+                        <option value="1">After 1 week</option>
+                        <option value="2">After 2 weeks</option>
+                        <option value="3">After 3 weeks</option>
+                        <option value="5">After 5 weeks</option>
+                        <option value="10">After 10 weeks</option>
                       </select>
                     </div>
                   </div>
                   {Number(formData.recurringDiscountPercent) > 0 && (
                     <p className="text-[11px] text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
                       Renters pay <strong>${recurringPrice}/hr</strong> instead of ${formData.pricePerHour}/hr
-                      {Number(formData.recurringDiscountAfter) > 0 && <> after {formData.recurringDiscountAfter} booking{Number(formData.recurringDiscountAfter) !== 1 ? "s" : ""}</>}
+                      {Number(formData.recurringDiscountAfter) > 0 && <> after {formData.recurringDiscountAfter} week{Number(formData.recurringDiscountAfter) !== 1 ? "s" : ""}</>}
                     </p>
                   )}
                 </div>
@@ -791,6 +791,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
 
 function NewSpaceForm({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
+  const [tab, setTab] = useState<EditTab>("details");
   const [schedule, setSchedule] = useState<WeekSchedule>({
     mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
     wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
@@ -809,17 +810,29 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     targetProfession: "",
     hostName: "",
     bufferMinutes: "15",
+    cancellationPolicy: "flexible",
+    recurringMinBookings: "1",
+    recurringDiscountPercent: "0",
+    recurringDiscountAfter: "0",
+    bookingTypes: "both",
   });
   const [newAmenitiesTags, setNewAmenitiesTags] = useState<string[]>([]);
+
+  const score = getCompletionScore(formData, [], newAmenitiesTags);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       const payload = {
         ...formData,
         bufferMinutes: Number(formData.bufferMinutes),
+        recurringMinBookings: Number(formData.recurringMinBookings) || 1,
+        recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
+        recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
+        bookingTypes: formData.bookingTypes,
         amenities: newAmenitiesTags,
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
+        cancellationPolicy: formData.cancellationPolicy,
       };
       await apiRequest("POST", "/api/spaces", payload);
     },
@@ -837,134 +850,373 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const tabs: { id: EditTab; label: string; icon: React.ReactNode }[] = [
+    { id: "details", label: "Details", icon: <Building2 className="w-3.5 h-3.5" /> },
+    { id: "pricing", label: "Pricing", icon: <DollarSign className="w-3.5 h-3.5" /> },
+    { id: "schedule", label: "Schedule", icon: <CalendarDays className="w-3.5 h-3.5" /> },
+    { id: "extras", label: "Extras", icon: <Star className="w-3.5 h-3.5" /> },
+  ];
+
+  const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
+    ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
+    : null;
+
   return (
-    <Card className="bg-white border-gray-200" data-testid="form-new-space">
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-serif text-lg text-gray-900">List a New Space</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" data-testid="button-close-space-form">
-            <X className="w-5 h-5" />
+    <motion.div
+      className="fixed inset-0 z-[2000] flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        className="relative bg-white w-full max-w-2xl mx-4 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+        initial={{ y: 40, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.97 }}
+        transition={{ type: "spring", damping: 28, stiffness: 350 }}
+        data-testid="form-new-space"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <Plus className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+            <h2 className="font-serif text-lg font-bold text-stone-900 truncate">List a New Workspace</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors flex-shrink-0" data-testid="button-close-space-form">
+            <X className="w-4 h-4 text-stone-500" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Space Name *</label>
-            <Input value={formData.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-space-name" />
+        {/* Completion Score */}
+        <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-stone-600">Listing completeness</span>
+            <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
           </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Space Category *</label>
-            <select
-              value={formData.type}
-              onChange={(e) => update("type", e.target.value)}
-              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
-              data-testid="select-space-type"
-            >
-              {SPACE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+          <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 70 ? "bg-amber-500" : "bg-stone-400"}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${score.percent}%` }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+          {score.percent < 100 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {score.checks.filter((c) => !c.done).map((c) => (
+                <span key={c.label} className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 text-stone-500">{c.label}</span>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Host Name *</label>
-            <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-host-name" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Address *</label>
-            <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="Full address" data-testid="input-space-address" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
-            <Input value={formData.neighborhood} onChange={(e) => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid="input-space-neighborhood" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Price per Hour ($) *</label>
-            <Input type="number" value={formData.pricePerHour} onChange={(e) => update("pricePerHour", e.target.value)} placeholder="35" data-testid="input-space-price-hour" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Price per Day ($)</label>
-            <Input type="number" value={formData.pricePerDay} onChange={(e) => update("pricePerDay", e.target.value)} placeholder="200" data-testid="input-space-price-day" />
-          </div>
-          <div className="col-span-2">
-            <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
-            <div className="flex flex-wrap gap-2" data-testid="input-space-target">
-              {SPACE_TYPES.map((t) => {
-                const selected = (formData.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
-                const isSelected = selected.includes(t.label);
-                return (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => {
-                      const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
-                      update("targetProfession", next.join(", "));
-                    }}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                      isSelected
-                        ? "border-gray-800 bg-gray-800 text-white"
-                        : "border-gray-200 text-gray-500 hover:border-gray-300"
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                );
-              })}
             </div>
-          </div>
-        </div>
-
-        <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
-
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Buffer Time Between Bookings</label>
-          <select
-            value={formData.bufferMinutes}
-            onChange={(e) => update("bufferMinutes", e.target.value)}
-            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white"
-            data-testid="select-space-buffer"
-          >
-            <option value="0">No buffer</option>
-            <option value="5">5 minutes</option>
-            <option value="10">10 minutes</option>
-            <option value="15">15 minutes (default)</option>
-            <option value="20">20 minutes</option>
-            <option value="30">30 minutes</option>
-            <option value="45">45 minutes</option>
-            <option value="60">60 minutes</option>
-          </select>
-          <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
-        </div>
-
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
-          <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} placeholder="Brief one-liner about your space" data-testid="input-space-short-desc" />
-        </div>
-
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Description *</label>
-          <Textarea value={formData.description} onChange={(e) => update("description", e.target.value)} placeholder="Describe your space in detail..." rows={3} data-testid="input-space-description" />
-        </div>
-
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
-          <AmenityInput value={newAmenitiesTags} onChange={setNewAmenitiesTags} data-testid="input-space-amenities" />
-        </div>
-
-        <Button
-          onClick={() => createMutation.mutate()}
-          disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending}
-          className="w-full bg-stone-900 text-white hover:bg-stone-800"
-          data-testid="button-submit-space"
-        >
-          {createMutation.isPending ? (
-            <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</>
-          ) : (
-            "Submit for Approval"
           )}
-        </Button>
-        <p className="text-xs text-gray-400 text-center">Your listing will be reviewed by our team before going live.</p>
-      </CardContent>
-    </Card>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-stone-100 px-6 gap-1 flex-shrink-0">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all ${
+                tab === t.id
+                  ? "border-[#c4956a] text-[#c4956a]"
+                  : "border-transparent text-stone-400 hover:text-stone-600"
+              }`}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {tab === "details" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Space Name</label>
+                  <Input value={formData.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-space-name" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Space Category</label>
+                  <select value={formData.type} onChange={(e) => update("type", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid="select-space-type">
+                    {SPACE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
+                  <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-host-name" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Address</label>
+                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile, Coral Gables, FL 33134" data-testid="input-space-address" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
+                  <Input value={formData.neighborhood} onChange={(e) => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid="input-space-neighborhood" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
+                <Input value={formData.shortDescription} onChange={(e) => update("shortDescription", e.target.value)} placeholder="e.g. A calm, private suite perfect for therapy sessions" data-testid="input-space-short-desc" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                <Textarea value={formData.description} onChange={(e) => update("description", e.target.value)} rows={3} placeholder="e.g. Fully furnished therapy room with natural light, sound insulation, and a private waiting area. Ideal for therapists, counselors, and coaches." data-testid="input-space-description" />
+              </div>
+            </div>
+          )}
+
+          {tab === "pricing" && (
+            <div className="space-y-5">
+              {/* Booking Types */}
+              <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                <h4 className="text-sm font-medium text-stone-700">Accepted Booking Types</h4>
+                <p className="text-[11px] text-stone-400 -mt-1">Choose how renters can book your space</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {([
+                    { key: "hourly" as const, icon: Clock, label: "Single Bookings", desc: "One-time hourly or daily sessions" },
+                    { key: "recurring" as const, icon: Repeat, label: "Recurring Bookings", desc: "Weekly repeating sessions" },
+                  ]).map(opt => {
+                    const active = formData.bookingTypes === opt.key || formData.bookingTypes === "both";
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.bookingTypes;
+                          let next: string;
+                          if (current === "both") {
+                            next = opt.key === "hourly" ? "recurring" : "hourly";
+                          } else if (current === opt.key) {
+                            next = "none";
+                          } else if (current === "none") {
+                            next = opt.key;
+                          } else {
+                            next = "both";
+                          }
+                          update("bookingTypes", next);
+                        }}
+                        className={`relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                          active ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-50 hover:opacity-75"
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                          active ? "border-stone-900 bg-stone-900" : "border-stone-300"
+                        }`}>
+                          {active && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <opt.icon className="w-3.5 h-3.5 text-stone-500" />
+                            <span className="text-sm font-medium text-stone-800">{opt.label}</span>
+                          </div>
+                          <p className="text-[11px] text-stone-400 mt-0.5">{opt.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className={`rounded-xl border-2 p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-40"}`}>
+                  <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Hourly Rate</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-stone-400 text-lg">$</span>
+                    <input
+                      type="number"
+                      value={formData.pricePerHour}
+                      onChange={(e) => update("pricePerHour", e.target.value)}
+                      className="w-20 text-center text-2xl font-bold text-stone-900 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      data-testid="input-space-price-hour"
+                    />
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">per hour</p>
+                </div>
+                <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-200 bg-white" : "border-stone-200 bg-white opacity-40"}`}>
+                  <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Daily Rate</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-stone-400 text-lg">$</span>
+                    <input
+                      type="number"
+                      value={formData.pricePerDay}
+                      onChange={(e) => update("pricePerDay", e.target.value)}
+                      className="w-20 text-center text-2xl font-bold text-stone-900 bg-transparent border-none outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      data-testid="input-space-price-day"
+                    />
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">per day (optional)</p>
+                </div>
+                <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "hourly" ? "border-2 border-emerald-600 bg-emerald-50" : "border-stone-200 bg-white opacity-40"}`}>
+                  <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Recurring Rate</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-stone-400 text-lg">$</span>
+                    <span className="text-2xl font-bold text-emerald-600">{recurringPrice || (formData.pricePerHour || "0")}</span>
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">per hour for regulars</p>
+                </div>
+              </div>
+
+              {/* Minimum Recurring Weeks — only when recurring enabled */}
+              {formData.bookingTypes !== "hourly" && (
+                <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                  <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                    <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
+                    Minimum Recurring Commitment
+                  </h4>
+                  <p className="text-[11px] text-stone-400 -mt-1">How many weeks a renter must commit to (1 day per week)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4, 8, 12].map(n => (
+                      <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          String(n) === formData.recurringMinBookings
+                            ? "border-stone-900 bg-stone-900 text-white"
+                            : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
+                        }`}>
+                        {n === 1 ? "No minimum" : `${n} weeks`}
+                      </button>
+                    ))}
+                  </div>
+                  {Number(formData.recurringMinBookings) > 1 && (
+                    <p className="text-[11px] text-stone-500 bg-stone-50 rounded-lg px-3 py-2">
+                      Renters must commit to at least <strong>{formData.recurringMinBookings} weeks</strong> (1 day per week) to request a recurring booking.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Recurring Discount */}
+              {formData.bookingTypes !== "hourly" && (
+                <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                  <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                    <Repeat className="w-3.5 h-3.5 text-emerald-600" />
+                    Recurring Discount
+                  </h4>
+                  <p className="text-[11px] text-stone-400 -mt-1">Reward loyal renters with a discount on their recurring rate</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
+                      <div className="flex items-center gap-2">
+                        <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} />
+                        <span className="text-sm text-stone-400 flex-shrink-0">%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
+                      <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
+                        <option value="0">Immediately</option>
+                        <option value="1">After 1 week</option>
+                        <option value="2">After 2 weeks</option>
+                        <option value="3">After 3 weeks</option>
+                        <option value="5">After 5 weeks</option>
+                        <option value="10">After 10 weeks</option>
+                      </select>
+                    </div>
+                  </div>
+                  {Number(formData.recurringDiscountPercent) > 0 && (
+                    <p className="text-[11px] text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
+                      Renters pay <strong>${recurringPrice}/hr</strong> instead of ${formData.pricePerHour}/hr
+                      {Number(formData.recurringDiscountAfter) > 0 && <> after {formData.recurringDiscountAfter} week{Number(formData.recurringDiscountAfter) !== 1 ? "s" : ""}</>}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "schedule" && (
+            <div className="space-y-4">
+              <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Buffer Time Between Bookings</label>
+                <select value={formData.bufferMinutes} onChange={(e) => update("bufferMinutes", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid="select-space-buffer">
+                  <option value="0">No buffer</option>
+                  <option value="5">5 minutes</option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="20">20 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">60 minutes</option>
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1">Time reserved between bookings for prep or cleanup</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
+                <select value={formData.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
+                  <option value="flexible">Flexible, full refund up to 24 hours before</option>
+                  <option value="moderate">Moderate, full refund up to 5 days, 50% after</option>
+                  <option value="strict">Strict, 50% refund up to 7 days, none after</option>
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1">
+                  {formData.cancellationPolicy === "flexible"
+                    ? "Recommended for new hosts to attract more bookings"
+                    : formData.cancellationPolicy === "moderate"
+                    ? "Good balance between flexibility and protection"
+                    : "Best for high-demand spaces with consistent bookings"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {tab === "extras" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
+                <AmenityInput value={newAmenitiesTags} onChange={setNewAmenitiesTags} data-testid="input-space-amenities" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Target Professionals</label>
+                <div className="flex flex-wrap gap-2" data-testid="input-space-target">
+                  {SPACE_TYPES.map((t) => {
+                    const selected = (formData.targetProfession || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+                    const isSelected = selected.includes(t.label);
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => {
+                          const next = isSelected ? selected.filter((s: string) => s !== t.label) : [...selected, t.label];
+                          update("targetProfession", next.join(", "));
+                        }}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                          isSelected
+                            ? "border-gray-800 bg-gray-800 text-white"
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
+          <Button size="sm" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => createMutation.mutate()}
+            disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending || formData.bookingTypes === "none"}
+            size="sm"
+            className="bg-stone-900 text-white hover:bg-stone-800"
+            data-testid="button-submit-space"
+          >
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+            Submit for Approval
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -2160,9 +2412,7 @@ function MySpacesTab() {
 
       <AnimatePresence>
         {showForm && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <NewSpaceForm onClose={() => setShowForm(false)} />
-          </motion.div>
+          <NewSpaceForm onClose={() => setShowForm(false)} />
         )}
       </AnimatePresence>
 

@@ -655,21 +655,21 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
 
-                  {/* Minimum Recurring Sessions */}
+                  {/* Minimum Recurring Commitment */}
                   {formData.bookingTypes !== "hourly" && (
                     <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
                       <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
                         <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
-                        Minimum Recurring Sessions
+                        Minimum Recurring Commitment
                       </h4>
-                      <p className="text-[11px] text-stone-400 -mt-1">How many weekly sessions a renter must commit to</p>
+                      <p className="text-[11px] text-stone-400 -mt-1">How many weeks a renter must commit to (1 day per week)</p>
                       <div className="flex flex-wrap gap-2">
                         {[1, 2, 3, 4, 8, 12].map(n => (
                           <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                               String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
                             }`}>
-                            {n === 1 ? "No minimum" : `${n} sessions`}
+                            {n === 1 ? "No minimum" : `${n} weeks`}
                           </button>
                         ))}
                       </div>
@@ -696,11 +696,11 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                           <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
                           <select value={formData.recurringDiscountAfter} onChange={e => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
                             <option value="0">Immediately</option>
-                            <option value="1">After 1 booking</option>
-                            <option value="2">After 2 bookings</option>
-                            <option value="3">After 3 bookings</option>
-                            <option value="5">After 5 bookings</option>
-                            <option value="10">After 10 bookings</option>
+                            <option value="1">After 1 week</option>
+                            <option value="2">After 2 weeks</option>
+                            <option value="3">After 3 weeks</option>
+                            <option value="5">After 5 weeks</option>
+                            <option value="10">After 10 weeks</option>
                           </select>
                         </div>
                       </div>

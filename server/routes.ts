@@ -2755,7 +2755,7 @@ export async function registerRoutes(
   app.post("/api/spaces", isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user;
-      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName, bookingTypes, recurringMinBookings, recurringDiscountPercent, recurringDiscountAfter } = req.body;
+      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName, bookingTypes, recurringMinBookings, recurringDiscountPercent, recurringDiscountAfter, cancellationPolicy, availabilitySchedule } = req.body;
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -2794,6 +2794,8 @@ export async function registerRoutes(
         recurringMinBookings: recurringMinBookings ? parseInt(recurringMinBookings) : 1,
         recurringDiscountPercent: recurringDiscountPercent ? parseInt(recurringDiscountPercent) : null,
         recurringDiscountAfter: recurringDiscountAfter ? parseInt(recurringDiscountAfter) : 0,
+        cancellationPolicy: cancellationPolicy && ["flexible", "moderate", "strict"].includes(cancellationPolicy) ? cancellationPolicy : "flexible",
+        availabilitySchedule: availabilitySchedule || null,
         isSample: 0,
         isActive: 1,
       });
