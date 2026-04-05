@@ -5148,6 +5148,25 @@ const ACTIVITY_TYPES = [
   { key: "note", label: "Note", icon: Edit },
 ];
 
+function LinkifiedText({ text }: { text: string }) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        urlRegex.test(part) ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+            className="text-blue-600 hover:underline">
+            {(() => { try { return new URL(part).hostname.replace(/^www\./, ""); } catch { return part; } })()}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 function PipelineManager({ token, onBack }: { token: string; onBack: () => void }) {
   const { toast } = useToast();
   const [contacts, setContacts] = useState<PipelineContact[]>([]);
@@ -5589,7 +5608,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
               </div>
 
-              {selectedContact.notes && <p className="text-sm text-gray-600 bg-stone-50 rounded-lg p-3">{selectedContact.notes}</p>}
+              {selectedContact.notes && <p className="text-sm text-gray-600 bg-stone-50 rounded-lg p-3"><LinkifiedText text={selectedContact.notes} /></p>}
 
               {totalAttempts > 0 && (
                 <div className="flex flex-wrap gap-1.5" data-testid="contact-attempt-stats">
@@ -5843,7 +5862,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                               </div>
                             </div>
                           ) : (
-                            a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>
+                            a.note && <p className="text-sm text-gray-600 mt-0.5"><LinkifiedText text={a.note} /></p>
                           )}
                           {/* Edit history */}
                           {hasEditHistory && !isEditing && (
