@@ -1,0 +1,1 @@
+ALTER TABLE spaces ADD COLUMN IF NOT EXISTS booking_types TEXT DEFAULT 'both';

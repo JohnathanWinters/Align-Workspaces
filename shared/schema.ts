@@ -408,6 +408,7 @@ export const spaces = pgTable("spaces", {
   colorPalette: text("color_palette"),
   tags: text("tags").array(),
   cancellationPolicy: text("cancellation_policy").default("flexible"), // 'flexible' | 'moderate' | 'strict'
+  bookingTypes: text("booking_types").default("both"), // 'hourly' | 'recurring' | 'both'
   recurringDiscountPercent: integer("recurring_discount_percent"),
   recurringDiscountAfter: integer("recurring_discount_after").default(3),
   isSample: integer("is_sample").default(0),

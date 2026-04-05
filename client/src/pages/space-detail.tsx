@@ -430,6 +430,385 @@ function AnimatedPrice({ value, prefix = "$" }: { value: number; prefix?: string
   return <span>{prefix}{(display / 100).toFixed(2)}</span>;
 }
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_KEYS: (keyof WeekSchedule)[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+function RecurringBookingPopup({ space, onClose, schedule }: {
+  space: Space; onClose: () => void; schedule: WeekSchedule | null;
+}) {
+  const [step, setStep] = useState<"day" | "time" | "confirm">("day");
+  const [dayOfWeek, setDayOfWeek] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState("");
+  const [hours, setHours] = useState(1);
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
+  const [endDate, setEndDate] = useState("");
+  const [direction, setDirection] = useState(1);
+  const [submitted, setSubmitted] = useState(false);
+  const { toast } = useToast();
+
+  const DEFAULT_SCHEDULE: WeekSchedule = {
+    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
+    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
+    fri: { open: "09:00", close: "17:00" }, sat: { open: "10:00", close: "15:00" }, sun: null,
+  };
+  const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
+
+  // Available days based on schedule
+  const availableDays = DAY_KEYS.map((key, i) => ({
+    index: i, name: DAY_NAMES[i], key,
+    available: effectiveSchedule[key] !== null,
+  }));
+
+  // Available time slots for selected day
+  const timeSlots = dayOfWeek !== null ? (() => {
+    const dayKey = DAY_KEYS[dayOfWeek];
+    const daySchedule = effectiveSchedule[dayKey];
+    if (!daySchedule) return [];
+    const slots: string[] = [];
+    const [openH, openM] = daySchedule.open.split(":").map(Number);
+    const [closeH, closeM] = daySchedule.close.split(":").map(Number);
+    const openMin = openH * 60 + openM;
+    const closeMin = closeH * 60 + closeM;
+    for (let m = openMin; m < closeMin; m += 60) {
+      const h = Math.floor(m / 60);
+      const mi = m % 60;
+      slots.push(`${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`);
+    }
+    return slots;
+  })() : [];
+
+  const maxHours = startTime && dayOfWeek !== null ? (() => {
+    const dayKey = DAY_KEYS[dayOfWeek];
+    const daySchedule = effectiveSchedule[dayKey];
+    if (!daySchedule) return 1;
+    const [closeH, closeM] = daySchedule.close.split(":").map(Number);
+    const closeMin = closeH * 60 + closeM;
+    const [startH, startM] = startTime.split(":").map(Number);
+    const startMin = startH * 60 + startM;
+    return Math.max(1, Math.floor((closeMin - startMin) / 60));
+  })() : 8;
+
+  const weeklyTotal = space.pricePerHour * hours;
+  const discountPercent = (space as any).recurringDiscountPercent || 0;
+  const discountedTotal = discountPercent > 0
+    ? Math.round(weeklyTotal * (1 - discountPercent / 100))
+    : weeklyTotal;
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const submitRecurring = async () => {
+    if (dayOfWeek === null || !startTime || !startDate) return;
+    try {
+      const res = await apiRequest("POST", "/api/recurring-bookings", {
+        spaceId: space.id,
+        dayOfWeek,
+        startTime,
+        hours,
+        startDate,
+        endDate: endDate || null,
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to submit");
+      }
+      setSubmitted(true);
+      toast({ title: "Recurring booking requested", description: "The host will review your request." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const stepIndex = step === "day" ? 0 : step === "time" ? 1 : 2;
+  const steps = [
+    { label: "Day", icon: CalendarDays },
+    { label: "Time", icon: Clock },
+    { label: "Confirm", icon: Check },
+  ];
+
+  const slideVariants = {
+    enter: (d: number) => ({ x: d > 0 ? 40 : -40, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (d: number) => ({ x: d > 0 ? -40 : 40, opacity: 0 }),
+  };
+
+  const goBack = () => {
+    setDirection(-1);
+    if (step === "time") { setStep("day"); setStartTime(""); }
+    else if (step === "confirm") setStep("time");
+  };
+
+  if (submitted) {
+    return (
+      <motion.div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+        <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <motion.div className="relative bg-white w-full sm:w-[440px] sm:rounded-2xl rounded-t-2xl p-8 text-center" initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} onClick={e => e.stopPropagation()}>
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, delay: 0.1 }}
+            className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-emerald-600" strokeWidth={3} />
+          </motion.div>
+          <h3 className="text-lg font-semibold text-stone-900 mb-1">Request Sent</h3>
+          <p className="text-sm text-stone-500 mb-2">
+            Your recurring booking request for <span className="font-medium text-stone-700">{DAY_NAMES[dayOfWeek!]}s at {formatTime(startTime)}</span> has been sent to the host.
+          </p>
+          <p className="text-xs text-stone-400 mb-6">You'll be notified once the host responds.</p>
+          <button onClick={onClose} className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 transition-colors">Done</button>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} data-testid="recurring-booking-popup">
+      <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <motion.div
+        className="relative bg-white w-full sm:w-[440px] sm:rounded-2xl rounded-t-2xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col"
+        initial={{ y: 100, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 100, opacity: 0, scale: 0.95 }}
+        transition={{ type: "spring", damping: 28, stiffness: 350 }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="relative h-28 sm:h-32 overflow-hidden flex-shrink-0">
+          {space.imageUrls && space.imageUrls[0] ? (
+            <img src={space.imageUrls[0]} alt={space.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-stone-200 to-stone-100" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-3 left-4 right-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-white font-serif text-lg font-semibold truncate">{space.name}</h3>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white flex items-center gap-1 flex-shrink-0">
+                <Repeat className="w-2.5 h-2.5" /> Recurring
+              </span>
+            </div>
+            <p className="text-white/70 text-xs flex items-center gap-1.5">
+              <MapPin className="w-3 h-3" /> {space.neighborhood || space.address}
+              <span className="mx-1">&middot;</span>
+              <span className="text-white font-medium">${space.pricePerHour}/hr</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Step indicator */}
+        <div className="px-5 pt-4 pb-2 flex-shrink-0">
+          <div className="flex items-center justify-between mb-1">
+            {steps.map((s, i) => (
+              <div key={i} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <motion.div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ${
+                      i < stepIndex ? "bg-emerald-500 text-white" :
+                      i === stepIndex ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/30" :
+                      "bg-stone-100 text-stone-400"
+                    }`}
+                    animate={i === stepIndex ? { scale: [1, 1.1, 1] } : {}}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {i < stepIndex ? <Check className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
+                  </motion.div>
+                  <span className={`text-[10px] mt-1 font-medium ${i <= stepIndex ? "text-stone-700" : "text-stone-400"}`}>{s.label}</span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="flex-1 h-0.5 mx-1 mb-5 rounded-full overflow-hidden bg-stone-100">
+                    <motion.div className="h-full bg-emerald-500 rounded-full" initial={{ width: "0%" }} animate={{ width: i < stepIndex ? "100%" : "0%" }} transition={{ duration: 0.4, ease: "easeOut" }} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 pb-5 min-h-[320px]">
+          <AnimatePresence mode="wait" custom={direction}>
+            {step === "day" && (
+              <motion.div key="day" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15, ease: "easeOut" }} className="space-y-4">
+                <p className="text-sm font-medium text-stone-600 text-center">Which day works best for your weekly session?</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {availableDays.filter(d => d.available).map(d => {
+                    const daySchedule = effectiveSchedule[d.key];
+                    return (
+                      <button
+                        key={d.index}
+                        onClick={() => { setDayOfWeek(d.index); setStartTime(""); }}
+                        className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-left ${
+                          dayOfWeek === d.index
+                            ? "border-emerald-600 bg-emerald-50 shadow-sm"
+                            : "border-stone-200 bg-white hover:border-stone-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            dayOfWeek === d.index ? "border-emerald-600 bg-emerald-600" : "border-stone-300"
+                          }`}>
+                            {dayOfWeek === d.index && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <span className={`text-sm font-medium ${dayOfWeek === d.index ? "text-emerald-800" : "text-stone-700"}`}>{d.name}</span>
+                        </div>
+                        {daySchedule && (
+                          <span className="text-xs text-stone-400">{formatTime(daySchedule.open)} – {formatTime(daySchedule.close)}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <motion.button
+                  onClick={() => { setDirection(1); setStep("time"); }}
+                  disabled={dayOfWeek === null}
+                  animate={dayOfWeek !== null
+                    ? { backgroundColor: "#059669", color: "#ffffff", scale: [0.97, 1.02, 1] }
+                    : { backgroundColor: "#e7e5e4", color: "#a8a29e", scale: 1 }
+                  }
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 ${
+                    dayOfWeek !== null ? "hover:bg-emerald-700 shadow-lg shadow-emerald-600/30" : "cursor-not-allowed"
+                  }`}
+                >
+                  {dayOfWeek === null ? "Pick a Day" : (
+                    <><span>Next, Pick a Time</span><ChevronRight className="w-5 h-5" /></>
+                  )}
+                </motion.button>
+              </motion.div>
+            )}
+
+            {step === "time" && (
+              <motion.div key="time" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15, ease: "easeOut" }} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <button onClick={goBack} className="p-1.5 rounded-full hover:bg-stone-100 transition-colors">
+                    <ArrowLeft className="w-4 h-4 text-stone-500" />
+                  </button>
+                  <p className="text-sm font-medium text-stone-600">
+                    Every <span className="text-emerald-700 font-semibold">{DAY_NAMES[dayOfWeek!]}</span> — choose your time
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs text-stone-500 mb-1.5 block font-medium">Start Time</label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {timeSlots.map(slot => (
+                      <button key={slot} onClick={() => { setStartTime(slot); setHours(1); }}
+                        className={`py-2 rounded-lg text-xs font-medium transition-all ${
+                          startTime === slot
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : "bg-stone-50 text-stone-600 hover:bg-stone-100 border border-stone-200"
+                        }`}
+                      >
+                        {formatTime(slot)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {startTime && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    <div>
+                      <label className="text-xs text-stone-500 mb-1.5 block font-medium">Duration</label>
+                      <div className="flex items-center justify-center gap-3 py-2 bg-stone-50 rounded-xl border border-stone-200">
+                        <button onClick={() => setHours(Math.max(1, hours - 1))} className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-100 text-sm font-bold">&minus;</button>
+                        <span className="text-lg font-bold text-stone-800 w-16 text-center">{hours} hr{hours !== 1 ? "s" : ""}</span>
+                        <button onClick={() => setHours(Math.min(maxHours, hours + 1))} className="w-7 h-7 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-100 text-sm font-bold">+</button>
+                      </div>
+                    </div>
+
+                    <motion.button
+                      onClick={() => { setDirection(1); setStep("confirm"); }}
+                      className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-colors"
+                    >
+                      Review & Confirm <ChevronRight className="w-5 h-5" />
+                    </motion.button>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {step === "confirm" && (
+              <motion.div key="confirm" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15, ease: "easeOut" }} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <button onClick={goBack} className="p-1.5 rounded-full hover:bg-stone-100 transition-colors">
+                    <ArrowLeft className="w-4 h-4 text-stone-500" />
+                  </button>
+                  <p className="text-sm font-medium text-stone-600">Confirm your recurring booking</p>
+                </div>
+
+                {/* Summary card */}
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-800">
+                    <Repeat className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Weekly Booking</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Day</p>
+                      <p className="font-medium text-stone-800">{DAY_NAMES[dayOfWeek!]}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Time</p>
+                      <p className="font-medium text-stone-800">{formatTime(startTime)} · {hours} hr{hours !== 1 ? "s" : ""}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Date range */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-stone-500 mb-1 block font-medium">Starting from</label>
+                    <input type="date" value={startDate} min={new Date().toISOString().split("T")[0]}
+                      onChange={e => setStartDate(e.target.value)}
+                      className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-stone-500 mb-1 block font-medium">End date <span className="text-stone-400 font-normal">(optional — leave blank for ongoing)</span></label>
+                    <input type="date" value={endDate} min={startDate}
+                      onChange={e => setEndDate(e.target.value)}
+                      className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white" />
+                  </div>
+                </div>
+
+                {/* Pricing */}
+                <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-stone-500">${space.pricePerHour}/hr × {hours} hr{hours !== 1 ? "s" : ""}</span>
+                    <span className="font-medium text-stone-700">${weeklyTotal}</span>
+                  </div>
+                  {discountPercent > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span className="flex items-center gap-1"><Repeat className="w-3 h-3" /> Recurring discount ({discountPercent}%)</span>
+                      <span className="font-medium">-${weeklyTotal - discountedTotal}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-semibold pt-2 border-t border-stone-100">
+                    <span className="text-stone-800">Per week</span>
+                    <span className="text-emerald-600">${discountedTotal}/week</span>
+                  </div>
+                  <p className="text-[10px] text-stone-400">+ service fee & tax applied at checkout per session</p>
+                </div>
+
+                <button
+                  onClick={submitRecurring}
+                  className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-colors"
+                >
+                  <Repeat className="w-4 h-4" />
+                  Request Recurring Booking
+                </button>
+                <p className="text-[10px] text-stone-400 text-center">The host will review your request. You'll only be charged after confirmation.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }: {
   space: Space; onClose: () => void; schedule: WeekSchedule | null; bufferMinutes: number; bookMutation: any;
 }) {
@@ -1018,6 +1397,12 @@ function BookingCard({
       {space.pricePerDay && (
         <p className="text-sm text-stone-400 mb-1">${space.pricePerDay}/day also available</p>
       )}
+      {(space as any).bookingTypes === "recurring" && (
+        <div className="flex items-center gap-1.5 mt-1.5 mb-2 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+          <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+          <span className="text-xs text-emerald-700 font-medium">Recurring bookings only</span>
+        </div>
+      )}
       {(space as any).recurringDiscountPercent > 0 && (
         <div className="flex items-center gap-1.5 mt-1.5 mb-4 px-2.5 py-1.5 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
           <Repeat className="w-3.5 h-3.5 text-[#946b4a] flex-shrink-0" />
@@ -1029,7 +1414,7 @@ function BookingCard({
           </span>
         </div>
       )}
-      {!space.pricePerDay && !((space as any).recurringDiscountPercent > 0) && <div className="mb-5" />}
+      {!space.pricePerDay && !((space as any).recurringDiscountPercent > 0) && (space as any).bookingTypes !== "recurring" && <div className="mb-5" />}
 
       {/* Hours */}
       {space.availableHours && (
@@ -1048,11 +1433,18 @@ function BookingCard({
       {/* CTA */}
       <button
         onClick={onBookClick}
-        className="w-full py-3 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] flex items-center justify-center gap-2 shadow-sm transition-colors"
+        className={`w-full py-3 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-sm transition-colors ${
+          (space as any).bookingTypes === "recurring"
+            ? "bg-emerald-600 hover:bg-emerald-700"
+            : "bg-[#c4956a] hover:bg-[#b8845c]"
+        }`}
         data-testid="button-book-space"
       >
-        <Send className="w-4 h-4" />
-        Request to book
+        {(space as any).bookingTypes === "recurring" ? (
+          <><Repeat className="w-4 h-4" /> Request recurring booking</>
+        ) : (
+          <><Send className="w-4 h-4" /> Request to book</>
+        )}
       </button>
       <p className="text-[11px] text-stone-400 text-center mt-2 leading-relaxed">
         By booking, you agree to our{" "}
@@ -1591,6 +1983,12 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                     <div className="text-stone-500">${space.pricePerDay}/day</div>
                   )}
                 </div>
+                {(space as any).bookingTypes === "recurring" && (
+                  <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <Repeat className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs text-emerald-700 font-medium">Recurring bookings only</span>
+                  </div>
+                )}
                 {(space as any).recurringDiscountPercent > 0 && (
                   <div className="flex items-center gap-1.5 mt-3 px-2.5 py-1.5 bg-[#c4956a]/10 rounded-lg border border-[#e8ddd0]">
                     <Repeat className="w-3.5 h-3.5 text-[#946b4a] flex-shrink-0" />
@@ -2032,9 +2430,17 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
           </div>
           <button
             onClick={handleBookClick}
-            className="px-6 py-2.5 rounded-xl bg-[#c4956a] text-white text-sm font-semibold hover:bg-[#b8845c] transition-colors shadow-sm"
+            className={`px-6 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${
+              (space as any).bookingTypes === "recurring"
+                ? "bg-emerald-600 hover:bg-emerald-700"
+                : "bg-[#c4956a] hover:bg-[#b8845c]"
+            }`}
           >
-            Request to book
+            {(space as any).bookingTypes === "recurring" ? (
+              <><Repeat className="w-3.5 h-3.5" /> Recurring booking</>
+            ) : (
+              "Request to book"
+            )}
           </button>
         </div>
       </div>
@@ -2056,13 +2462,21 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
 
       <AnimatePresence>
         {showBooking && isAuthenticated && (
-          <BookingPopup
-            space={space}
-            onClose={() => setShowBooking(false)}
-            schedule={schedule}
-            bufferMinutes={bufferMinutes}
-            bookMutation={bookMutation}
-          />
+          (space as any).bookingTypes === "recurring" ? (
+            <RecurringBookingPopup
+              space={space}
+              onClose={() => setShowBooking(false)}
+              schedule={schedule}
+            />
+          ) : (
+            <BookingPopup
+              space={space}
+              onClose={() => setShowBooking(false)}
+              schedule={schedule}
+              bufferMinutes={bufferMinutes}
+              bookMutation={bookMutation}
+            />
+          )
         )}
       </AnimatePresence>
 

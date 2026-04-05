@@ -40,6 +40,7 @@ import {
   Compass,
   CalendarDays,
   CreditCard,
+  Repeat,
   Heart,
   Share2,
   Search,
@@ -47,7 +48,6 @@ import {
   Timer,
   HelpCircle,
   Plus,
-  CalendarDays,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -589,7 +589,11 @@ function SpaceCard({ space, onHover, onLeave, isHighlighted, distance, portfolio
             <span className="text-white text-xl font-medium leading-none">${space.pricePerHour}</span>
             <span className="text-white/70 text-xs font-medium ml-0.5">/hr</span>
           </div>
-          {(space as any).recurringDiscountPercent > 0 && (
+          {(space as any).bookingTypes === "recurring" ? (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-600/90 text-white backdrop-blur-sm leading-tight flex items-center gap-1">
+              <Repeat className="w-2.5 h-2.5" /> Recurring Only
+            </span>
+          ) : (space as any).recurringDiscountPercent > 0 && (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#c4956a]/90 text-white backdrop-blur-sm leading-tight">
               ${Math.round(space.pricePerHour * (1 - (space as any).recurringDiscountPercent / 100))}/hr recurring
             </span>

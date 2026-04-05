@@ -40,6 +40,7 @@ import {
   ChevronUp,
   TrendingUp,
   Repeat,
+  Clock,
   Pause,
   Play,
   XCircle,
@@ -354,6 +355,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     cancellationPolicy: (space as any).cancellationPolicy || "flexible",
     recurringDiscountPercent: String((space as any).recurringDiscountPercent ?? "0"),
     recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "3"),
+    bookingTypes: (space as any).bookingTypes || "both",
   });
   const [amenitiesTags, setAmenitiesTags] = useState<string[]>((space.amenities || []) as string[]);
 
@@ -369,6 +371,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
         bufferMinutes: Number(formData.bufferMinutes),
         recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
         recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
+        bookingTypes: formData.bookingTypes,
         amenities: amenitiesTags,
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
@@ -510,8 +513,64 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
 
           {tab === "pricing" && (
             <div className="space-y-5">
+              {/* Booking Types */}
+              <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                <h4 className="text-sm font-medium text-stone-700">Accepted Booking Types</h4>
+                <p className="text-[11px] text-stone-400 -mt-1">Choose how renters can book your space</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {([
+                    { key: "hourly" as const, icon: Clock, label: "Single Bookings", desc: "One-time hourly or daily sessions" },
+                    { key: "recurring" as const, icon: Repeat, label: "Recurring Bookings", desc: "Weekly repeating sessions" },
+                  ]).map(opt => {
+                    const active = formData.bookingTypes === opt.key || formData.bookingTypes === "both";
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.bookingTypes;
+                          let next: string;
+                          if (current === "both") {
+                            next = opt.key === "hourly" ? "recurring" : "hourly";
+                          } else if (current === opt.key) {
+                            // Can't deselect the only one — toggle to both
+                            next = "both";
+                          } else {
+                            // Other type is selected, add this one
+                            next = "both";
+                          }
+                          update("bookingTypes", next);
+                        }}
+                        className={`relative flex items-start gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                          active ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-50 hover:opacity-75"
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                          active ? "border-stone-900 bg-stone-900" : "border-stone-300"
+                        }`}>
+                          {active && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <opt.icon className="w-3.5 h-3.5 text-stone-500" />
+                            <span className="text-sm font-medium text-stone-800">{opt.label}</span>
+                          </div>
+                          <p className="text-[11px] text-stone-400 mt-0.5">{opt.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {formData.bookingTypes === "recurring" && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                    <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Your space will only accept recurring weekly bookings. Single sessions will not be available.</span>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-xl border-2 border-stone-900 bg-stone-50 p-4 text-center">
+                <div className={`rounded-xl border-2 p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-40"}`}>
                   <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Hourly Rate</p>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-stone-400 text-lg">$</span>
@@ -526,7 +585,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                   </div>
                   <p className="text-[10px] text-stone-400 mt-1">per hour</p>
                 </div>
-                <div className="rounded-xl border border-stone-200 bg-white p-4 text-center">
+                <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-200 bg-white" : "border-stone-200 bg-white opacity-40"}`}>
                   <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Daily Rate</p>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-stone-400 text-lg">$</span>
@@ -541,7 +600,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                   </div>
                   <p className="text-[10px] text-stone-400 mt-1">per day (optional)</p>
                 </div>
-                <div className="rounded-xl border border-stone-200 bg-white p-4 text-center">
+                <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "hourly" ? "border-2 border-emerald-600 bg-emerald-50" : "border-stone-200 bg-white opacity-40"}`}>
                   <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Recurring Rate</p>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-stone-400 text-lg">$</span>
@@ -551,32 +610,34 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </div>
               </div>
 
-              <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
-                <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
-                  <Repeat className="w-3.5 h-3.5 text-emerald-600" />
-                  Recurring Discount
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
-                    <div className="flex items-center gap-2">
-                      <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} data-testid={`edit-input-recurring-discount-${space.id}`} />
-                      <span className="text-sm text-stone-400 flex-shrink-0">%</span>
+              {formData.bookingTypes !== "hourly" && (
+                <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                  <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                    <Repeat className="w-3.5 h-3.5 text-emerald-600" />
+                    Recurring Discount
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
+                      <div className="flex items-center gap-2">
+                        <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={(e) => update("recurringDiscountPercent", e.target.value)} data-testid={`edit-input-recurring-discount-${space.id}`} />
+                        <span className="text-sm text-stone-400 flex-shrink-0">%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Kicks In After</label>
+                      <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-recurring-after-${space.id}`}>
+                        <option value="0">Immediately</option>
+                        <option value="1">After 1 booking</option>
+                        <option value="2">After 2 bookings</option>
+                        <option value="3">After 3 bookings</option>
+                        <option value="5">After 5 bookings</option>
+                        <option value="10">After 10 bookings</option>
+                      </select>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Kicks In After</label>
-                    <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-recurring-after-${space.id}`}>
-                      <option value="0">Immediately</option>
-                      <option value="1">After 1 booking</option>
-                      <option value="2">After 2 bookings</option>
-                      <option value="3">After 3 bookings</option>
-                      <option value="5">After 5 bookings</option>
-                      <option value="10">After 10 bookings</option>
-                    </select>
-                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

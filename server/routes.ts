@@ -2914,6 +2914,9 @@ export async function registerRoutes(
         if (!Array.isArray(body.amenities)) return res.status(400).json({ message: "Amenities must be an array" });
         updates.amenities = body.amenities.map((a: any) => String(a).trim()).filter(Boolean);
       }
+      if (body.bookingTypes !== undefined && ["hourly", "recurring", "both"].includes(body.bookingTypes)) {
+        updates.bookingTypes = body.bookingTypes;
+      }
       if (body.recurringDiscountPercent !== undefined) {
         const n = body.recurringDiscountPercent === null ? null : Number(body.recurringDiscountPercent);
         if (n !== null && (isNaN(n) || n < 0 || n > 100)) return res.status(400).json({ message: "Invalid recurring discount percent" });
@@ -3773,6 +3776,10 @@ export async function registerRoutes(
       const space = await storage.getSpaceById(req.params.id);
       if (!space || space.approvalStatus !== "approved" || space.isActive !== 1) {
         return res.status(404).json({ message: "Space not found" });
+      }
+
+      if ((space as any).bookingTypes === "recurring") {
+        return res.status(400).json({ message: "This space only accepts recurring bookings. Please request a recurring booking instead." });
       }
 
       const { bookingDate, bookingStartTime, bookingHours } = req.body;
