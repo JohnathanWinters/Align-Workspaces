@@ -3103,13 +3103,13 @@ function resolveLegacyTab(tab: string): SpacesTabKey {
     case "earnings": return "earnings";
     case "calendar": return "calendar";
     case "saved": return "saved";
-    default: return "calendar";
+    default: return "my-spaces";
   }
 }
 
 export default function PortalSpacesSection({ userId, initialTab }: { userId: string; initialTab?: string }) {
   const resolvedInitialTab = initialTab ? resolveLegacyTab(initialTab) : undefined;
-  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "calendar");
+  const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "my-spaces");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
 
   // Fetch counts to auto-detect best sub-tab
@@ -3139,13 +3139,13 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
     const allBookings = [...(bookingsData?.guestBookings || []), ...(bookingsData?.hostBookings || [])];
     const hasBookings = allBookings.length > 0;
 
-    // Default to calendar if user has bookings, otherwise my-spaces for hosts, saved for guests
-    if (hasBookings) {
-      setSpacesTab("calendar");
-    } else if (hasMySpaces) {
+    // Default to my-spaces; fall back to calendar only if no spaces and has bookings
+    if (hasMySpaces) {
       setSpacesTab("my-spaces");
-    } else {
+    } else if (hasBookings) {
       setSpacesTab("calendar");
+    } else {
+      setSpacesTab("my-spaces");
     }
 
     setTabResolved(true);
@@ -3154,8 +3154,8 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
   const isHost = mySpaces.length > 0;
 
   const tabs = [
-    { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
     { key: "my-spaces" as const, label: "My Workspaces", icon: Building2 },
+    { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
     { key: "saved" as const, label: "Saved", icon: Heart },
   ];
