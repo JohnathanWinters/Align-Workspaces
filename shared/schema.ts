@@ -698,6 +698,7 @@ export const pipelineActivities = pgTable("pipeline_activities", {
   contactId: varchar("contact_id").notNull(),
   type: text("type").notNull(),
   note: text("note"),
+  referredContactId: varchar("referred_contact_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

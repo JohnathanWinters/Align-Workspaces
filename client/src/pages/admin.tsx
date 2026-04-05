@@ -74,6 +74,7 @@ import {
   ArrowLeft,
   RefreshCw,
   Home,
+  UserPlus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -5136,12 +5137,12 @@ const PIPELINE_STAGES = [
 ];
 
 const ACTIVITY_TYPES = [
-  { key: "call", label: "Phone Call", icon: Phone },
-  { key: "text", label: "Text", icon: MessageCircle },
-  { key: "email", label: "Email", icon: Send },
+  { key: "call", label: "Called", icon: Phone },
+  { key: "text", label: "Texted", icon: MessageCircle },
+  { key: "email", label: "Emailed", icon: Send },
+  { key: "meeting", label: "Met", icon: Users },
+  { key: "referral", label: "Referral", icon: UserPlus },
   { key: "note", label: "Note", icon: Edit },
-  { key: "meeting", label: "Meeting", icon: Users },
-  { key: "follow-up", label: "Follow-up", icon: Clock },
 ];
 
 function PipelineManager({ token, onBack }: { token: string; onBack: () => void }) {
@@ -5153,7 +5154,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [editingContact, setEditingContact] = useState<PipelineContact | null>(null);
   const [selectedContact, setSelectedContact] = useState<PipelineContact | null>(null);
   const [activities, setActivities] = useState<any[]>([]);
-  const [newActivity, setNewActivity] = useState({ type: "call", note: "", followUpDays: 0 });
+  const [newActivity, setNewActivity] = useState({ type: "call", note: "", followUpDate: "", referredContactId: "" });
+  const [referralSearch, setReferralSearch] = useState("");
   const [activityJustLogged, setActivityJustLogged] = useState(false);
   const [stageSuggestion, setStageSuggestion] = useState<{ contactId: string; from: string; to: string; label: string } | null>(null);
   const [filter, setFilter] = useState<"all" | "portraits" | "spaces">("all");
@@ -5164,6 +5166,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const fileRef = useRef<HTMLInputElement>(null);
   const [expandedListContact, setExpandedListContact] = useState<string | null>(null);
   const [showActions, setShowActions] = useState(false);
+  const [editingFollowUp, setEditingFollowUp] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"follow-up" | "last-contact" | "date-added">("follow-up");
   const [allSpaces, setAllSpaces] = useState<any[]>([]);
   const [allShoots, setAllShoots] = useState<any[]>([]);
@@ -5273,11 +5276,25 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
     } catch {}
   };
 
+  const setFollowUpDate = async (contact: PipelineContact, dateStr: string) => {
+    setEditingFollowUp(null);
+    if (!dateStr) return;
+    try {
+      await adminFetch(`/api/admin/pipeline/${contact.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nextFollowUp: new Date(dateStr + "T00:00:00").toISOString() }),
+      });
+      await loadContacts();
+      toast({ title: "Follow-up date set" });
+    } catch {}
+  };
+
   const logActivity = async () => {
     if (!selectedContact) return;
     try {
       const payload: any = { type: newActivity.type, note: newActivity.note };
-      if (newActivity.followUpDays > 0) payload.followUpDays = newActivity.followUpDays;
+      if (newActivity.followUpDate) payload.followUpDate = new Date(newActivity.followUpDate + "T00:00:00").toISOString();
+      if (newActivity.referredContactId) payload.referredContactId = newActivity.referredContactId;
       const res = await adminFetch(`/api/admin/pipeline/${selectedContact.id}/activities`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
@@ -5286,16 +5303,18 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         if (data.contact) setSelectedContact(data.contact);
       }
       const actType = newActivity.type;
-      setNewActivity({ type: "call", note: "", followUpDays: 0 });
+      const hadFollowUp = !!newActivity.followUpDate;
+      setNewActivity({ type: "call", note: "", followUpDate: "", referredContactId: "" });
+      setReferralSearch("");
       setActivityJustLogged(true);
       setTimeout(() => setActivityJustLogged(false), 3000);
       await loadActivities(selectedContact.id);
       await loadContacts();
-      const followUpMsg = newActivity.followUpDays > 0 ? ` · Follow-up set in ${newActivity.followUpDays} days` : "";
+      const followUpMsg = hadFollowUp ? ` · Follow-up set` : "";
       toast({ title: `Activity logged${followUpMsg}` });
       // Suggest stage move based on current stage + activity type
       const stage = selectedContact.stage;
-      if (stage === "new" && ["call", "text", "email"].includes(actType)) {
+      if (stage === "new" && ["call", "text", "email", "referral"].includes(actType)) {
         setStageSuggestion({ contactId: selectedContact.id, from: "new", to: "contacted", label: "Contact" });
       } else if (stage === "contacted" && actType === "meeting") {
         setStageSuggestion({ contactId: selectedContact.id, from: "contacted", to: "booked", label: "Scheduled" });
@@ -5492,12 +5511,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               {/* Follow-up + last contact */}
               <div className="flex flex-wrap gap-3 text-sm">
                 {selectedContact.nextFollowUp && (
-                  <span className={`flex items-center gap-1.5 ${new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00") <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
-                    <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
+                  <span className={`flex items-center gap-1.5 ${new Date(selectedContact.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : "text-gray-500"}`}>
+                    <CalendarDays className="w-3.5 h-3.5" /> Follow-up: {new Date(selectedContact.nextFollowUp).toLocaleDateString()}
                   </span>
                 )}
                 {selectedContact.lastContactDate && (
-                  <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {new Date(selectedContact.lastContactDate.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}</span>
+                  <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {new Date(selectedContact.lastContactDate).toLocaleDateString()}</span>
                 )}
               </div>
 
@@ -5555,18 +5574,71 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       data-testid={`button-activity-type-${a.key}`}><a.icon className="w-3 h-3" /> {a.label}</button>
                   ))}
                 </div>
+                {newActivity.type === "referral" && (
+                  <div className="relative">
+                    <div className="flex items-center gap-2 mb-1">
+                      <UserPlus className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-xs text-gray-500 font-medium">Link to contact</span>
+                    </div>
+                    {newActivity.referredContactId ? (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <span className="text-sm font-medium text-blue-800 flex-1">{contacts.find(c => c.id === newActivity.referredContactId)?.name || "Unknown"}</span>
+                        <button onClick={() => { setNewActivity(p => ({ ...p, referredContactId: "" })); setReferralSearch(""); }} className="text-blue-400 hover:text-blue-600">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <Input
+                          value={referralSearch}
+                          onChange={e => setReferralSearch(e.target.value)}
+                          placeholder="Search contacts..."
+                          className="h-8 text-sm bg-white"
+                          data-testid="input-referral-search"
+                        />
+                        {referralSearch.trim().length > 0 && (
+                          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 overflow-y-auto z-50">
+                            {contacts
+                              .filter(c => c.id !== selectedContact?.id && c.name.toLowerCase().includes(referralSearch.toLowerCase()))
+                              .slice(0, 5)
+                              .map(c => (
+                                <button key={c.id} onClick={() => { setNewActivity(p => ({ ...p, referredContactId: c.id })); setReferralSearch(""); }}
+                                  className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-sm" data-testid={`referral-option-${c.id}`}>
+                                  <div className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                                    <span className="text-[10px] font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                                  </div>
+                                  <span className="font-medium text-gray-900">{c.name}</span>
+                                  {c.email && <span className="text-xs text-gray-400 ml-auto">{c.email}</span>}
+                                </button>
+                              ))}
+                            {contacts.filter(c => c.id !== selectedContact?.id && c.name.toLowerCase().includes(referralSearch.toLowerCase())).length === 0 && (
+                              <p className="px-3 py-2 text-xs text-gray-400">No contacts found</p>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
-                  placeholder="What happened? Quick notes..." className="h-16 text-sm bg-white" data-testid="input-activity-note" />
+                  placeholder={newActivity.type === "referral" ? "e.g. Beatriz advised me to reach out to Prince..." : "What happened? Quick notes..."} className="h-16 text-sm bg-white" data-testid="input-activity-note" />
                 <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <Select value={String(newActivity.followUpDays)} onValueChange={v => setNewActivity(p => ({ ...p, followUpDays: parseInt(v) }))}>
-                      <SelectTrigger className="h-8 text-xs bg-white" data-testid="select-followup-schedule"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FOLLOW_UP_OPTIONS.map(o => (
-                          <SelectItem key={o.days} value={String(o.days)}>{o.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex-1 flex items-center gap-2">
+                    <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <input
+                      type="date"
+                      value={newActivity.followUpDate}
+                      onChange={e => setNewActivity(p => ({ ...p, followUpDate: e.target.value }))}
+                      className="h-8 text-xs bg-white border border-gray-200 rounded-md px-2 flex-1 text-gray-700"
+                      data-testid="input-followup-date"
+                      min={new Date().toISOString().split("T")[0]}
+                      placeholder="Follow-up date"
+                    />
+                    {newActivity.followUpDate && (
+                      <button onClick={() => setNewActivity(p => ({ ...p, followUpDate: "" }))} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                   <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white" data-testid="button-log-activity">
                     <Plus className="w-3.5 h-3.5 mr-1" /> Log
@@ -5581,6 +5653,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   {activities.map((a: any) => {
                     const at = ACTIVITY_TYPES.find(t => t.key === a.type);
                     const Icon = at?.icon || Edit;
+                    const referredContact = a.referredContactId ? contacts.find(c => c.id === a.referredContactId) : null;
                     return (
                       <div key={a.id} className="flex gap-3 items-start p-3 rounded-lg bg-gray-50" data-testid={`activity-${a.id}`}>
                         <div className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -5591,6 +5664,11 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                             <span className="text-xs font-medium text-gray-700">{at?.label || a.type}</span>
                             <span className="text-[10px] text-gray-400">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                           </div>
+                          {referredContact && (
+                            <button onClick={() => openDetail(referredContact)} className="flex items-center gap-1.5 mt-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-100 transition-colors">
+                              <UserPlus className="w-3 h-3" /> {referredContact.name}
+                            </button>
+                          )}
                           {a.note && <p className="text-sm text-gray-600 mt-0.5">{a.note}</p>}
                         </div>
                       </div>
@@ -5718,8 +5796,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         <div className="space-y-5" data-testid="pipeline-overview">
 
           {(() => {
-            const needsAttention = filteredContacts.filter(c => 
-              (c.nextFollowUp && new Date(c.nextFollowUp) <= new Date()) ||
+            const needsAttention = filteredContacts.filter(c =>
+              (c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) && new Date(c.nextFollowUp) <= new Date()) ||
               (c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000)
             );
             if (needsAttention.length === 0) return null;
@@ -5756,9 +5834,19 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         <button onClick={e => quickLog(c, "email", e)} className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
                           <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
                         </button>
-                        <button onClick={e => snoozeFollowUp(c, 1, e)} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Snooze 1 day">
-                          <Clock className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
-                        </button>
+                        <div className="relative">
+                          <button onClick={e => { e.stopPropagation(); setEditingFollowUp(editingFollowUp === c.id ? null : c.id); }} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Set follow-up date">
+                            <CalendarDays className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
+                          </button>
+                          {editingFollowUp === c.id && (
+                            <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-2" onClick={e => e.stopPropagation()}>
+                              <input type="date" autoFocus min={new Date().toISOString().split("T")[0]}
+                                defaultValue={c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) ? new Date(c.nextFollowUp).toISOString().split("T")[0] : ""}
+                                onChange={e => setFollowUpDate(c, e.target.value)}
+                                className="text-xs border border-gray-200 rounded px-2 py-1.5 text-gray-700" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -5773,11 +5861,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
             const weekEnd = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
             const upcoming = filteredContacts
-              .filter(c => c.nextFollowUp && new Date(c.nextFollowUp) > now && new Date(c.nextFollowUp) <= weekEnd)
+              .filter(c => c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) && new Date(c.nextFollowUp) > now && new Date(c.nextFollowUp) <= weekEnd)
               .sort((a, b) => new Date(a.nextFollowUp!).getTime() - new Date(b.nextFollowUp!).getTime());
             if (upcoming.length === 0) return null;
             const getLabel = (d: Date) => {
-              const dt = new Date(d.toString().split("T")[0] + "T00:00:00");
+              if (isNaN(d.getTime())) return "";
+              const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
               if (dt.getTime() === today.getTime()) return "Today";
               if (dt.getTime() === tomorrow.getTime()) return "Tomorrow";
               return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -5808,9 +5897,19 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         <button onClick={e => quickLog(c, "email", e)} className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
                           <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
                         </button>
-                        <button onClick={e => snoozeFollowUp(c, 1, e)} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Snooze 1 day">
-                          <Clock className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
-                        </button>
+                        <div className="relative">
+                          <button onClick={e => { e.stopPropagation(); setEditingFollowUp(editingFollowUp === c.id ? null : c.id); }} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Set follow-up date">
+                            <CalendarDays className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
+                          </button>
+                          {editingFollowUp === c.id && (
+                            <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-2" onClick={e => e.stopPropagation()}>
+                              <input type="date" autoFocus min={new Date().toISOString().split("T")[0]}
+                                defaultValue={c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) ? new Date(c.nextFollowUp).toISOString().split("T")[0] : ""}
+                                onChange={e => setFollowUpDate(c, e.target.value)}
+                                className="text-xs border border-gray-200 rounded px-2 py-1.5 text-gray-700" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -5824,11 +5923,11 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             const now = new Date();
             const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
             const attentionIds = new Set(filteredContacts.filter(c =>
-              (c.nextFollowUp && new Date(c.nextFollowUp) <= now) ||
+              (c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) && new Date(c.nextFollowUp) <= now) ||
               (c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000)
             ).map(c => c.id));
             const upcomingIds = new Set(filteredContacts.filter(c =>
-              c.nextFollowUp && new Date(c.nextFollowUp) > now && new Date(c.nextFollowUp) <= weekEnd
+              c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) && new Date(c.nextFollowUp) > now && new Date(c.nextFollowUp) <= weekEnd
             ).map(c => c.id));
             const rest = filteredContacts.filter(c => !attentionIds.has(c.id) && !upcomingIds.has(c.id));
             if (rest.length === 0) return null;
@@ -5852,7 +5951,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
                       {c.nextFollowUp && (
                         <span className={`text-[10px] shrink-0 hidden sm:inline ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
-                          {new Date(c.nextFollowUp.toString().split("T")[0] + "T00:00:00").toLocaleDateString()}
+                          {new Date(c.nextFollowUp).toLocaleDateString()}
                         </span>
                       )}
                     </button>
@@ -5863,9 +5962,19 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       <button onClick={e => quickLog(c, "email", e)} className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
                         <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
                       </button>
-                      <button onClick={e => snoozeFollowUp(c, 1, e)} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Snooze 1 day">
-                        <Clock className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
-                      </button>
+                      <div className="relative">
+                        <button onClick={e => { e.stopPropagation(); setEditingFollowUp(editingFollowUp === c.id ? null : c.id); }} className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Set follow-up date">
+                          <CalendarDays className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
+                        </button>
+                        {editingFollowUp === c.id && (
+                          <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-2" onClick={e => e.stopPropagation()}>
+                            <input type="date" autoFocus min={new Date().toISOString().split("T")[0]}
+                              defaultValue={c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) ? new Date(c.nextFollowUp).toISOString().split("T")[0] : ""}
+                              onChange={e => setFollowUpDate(c, e.target.value)}
+                              className="text-xs border border-gray-200 rounded px-2 py-1.5 text-gray-700" />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

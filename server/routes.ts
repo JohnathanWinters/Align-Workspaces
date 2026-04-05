@@ -6851,13 +6851,17 @@ ${featuredSection}
 
   app.post("/api/admin/pipeline/:id/activities", isAdmin, async (req, res) => {
     try {
-      const activity = await storage.createPipelineActivity({
+      const activityData: any = {
         contactId: req.params.id,
         type: req.body.type || "note",
         note: req.body.note,
-      });
+      };
+      if (req.body.referredContactId) activityData.referredContactId = req.body.referredContactId;
+      const activity = await storage.createPipelineActivity(activityData);
       const updates: any = { lastContactDate: new Date() };
-      if (req.body.followUpDays && typeof req.body.followUpDays === "number") {
+      if (req.body.followUpDate) {
+        updates.nextFollowUp = new Date(req.body.followUpDate);
+      } else if (req.body.followUpDays && typeof req.body.followUpDays === "number") {
         const next = new Date();
         next.setDate(next.getDate() + req.body.followUpDays);
         updates.nextFollowUp = next;
