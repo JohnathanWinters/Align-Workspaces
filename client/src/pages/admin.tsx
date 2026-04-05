@@ -77,6 +77,7 @@ import {
   UserPlus,
   History,
   Check,
+  Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
