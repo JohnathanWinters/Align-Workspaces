@@ -255,16 +255,16 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs text-foreground/50 mb-1 block">Insurance Carrier *</label>
+          <label className="text-xs text-gray-500 mb-1 block">Insurance Carrier *</label>
           <Input value={form.carrierName} onChange={e => setForm(f => ({ ...f, carrierName: e.target.value }))} placeholder="e.g. State Farm, GEICO" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-foreground/50 mb-1 block">Policy Number *</label>
+            <label className="text-xs text-gray-500 mb-1 block">Policy Number *</label>
             <Input value={form.policyNumber} onChange={e => setForm(f => ({ ...f, policyNumber: e.target.value }))} placeholder="Policy #" />
           </div>
           <div>
-            <label className="text-xs text-foreground/50 mb-1 block">Coverage Type *</label>
+            <label className="text-xs text-gray-500 mb-1 block">Coverage Type *</label>
             <select
               value={form.coverageType}
               onChange={e => setForm(f => ({ ...f, coverageType: e.target.value }))}
@@ -276,16 +276,16 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-foreground/50 mb-1 block">Coverage Amount ($) *</label>
+            <label className="text-xs text-gray-500 mb-1 block">Coverage Amount ($) *</label>
             <Input type="number" value={form.coverageAmount} onChange={e => setForm(f => ({ ...f, coverageAmount: e.target.value }))} placeholder="1000000" min="1000000" />
           </div>
           <div>
-            <label className="text-xs text-foreground/50 mb-1 block">Expiration Date *</label>
+            <label className="text-xs text-gray-500 mb-1 block">Expiration Date *</label>
             <Input type="date" value={form.policyExpirationDate} onChange={e => setForm(f => ({ ...f, policyExpirationDate: e.target.value }))} />
           </div>
         </div>
         <div>
-          <label className="text-xs text-foreground/50 mb-1 block">Declarations Page (PDF or image, max 10MB) *</label>
+          <label className="text-xs text-gray-500 mb-1 block">Declarations Page (PDF or image, max 10MB) *</label>
           <label className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] cursor-pointer transition-colors bg-stone-50/50">
             <Upload className="w-4 h-4 text-stone-400" />
             <span className="text-sm text-stone-500">{file ? file.name : "Choose file..."}</span>
@@ -388,29 +388,32 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
   return (
     <motion.div
+      className="fixed inset-0 z-[2000] flex items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9998] bg-black/60 flex items-center justify-center p-4"
-      onClick={onClose}
     >
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.97 }}
-        transition={{ duration: 0.25 }}
-        className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
-        onClick={e => e.stopPropagation()}
+        className="relative bg-white w-full max-w-2xl mx-4 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+        initial={{ y: 40, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.97 }}
+        transition={{ type: "spring", damping: 28, stiffness: 350 }}
       >
-        <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
-          <h2 className="font-serif text-lg font-semibold text-foreground">List Your Space</h2>
-          <button onClick={onClose} className="text-foreground/40 hover:text-foreground/70 p-1" data-testid="button-close-list-modal">
-            <X className="w-5 h-5" />
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <Building2 className="w-4 h-4 text-[#c4956a] flex-shrink-0" />
+            <h2 className="font-serif text-lg font-bold text-stone-900 truncate">List Your Space</h2>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition-colors flex-shrink-0" data-testid="button-close-list-modal">
+            <X className="w-4 h-4 text-stone-500" />
           </button>
         </div>
 
         {!isAuthenticated ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-5 overflow-y-auto">
             <div className="text-center">
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <Mail className="w-7 h-7 text-[#c4956a]" />
@@ -452,38 +455,38 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             }}
           />
         ) : (
-          <div className="flex flex-col" style={{ maxHeight: "calc(85vh - 60px)" }}>
-            {/* Progress bar */}
-            <div className="px-6 pt-4 pb-2 flex-shrink-0">
+          <>
+            {/* Completion Score */}
+            <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50 flex-shrink-0">
               {insuranceStatus?.hasInsurance && (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 mb-3">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span className="text-xs font-medium text-emerald-700">Insurance verified</span>
                 </div>
               )}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-stone-500">Listing completeness</span>
-                <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 60 ? "text-amber-500" : "text-stone-400"}`}>{score.percent}%</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-medium text-stone-600">Listing completeness</span>
+                <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
-              <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-1">
+              <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
                 <motion.div
-                  className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 60 ? "bg-amber-500" : "bg-stone-300"}`}
+                  className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 70 ? "bg-amber-500" : "bg-stone-400"}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${score.percent}%` }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
               {score.percent < 100 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {score.checks.filter(c => !c.done).map(c => (
-                    <span key={c.label} className="text-[10px] text-stone-400 bg-stone-50 border border-stone-100 px-1.5 py-0.5 rounded">{c.label}</span>
+                    <span key={c.label} className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 text-stone-500">{c.label}</span>
                   ))}
                 </div>
               )}
             </div>
 
             {/* Tabs */}
-            <div className="px-6 flex gap-1 border-b border-stone-100 flex-shrink-0">
+            <div className="flex border-b border-stone-100 px-6 gap-1 flex-shrink-0">
               {([
                 { id: "details" as const, label: "Details", icon: Building2 },
                 { id: "pricing" as const, label: "Pricing", icon: DollarSign },
@@ -492,8 +495,10 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors ${
-                    tab === t.id ? "border-stone-900 text-stone-900" : "border-transparent text-stone-400 hover:text-stone-600"
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all ${
+                    tab === t.id
+                      ? "border-[#c4956a] text-[#c4956a]"
+                      : "border-transparent text-stone-400 hover:text-stone-600"
                   }`}
                 >
                   <t.icon className="w-3.5 h-3.5" />
@@ -502,22 +507,22 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
 
-            {/* Tab content */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-5">
               {tab === "details" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-foreground/50 mb-1 block">Space Name *</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Space Name *</label>
                       <Input value={formData.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-list-name" />
                     </div>
                     <div>
-                      <label className="text-xs text-foreground/50 mb-1 block">Your Name / Business *</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Your Name / Business *</label>
                       <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-list-host" />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-foreground/50 mb-1.5 block">Categories *</label>
+                    <label className="text-xs text-gray-500 mb-1.5 block">Categories *</label>
                     <div className="flex flex-wrap gap-2">
                       {LIST_SPACE_TYPES.map(t => {
                         const selected = formData.tags.includes(t.value);
@@ -540,20 +545,20 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-foreground/50 mb-1 block">Address *</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Address *</label>
                       <Input value={formData.address} onChange={e => update("address", e.target.value)} placeholder="Full address" data-testid="input-list-address" />
                     </div>
                     <div>
-                      <label className="text-xs text-foreground/50 mb-1 block">Neighborhood</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
                       <Input value={formData.neighborhood} onChange={e => update("neighborhood", e.target.value)} placeholder="e.g. Brickell" data-testid="input-list-neighborhood" />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-foreground/50 mb-1 block">Short Description</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
                     <Input value={formData.shortDescription} onChange={e => update("shortDescription", e.target.value)} placeholder="Brief one-liner" data-testid="input-list-short-desc" />
                   </div>
                   <div>
-                    <label className="text-xs text-foreground/50 mb-1 block">Description *</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Description *</label>
                     <Textarea value={formData.description} onChange={e => update("description", e.target.value)} placeholder="Describe your space in detail..." rows={3} data-testid="input-list-description" />
                   </div>
                 </div>
@@ -707,16 +712,16 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               {tab === "extras" && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs text-foreground/50 mb-1 block">Amenities</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
                     <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-foreground/50 mb-1 block">Target Profession</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
                       <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists" data-testid="input-list-target" />
                     </div>
                     <div>
-                      <label className="text-xs text-foreground/50 mb-1 block">Available Hours</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Available Hours</label>
                       <Input value={formData.availableHours} onChange={e => update("availableHours", e.target.value)} placeholder="Mon-Fri 9am-5pm" data-testid="input-list-hours" />
                     </div>
                   </div>
@@ -725,22 +730,22 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-stone-100 flex-shrink-0 space-y-3">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
+              <Button size="sm" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
               <Button
                 onClick={() => createMutation.mutate()}
                 disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
-                className="w-full bg-foreground text-background hover:opacity-90 py-3"
+                size="sm"
+                className="bg-stone-900 text-white hover:bg-stone-800"
                 data-testid="button-submit-list-space"
               >
-                {createMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : "Submit for Approval"}
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                Submit for Approval
               </Button>
-              <p className="text-[11px] text-foreground/30 text-center leading-relaxed">
-                By listing your workspace, you agree to our{" "}
-                <a href="/terms" target="_blank" className="underline hover:text-foreground/50">Terms of Service</a>{" "}and{" "}
-                <a href="/privacy" target="_blank" className="underline hover:text-foreground/50">Privacy Policy</a>.
-              </p>
             </div>
-          </div>
+          </>
         )}
       </motion.div>
     </motion.div>
