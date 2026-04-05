@@ -5036,6 +5036,35 @@ export async function registerRoutes(
     }
   });
 
+  // Public review submission (shareable link)
+  app.get("/api/review/:slug", async (req, res) => {
+    try {
+      const space = await storage.getSpaceBySlug(req.params.slug);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+      res.json({ id: space.id, name: space.name, hostName: space.hostName, imageUrls: space.imageUrls, type: space.type });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.post("/api/review/:slug", async (req, res) => {
+    try {
+      const space = await storage.getSpaceBySlug(req.params.slug);
+      if (!space) return res.status(404).json({ message: "Space not found" });
+      const { rating, title, comment, guestName, guestEmail } = req.body;
+      if (!rating || !guestName) return res.status(400).json({ message: "Rating and name are required" });
+      const review = await storage.createSpaceReview({
+        spaceId: space.id,
+        bookingId: `direct-${Date.now()}`,
+        guestId: `guest-${Date.now()}`,
+        guestName,
+        rating: Math.min(5, Math.max(1, Number(rating))),
+        title: title ? String(title).slice(0, 200) : null,
+        comment: comment ? String(comment).slice(0, 2000) : null,
+        status: "published",
+      });
+      res.json(review);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
   // ══════════════════════════════════════════════════════════════════
   // SHOOT REVIEWS
   // ══════════════════════════════════════════════════════════════════

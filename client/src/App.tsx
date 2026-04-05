@@ -24,6 +24,7 @@ import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
 import TrustPage from "@/pages/trust";
 import BookMeetingPage from "@/pages/book-meeting";
+import SubmitReviewPage from "@/pages/submit-review";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAuth } from "@/hooks/use-auth";
 import GlobalMessenger from "@/components/global-messenger";
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/featured/:slug" component={FeaturedPage} />
       <Route path="/featured" component={FeaturedPage} />
       <Route path="/book/:slug" component={BookMeetingPage} />
+      <Route path="/review/:slug" component={SubmitReviewPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/host-pricing">{() => { window.location.replace("/pricing"); return null; }}</Route>

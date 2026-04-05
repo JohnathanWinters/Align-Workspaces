@@ -2216,6 +2216,8 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "hidden" | "flagged">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "photography" | "workspaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [allSpaces, setAllSpaces] = useState<any[]>([]);
+  const [showSharePanel, setShowSharePanel] = useState(false);
 
   const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
@@ -2241,6 +2243,9 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   }, [adminFetchLocal]);
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
+  useEffect(() => {
+    adminFetchLocal("/api/admin/spaces/all").then(r => r.ok ? r.json() : []).then(d => setAllSpaces(Array.isArray(d) ? d : [])).catch(() => {});
+  }, [adminFetchLocal]);
 
   const updateStatus = async (id: string, status: "published" | "hidden" | "flagged", type: string) => {
     const endpoint = type === "photography" ? `/api/admin/shoot-reviews/${id}` : `/api/admin/reviews/${id}`;
@@ -2320,10 +2325,55 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
             </button>
             <h1 className="font-serif text-xl font-semibold">Reviews ({filtered.length})</h1>
           </div>
+          <Button size="sm" onClick={() => setShowSharePanel(!showSharePanel)} className="bg-stone-900 text-white hover:bg-stone-800">
+            <Send className="w-3.5 h-3.5 mr-1" /> Get Review Link
+          </Button>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+        {/* Share review link panel */}
+        <AnimatePresence>
+          {showSharePanel && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-6">
+              <div className="bg-white rounded-xl border border-stone-100 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-stone-900 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Share a review link with your clients
+                </h3>
+                <p className="text-xs text-stone-400">Pick a workspace and share the link. Clients can leave a review without an account.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {allSpaces.filter((s: any) => s.approvalStatus === "approved" && s.isActive).map((s: any) => {
+                    const url = `${window.location.origin}/review/${s.slug}`;
+                    return (
+                      <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-stone-100 bg-stone-50/50">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-stone-800 truncate">{s.name}</p>
+                          <p className="text-[10px] text-stone-400 truncate">/review/{s.slug}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Review link copied!" }); }}
+                            className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 transition-colors flex items-center gap-1">
+                            <Copy className="w-3 h-3" /> Copy
+                          </button>
+                          <button onClick={() => {
+                            if (navigator.share) { navigator.share({ title: `Leave a review for ${s.name}`, url }).catch(() => {}); }
+                            else { navigator.clipboard.writeText(url); toast({ title: "Review link copied!" }); }
+                          }} className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors flex items-center gap-1">
+                            <Send className="w-3 h-3" /> Share
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {allSpaces.filter((s: any) => s.approvalStatus === "approved" && s.isActive).length === 0 && (
+                  <p className="text-xs text-stone-400 text-center py-2">No active workspaces found</p>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
