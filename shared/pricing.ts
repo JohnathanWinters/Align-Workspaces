@@ -15,7 +15,7 @@ export function calculatePricing(shootIntent: string | null): { min: number; max
 
 // --- Three-Tier Fee Structure ---
 
-export type FeeTier = "standard" | "host_referred" | "repeat_guest";
+export type FeeTier = "standard" | "host_referred" | "repeat_guest" | "founding_host";
 
 export const FEE_TIERS: Record<FeeTier, { hostFeePercent: number; guestFeePercent: number }> = {
   standard: {
@@ -29,6 +29,10 @@ export const FEE_TIERS: Record<FeeTier, { hostFeePercent: number; guestFeePercen
   repeat_guest: {
     hostFeePercent: 0.125,   // 12.5%
     guestFeePercent: 0.05,   // 5%
+  },
+  founding_host: {
+    hostFeePercent: 0,       // 0% — first 20 spaces promotion
+    guestFeePercent: 0.07,   // 7%
   },
 };
 
@@ -48,8 +52,12 @@ export const DEFAULT_TAX_JURISDICTION = "FL-MIAMI-DADE";
 export function resolveFeeTier(opts: {
   isRepeatGuest: boolean;
   isHostReferred: boolean;
+  isFoundingHost?: boolean;
 }): FeeTier {
-  const { isRepeatGuest, isHostReferred } = opts;
+  const { isRepeatGuest, isHostReferred, isFoundingHost } = opts;
+
+  // Founding host always wins — 0% host fee
+  if (isFoundingHost) return "founding_host";
 
   if (isRepeatGuest && isHostReferred) {
     // host_referred and repeat_guest have same total take (15.5%), prefer host_referred for host benefit

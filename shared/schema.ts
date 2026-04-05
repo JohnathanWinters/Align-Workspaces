@@ -412,6 +412,7 @@ export const spaces = pgTable("spaces", {
   recurringMinBookings: integer("recurring_min_bookings").default(1), // minimum weeks commitment (1 day per week)
   recurringDiscountPercent: integer("recurring_discount_percent"),
   recurringDiscountAfter: integer("recurring_discount_after").default(0), // bookings before discount kicks in
+  isFoundingHost: integer("is_founding_host").default(0), // 1 = founding host (0% host fee), first 20 spaces, one per account
   isSample: integer("is_sample").default(0),
   isActive: integer("is_active").default(1),
   createdAt: timestamp("created_at").defaultNow(),

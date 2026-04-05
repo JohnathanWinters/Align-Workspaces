@@ -2129,6 +2129,7 @@ function AdminSpaceBookings({ spaceId, token }: { spaceId: string; token: string
     standard: "Standard",
     host_referred: "Referred",
     repeat_guest: "Repeat",
+    founding_host: "Founding Host",
   };
 
   return (
@@ -6685,7 +6686,7 @@ function TaxReportManager({ token, onBack }: { token: string; onBack: () => void
                   tierTotals[tier].revenue += stats.revenue;
                 }
               }
-              const tierLabels: Record<string, string> = { standard: "Standard", host_referred: "Host Referred", repeat_guest: "Repeat Guest" };
+              const tierLabels: Record<string, string> = { standard: "Standard", host_referred: "Host Referred", repeat_guest: "Repeat Guest", founding_host: "Founding Host" };
               return Object.keys(tierTotals).length > 0 ? (
                 <Card className="border-gray-100">
                   <CardHeader className="pb-2">

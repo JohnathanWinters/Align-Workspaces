@@ -2769,6 +2769,13 @@ export async function registerRoutes(
         }
       }
 
+      // Check founding host eligibility: first 20 spaces, one per account
+      const [foundingCount, alreadyHasFounding] = await Promise.all([
+        storage.countFoundingHostSpaces(),
+        storage.hasFoundingHostSpace(user.claims.sub),
+      ]);
+      const isFoundingHost = foundingCount < 20 && !alreadyHasFounding ? 1 : 0;
+
       const space = await storage.createSpace({
         name,
         slug,
@@ -2796,6 +2803,7 @@ export async function registerRoutes(
         recurringDiscountAfter: recurringDiscountAfter ? parseInt(recurringDiscountAfter) : 0,
         cancellationPolicy: cancellationPolicy && ["flexible", "moderate", "strict"].includes(cancellationPolicy) ? cancellationPolicy : "flexible",
         availabilitySchedule: availabilitySchedule || null,
+        isFoundingHost,
         isSample: 0,
         isActive: 1,
       });
@@ -3352,7 +3360,7 @@ export async function registerRoutes(
           bookingAmount: subtotal, // What the host listed (subtotal)
           hostFeeAmount: b.hostFeeAmount,
           hostFeePercent: b.hostFeePercent,
-          feeTier: b.feeTier === "host_referred" ? "referral" : b.feeTier === "repeat_guest" ? "repeat" : "standard",
+          feeTier: b.feeTier === "host_referred" ? "referral" : b.feeTier === "repeat_guest" ? "repeat" : b.feeTier === "founding_host" ? "founding_host" : "standard",
           payoutAmount: b.hostPayoutAmount ?? b.hostEarnings,
           payoutStatus: b.payoutStatus || "pending",
           stripeTransferId: b.stripeTransferId,
@@ -3433,7 +3441,7 @@ export async function registerRoutes(
           monthBookingCount++;
         }
 
-        const tier = b.feeTier === "host_referred" ? "referral" : b.feeTier === "repeat_guest" ? "repeat" : "standard";
+        const tier = b.feeTier === "host_referred" ? "referral" : b.feeTier === "repeat_guest" ? "repeat" : b.feeTier === "founding_host" ? "founding_host" : "standard";
         tierCounts[tier] = (tierCounts[tier] || 0) + 1;
       }
 
@@ -3678,10 +3686,14 @@ export async function registerRoutes(
   });
 
   // --- Fee tier detection helper ---
-  async function detectFeeTier(req: any, space: any): Promise<{ tier: FeeTier; isRepeatGuest: boolean; isHostReferred: boolean; referralLinkId: string | null }> {
+  async function detectFeeTier(req: any, space: any): Promise<{ tier: FeeTier; isRepeatGuest: boolean; isHostReferred: boolean; isFoundingHost: boolean; referralLinkId: string | null }> {
     let isRepeatGuest = false;
     let isHostReferred = false;
     let referralLinkId: string | null = null;
+
+    // Check founding host status: space must be flagged AND within 1 year of creation
+    const isFoundingHost = !!(space.isFoundingHost && space.createdAt &&
+      new Date(space.createdAt).getTime() > Date.now() - 365 * 24 * 60 * 60 * 1000);
 
     // Get user ID from auth middleware or session directly
     const userId = req.user?.claims?.sub || req.session?.magicUserId;
@@ -3710,8 +3722,8 @@ export async function registerRoutes(
       }
     }
 
-    const tier = resolveFeeTier({ isRepeatGuest, isHostReferred });
-    return { tier, isRepeatGuest, isHostReferred, referralLinkId };
+    const tier = resolveFeeTier({ isRepeatGuest, isHostReferred, isFoundingHost });
+    return { tier, isRepeatGuest, isHostReferred, isFoundingHost, referralLinkId };
   }
 
   // Return booked time ranges for a space on a given date

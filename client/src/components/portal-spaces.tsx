@@ -2592,7 +2592,7 @@ function EarningsTab() {
     );
   }
 
-  const tierLabels: Record<string, string> = { standard: "Standard", referral: "Referred", repeat: "Repeat guest" };
+  const tierLabels: Record<string, string> = { standard: "Standard", referral: "Referred", repeat: "Repeat guest", founding_host: "Founding Host" };
 
   const payoutStatusStyles: Record<string, string> = {
     paid: "bg-emerald-50 text-emerald-700",

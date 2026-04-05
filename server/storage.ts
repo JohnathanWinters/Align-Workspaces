@@ -826,6 +826,16 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(spaces).where(eq(spaces.approvalStatus, "pending")).orderBy(desc(spaces.createdAt));
   }
 
+  async countFoundingHostSpaces(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(spaces).where(eq(spaces.isFoundingHost, 1));
+    return Number(result?.count ?? 0);
+  }
+
+  async hasFoundingHostSpace(userId: string): Promise<boolean> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(spaces).where(and(eq(spaces.userId, userId), eq(spaces.isFoundingHost, 1)));
+    return Number(result?.count ?? 0) > 0;
+  }
+
   async createSpace(data: InsertSpace): Promise<Space> {
     const [result] = await db.insert(spaces).values(data).returning();
     return result;
