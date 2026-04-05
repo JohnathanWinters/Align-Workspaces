@@ -5333,10 +5333,21 @@ function SchedulingManager({ token, onBack }: { token: string; onBack: () => voi
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-stone-900">{s.adminName}</h3>
                 <p className="text-xs text-stone-400 mt-0.5">{s.meetingTitle} · {s.meetingDurationMinutes} min · {s.location || "No location"}</p>
-                <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center gap-3 mt-1.5">
                   <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/book/${s.slug}`); toast({ title: "Link copied!" }); }}
                     className="flex items-center gap-1 text-[11px] text-blue-600 hover:underline cursor-pointer">
-                    <Copy className="w-3 h-3" /> {window.location.origin}/book/{s.slug}
+                    <Copy className="w-3 h-3" /> Copy link
+                  </button>
+                  <button onClick={() => {
+                    const url = `${window.location.origin}/book/${s.slug}`;
+                    if (navigator.share) {
+                      navigator.share({ title: `Book a meeting with ${s.adminName}`, url }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(url);
+                      toast({ title: "Link copied!" });
+                    }
+                  }} className="flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-700 cursor-pointer">
+                    <Send className="w-3 h-3" /> Share
                   </button>
                 </div>
               </div>
