@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, Clock, MapPin, CheckCircle2, Loader2, ArrowLeft, User, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,8 +18,8 @@ interface ScheduleInfo {
   weeklySchedule: WeekSchedule | null;
 }
 
-export default function BookMeetingPage() {
-  const { slug } = useParams<{ slug: string }>();
+export default function BookMeetingPage({ params }: { params: { slug: string } }) {
+  const slug = params.slug;
   const [info, setInfo] = useState<ScheduleInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +50,7 @@ export default function BookMeetingPage() {
   }, [selectedDate, slug]);
 
   const submit = async () => {
-    if (!selectedDate || !selectedTime || !form.name || !form.email) return;
+    if (!selectedDate || !selectedTime || !form.name || !form.email || !form.phone) return;
     setSubmitting(true);
     try {
       const res = await fetch(`/api/book/${slug}`, {
@@ -208,14 +207,14 @@ export default function BookMeetingPage() {
                     <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="your@email.com" />
                   </div>
                   <div>
-                    <label className="text-xs text-stone-500 mb-1 block flex items-center gap-1"><Phone className="w-3 h-3" /> Phone (optional)</label>
+                    <label className="text-xs text-stone-500 mb-1 block flex items-center gap-1"><Phone className="w-3 h-3" /> Phone *</label>
                     <Input value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="(555) 123-4567" />
                   </div>
                   <div>
                     <label className="text-xs text-stone-500 mb-1 block">Notes (optional)</label>
                     <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} placeholder="What would you like to discuss?" />
                   </div>
-                  <Button onClick={submit} disabled={!form.name || !form.email || submitting} className="w-full bg-stone-900 text-white hover:bg-stone-800">
+                  <Button onClick={submit} disabled={!form.name || !form.email || !form.phone || submitting} className="w-full bg-stone-900 text-white hover:bg-stone-800">
                     {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
                     Confirm Booking
                   </Button>
