@@ -2269,7 +2269,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                     data-testid="button-contact-host"
                   >
                     <MessageCircle className="w-4 h-4" />
-                    Contact host
+                    Message host
                   </button>
                 </div>
               )}
