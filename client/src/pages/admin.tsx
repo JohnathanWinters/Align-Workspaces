@@ -5164,6 +5164,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [filter, setFilter] = useState<"all" | "portraits" | "spaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<string | null>(null);
+  const [assignedFilter, setAssignedFilter] = useState<string | null>(null);
   const [showImportCsv, setShowImportCsv] = useState(false);
   const [csvText, setCsvText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -5179,7 +5180,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
-    category: "portraits", stage: "new", notes: "",
+    category: "portraits", stage: "new", notes: "", assignedTo: "",
     nextFollowUp: "", spaceId: "", shootId: "",
   });
 
@@ -5218,6 +5219,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       else body.nextFollowUp = null;
       body.spaceId = form.spaceId || null;
       body.shootId = form.shootId || null;
+      body.assignedTo = form.assignedTo || null;
       if (editingContact) {
         const res = await adminFetch(`/api/admin/pipeline/${editingContact.id}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -5234,7 +5236,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         if (res.ok) { toast({ title: "Contact added" }); }
       }
       setShowForm(false); setEditingContact(null);
-      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "", spaceId: "", shootId: "" });
+      setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", assignedTo: "", nextFollowUp: "", spaceId: "", shootId: "" });
       await loadContacts();
     } catch { toast({ title: "Save failed", variant: "destructive" }); }
   };
@@ -5287,12 +5289,15 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
     setEditingFollowUp(null);
     if (!dateStr) return;
     try {
+      // If contact is in "new" stage, auto-move to "contacted"
+      const patch: any = { nextFollowUp: new Date(dateStr + "T00:00:00").toISOString() };
+      if (contact.stage === "new") patch.stage = "contacted";
       await adminFetch(`/api/admin/pipeline/${contact.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nextFollowUp: new Date(dateStr + "T00:00:00").toISOString() }),
+        body: JSON.stringify(patch),
       });
       await loadContacts();
-      toast({ title: "Follow-up date set" });
+      toast({ title: contact.stage === "new" ? "Follow-up set · Moved to Contact" : "Follow-up date set" });
     } catch {}
   };
 
@@ -5422,7 +5427,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
       name: contact.name, email: contact.email || "", phone: contact.phone || "",
       instagram: contact.instagram || "", source: contact.source || "website",
       category: contact.category || "portraits", stage: contact.stage,
-      notes: contact.notes || "",
+      notes: contact.notes || "", assignedTo: (contact as any).assignedTo || "",
       nextFollowUp: contact.nextFollowUp ? new Date(contact.nextFollowUp).toISOString().split("T")[0] : "",
       spaceId: (contact as any).spaceId || "", shootId: (contact as any).shootId || "",
     });
@@ -5437,6 +5442,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const filteredContacts = contacts.filter(c => {
     if (filter !== "all" && c.category !== filter) return false;
     if (stageFilter && c.stage !== stageFilter) return false;
+    if (assignedFilter === "unassigned" && (c as any).assignedTo) return false;
+    if (assignedFilter && assignedFilter !== "unassigned" && (c as any).assignedTo !== assignedFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (c.name || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").includes(q);
@@ -5555,7 +5562,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     <CalendarDays className="w-3.5 h-3.5" /> {selectedContact.nextFollowUp ? `Follow-up: ${new Date(selectedContact.nextFollowUp).toLocaleDateString()}` : "Set follow-up"}
                     <input id="detail-followup-picker" type="date" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" min={new Date().toISOString().split("T")[0]}
                       value={selectedContact.nextFollowUp ? new Date(selectedContact.nextFollowUp).toISOString().split("T")[0] : ""}
-                      onChange={e => { setFollowUpDate(selectedContact, e.target.value); setSelectedContact({ ...selectedContact, nextFollowUp: e.target.value ? new Date(e.target.value + "T00:00:00").toISOString() : null }); }}
+                      onChange={e => { setFollowUpDate(selectedContact, e.target.value); setSelectedContact({ ...selectedContact, nextFollowUp: e.target.value ? new Date(e.target.value + "T00:00:00").toISOString() : null, ...(selectedContact.stage === "new" && e.target.value ? { stage: "contacted" } : {}) }); }}
                     />
                   </span>
                   {selectedContact.lastContactDate && (
@@ -5573,7 +5580,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                     const d = new Date(); d.setDate(d.getDate() + opt.days);
                     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
                     return (
-                      <button key={opt.label} onClick={() => { setFollowUpDate(selectedContact, dateStr); setSelectedContact({ ...selectedContact, nextFollowUp: new Date(dateStr + "T00:00:00").toISOString() }); }}
+                      <button key={opt.label} onClick={() => { setFollowUpDate(selectedContact, dateStr); setSelectedContact({ ...selectedContact, nextFollowUp: new Date(dateStr + "T00:00:00").toISOString(), ...(selectedContact.stage === "new" ? { stage: "contacted" } : {}) }); }}
                         className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors">
                         {opt.label}
                       </button>
@@ -5603,6 +5610,35 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${selectedContact.stage === s.key ? s.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}
                       data-testid={`button-stage-${s.key}`}>{s.label}</button>
                   ))}
+                </div>
+              </div>
+
+              {/* Assigned to */}
+              <div>
+                <Label className="text-xs font-medium text-gray-500 mb-1.5 block">Assigned To</Label>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { key: "armando", label: "Armando", color: "bg-blue-50 text-blue-700" },
+                    { key: "edith", label: "Edith", color: "bg-purple-50 text-purple-700" },
+                  ].map(person => {
+                    const isAssigned = (selectedContact as any).assignedTo === person.key;
+                    return (
+                      <button key={person.key} onClick={async () => {
+                        const newVal = isAssigned ? null : person.key;
+                        try {
+                          await adminFetch(`/api/admin/pipeline/${selectedContact.id}`, {
+                            method: "PATCH", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ assignedTo: newVal }),
+                          });
+                          setSelectedContact({ ...selectedContact, assignedTo: newVal } as any);
+                          await loadContacts();
+                        } catch {}
+                      }}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${isAssigned ? person.color + " ring-1 ring-black/10" : "bg-gray-50 text-gray-500 hover:bg-gray-100"}`}>
+                        {person.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -5888,7 +5924,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
               )}
             </AnimatePresence>
           </div>
-          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", nextFollowUp: "", spaceId: "", shootId: "" }); }} data-testid="button-add-contact">
+          <Button size="sm" className="h-8 text-xs bg-stone-900 hover:bg-stone-800 text-white" onClick={() => { setShowForm(true); setEditingContact(null); setForm({ name: "", email: "", phone: "", instagram: "", source: "website", category: "portraits", stage: "new", notes: "", assignedTo: "", nextFollowUp: "", spaceId: "", shootId: "" }); }} data-testid="button-add-contact">
             <Plus className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Add Contact</span>
           </Button>
         </div>
@@ -5947,6 +5983,24 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
         })}
       </div>
 
+      {/* Assigned-to filter */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-xs text-gray-400 font-medium">Assigned:</span>
+        {[
+          { key: null, label: "All" },
+          { key: "armando", label: "Armando" },
+          { key: "edith", label: "Edith" },
+          { key: "unassigned", label: "Unassigned" },
+        ].map(opt => (
+          <button key={opt.key ?? "all"} onClick={() => setAssignedFilter(opt.key === assignedFilter ? null : opt.key)}
+            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+              assignedFilter === opt.key ? "bg-stone-900 text-white" : "bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-100"
+            }`}>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : (
@@ -5974,6 +6028,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium text-gray-900">{c.name}</span>
                           <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                          {(c as any).assignedTo && <span className={`text-[10px] ml-1 px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
                         </div>
                         <div className="text-right shrink-0">
                           {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && (
@@ -6045,6 +6100,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium text-gray-900">{c.name}</span>
                           <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                          {(c as any).assignedTo && <span className={`text-[10px] ml-1 px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
                         </div>
                         <span className="text-[11px] text-blue-600 font-medium shrink-0">{getLabel(new Date(c.nextFollowUp!))}</span>
                       </button>
@@ -6107,6 +6163,7 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
                       </div>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                      {(c as any).assignedTo && <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
                       {c.nextFollowUp && (
                         <span className={`text-[10px] shrink-0 hidden sm:inline ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
                           {new Date(c.nextFollowUp).toLocaleDateString()}

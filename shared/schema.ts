@@ -667,6 +667,7 @@ export const pipelineContacts = pgTable("pipeline_contacts", {
   bookingId: varchar("booking_id"),
   spaceId: varchar("space_id"),
   shootId: varchar("shoot_id"),
+  assignedTo: text("assigned_to"), // 'armando' | 'edith' | null
   estimatedValue: integer("estimated_value"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
