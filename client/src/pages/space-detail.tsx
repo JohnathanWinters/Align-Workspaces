@@ -2364,35 +2364,6 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 </div>
               )}
 
-              {/* ── Work Created Here (Portfolio) ── */}
-              {portfolioWork.length > 0 && (
-                <div className="mb-6 pb-6 border-b border-stone-200/60" data-testid="portfolio-work">
-                  <h2 className="font-serif text-lg font-semibold text-stone-900 mb-1 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#c4956a]" />
-                    Work Created Here
-                  </h2>
-                  <p className="text-xs text-stone-400 mb-3">
-                    {portfolioWork.length} piece{portfolioWork.length !== 1 ? "s" : ""} from creators who used this space
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {portfolioWork.map((photo) => (
-                      <div key={photo.id} className="group">
-                        <div className="aspect-[3/4] overflow-hidden rounded-xl relative">
-                          <img
-                            src={photo.imageUrl}
-                            alt={photo.title || "Portfolio work"}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                        </div>
-                        {photo.title && (
-                          <p className="text-xs text-stone-500 mt-1.5 truncate">{photo.title}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* ── Right column (desktop only) — sticky booking card ── */}
