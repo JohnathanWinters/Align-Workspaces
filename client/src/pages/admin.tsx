@@ -6023,9 +6023,10 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             const getLabel = (d: Date) => {
               if (isNaN(d.getTime())) return "";
               const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-              if (dt.getTime() === today.getTime()) return "Today";
-              if (dt.getTime() === tomorrow.getTime()) return "Tomorrow";
-              return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+              const diffDays = Math.round((dt.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              if (diffDays <= 0) return "Today";
+              if (diffDays === 1) return "Tomorrow";
+              return `in ${diffDays} days`;
             };
             return (
               <div>
