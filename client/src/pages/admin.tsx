@@ -86,6 +86,7 @@ import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
 import AdminTeamMembers from "@/components/admin-team-members";
+import { AvailabilityScheduleEditor } from "@/components/availability-schedule-editor";
 
 interface EditToken {
   id: string;
@@ -5131,6 +5132,279 @@ function FeaturedManager({ token, onBack }: { token: string; onBack: () => void 
   );
 }
 
+// ── Scheduling Manager ──
+
+function SchedulingManager({ token, onBack }: { token: string; onBack: () => void }) {
+  const { toast } = useToast();
+  const adminFetch = useCallback(async (url: string, opts: RequestInit = {}) => {
+    return fetch(url, { ...opts, headers: { ...opts.headers as any, Authorization: `Bearer ${token}` } });
+  }, [token]);
+
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [schedule, setSchedule] = useState<any>({
+    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
+    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
+    fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+  });
+  const [form, setForm] = useState({
+    adminName: "", adminEmail: "", slug: "", meetingDurationMinutes: "30",
+    bufferMinutes: "15", maxDaysInAdvance: "30", meetingTitle: "Meeting with Align",
+    meetingDescription: "", location: "",
+  });
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [sRes, bRes] = await Promise.all([
+        adminFetch("/api/admin/schedules"),
+        adminFetch("/api/admin/meeting-bookings"),
+      ]);
+      if (sRes.ok) setSchedules(await sRes.json());
+      if (bRes.ok) setBookings(await bRes.json());
+    } catch {} finally { setLoading(false); }
+  }, [adminFetch]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const handleSave = async () => {
+    const payload = {
+      ...form,
+      meetingDurationMinutes: Number(form.meetingDurationMinutes),
+      bufferMinutes: Number(form.bufferMinutes),
+      maxDaysInAdvance: Number(form.maxDaysInAdvance),
+      weeklySchedule: JSON.stringify(schedule),
+    };
+    try {
+      if (editingSchedule) {
+        await adminFetch(`/api/admin/schedules/${editingSchedule.id}`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+        });
+        toast({ title: "Schedule updated" });
+      } else {
+        await adminFetch("/api/admin/schedules", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+        });
+        toast({ title: "Schedule created" });
+      }
+      setShowCreate(false);
+      setEditingSchedule(null);
+      await loadData();
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+  };
+
+  const deleteSchedule = async (id: string) => {
+    await adminFetch(`/api/admin/schedules/${id}`, { method: "DELETE" });
+    await loadData();
+    toast({ title: "Schedule deleted" });
+  };
+
+  const cancelBooking = async (id: string) => {
+    await adminFetch(`/api/admin/meeting-bookings/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelled" }),
+    });
+    await loadData();
+    toast({ title: "Meeting cancelled" });
+  };
+
+  const openEdit = (s: any) => {
+    setEditingSchedule(s);
+    setForm({
+      adminName: s.adminName, adminEmail: s.adminEmail, slug: s.slug,
+      meetingDurationMinutes: String(s.meetingDurationMinutes || 30),
+      bufferMinutes: String(s.bufferMinutes || 15), maxDaysInAdvance: String(s.maxDaysInAdvance || 30),
+      meetingTitle: s.meetingTitle || "Meeting with Align", meetingDescription: s.meetingDescription || "",
+      location: s.location || "",
+    });
+    setSchedule(s.weeklySchedule ? JSON.parse(s.weeklySchedule) : {
+      mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
+      wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
+      fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+    });
+    setShowCreate(true);
+  };
+
+  const upcomingBookings = bookings.filter(b => b.status === "confirmed" && b.meetingDate >= new Date().toISOString().split("T")[0]).sort((a: any, b: any) => a.meetingDate.localeCompare(b.meetingDate) || a.meetingStartTime.localeCompare(b.meetingStartTime));
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+
+  if (showCreate) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-lg font-bold text-stone-900">{editingSchedule ? "Edit Schedule" : "Create Schedule"}</h2>
+          <button onClick={() => { setShowCreate(false); setEditingSchedule(null); }} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Name</label>
+            <Input value={form.adminName} onChange={e => setForm(p => ({ ...p, adminName: e.target.value }))} placeholder="e.g. Armando" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Email</label>
+            <Input value={form.adminEmail} onChange={e => setForm(p => ({ ...p, adminEmail: e.target.value }))} placeholder="armando@alignworkspaces.com" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">URL Slug</label>
+            <Input value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))} placeholder="armando" />
+            {form.slug && <p className="text-[10px] text-gray-400 mt-1">{window.location.origin}/book/{form.slug}</p>}
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Meeting Duration</label>
+            <select value={form.meetingDurationMinutes} onChange={e => setForm(p => ({ ...p, meetingDurationMinutes: e.target.value }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="45">45 minutes</option>
+              <option value="60">60 minutes</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Buffer Between Meetings</label>
+            <select value={form.bufferMinutes} onChange={e => setForm(p => ({ ...p, bufferMinutes: e.target.value }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
+              <option value="0">No buffer</option>
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+              <option value="15">15 minutes</option>
+              <option value="30">30 minutes</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Max Days in Advance</label>
+            <select value={form.maxDaysInAdvance} onChange={e => setForm(p => ({ ...p, maxDaysInAdvance: e.target.value }))} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
+              <option value="7">1 week</option>
+              <option value="14">2 weeks</option>
+              <option value="30">1 month</option>
+              <option value="60">2 months</option>
+              <option value="90">3 months</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Meeting Title</label>
+          <Input value={form.meetingTitle} onChange={e => setForm(p => ({ ...p, meetingTitle: e.target.value }))} placeholder="Meeting with Align" />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Description (shown on booking page)</label>
+          <Textarea value={form.meetingDescription} onChange={e => setForm(p => ({ ...p, meetingDescription: e.target.value }))} rows={2} placeholder="Let's chat about how Align can help you find the perfect workspace." />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Location</label>
+          <Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="e.g. Google Meet, or a physical address" />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-500 mb-2 block">Weekly Availability</label>
+          <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
+        </div>
+
+        <Button onClick={handleSave} disabled={!form.adminName || !form.adminEmail || !form.slug} className="w-full bg-stone-900 text-white hover:bg-stone-800">
+          {editingSchedule ? "Save Changes" : "Create Schedule"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="font-serif text-lg font-bold text-stone-900">Scheduling</h2>
+        <Button size="sm" onClick={() => { setShowCreate(true); setEditingSchedule(null); setForm({ adminName: "", adminEmail: "", slug: "", meetingDurationMinutes: "30", bufferMinutes: "15", maxDaysInAdvance: "30", meetingTitle: "Meeting with Align", meetingDescription: "", location: "" }); }} className="bg-stone-900 text-white hover:bg-stone-800">
+          <Plus className="w-4 h-4 mr-1" /> New Schedule
+        </Button>
+      </div>
+
+      {/* Schedule Cards */}
+      {schedules.length === 0 ? (
+        <div className="text-center py-12 text-stone-500">
+          <Clock className="w-8 h-8 mx-auto mb-3 text-stone-300" />
+          <p className="text-sm font-medium mb-1">No schedules yet</p>
+          <p className="text-xs text-stone-400">Create a schedule to start accepting meeting bookings.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {schedules.map((s: any) => (
+            <div key={s.id} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-stone-900">{s.adminName}</h3>
+                <p className="text-xs text-stone-400 mt-0.5">{s.meetingTitle} · {s.meetingDurationMinutes} min · {s.location || "No location"}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/book/${s.slug}`); toast({ title: "Link copied!" }); }}
+                    className="flex items-center gap-1 text-[11px] text-blue-600 hover:underline cursor-pointer">
+                    <Copy className="w-3 h-3" /> {window.location.origin}/book/{s.slug}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => openEdit(s)} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
+                  <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+                <button onClick={() => deleteSchedule(s.id)} className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center">
+                  <Trash2 className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upcoming Meetings */}
+      {upcomingBookings.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+            <CalendarDays className="w-3.5 h-3.5 text-blue-500" /> Upcoming Meetings <span className="text-gray-400 font-normal">({upcomingBookings.length})</span>
+          </h3>
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+            {upcomingBookings.map((b: any) => {
+              const sched = schedules.find((s: any) => s.id === b.scheduleId);
+              return (
+                <div key={b.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900">{b.guestName}</span>
+                      {b.guestEmail && <span className="text-xs text-gray-400">{b.guestEmail}</span>}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {new Date(b.meetingDate + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} at {b.meetingStartTime} · {b.meetingDurationMinutes} min
+                      {sched && <> · {sched.adminName}</>}
+                    </p>
+                    {b.notes && <p className="text-xs text-gray-400 mt-0.5 truncate">{b.notes}</p>}
+                  </div>
+                  <button onClick={() => cancelBooking(b.id)} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-red-600 hover:bg-red-50 border border-red-200 transition-colors">
+                    Cancel
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Past / All Bookings */}
+      {bookings.filter(b => b.status !== "confirmed" || b.meetingDate < new Date().toISOString().split("T")[0]).length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Past Meetings</h3>
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+            {bookings.filter((b: any) => b.status !== "confirmed" || b.meetingDate < new Date().toISOString().split("T")[0]).slice(0, 20).map((b: any) => (
+              <div key={b.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <span className="font-medium text-gray-700 flex-1">{b.guestName}</span>
+                <span className="text-xs text-gray-400">{b.meetingDate} {b.meetingStartTime}</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "cancelled" ? "bg-red-50 text-red-600" : b.status === "completed" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"}`}>
+                  {b.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const PIPELINE_STAGES = [
   { key: "new", label: "New", color: "bg-blue-100 text-blue-700" },
   { key: "contacted", label: "Contact", color: "bg-purple-100 text-purple-700" },
@@ -8199,8 +8473,8 @@ function AdminDashboard({ token }: { token: string }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [shoots, setShoots] = useState<Shoot[]>([]);
   const [loading, setLoading] = useState(true);
-  type AdminView = "clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members" | "community-events";
-  const validViews: AdminView[] = ["clients", "create", "edit", "gallery", "tokens", "shoots", "employees", "featured", "nominations", "portfolio", "spaces", "analytics", "pipeline", "tax", "revenue", "reviews", "messages", "team-members", "community-events"];
+  type AdminView = "clients" | "create" | "edit" | "gallery" | "tokens" | "shoots" | "employees" | "featured" | "nominations" | "portfolio" | "spaces" | "analytics" | "pipeline" | "tax" | "revenue" | "reviews" | "messages" | "team-members" | "community-events" | "scheduling";
+  const validViews: AdminView[] = ["clients", "create", "edit", "gallery", "tokens", "shoots", "employees", "featured", "nominations", "portfolio", "spaces", "analytics", "pipeline", "tax", "revenue", "reviews", "messages", "team-members", "community-events", "scheduling"];
   const getInitialView = (): AdminView => {
     const hash = window.location.hash.replace("#", "");
     return validViews.includes(hash as AdminView) ? (hash as AdminView) : "clients";
@@ -8267,6 +8541,7 @@ function AdminDashboard({ token }: { token: string }) {
         { id: "spaces" as const, label: "Workspaces", icon: Building2 },
         { id: "employees" as const, label: "Team", icon: Users },
         { id: "reviews" as const, label: "Reviews", icon: MessageSquare },
+        { id: "scheduling" as const, label: "Scheduling", icon: Clock },
       ],
     },
     {
@@ -8624,6 +8899,10 @@ function AdminDashboard({ token }: { token: string }) {
 
     if (view === "community-events") {
       return <CommunityEventsManager token={token} onBack={() => setView("clients")} />;
+    }
+
+    if (view === "scheduling") {
+      return <SchedulingManager token={token} onBack={() => setView("clients")} />;
     }
 
     if (view === "messages") {
@@ -9724,6 +10003,7 @@ function AdminDashboard({ token }: { token: string }) {
             {view === "gallery" && "Gallery"}
             {view === "tokens" && "Edit Tokens"}
             {view === "team-members" && "Our Vision"}
+            {view === "scheduling" && "Scheduling"}
           </p>
         </header>
 

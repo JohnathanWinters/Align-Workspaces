@@ -1104,3 +1104,56 @@ export const eventRsvps = pgTable("event_rsvps", {
 });
 
 export type EventRsvp = typeof eventRsvps.$inferSelect;
+
+// ── Admin Scheduling (cal.com-style) ──
+
+export const adminSchedules = pgTable("admin_schedules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminName: text("admin_name").notNull(),
+  adminEmail: text("admin_email").notNull(),
+  slug: text("slug").notNull().unique(),
+  weeklySchedule: text("weekly_schedule"), // JSON WeekSchedule
+  meetingDurationMinutes: integer("meeting_duration_minutes").default(30),
+  bufferMinutes: integer("buffer_minutes").default(15),
+  maxDaysInAdvance: integer("max_days_in_advance").default(30),
+  timezone: text("timezone").default("America/New_York"),
+  meetingTitle: text("meeting_title").default("Meeting with Align"),
+  meetingDescription: text("meeting_description"),
+  location: text("location"),
+  isActive: integer("is_active").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type AdminSchedule = typeof adminSchedules.$inferSelect;
+
+export const adminScheduleOverrides = pgTable("admin_schedule_overrides", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scheduleId: varchar("schedule_id").notNull(),
+  overrideDate: text("override_date").notNull(), // YYYY-MM-DD
+  isBlocked: integer("is_blocked").default(0),
+  customOpen: text("custom_open"),
+  customClose: text("custom_close"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AdminScheduleOverride = typeof adminScheduleOverrides.$inferSelect;
+
+export const adminMeetingBookings = pgTable("admin_meeting_bookings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scheduleId: varchar("schedule_id").notNull(),
+  guestName: text("guest_name").notNull(),
+  guestEmail: text("guest_email").notNull(),
+  guestPhone: text("guest_phone"),
+  meetingDate: text("meeting_date").notNull(), // YYYY-MM-DD
+  meetingStartTime: text("meeting_start_time").notNull(), // HH:MM
+  meetingDurationMinutes: integer("meeting_duration_minutes").notNull(),
+  notes: text("notes"),
+  status: text("status").default("confirmed"), // confirmed | cancelled | completed | no_show
+  googleCalendarEventId: text("google_calendar_event_id"),
+  pipelineContactId: varchar("pipeline_contact_id"),
+  cancelToken: text("cancel_token"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AdminMeetingBooking = typeof adminMeetingBookings.$inferSelect;

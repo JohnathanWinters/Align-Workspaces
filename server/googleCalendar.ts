@@ -201,6 +201,80 @@ export function generateAddToCalendarUrl(params: BookingEventParams): string {
   return `https://calendar.google.com/calendar/render?${urlParams.toString()}`;
 }
 
+// ── Admin Meeting Calendar ──────────────────────────────────────────
+
+export async function createMeetingCalendarEvent(params: {
+  adminName: string;
+  adminEmail?: string;
+  guestName: string;
+  guestEmail: string;
+  meetingDate: string;
+  meetingStartTime: string;
+  durationMinutes: number;
+  title: string;
+  location?: string;
+  notes?: string;
+  meetingId: string;
+}): Promise<string | null> {
+  try {
+    const calendar = getCalendarClient();
+    const [startH, startM] = params.meetingStartTime.split(":").map(Number);
+    const startDate = new Date(`${params.meetingDate}T${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00`);
+    const endDate = new Date(startDate.getTime() + params.durationMinutes * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const toLocalISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+
+    const attendees: { email: string }[] = [{ email: params.guestEmail }];
+    if (params.adminEmail && params.adminEmail !== params.guestEmail) attendees.push({ email: params.adminEmail });
+
+    const event = await calendar.events.insert({
+      calendarId: 'primary',
+      requestBody: {
+        summary: `${params.title} — ${params.guestName}`,
+        description: [
+          `Meeting booked via Align`,
+          `Guest: ${params.guestName} (${params.guestEmail})`,
+          `Duration: ${params.durationMinutes} minutes`,
+          params.notes ? `Notes: ${params.notes}` : null,
+        ].filter(Boolean).join("\n"),
+        location: params.location || undefined,
+        start: { dateTime: toLocalISO(startDate), timeZone: 'America/New_York' },
+        end: { dateTime: toLocalISO(endDate), timeZone: 'America/New_York' },
+        attendees,
+        reminders: { useDefault: false, overrides: [{ method: 'email', minutes: 60 }, { method: 'popup', minutes: 30 }] },
+      },
+    });
+    console.log(`Meeting calendar event created: ${event.data.id}`);
+    return event.data.id || null;
+  } catch (err) {
+    console.error("Failed to create meeting calendar event:", err);
+    return null;
+  }
+}
+
+export async function fetchAdminCalendarEvents(dateMin: string, dateMax: string): Promise<{ start: string; end: string }[]> {
+  try {
+    const calendar = getCalendarClient();
+    const res = await calendar.events.list({
+      calendarId: 'primary',
+      timeMin: new Date(`${dateMin}T00:00:00`).toISOString(),
+      timeMax: new Date(`${dateMax}T23:59:59`).toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 250,
+    });
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return (res.data.items || []).filter(e => e.start?.dateTime).map(e => {
+      const s = new Date(e.start!.dateTime!);
+      const en = new Date(e.end!.dateTime!);
+      return { start: `${pad(s.getHours())}:${pad(s.getMinutes())}`, end: `${pad(en.getHours())}:${pad(en.getMinutes())}` };
+    });
+  } catch (err) {
+    console.error("Failed to fetch admin calendar events:", err);
+    return [];
+  }
+}
+
 // ── Host Calendar OAuth (per-host) ──────────────────────────────────
 
 const SITE_URL = process.env.SITE_URL || 'https://alignworkspaces.com';

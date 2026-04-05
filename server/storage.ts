@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks, type CommunityEvent, type InsertCommunityEvent, communityEvents, type EventRsvp, eventRsvps } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks, type CommunityEvent, type InsertCommunityEvent, communityEvents, type EventRsvp, eventRsvps, type AdminSchedule, adminSchedules, type AdminScheduleOverride, adminScheduleOverrides, type AdminMeetingBooking, adminMeetingBookings } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -1552,6 +1552,75 @@ export class DatabaseStorage implements IStorage {
   async deleteEventRsvp(eventId: string, userId: string): Promise<void> {
     await db.delete(eventRsvps).where(and(eq(eventRsvps.eventId, eventId), eq(eventRsvps.userId, userId)));
     await db.update(communityEvents).set({ rsvpCount: sql`GREATEST(COALESCE(${communityEvents.rsvpCount}, 0) - 1, 0)` }).where(eq(communityEvents.id, eventId));
+  }
+
+  // ── Admin Scheduling ──
+
+  async getAdminSchedules(): Promise<AdminSchedule[]> {
+    return db.select().from(adminSchedules).orderBy(adminSchedules.adminName);
+  }
+
+  async getAdminScheduleById(id: string): Promise<AdminSchedule | undefined> {
+    const [result] = await db.select().from(adminSchedules).where(eq(adminSchedules.id, id));
+    return result;
+  }
+
+  async getAdminScheduleBySlug(slug: string): Promise<AdminSchedule | undefined> {
+    const [result] = await db.select().from(adminSchedules).where(eq(adminSchedules.slug, slug));
+    return result;
+  }
+
+  async createAdminSchedule(data: any): Promise<AdminSchedule> {
+    const [result] = await db.insert(adminSchedules).values(data).returning();
+    return result;
+  }
+
+  async updateAdminSchedule(id: string, data: any): Promise<AdminSchedule> {
+    const [result] = await db.update(adminSchedules).set({ ...data, updatedAt: new Date() }).where(eq(adminSchedules.id, id)).returning();
+    return result;
+  }
+
+  async deleteAdminSchedule(id: string): Promise<void> {
+    await db.delete(adminSchedules).where(eq(adminSchedules.id, id));
+  }
+
+  async getScheduleOverrides(scheduleId: string): Promise<AdminScheduleOverride[]> {
+    return db.select().from(adminScheduleOverrides).where(eq(adminScheduleOverrides.scheduleId, scheduleId));
+  }
+
+  async createScheduleOverride(data: any): Promise<AdminScheduleOverride> {
+    const [result] = await db.insert(adminScheduleOverrides).values(data).returning();
+    return result;
+  }
+
+  async deleteScheduleOverride(id: string): Promise<void> {
+    await db.delete(adminScheduleOverrides).where(eq(adminScheduleOverrides.id, id));
+  }
+
+  async getMeetingBookings(scheduleId?: string): Promise<AdminMeetingBooking[]> {
+    if (scheduleId) {
+      return db.select().from(adminMeetingBookings).where(eq(adminMeetingBookings.scheduleId, scheduleId)).orderBy(desc(adminMeetingBookings.createdAt));
+    }
+    return db.select().from(adminMeetingBookings).orderBy(desc(adminMeetingBookings.createdAt));
+  }
+
+  async getMeetingBookingsByDate(scheduleId: string, date: string): Promise<AdminMeetingBooking[]> {
+    return db.select().from(adminMeetingBookings).where(and(eq(adminMeetingBookings.scheduleId, scheduleId), eq(adminMeetingBookings.meetingDate, date), eq(adminMeetingBookings.status, "confirmed")));
+  }
+
+  async getMeetingBookingByCancelToken(token: string): Promise<AdminMeetingBooking | undefined> {
+    const [result] = await db.select().from(adminMeetingBookings).where(eq(adminMeetingBookings.cancelToken, token));
+    return result;
+  }
+
+  async createMeetingBooking(data: any): Promise<AdminMeetingBooking> {
+    const [result] = await db.insert(adminMeetingBookings).values(data).returning();
+    return result;
+  }
+
+  async updateMeetingBooking(id: string, data: any): Promise<AdminMeetingBooking> {
+    const [result] = await db.update(adminMeetingBookings).set(data).where(eq(adminMeetingBookings.id, id)).returning();
+    return result;
   }
 }
 

@@ -9,7 +9,7 @@ import { sendBookingNotification, sendHelpRequest, sendCollaborateMessage, sendE
 import { sendPushToUser, sendPushToRole, cancelEmailFallback } from "./pushNotifications";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { calculatePricing, calculateSpaceBookingFees, resolveFeeTier, type FeeTier, FEE_TIERS, TAX_RATES, DEFAULT_TAX_JURISDICTION } from "@shared/pricing";
-import { createBookingCalendarEvent, createShootCalendarEvent, deleteBookingCalendarEvent, generateAddToCalendarUrl, generateHostCalendarAuthUrl, exchangeHostCalendarCode, createHostBookingEvent } from "./googleCalendar";
+import { createBookingCalendarEvent, createShootCalendarEvent, deleteBookingCalendarEvent, generateAddToCalendarUrl, generateHostCalendarAuthUrl, exchangeHostCalendarCode, createHostBookingEvent, createMeetingCalendarEvent, fetchAdminCalendarEvents } from "./googleCalendar";
 import { generateIcsEvent, generateIcsExportFeed } from "./icalSync";
 import { calculateRefundAmount, processCompletedBookings, processPendingPayouts, processBookingNotifications, holdPayout, releasePayout, reversePayout } from "./payouts";
 import { isAuthenticated } from "./auth";
@@ -7633,6 +7633,206 @@ ${featuredSection}
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
+  });
+
+  // ── Admin Scheduling Routes ──
+
+  app.get("/api/admin/schedules", isAdmin, async (_req, res) => {
+    try { res.json(await storage.getAdminSchedules()); }
+    catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.post("/api/admin/schedules", isAdmin, async (req, res) => {
+    try {
+      const { adminName, adminEmail, slug, weeklySchedule, meetingDurationMinutes, bufferMinutes, maxDaysInAdvance, meetingTitle, meetingDescription, location } = req.body;
+      const schedule = await storage.createAdminSchedule({
+        adminName, adminEmail, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+        weeklySchedule: weeklySchedule || null, meetingDurationMinutes: meetingDurationMinutes || 30,
+        bufferMinutes: bufferMinutes || 15, maxDaysInAdvance: maxDaysInAdvance || 30,
+        meetingTitle: meetingTitle || "Meeting with Align", meetingDescription: meetingDescription || null,
+        location: location || null,
+      });
+      res.json(schedule);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.patch("/api/admin/schedules/:id", isAdmin, async (req, res) => {
+    try {
+      const schedule = await storage.updateAdminSchedule(req.params.id, req.body);
+      res.json(schedule);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.delete("/api/admin/schedules/:id", isAdmin, async (req, res) => {
+    try { await storage.deleteAdminSchedule(req.params.id); res.json({ success: true }); }
+    catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.get("/api/admin/schedules/:id/overrides", isAdmin, async (req, res) => {
+    try { res.json(await storage.getScheduleOverrides(req.params.id)); }
+    catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.post("/api/admin/schedules/:id/overrides", isAdmin, async (req, res) => {
+    try {
+      const override = await storage.createScheduleOverride({ scheduleId: req.params.id, ...req.body });
+      res.json(override);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.delete("/api/admin/schedule-overrides/:id", isAdmin, async (req, res) => {
+    try { await storage.deleteScheduleOverride(req.params.id); res.json({ success: true }); }
+    catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.get("/api/admin/meeting-bookings", isAdmin, async (req, res) => {
+    try { res.json(await storage.getMeetingBookings(req.query.scheduleId as string)); }
+    catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.patch("/api/admin/meeting-bookings/:id", isAdmin, async (req, res) => {
+    try {
+      const booking = await storage.updateMeetingBooking(req.params.id, req.body);
+      if (req.body.status === "cancelled" && booking.googleCalendarEventId) {
+        await deleteBookingCalendarEvent(booking.googleCalendarEventId);
+      }
+      res.json(booking);
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  // ── Public Booking Routes ──
+
+  app.get("/api/book/:slug", async (req, res) => {
+    try {
+      const schedule = await storage.getAdminScheduleBySlug(req.params.slug);
+      if (!schedule || !schedule.isActive) return res.status(404).json({ message: "Schedule not found" });
+      res.json({
+        adminName: schedule.adminName, meetingTitle: schedule.meetingTitle, meetingDescription: schedule.meetingDescription,
+        meetingDurationMinutes: schedule.meetingDurationMinutes, location: schedule.location,
+        maxDaysInAdvance: schedule.maxDaysInAdvance, timezone: schedule.timezone,
+        weeklySchedule: schedule.weeklySchedule ? JSON.parse(schedule.weeklySchedule) : null,
+      });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.get("/api/book/:slug/slots", async (req, res) => {
+    try {
+      const schedule = await storage.getAdminScheduleBySlug(req.params.slug);
+      if (!schedule || !schedule.isActive) return res.status(404).json({ message: "Schedule not found" });
+
+      const date = req.query.date as string;
+      if (!date) return res.status(400).json({ message: "date query param required" });
+
+      const dayOfWeek = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(date + "T12:00:00").getDay()];
+      const weekly = schedule.weeklySchedule ? JSON.parse(schedule.weeklySchedule) : {};
+      const daySchedule = weekly[dayOfWeek];
+
+      // Check overrides
+      const overrides = await storage.getScheduleOverrides(schedule.id);
+      const override = overrides.find(o => o.overrideDate === date);
+      if (override?.isBlocked) return res.json({ slots: [] });
+
+      const open = override?.customOpen || daySchedule?.open;
+      const close = override?.customClose || daySchedule?.close;
+      if (!open || !close) return res.json({ slots: [] });
+
+      const duration = schedule.meetingDurationMinutes || 30;
+      const buffer = schedule.bufferMinutes || 15;
+      const [openH, openM] = open.split(":").map(Number);
+      const [closeH, closeM] = close.split(":").map(Number);
+      const openMin = openH * 60 + openM;
+      const closeMin = closeH * 60 + closeM;
+
+      // Get existing bookings for this date
+      const existingBookings = await storage.getMeetingBookingsByDate(schedule.id, date);
+      const bookedRanges = existingBookings.map(b => {
+        const [h, m] = b.meetingStartTime.split(":").map(Number);
+        const start = h * 60 + m;
+        return { start, end: start + b.meetingDurationMinutes + buffer };
+      });
+
+      // Fetch Google Calendar events to block those slots too
+      let gcalBlocks: { start: string; end: string }[] = [];
+      try { gcalBlocks = await fetchAdminCalendarEvents(date, date); } catch {}
+      const gcalRanges = gcalBlocks.map(b => {
+        const [sh, sm] = b.start.split(":").map(Number);
+        const [eh, em] = b.end.split(":").map(Number);
+        return { start: sh * 60 + sm, end: eh * 60 + em };
+      });
+
+      const allBlocked = [...bookedRanges, ...gcalRanges];
+
+      // Generate available slots
+      const slots: string[] = [];
+      for (let t = openMin; t + duration <= closeMin; t += duration + buffer) {
+        const isBlocked = allBlocked.some(r => t < r.end && t + duration > r.start);
+        if (!isBlocked) {
+          const h = Math.floor(t / 60);
+          const m = t % 60;
+          slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+        }
+      }
+
+      res.json({ slots });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.post("/api/book/:slug", async (req, res) => {
+    try {
+      const schedule = await storage.getAdminScheduleBySlug(req.params.slug);
+      if (!schedule || !schedule.isActive) return res.status(404).json({ message: "Schedule not found" });
+
+      const { guestName, guestEmail, guestPhone, date, time, notes } = req.body;
+      if (!guestName || !guestEmail || !date || !time) return res.status(400).json({ message: "Missing required fields" });
+
+      // Verify slot is still available
+      const existing = await storage.getMeetingBookingsByDate(schedule.id, date);
+      const duration = schedule.meetingDurationMinutes || 30;
+      const buffer = schedule.bufferMinutes || 15;
+      const [h, m] = time.split(":").map(Number);
+      const requestedStart = h * 60 + m;
+      const conflict = existing.some(b => {
+        const [bh, bm] = b.meetingStartTime.split(":").map(Number);
+        const bStart = bh * 60 + bm;
+        return requestedStart < bStart + b.meetingDurationMinutes + buffer && requestedStart + duration > bStart;
+      });
+      if (conflict) return res.status(409).json({ message: "This time slot is no longer available" });
+
+      const cancelToken = crypto.randomUUID();
+
+      // Create Google Calendar event
+      let googleCalendarEventId: string | null = null;
+      try {
+        googleCalendarEventId = await createMeetingCalendarEvent({
+          adminName: schedule.adminName, adminEmail: schedule.adminEmail,
+          guestName, guestEmail, meetingDate: date, meetingStartTime: time,
+          durationMinutes: duration, title: schedule.meetingTitle || "Meeting with Align",
+          location: schedule.location || undefined, notes, meetingId: cancelToken,
+        });
+      } catch (err) { console.error("Failed to create meeting calendar event:", err); }
+
+      const booking = await storage.createMeetingBooking({
+        scheduleId: schedule.id, guestName, guestEmail, guestPhone: guestPhone || null,
+        meetingDate: date, meetingStartTime: time, meetingDurationMinutes: duration,
+        notes: notes || null, googleCalendarEventId, cancelToken,
+      });
+
+      res.json({ booking, cancelToken });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  app.post("/api/book/cancel/:cancelToken", async (req, res) => {
+    try {
+      const booking = await storage.getMeetingBookingByCancelToken(req.params.cancelToken);
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      if (booking.status === "cancelled") return res.json({ message: "Already cancelled" });
+
+      if (booking.googleCalendarEventId) {
+        await deleteBookingCalendarEvent(booking.googleCalendarEventId);
+      }
+      await storage.updateMeetingBooking(booking.id, { status: "cancelled" });
+      res.json({ success: true });
+    } catch (err: any) { res.status(500).json({ message: err.message }); }
   });
 
   return httpServer;
