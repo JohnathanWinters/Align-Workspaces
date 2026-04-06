@@ -5532,6 +5532,9 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
   const [confirmDeleteActivity, setConfirmDeleteActivity] = useState<string | null>(null);
   const [confirmEditActivity, setConfirmEditActivity] = useState<boolean>(false);
   const [showHistoryFor, setShowHistoryFor] = useState<string | null>(null);
+  const [editingFacts, setEditingFacts] = useState(false);
+  const [factsText, setFactsText] = useState("");
+  const [savingFacts, setSavingFacts] = useState(false);
   const [form, setForm] = useState({
     name: "", email: "", phone: "", instagram: "", source: "website",
     category: "portraits", stage: "new", notes: "", assignedTo: "",
@@ -5943,7 +5946,48 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 </div>
               </div>
 
-              {selectedContact.notes && <p className="text-sm text-gray-600 bg-stone-50 rounded-lg p-3"><LinkifiedText text={selectedContact.notes} /></p>}
+              {/* Important Facts */}
+              <div className="bg-amber-50/60 border border-amber-200/60 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 uppercase tracking-wide"><Star className="w-3.5 h-3.5" /> Important Facts</span>
+                  {!editingFacts && (
+                    <button onClick={() => { setEditingFacts(true); setFactsText(selectedContact.notes || ""); }}
+                      className="text-amber-600 hover:text-amber-800 transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
+                  )}
+                </div>
+                {editingFacts ? (
+                  <div className="space-y-2">
+                    <textarea value={factsText} onChange={e => setFactsText(e.target.value)}
+                      placeholder="Key facts about this client..."
+                      className="w-full text-sm bg-white border border-amber-200 rounded-lg p-2.5 min-h-[60px] focus:outline-none focus:ring-2 focus:ring-amber-300 resize-y" autoFocus />
+                    <div className="flex justify-end gap-1.5">
+                      <button onClick={() => setEditingFacts(false)}
+                        className="px-2.5 py-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</button>
+                      <button disabled={savingFacts} onClick={async () => {
+                        setSavingFacts(true);
+                        try {
+                          const res = await adminFetch(`/api/admin/pipeline/${selectedContact.id}`, {
+                            method: "PATCH", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ notes: factsText.trim() || null }),
+                          });
+                          if (res.ok) {
+                            setSelectedContact({ ...selectedContact, notes: factsText.trim() || null });
+                            setEditingFacts(false);
+                            await loadContacts();
+                          }
+                        } catch {} finally { setSavingFacts(false); }
+                      }}
+                        className="px-2.5 py-1 text-xs font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:opacity-50">
+                        {savingFacts ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  selectedContact.notes
+                    ? <p className="text-sm text-gray-700 whitespace-pre-wrap"><LinkifiedText text={selectedContact.notes} /></p>
+                    : <p className="text-sm text-gray-400 italic">No facts yet — click the pencil to add some.</p>
+                )}
+              </div>
 
               {totalAttempts > 0 && (
                 <div className="flex flex-wrap gap-1.5" data-testid="contact-attempt-stats">
@@ -6651,8 +6695,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Notes</Label>
-                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Do they know anything about Align?" className="h-20 text-sm" data-testid="input-contact-notes" />
+                  <Label className="text-xs text-gray-500">Important Facts</Label>
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Key facts about this client..." className="h-20 text-sm" data-testid="input-contact-notes" />
                 </div>
               </div>
               <div className="flex justify-end gap-2 px-6 py-4 border-t border-stone-100 flex-shrink-0">
@@ -6745,8 +6789,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Notes</Label>
-                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="e.g. Do they know anything about Align?" className="h-16 text-sm" />
+                  <Label className="text-xs text-gray-500">Important Facts</Label>
+                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Key facts about this client..." className="h-16 text-sm" />
                 </div>
               </div>
               <div className="flex justify-end gap-2 px-5 py-3 border-t border-stone-100 flex-shrink-0">
