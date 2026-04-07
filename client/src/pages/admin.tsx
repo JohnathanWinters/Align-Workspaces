@@ -78,6 +78,7 @@ import {
   History,
   Check,
   Copy,
+  ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -8619,6 +8620,11 @@ function AdminDashboard({ token }: { token: string }) {
   const [debugPreviewRole, setDebugPreviewRole] = useState<"new" | "photo" | "host" | "both">("new");
   const [debugPreviewOpen, setDebugPreviewOpen] = useState(false);
   const [initialMessageClientId, setInitialMessageClientId] = useState<string | null>(null);
+  const [insuranceUser, setInsuranceUser] = useState<UserType | null>(null);
+  const [insuranceForm, setInsuranceForm] = useState({ carrierName: "", policyNumber: "", coverageType: "general_liability", coverageAmount: "1000000", policyExpirationDate: "" });
+  const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
+  const [savingInsurance, setSavingInsurance] = useState(false);
+  const insuranceFileRef = useRef<HTMLInputElement>(null);
 
   const sidebarNav = useMemo(() => [
     {
@@ -9527,6 +9533,20 @@ function AdminDashboard({ token }: { token: string }) {
                                       variant="outline"
                                       size="sm"
                                       onClick={() => {
+                                        setInsuranceUser(user);
+                                        setInsuranceForm({ carrierName: "", policyNumber: "", coverageType: "general_liability", coverageAmount: "1000000", policyExpirationDate: "" });
+                                        setInsuranceFile(null);
+                                      }}
+                                      data-testid={`button-insurance-user-${user.id}`}
+                                      className="h-7 text-xs px-2 text-gray-600 border-gray-200"
+                                    >
+                                      <ShieldCheck className="w-3 h-3 mr-1" />
+                                      Insurance
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
                                         setDeletingUser(user);
                                         setDeletePassword("");
                                         setDeleteConfirmText("");
@@ -10196,6 +10216,109 @@ function AdminDashboard({ token }: { token: string }) {
               >
                 {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 className="w-4 h-4 mr-1.5" />}
                 Delete Account
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {insuranceUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg text-gray-900">Add Insurance</h3>
+                <p className="text-sm text-gray-500">For {insuranceUser.firstName} {insuranceUser.lastName}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs text-gray-500">Insurance Carrier *</Label>
+                <Input value={insuranceForm.carrierName} onChange={e => setInsuranceForm(f => ({ ...f, carrierName: e.target.value }))} placeholder="e.g. State Farm, Allstate" className="mt-1 h-9 text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-gray-500">Policy Number *</Label>
+                  <Input value={insuranceForm.policyNumber} onChange={e => setInsuranceForm(f => ({ ...f, policyNumber: e.target.value }))} placeholder="Policy #" className="mt-1 h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Coverage Type *</Label>
+                  <Select value={insuranceForm.coverageType} onValueChange={v => setInsuranceForm(f => ({ ...f, coverageType: v }))}>
+                    <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general_liability">General Liability</SelectItem>
+                      <SelectItem value="professional_liability">Professional Liability</SelectItem>
+                      <SelectItem value="property">Property</SelectItem>
+                      <SelectItem value="bop">Business Owner's Policy</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-gray-500">Coverage Amount ($) *</Label>
+                  <Input type="number" value={insuranceForm.coverageAmount} onChange={e => setInsuranceForm(f => ({ ...f, coverageAmount: e.target.value }))} placeholder="1000000" min="1000000" className="mt-1 h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Expiration Date *</Label>
+                  <Input type="date" value={insuranceForm.policyExpirationDate} onChange={e => setInsuranceForm(f => ({ ...f, policyExpirationDate: e.target.value }))} className="mt-1 h-9 text-sm" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Declarations Page (PDF or image, max 10MB) *</Label>
+                <input ref={insuranceFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" className="hidden" onChange={e => setInsuranceFile(e.target.files?.[0] || null)} />
+                <button
+                  type="button"
+                  onClick={() => insuranceFileRef.current?.click()}
+                  className="mt-1 w-full flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-stone-300 hover:border-emerald-400 cursor-pointer transition-colors bg-stone-50/50 text-sm"
+                >
+                  <Upload className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-500">{insuranceFile ? insuranceFile.name : "Choose file..."}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <Button variant="outline" onClick={() => setInsuranceUser(null)} className="flex-1">Cancel</Button>
+              <Button
+                disabled={savingInsurance || !insuranceForm.carrierName || !insuranceForm.policyNumber || !insuranceForm.policyExpirationDate || !insuranceFile}
+                className="flex-1 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white disabled:opacity-50"
+                onClick={async () => {
+                  setSavingInsurance(true);
+                  try {
+                    const fd = new FormData();
+                    fd.append("userId", insuranceUser.id);
+                    fd.append("carrierName", insuranceForm.carrierName);
+                    fd.append("policyNumber", insuranceForm.policyNumber);
+                    fd.append("coverageType", insuranceForm.coverageType);
+                    fd.append("coverageAmount", insuranceForm.coverageAmount);
+                    fd.append("policyExpirationDate", insuranceForm.policyExpirationDate);
+                    fd.append("document", insuranceFile!);
+                    const res = await adminFetch("/api/admin/insurance", token, { method: "POST", body: fd, isFormData: true });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error || "Upload failed");
+                    }
+                    toast({ title: "Insurance saved", description: `Insurance record added for ${insuranceUser.firstName} ${insuranceUser.lastName}.` });
+                    setInsuranceUser(null);
+                  } catch (e: any) {
+                    toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+                  } finally {
+                    setSavingInsurance(false);
+                  }
+                }}
+              >
+                {savingInsurance ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <ShieldCheck className="w-4 h-4 mr-1.5" />}
+                Save Insurance
               </Button>
             </div>
           </motion.div>

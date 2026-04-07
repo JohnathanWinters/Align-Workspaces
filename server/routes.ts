@@ -7304,6 +7304,39 @@ ${featuredSection}
     }
   });
 
+  app.post("/api/admin/insurance", isAdminOrEmployee, documentUpload.single("document"), async (req: any, res) => {
+    try {
+      const { userId, carrierName, policyNumber, coverageType, coverageAmount, policyExpirationDate } = req.body;
+      if (!userId || !carrierName || !policyNumber || !coverageType || !coverageAmount || !policyExpirationDate) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+      const amount = parseInt(coverageAmount, 10);
+      if (isNaN(amount) || amount < 1000000) {
+        return res.status(400).json({ error: "Minimum coverage amount is $1,000,000" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "Insurance document upload is required" });
+      }
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const contentType = ext === ".pdf" ? "application/pdf" : `image/${ext.slice(1)}`;
+      const documentUrl = await uploadFile(req.file.path, contentType);
+
+      await db.update(hostInsuranceRecords)
+        .set({ status: "replaced", updatedAt: new Date() })
+        .where(and(eq(hostInsuranceRecords.userId, userId), eq(hostInsuranceRecords.status, "active")));
+
+      const [record] = await db.insert(hostInsuranceRecords).values({
+        userId, carrierName, policyNumber, coverageType,
+        coverageAmount: amount, policyExpirationDate, documentUrl,
+        documentFilename: req.file.originalname, status: "active", verifiedAt: new Date(),
+      }).returning();
+      res.json(record);
+    } catch (e) {
+      console.error("Admin insurance upload error:", e);
+      res.status(500).json({ error: "Failed to save insurance record" });
+    }
+  });
+
   // ── Professional Use Certifications (2B) ────────────────────────
 
   app.get("/api/spaces/:id/certifications", async (req, res) => {
