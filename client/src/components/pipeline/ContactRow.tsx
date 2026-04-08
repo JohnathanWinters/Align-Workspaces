@@ -45,13 +45,6 @@ export default function ContactRow({
         {subtitle && <p className="text-[11px] text-gray-400 truncate">{subtitle}</p>}
       </div>
 
-      {/* Stage badge - fixed width column */}
-      <div className="w-20 shrink-0 mr-2">
-        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block ${stageOf(c.stage)?.color || "bg-gray-100"}`}>
-          {stageOf(c.stage)?.label}
-        </span>
-      </div>
-
       {/* Assigned - fixed width column */}
       <div className="w-6 shrink-0 mr-2 text-center">
         {(c as any).assignedTo ? (
@@ -63,6 +56,13 @@ export default function ContactRow({
         ) : (
           <span className="text-[10px] text-gray-300">—</span>
         )}
+      </div>
+
+      {/* Stage badge - fixed width column */}
+      <div className="w-20 shrink-0 mr-2">
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block ${stageOf(c.stage)?.color || "bg-gray-100"}`}>
+          {stageOf(c.stage)?.label}
+        </span>
       </div>
 
       {/* Health dot - fixed width */}
