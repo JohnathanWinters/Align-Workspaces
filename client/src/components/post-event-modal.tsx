@@ -353,7 +353,7 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <Calendar className="w-7 h-7 text-[#c4956a]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-2">Sign In to Post an Event</h3>
+              <h3 className="font-serif text-lg font-semibold mb-2">Sign In</h3>
               <p className="text-sm text-stone-500 max-w-sm mx-auto">
                 Enter your email to get started. Your event will be reviewed by our team.
               </p>
@@ -367,6 +367,7 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
                 <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
                 <p className="text-sm font-medium">Check your email!</p>
                 <p className="text-xs text-stone-400 mt-1">Click the link we sent to sign in.</p>
+                <p className="text-xs text-stone-400 mt-1">Don't see it? Check your spam or junk folder.</p>
               </div>
             ) : authStep === "name" ? (
               <div className="space-y-3">

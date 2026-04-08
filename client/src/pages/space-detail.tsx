@@ -352,7 +352,7 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
           {magicStep === "email" && (
             <div className="space-y-4">
               <div className="text-center mb-2">
-                <h3 className="font-serif text-lg font-semibold">{intent === "contact" ? "Sign in to message" : "Sign in to book"}</h3>
+                <h3 className="font-serif text-lg font-semibold">Sign In</h3>
                 <p className="text-sm text-stone-500 mt-1">Enter your email and we'll send you a sign-in link</p>
               </div>
               {magicError && <p className="text-xs text-red-500 text-center">{magicError}</p>}
@@ -388,6 +388,7 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
                 We sent a sign-in link to <span className="font-medium text-stone-700">{magicEmail}</span>. Tap the link to continue.
               </p>
               <p className="text-xs text-stone-400">The link expires in 15 minutes.</p>
+              <p className="text-xs text-stone-400">Don't see it? Check your spam or junk folder.</p>
             </div>
           )}
         </motion.div>

@@ -80,7 +80,7 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
                 <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                   <Mail className="w-7 h-7 text-[#c4956a]" />
                 </div>
-                <h3 className="font-serif text-lg font-semibold mb-1">Sign In to Book</h3>
+                <h3 className="font-serif text-lg font-semibold mb-1">Sign In</h3>
                 <p className="text-sm text-foreground/50">
                   Enter your email and we'll send you a sign-in link.
                 </p>
@@ -173,6 +173,9 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
               </p>
               <p className="text-xs text-foreground/30">
                 The link expires in 15 minutes.
+              </p>
+              <p className="text-xs text-foreground/30">
+                Don't see it? Check your spam or junk folder.
               </p>
             </div>
           )}
@@ -418,7 +421,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <Mail className="w-7 h-7 text-[#c4956a]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-2">Sign In to List Your Space</h3>
+              <h3 className="font-serif text-lg font-semibold mb-2">Sign In</h3>
               <p className="text-sm text-foreground/50 max-w-sm mx-auto">
                 Enter your email to get started. Your listing will be reviewed by our team.
               </p>

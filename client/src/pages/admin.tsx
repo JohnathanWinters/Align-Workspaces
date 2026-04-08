@@ -220,6 +220,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string) => void }) {
             <br />Click the link in the email to access the admin panel.
           </p>
           <p className="text-white/30 text-xs">The link expires in 15 minutes.</p>
+          <p className="text-white/30 text-xs mt-1">Don't see it? Check your spam or junk folder.</p>
           <button
             onClick={() => { setSent(false); setEmail(""); }}
             className="mt-6 text-white/40 text-sm hover:text-white/60 transition-colors"

@@ -185,7 +185,7 @@ export default function EventDetailPage() {
             ) : (
               <Link href="/portal">
                 <Button className="bg-[#c4956a] hover:bg-[#b8845c] text-white">
-                  <Users className="w-4 h-4 mr-2" /> Sign in to RSVP
+                  <Users className="w-4 h-4 mr-2" /> Sign In
                 </Button>
               </Link>
             )}
