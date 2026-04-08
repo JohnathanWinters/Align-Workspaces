@@ -39,8 +39,8 @@ export default function ContactRow({
         <span className="text-xs font-medium">{getInitials(c.name)}</span>
       </div>
 
-      {/* Name + subtitle - flexible but capped */}
-      <div className="flex-1 min-w-0 mr-3 max-w-[200px]">
+      {/* Name + subtitle */}
+      <div className="flex-1 min-w-0 mr-3">
         <span className="text-sm font-medium text-gray-900 truncate block">{c.name}</span>
         {subtitle && <p className="text-[11px] text-gray-400 truncate">{subtitle}</p>}
       </div>
@@ -65,8 +65,8 @@ export default function ContactRow({
         </span>
       </div>
 
-      {/* Status / date + health dot - fixed width column, right-aligned */}
-      <div className="w-32 shrink-0 flex items-center justify-end gap-2">
+      {/* Status / date + health dot - pushed to far right */}
+      <div className="shrink-0 flex items-center justify-end gap-2 ml-auto">
         {variant === "attention" && isOverdue && (
           <span className={`text-[11px] font-medium ${days >= 7 ? "text-red-600" : "text-red-500"}`}>{overdueLabel(days)}</span>
         )}
