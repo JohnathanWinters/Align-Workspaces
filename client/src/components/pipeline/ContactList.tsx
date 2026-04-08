@@ -1,5 +1,4 @@
 import { Clock, CalendarDays, Users, Loader2 } from "lucide-react";
-import type { PipelineContact } from "./types";
 import type { UsePipelineReturn } from "./use-pipeline";
 import ContactRow from "./ContactRow";
 import PipelineDailyFocus from "./PipelineDailyFocus";
@@ -12,8 +11,7 @@ export default function ContactList({ pipeline }: ContactListProps) {
   const {
     loading, attentionContacts, upcomingContacts, restContacts,
     selectedContactId, focusedIndex, flatContactList,
-    quickLogContactId, setQuickLogContactId,
-    selectContact, quickLogActivity, quickLogInline,
+    selectContact,
   } = pipeline;
 
   if (loading) {
@@ -47,11 +45,7 @@ export default function ContactList({ pipeline }: ContactListProps) {
                 variant="attention"
                 isSelected={selectedContactId === c.id}
                 isFocused={getFocusedId() === c.id}
-                quickLogOpen={quickLogContactId === c.id}
                 onSelect={selectContact}
-                onQuickLog={quickLogActivity}
-                onQuickLogToggle={setQuickLogContactId}
-                onQuickLogInline={quickLogInline}
               />
             ))}
           </div>
@@ -73,11 +67,7 @@ export default function ContactList({ pipeline }: ContactListProps) {
                 variant="upcoming"
                 isSelected={selectedContactId === c.id}
                 isFocused={getFocusedId() === c.id}
-                quickLogOpen={quickLogContactId === c.id}
                 onSelect={selectContact}
-                onQuickLog={quickLogActivity}
-                onQuickLogToggle={setQuickLogContactId}
-                onQuickLogInline={quickLogInline}
               />
             ))}
           </div>
@@ -99,11 +89,7 @@ export default function ContactList({ pipeline }: ContactListProps) {
                 variant="default"
                 isSelected={selectedContactId === c.id}
                 isFocused={getFocusedId() === c.id}
-                quickLogOpen={quickLogContactId === c.id}
                 onSelect={selectContact}
-                onQuickLog={quickLogActivity}
-                onQuickLogToggle={setQuickLogContactId}
-                onQuickLogInline={quickLogInline}
               />
             ))}
           </div>

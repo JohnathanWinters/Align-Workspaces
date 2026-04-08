@@ -15,7 +15,6 @@ import { stageOf, getInitials, computeHealthScore, healthColor, healthTextColor,
 import ContactDetailStageBar from "./ContactDetailStageBar";
 import LinkifiedText from "./LinkifiedText";
 import FunnelVisualization from "./FunnelVisualization";
-import TeamLeaderboard from "./TeamLeaderboard";
 
 interface ContactDetailProps {
   pipeline: UsePipelineReturn;
@@ -48,7 +47,6 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
         <p className="text-sm text-gray-400 mb-6">Click a contact to see details, log activities, and manage follow-ups.</p>
         <div className="w-full max-w-sm space-y-4">
           <FunnelVisualization stageCounts={stageCounts} />
-          <TeamLeaderboard pipeline={pipeline} />
         </div>
       </div>
     );

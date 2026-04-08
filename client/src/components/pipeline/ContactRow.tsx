@@ -1,25 +1,16 @@
-import { useState } from "react";
-import { Phone, Send, MessageCircle, CalendarDays, Zap } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import type { PipelineContact } from "./types";
 import { stageOf, getInitials, daysAgo, overdueLabel, noActionLabel, computeHealthScore, healthColor, getRelativeFollowUpLabel } from "./utils";
-import ContactRowQuickLog from "./ContactRowQuickLog";
 
 interface ContactRowProps {
   contact: PipelineContact;
   variant: "attention" | "upcoming" | "default";
   isSelected: boolean;
   isFocused: boolean;
-  quickLogOpen: boolean;
   onSelect: (id: string) => void;
-  onQuickLog: (contactId: string, type: string, e?: React.MouseEvent) => void;
-  onQuickLogToggle: (contactId: string | null) => void;
-  onQuickLogInline: (contactId: string, type: string, note: string, followUpDays?: number) => void;
 }
 
 export default function ContactRow({
-  contact, variant, isSelected, isFocused, quickLogOpen,
-  onSelect, onQuickLog, onQuickLogToggle, onQuickLogInline,
+  contact, variant, isSelected, isFocused, onSelect,
 }: ContactRowProps) {
   const c = contact;
   const subtitle = c.email || c.phone || null;
@@ -88,37 +79,7 @@ export default function ContactRow({
           )}
         </div>
 
-        {/* Hover actions */}
-        <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={e => { e.stopPropagation(); onQuickLog(c.id, "call", e); }}
-            className="w-7 h-7 rounded-full hover:bg-blue-50 flex items-center justify-center transition-colors" title="Log call">
-            <Phone className="w-3.5 h-3.5 text-gray-400 hover:text-blue-600" />
-          </button>
-          <button onClick={e => { e.stopPropagation(); onQuickLog(c.id, "text", e); }}
-            className="w-7 h-7 rounded-full hover:bg-emerald-50 flex items-center justify-center transition-colors" title="Log text">
-            <MessageCircle className="w-3.5 h-3.5 text-gray-400 hover:text-emerald-600" />
-          </button>
-          <button onClick={e => { e.stopPropagation(); onQuickLog(c.id, "email", e); }}
-            className="w-7 h-7 rounded-full hover:bg-violet-50 flex items-center justify-center transition-colors" title="Log email">
-            <Send className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600" />
-          </button>
-          <button onClick={e => { e.stopPropagation(); onQuickLogToggle(quickLogOpen ? null : c.id); }}
-            className="w-7 h-7 rounded-full hover:bg-amber-50 flex items-center justify-center transition-colors" title="Quick log with note">
-            <Zap className="w-3.5 h-3.5 text-gray-400 hover:text-amber-600" />
-          </button>
-        </div>
       </div>
-
-      {/* Inline quick-log bar */}
-      <AnimatePresence>
-        {quickLogOpen && (
-          <ContactRowQuickLog
-            contactId={c.id}
-            onLog={onQuickLogInline}
-            onClose={() => onQuickLogToggle(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
