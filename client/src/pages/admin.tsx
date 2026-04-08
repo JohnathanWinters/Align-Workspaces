@@ -10532,10 +10532,32 @@ function AdminMessagesManager({ token, onBack, initialClientId, onClearInitialCl
                       {selectedConvo.clientPhoto && <AvatarImage src={selectedConvo.clientPhoto} />}
                       <AvatarFallback className="bg-gray-200 text-gray-500 text-xs"><User className="w-3.5 h-3.5" /></AvatarFallback>
                     </Avatar>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{selectedConvo.clientName}</p>
                       <p className="text-xs text-gray-500">{selectedConvo.clientEmail}</p>
                     </div>
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`Delete conversation with ${selectedConvo.clientName}? All messages will be permanently removed.`)) return;
+                        try {
+                          const res = await adminFetch(`/api/admin/conversations/${selectedConvo.id}`, token, { method: "DELETE" });
+                          if (res.ok) {
+                            setConversations(prev => prev.filter(c => c.id !== selectedConvo.id));
+                            setSelectedConvo(null);
+                            setChatMessages([]);
+                            toast({ title: "Conversation deleted" });
+                          } else {
+                            toast({ title: "Failed to delete", variant: "destructive" });
+                          }
+                        } catch {
+                          toast({ title: "Failed to delete", variant: "destructive" });
+                        }
+                      }}
+                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                      title="Delete conversation"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {/* Messages */}

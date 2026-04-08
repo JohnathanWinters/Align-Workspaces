@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles, pipelineActivities } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles, pipelineActivities, adminConversations, adminMessages } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1303,6 +1303,19 @@ export async function registerRoutes(
       res.json({ messages, otherPartyLastRead: otherPartyLastRead || null });
     } catch {
       res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  // Admin: delete conversation and its messages
+  app.delete("/api/admin/conversations/:id", isAdmin, async (req, res) => {
+    try {
+      const convoId = req.params.id as string;
+      await db.delete(adminMessages).where(eq(adminMessages.conversationId, convoId));
+      await db.delete(adminConversations).where(eq(adminConversations.id, convoId));
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+      res.status(500).json({ message: "Failed to delete conversation" });
     }
   });
 
