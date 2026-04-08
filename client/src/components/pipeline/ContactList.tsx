@@ -14,8 +14,7 @@ function ColumnHeader() {
       <div className="flex-1 min-w-0 mr-3">Name</div>
       <div className="w-6 shrink-0 mr-2 text-center">Asn</div>
       <div className="w-20 shrink-0 mr-2">Stage</div>
-      <div className="w-4 shrink-0 mr-2" />
-      <div className="w-28 shrink-0 text-right">Status</div>
+      <div className="w-32 shrink-0 text-right">Status</div>
     </div>
   );
 }

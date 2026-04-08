@@ -65,13 +65,8 @@ export default function ContactRow({
         </span>
       </div>
 
-      {/* Health dot - fixed width */}
-      <div className="w-4 shrink-0 mr-2 flex justify-center">
-        <div className={`w-2 h-2 rounded-full ${healthColor(healthScore)} opacity-70`} title={`Health: ${healthScore}`} />
-      </div>
-
-      {/* Status / date - fixed width column, right-aligned */}
-      <div className="w-28 shrink-0 text-right">
+      {/* Status / date + health dot - fixed width column, right-aligned */}
+      <div className="w-32 shrink-0 flex items-center justify-end gap-2">
         {variant === "attention" && isOverdue && (
           <span className={`text-[11px] font-medium ${days >= 7 ? "text-red-600" : "text-red-500"}`}>{overdueLabel(days)}</span>
         )}
@@ -89,6 +84,7 @@ export default function ContactRow({
         {variant === "default" && !c.nextFollowUp && (
           <span className="text-[11px] text-gray-300">—</span>
         )}
+        <div className={`w-2 h-2 rounded-full shrink-0 ${healthColor(healthScore)} opacity-70`} title={`Health: ${healthScore}`} />
       </div>
     </div>
   );
