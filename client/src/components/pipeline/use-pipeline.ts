@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { PipelineContact, PipelineActivity, ContactForm, NewActivity, StageSuggestion } from "./types";
 import { EMPTY_FORM, EMPTY_ACTIVITY } from "./types";
-import { needsAttention, hasUpcomingFollowUp } from "./utils";
+import { needsAttention, hasUpcomingFollowUp, sortByStageAndOverdue } from "./utils";
 
 export function usePipeline(token: string) {
   const { toast } = useToast();
@@ -127,27 +127,17 @@ export function usePipeline(token: string) {
   }, [contacts, filter, stageFilter, assignedFilter, searchQuery, sortBy]);
 
   const attentionContacts = useMemo(() => {
-    return filteredContacts.filter(needsAttention).sort((a, b) => {
-      const aTime = a.nextFollowUp && new Date(a.nextFollowUp) <= new Date()
-        ? new Date(a.nextFollowUp).getTime()
-        : (a.createdAt ? new Date(a.createdAt).getTime() : Date.now());
-      const bTime = b.nextFollowUp && new Date(b.nextFollowUp) <= new Date()
-        ? new Date(b.nextFollowUp).getTime()
-        : (b.createdAt ? new Date(b.createdAt).getTime() : Date.now());
-      return aTime - bTime;
-    });
+    return filteredContacts.filter(needsAttention).sort(sortByStageAndOverdue);
   }, [filteredContacts]);
 
   const upcomingContacts = useMemo(() => {
-    return filteredContacts
-      .filter(hasUpcomingFollowUp)
-      .sort((a, b) => new Date(a.nextFollowUp!).getTime() - new Date(b.nextFollowUp!).getTime());
+    return filteredContacts.filter(hasUpcomingFollowUp).sort(sortByStageAndOverdue);
   }, [filteredContacts]);
 
   const restContacts = useMemo(() => {
     const attentionIds = new Set(attentionContacts.map(c => c.id));
     const upcomingIds = new Set(upcomingContacts.map(c => c.id));
-    return filteredContacts.filter(c => !attentionIds.has(c.id) && !upcomingIds.has(c.id));
+    return filteredContacts.filter(c => !attentionIds.has(c.id) && !upcomingIds.has(c.id)).sort(sortByStageAndOverdue);
   }, [filteredContacts, attentionContacts, upcomingContacts]);
 
   // Flat list for keyboard nav

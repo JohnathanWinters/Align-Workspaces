@@ -103,6 +103,30 @@ export function healthTextColor(score: number): string {
   return "text-red-600";
 }
 
+/** Stage sort order: new first, then contacted, booked, completed, lost last */
+const STAGE_ORDER: Record<string, number> = {
+  new: 0, contacted: 1, booked: 2, completed: 3, lost: 4,
+};
+
+export function stageOrder(stage: string): number {
+  return STAGE_ORDER[stage] ?? 99;
+}
+
+/** How many days overdue the follow-up is (0 if not overdue, negative if future) */
+export function overdueDays(c: PipelineContact): number {
+  if (!c.nextFollowUp) return -Infinity;
+  const fu = new Date(c.nextFollowUp);
+  if (isNaN(fu.getTime())) return -Infinity;
+  return Math.floor((Date.now() - fu.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/** Standard sort: stage first, then most overdue */
+export function sortByStageAndOverdue(a: PipelineContact, b: PipelineContact): number {
+  const stageDiff = stageOrder(a.stage) - stageOrder(b.stage);
+  if (stageDiff !== 0) return stageDiff;
+  return overdueDays(b) - overdueDays(a); // most overdue first
+}
+
 /** Check if contact needs attention */
 export function needsAttention(c: PipelineContact): boolean {
   return (
