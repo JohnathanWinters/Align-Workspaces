@@ -7,6 +7,19 @@ interface ContactListProps {
   pipeline: UsePipelineReturn;
 }
 
+function ColumnHeader() {
+  return (
+    <div className="flex items-center px-4 py-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-wider border-b border-gray-100 select-none">
+      <div className="w-8 shrink-0 mr-3" />
+      <div className="flex-1 min-w-0 mr-3">Name</div>
+      <div className="w-20 shrink-0 mr-2">Stage</div>
+      <div className="w-6 shrink-0 mr-2 text-center">Asn</div>
+      <div className="w-4 shrink-0 mr-2" />
+      <div className="w-28 shrink-0 text-right">Status</div>
+    </div>
+  );
+}
+
 export default function ContactList({ pipeline }: ContactListProps) {
   const {
     loading, attentionContacts, upcomingContacts, restContacts,
@@ -37,17 +50,20 @@ export default function ContactList({ pipeline }: ContactListProps) {
             <Clock className="w-3.5 h-3.5 text-red-500" /> Needs Attention
             <span className="text-gray-400 font-normal">({attentionContacts.length})</span>
           </h3>
-          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mx-2">
-            {attentionContacts.map(c => (
-              <ContactRow
-                key={c.id}
-                contact={c}
-                variant="attention"
-                isSelected={selectedContactId === c.id}
-                isFocused={getFocusedId() === c.id}
-                onSelect={selectContact}
-              />
-            ))}
+          <div className="bg-white rounded-xl border border-gray-100 mx-2 overflow-hidden">
+            <ColumnHeader />
+            <div className="divide-y divide-gray-100">
+              {attentionContacts.map(c => (
+                <ContactRow
+                  key={c.id}
+                  contact={c}
+                  variant="attention"
+                  isSelected={selectedContactId === c.id}
+                  isFocused={getFocusedId() === c.id}
+                  onSelect={selectContact}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -59,17 +75,20 @@ export default function ContactList({ pipeline }: ContactListProps) {
             <CalendarDays className="w-3.5 h-3.5 text-blue-500" /> Upcoming Follow-ups
             <span className="text-gray-400 font-normal">({upcomingContacts.length})</span>
           </h3>
-          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mx-2">
-            {upcomingContacts.map(c => (
-              <ContactRow
-                key={c.id}
-                contact={c}
-                variant="upcoming"
-                isSelected={selectedContactId === c.id}
-                isFocused={getFocusedId() === c.id}
-                onSelect={selectContact}
-              />
-            ))}
+          <div className="bg-white rounded-xl border border-gray-100 mx-2 overflow-hidden">
+            <ColumnHeader />
+            <div className="divide-y divide-gray-100">
+              {upcomingContacts.map(c => (
+                <ContactRow
+                  key={c.id}
+                  contact={c}
+                  variant="upcoming"
+                  isSelected={selectedContactId === c.id}
+                  isFocused={getFocusedId() === c.id}
+                  onSelect={selectContact}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -81,17 +100,20 @@ export default function ContactList({ pipeline }: ContactListProps) {
             <Users className="w-3.5 h-3.5 text-gray-400" /> Contacts
             <span className="text-gray-400 font-normal">({restContacts.length})</span>
           </h3>
-          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100 mx-2">
-            {restContacts.map(c => (
-              <ContactRow
-                key={c.id}
-                contact={c}
-                variant="default"
-                isSelected={selectedContactId === c.id}
-                isFocused={getFocusedId() === c.id}
-                onSelect={selectContact}
-              />
-            ))}
+          <div className="bg-white rounded-xl border border-gray-100 mx-2 overflow-hidden">
+            <ColumnHeader />
+            <div className="divide-y divide-gray-100">
+              {restContacts.map(c => (
+                <ContactRow
+                  key={c.id}
+                  contact={c}
+                  variant="default"
+                  isSelected={selectedContactId === c.id}
+                  isFocused={getFocusedId() === c.id}
+                  onSelect={selectContact}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}

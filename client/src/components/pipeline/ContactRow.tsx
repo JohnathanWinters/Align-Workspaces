@@ -26,59 +26,69 @@ export default function ContactRow({
   };
 
   return (
-    <div>
-      <div
-        className={`group flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${
-          isSelected ? "bg-blue-50/60 border-l-2 border-blue-500" : isFocused ? "bg-gray-50 ring-1 ring-inset ring-blue-200" : "hover:bg-gray-50/50 border-l-2 border-transparent"
-        }`}
-        onClick={() => onSelect(c.id)}
-        data-testid={`contact-row-${c.id}`}
-        data-contact-id={c.id}
-      >
-        {/* Avatar */}
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${avatarColors[variant]}`}>
-          <span className="text-xs font-medium">{getInitials(c.name)}</span>
-        </div>
+    <div
+      className={`flex items-center px-4 py-2.5 transition-colors cursor-pointer ${
+        isSelected ? "bg-blue-50/60 border-l-2 border-blue-500" : isFocused ? "bg-gray-50 ring-1 ring-inset ring-blue-200" : "hover:bg-gray-50/50 border-l-2 border-transparent"
+      }`}
+      onClick={() => onSelect(c.id)}
+      data-testid={`contact-row-${c.id}`}
+      data-contact-id={c.id}
+    >
+      {/* Avatar - fixed 32px */}
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mr-3 ${avatarColors[variant]}`}>
+        <span className="text-xs font-medium">{getInitials(c.name)}</span>
+      </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-900 truncate">{c.name}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>
-              {stageOf(c.stage)?.label}
-            </span>
-            {(c as any).assignedTo && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                (c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
-              }`}>
-                {(c as any).assignedTo === "armando" ? "A" : "E"}
-              </span>
-            )}
-          </div>
-          {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
-        </div>
+      {/* Name + subtitle - flexible, takes remaining space */}
+      <div className="flex-1 min-w-0 mr-3">
+        <span className="text-sm font-medium text-gray-900 truncate block">{c.name}</span>
+        {subtitle && <p className="text-[11px] text-gray-400 truncate">{subtitle}</p>}
+      </div>
 
-        {/* Health dot */}
-        <div className={`w-2 h-2 rounded-full shrink-0 ${healthColor(healthScore)} opacity-70`} title={`Health: ${healthScore}`} />
+      {/* Stage badge - fixed width column */}
+      <div className="w-20 shrink-0 mr-2">
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block ${stageOf(c.stage)?.color || "bg-gray-100"}`}>
+          {stageOf(c.stage)?.label}
+        </span>
+      </div>
 
-        {/* Status text */}
-        <div className="text-right shrink-0 w-24">
-          {variant === "attention" && isOverdue && (
-            <p className={`text-[11px] font-medium ${days >= 7 ? "text-red-600" : "text-red-500"}`}>{overdueLabel(days)}</p>
-          )}
-          {variant === "attention" && !isOverdue && isNoAction && (
-            <p className={`text-[11px] font-medium ${days >= 7 ? "text-amber-700" : "text-amber-600"}`}>{noActionLabel(days)}</p>
-          )}
-          {variant === "upcoming" && c.nextFollowUp && (
-            <p className="text-[11px] text-blue-600 font-medium">{getRelativeFollowUpLabel(new Date(c.nextFollowUp))}</p>
-          )}
-          {variant === "default" && c.nextFollowUp && (
-            <p className={`text-[10px] hidden sm:block ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
-              {new Date(c.nextFollowUp).toLocaleDateString()}
-            </p>
-          )}
-        </div>
+      {/* Assigned - fixed width column */}
+      <div className="w-6 shrink-0 mr-2 text-center">
+        {(c as any).assignedTo ? (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+            (c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
+          }`}>
+            {(c as any).assignedTo === "armando" ? "A" : "E"}
+          </span>
+        ) : (
+          <span className="text-[10px] text-gray-300">—</span>
+        )}
+      </div>
 
+      {/* Health dot - fixed width */}
+      <div className="w-4 shrink-0 mr-2 flex justify-center">
+        <div className={`w-2 h-2 rounded-full ${healthColor(healthScore)} opacity-70`} title={`Health: ${healthScore}`} />
+      </div>
+
+      {/* Status / date - fixed width column, right-aligned */}
+      <div className="w-28 shrink-0 text-right">
+        {variant === "attention" && isOverdue && (
+          <span className={`text-[11px] font-medium ${days >= 7 ? "text-red-600" : "text-red-500"}`}>{overdueLabel(days)}</span>
+        )}
+        {variant === "attention" && !isOverdue && isNoAction && (
+          <span className={`text-[11px] font-medium ${days >= 7 ? "text-amber-700" : "text-amber-600"}`}>{noActionLabel(days)}</span>
+        )}
+        {variant === "upcoming" && c.nextFollowUp && (
+          <span className="text-[11px] text-blue-600 font-medium">{getRelativeFollowUpLabel(new Date(c.nextFollowUp))}</span>
+        )}
+        {variant === "default" && c.nextFollowUp && (
+          <span className={`text-[11px] ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
+            {new Date(c.nextFollowUp).toLocaleDateString()}
+          </span>
+        )}
+        {variant === "default" && !c.nextFollowUp && (
+          <span className="text-[11px] text-gray-300">—</span>
+        )}
       </div>
     </div>
   );
