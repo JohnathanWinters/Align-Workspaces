@@ -1,0 +1,698 @@
+ALIGN WORKSPACES
+Legal Briefing Document
+Prepared: April 2026
+
+For review by outside counsel prior to publishing revised Terms of Service
+and enforcing platform trust and safety policies.
+
+================================================================================
+1. WHAT ALIGN WORKSPACES IS
+================================================================================
+
+Align Workspaces is a marketplace platform based in Miami, FL that connects
+two types of users:
+
+HOSTS: People who own or lease professional workspaces (therapy offices,
+salon stations, coaching rooms, wellness studios, creative spaces) and want
+to rent them out by the hour during idle time.
+
+GUESTS: Independent professionals (therapists, barbers, coaches, real estate
+agents, wellness practitioners, tattoo artists, photographers, etc.) who need
+flexible, profession-appropriate workspace to see clients without signing a
+traditional lease.
+
+Align is a marketplace intermediary. We do not own, operate, or manage any
+workspace. When a host and guest enter into a booking, they enter into a
+direct contractual relationship with each other. Align facilitates the
+connection, processes payment, and provides trust and safety tools.
+
+The arrangement between host and guest creates a revocable license to
+occupy, not a lease or any interest in real property.
+
+The platform also operates a portrait photography service managed by the
+founding team, with its own booking, gallery, and payment flows.
+
+================================================================================
+2. HOW THE PLATFORM WORKS (END TO END)
+================================================================================
+
+LISTING FLOW:
+
+- Host creates an account (magic link email authentication, passwordless)
+- Host uploads proof of insurance ($1M+ general liability required)
+- Carrier name, policy number, coverage type, coverage amount, expiration date, declarations page (PDF or image)
+- This is a hard gate: no listing can be published without it
+- Hosts without insurance are directed to Thimble (partner) where they can purchase general liability starting at $17/month
+- Host creates a listing with space details, pricing, photos, amenities, availability
+- Listing is reviewed by Align team before going live
+- Host can optionally self-certify their space under one of five Professional Use Certification tiers (see Section 5)
+- Host can create an Arrival Guide with step-by-step photos, WiFi credentials, and door codes
+
+BOOKING FLOW:
+
+- Guest browses available spaces, filters by type, neighborhood, price, certification
+- Guest selects date, time, and duration
+- System checks availability (prevents double-booking via advisory locks and external calendar sync)
+- Booking fee breakdown is displayed:
+- Base price (host's hourly rate x hours)
+- Guest service fee: 7% (5% for repeat guests)
+- Sales tax: 7% (Miami-Dade County)
+- Total charged to guest
+- Booking Agreement is presented (see Section 4)
+- Guest confirms and proceeds to Stripe checkout
+- Payment is collected via Stripe
+- Booking is confirmed, both parties notified via email and push notification
+- Host receives payout automatically via Stripe Connect minus applicable fees
+
+FEE STRUCTURE:
+
+- Host fee: 12.5% standard, 10.5% for host-referred bookings, 0% for Founding Hosts (first 20 spaces, promotional)
+- Guest fee: 7% standard, 5% for repeat guests
+- Sales tax: 7% (Miami-Dade County, FL) applied to subtotal only
+- No listing fees, no monthly subscription, no setup costs
+- Stripe processes all payments (host is a Stripe Connected Account)
+- Complete fee breakdown stored in fee_audit_log for every transaction
+
+RECURRING BOOKINGS:
+
+- Guests can request recurring weekly bookings (same day/time each week)
+- Host must confirm or decline recurring booking requests
+- Status tracking: pending_confirmation, confirmed, active, paused, cancelled
+- Individual bookings generated from recurring schedules
+
+POST-BOOKING:
+
+- Guest and host can message through the platform (booking-specific and direct channels)
+- Guest can check in and check out through the platform (timestamps logged)
+- Overtime minutes are tracked if guest exceeds booking duration
+- Guest can leave a review after completion
+- Host can file a damage report within 14 days (see Section 7)
+- Arrival Guide automatically sent to guest with check-in instructions
+
+================================================================================
+3. TERMS OF SERVICE (SUMMARY OF KEY PROVISIONS)
+================================================================================
+
+The full Terms of Service are published at alignworkspaces.com/terms and
+contain 23 sections. Key provisions for legal review:
+
+SECTION 2 - DEFINITIONS:
+
+- "Space License" is defined as a revocable, non-exclusive license, explicitly NOT a lease or any interest in real property
+- "Professional Use Certification" is defined as a host's voluntary self-certification, describing the space not the guest's credentials
+- "Booking Agreement" is defined as the mutual acknowledgment executed at the time of each booking
+
+SECTION 3 - PLATFORM ROLE:
+
+- Align is a marketplace intermediary, not a party to the booking
+- Align does not endorse, verify, or guarantee any listing, host, or guest
+- Professional Use Certifications are host self-declarations, not independently verified by Align
+
+SECTION 5 - HOST OBLIGATIONS (10 items):
+
+- Legal authority to list the space
+- Accurate descriptions
+- Compliance with all applicable laws, zoning, building codes, and health department requirements
+- Sole responsibility for condition, safety, maintenance, ADA compliance
+- Disclosure of surveillance devices
+- Maintain appropriate liability insurance with proof (Section 14)
+- Accurate Professional Use Certifications if elected
+- Disclosure of known limitations (soundproofing, ventilation, etc.)
+- Responsibility for health/safety/sanitation standards for regulated services (barbering, cosmetology, bodywork, food prep)
+
+SECTION 6 - GUEST OBLIGATIONS (10 items):
+
+- Use space per listing description and host rules
+- Responsible for own conduct and invitees
+- Liable for damage
+- Sole responsibility for professional licensing, regulatory compliance, health department compliance, privacy, recordkeeping, confidentiality
+- Responsible for independently verifying space meets their professional requirements regardless of any certification
+- Maintain own professional liability/malpractice/E&O insurance if required by their profession
+- Responsible for own permits, licenses, approvals
+
+SECTION 7 - BOOKING AGREEMENT:
+
+- Mutual acknowledgment incorporated into every booking
+- Host confirms: accurate listing, safe condition, active insurance, certification accuracy
+- Guest confirms: responsibility for conduct, own insurance if required, independently evaluated space, will comply with all laws, will report damage promptly
+- Mutual: Align is not a party, host bears premises liability, guest bears professional liability, neither party may hold Align liable
+- Timestamped record stored with version tracking, IP address, and user agent
+
+SECTION 10 - NON-CIRCUMVENTION:
+
+- 30% of booking subtotal as liquidated damages if users transact outside the platform to avoid service fees
+
+SECTION 11 - CONTENT AND INTELLECTUAL PROPERTY:
+
+- Users grant Align a non-exclusive, worldwide license to use content uploaded to the platform
+- This includes photos, reviews, listing descriptions, and messages
+
+SECTION 12 - PROFESSIONAL USE DISCLAIMER:
+
+- Platform serves all industries (therapists through tattoo artists)
+- Align makes no representations about credentials of any user
+- Users solely responsible for their own compliance including HIPAA, state privacy laws, professional board regulations, health codes
+- Align not responsible for malpractice, misconduct, regulatory violations, or health code violations
+
+SECTION 13 - PROFESSIONAL USE CERTIFICATIONS:
+
+- Five tiers: Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, General Professional
+- Self-reported by host, not verified by Align
+- Describes the space, not the guest
+- Any guest can book any space regardless of certification
+- Align reserves right to remove certifications for non-compliance
+
+SECTION 14 - INSURANCE REQUIREMENTS:
+
+- Host insurance: Required, $1M+ general liability, proof uploaded during onboarding, automated expiration tracking, listings suspended if lapsed
+- Guest insurance: Recommended/conditional, platform may require proof for certain certified spaces
+- Platform disclaimer: Align does not provide insurance, does not verify terms/exclusions/adequacy of any policy
+
+SECTION 15 - HOST PROTECTION PLAN:
+
+- Optional damage coverage for eligible incidents
+- Coverage details, exclusions, and claims process defined
+- Not an insurance contract between Align and host
+- Does not replace host's own liability insurance
+
+SECTION 16 - DAMAGE RESOLUTION:
+
+- 48-hour documentation window for hosts (14 days to initiate report)
+- Platform damage reporting tool with photo evidence
+- 72-hour guest response window
+- Escalation to Align support if unresolved
+- Guest may be charged through payment method on file
+
+SECTION 17 - DISCLAIMER OF WARRANTIES:
+
+- Platform provided "as is" and "as available"
+- No warranty on suitability, legality, quality of any workspace
+- No warranty that any space complies with regulatory/licensing/health department requirements of any guest's profession
+
+SECTION 18 - LIMITATION OF LIABILITY:
+
+- Aggregate liability capped at amounts paid in prior 12 months or $100
+- No liability for indirect, incidental, special, consequential, or punitive damages
+- Applies to all claims including those arising from host/guest actions, workspace condition, certifications, insurance adequacy, regulatory non-compliance, health/safety/sanitation issues
+
+SECTION 19 - INDEMNIFICATION:
+
+- Users indemnify Align for breach, platform use, workspace interactions, damage, legal violations, content, professional activities, failure to maintain required licenses/permits/insurance
+- Hosts additionally indemnify for: workspace condition/safety/legality, building code compliance, guest injury/loss, certification inaccuracy, services performed by guests if host was aware space was unsuitable
+
+SECTION 20 - DISPUTE RESOLUTION:
+
+- Host-guest disputes: direct resolution first, then Align determination (final)
+- User-Align disputes: binding individual arbitration (AAA rules)
+- Class action waiver
+- 30-day opt-out window from account creation
+- Written notice to hello@alignworkspaces.com
+
+SECTION 21 - GOVERNING LAW:
+
+- State of Florida
+- Miami-Dade County courts for actions outside arbitration
+
+================================================================================
+4. BOOKING AGREEMENT (IMPLEMENTED IN PRODUCT)
+================================================================================
+
+Every booking on the platform includes a Booking Agreement step before
+payment. This is not a separate document but a transactional acknowledgment
+layered on top of the Terms of Service.
+
+The confirmation screen displays two sections:
+
+"What the Host has confirmed for this booking:"
+
+- Space is accurately described in the listing
+- Space is maintained in safe, functional condition
+- Host maintains active liability insurance
+- Any Professional Use Certifications are accurate
+- [If certified]: "This space is certified as [tier name]"
+
+"By booking, you confirm:"
+
+- You accept responsibility for your conduct and anyone you bring
+- You are responsible for any damage to the space during your booking
+- If your profession requires it, you maintain your own professional liability insurance
+- You have independently verified this space meets your professional needs
+- You understand Align is a marketplace facilitator and is not liable for either party's actions or the condition of the space
+
+Guest checks a single confirmation box and proceeds to payment.
+
+Technical implementation:
+
+- Acceptance stored as a timestamped record tied to each booking
+- Records: who accepted, when, which agreement version, IP address, user agent
+- Agreement version is tracked so if language is updated, we know which version each booking was confirmed under
+- Creates an audit trail for dispute resolution
+
+================================================================================
+5. PROFESSIONAL USE CERTIFICATIONS (IMPLEMENTED IN PRODUCT)
+================================================================================
+
+Hosts can voluntarily self-certify their workspace. Certifications are about
+the SPACE, not the person booking it. Any guest can book any space regardless
+of certification status.
+
+Five tiers:
+
+CLINICAL READY
+
+Target: Therapists, counselors, psychologists, psychiatrists, social workers
+
+- Private, soundproofed or sound-dampened session space
+- No surveillance devices (audio or video) in session area
+- Separated or private entry/waiting area, or disclosed shared arrangement
+- Secure, non-shared internet connection, or disclosure of configuration
+- ADA accessibility compliance
+
+CONSULTATION READY
+
+Target: Real estate agents, financial advisors, coaches, consultants, attorneys, accountants
+
+- Professional, client-facing environment
+- Private meeting space with closable door
+- Reliable internet and power access
+- Adequate seating for stated capacity
+
+WELLNESS READY
+
+Target: Holistic practitioners, bodyworkers, acupuncturists, yoga instructors, massage therapists
+
+- Appropriate flooring and ventilation for stated modalities
+- Adequate space dimensions for stated practice type
+- Clean, sanitizable surfaces
+- Private changing area or restroom access
+
+SERVICE READY
+
+Target: Barbers, stylists, estheticians, nail technicians, tattoo artists
+
+- Proper ventilation per local code for stated service type
+- Access to running water and sanitation facilities
+- Adequate electrical capacity for professional equipment
+- Easy-to-clean flooring and work surfaces
+- Compliance with local health department requirements
+
+GENERAL PROFESSIONAL
+
+Target: Photographers, podcasters, remote workers, freelancers, tutors
+
+- Clean, well-maintained workspace
+- Reliable internet and power access
+- Private or semi-private space as described in listing
+- Adequate for use case stated in listing description
+
+Implementation:
+
+- Host selects a tier, completes checklist in listing management
+- Badge appears on listing when all items are checked
+- Guests can filter search results by certification type
+- Disclaimer displayed: "Professional Use Certifications are self-reported by the Host and are not independently verified, audited, or endorsed by Align Workspaces."
+- Align reserves the right to remove certifications for non-compliance with documented reason
+
+================================================================================
+6. INSURANCE VERIFICATION SYSTEM (IMPLEMENTED IN PRODUCT)
+================================================================================
+
+HOST INSURANCE (REQUIRED):
+
+- Hard gate: no host can publish a listing without completing this step
+- Data collected:
+- Insurance carrier name
+- Policy number
+- Coverage type (General Liability, Professional Liability, Property, Business Owner's Policy, or Other)
+- Coverage amount (minimum $1,000,000 general liability required)
+- Policy expiration date
+- Upload of declarations page (PDF or image, max 10MB)
+- Documents stored securely in Cloudflare R2 object storage
+- Admin can upload insurance on behalf of hosts
+- Automated expiration tracking:
+- Status indicators: Active (green), Expiring Soon (yellow, within 30 days), Expired (red)
+- Email reminders at 30 days and 7 days before expiration (de-duplicated to prevent repeat sends)
+- If policy expires without renewal: all listings automatically suspended
+- "Verified Insurance" badge displayed on listings
+
+THIMBLE PARTNERSHIP (FOR HOSTS WITHOUT COVERAGE):
+
+- Hosts who do not have insurance are presented with an option to purchase general liability coverage through Thimble
+- Thimble offers policies starting at $17/month with $1M+ coverage
+- Currently implemented as a referral link; API integration pending partner approval
+- Align will earn commission on policies sold through the platform
+
+PLATFORM DISCLAIMER:
+
+- Align does not provide insurance coverage
+- Insurance Verification is limited to confirming that a host has submitted documentation that appears to reflect active coverage
+- Align does not verify terms, exclusions, adequacy, or validity of any insurance policy
+
+NOTE FOR COUNSEL:
+
+- The $1M minimum is a platform policy, not a citation of Florida statute
+- Florida does not have a specific statute requiring liability insurance to rent out workspace by the hour
+- The requirement is within Align's rights as a private marketplace
+- Hosts have premises liability obligations under Florida common law regardless of insurance status
+
+================================================================================
+7. DAMAGE REPORTING AND RESOLUTION (IMPLEMENTED IN PRODUCT)
+================================================================================
+
+REPORTING:
+
+- "Report Issue" button available on completed bookings for 14 days after booking end time
+- Host selects issue type: Property Damage, Cleanliness Issue, Policy Violation, or Other
+- Host uploads photos (minimum 2, maximum 10, stored on Cloudflare R2)
+- Host provides written description
+- Host provides estimated repair/replacement cost (optional, stored in cents)
+
+RESOLUTION PROCESS:
+
+- Host submits report through platform (status: pending)
+- Guest is notified through platform messaging (status: guest_notified)
+- Guest has 72 hours to respond (status: guest_responded)
+- If unresolved after 72 hours, report escalates to Align support (status: escalated)
+- Align reviews evidence and issues determination
+- Guest found responsible may be charged through payment method on file, up to documented repair or replacement cost
+- If host is enrolled in Host Protection Plan, eligible claims processed under HPP terms
+- Final resolution recorded with notes (status: resolved)
+
+ALL RECORDS STORED:
+
+- Report details, photos, timestamps
+- Guest response and timestamp
+- Resolution outcome and resolution notes
+- Resolved by indicator (host, guest, or admin)
+- Escalation timestamp
+- Stored as part of the booking record for audit purposes
+
+================================================================================
+8. DATA AND PRIVACY CONSIDERATIONS
+================================================================================
+
+PAYMENT DATA:
+
+- All payment processing handled by Stripe (live mode)
+- Align does not store credit card numbers or bank account details
+- Hosts are Stripe Connected Accounts (Stripe's onboarding and KYC)
+- Full fee breakdown stored in fee_audit_log for every transaction
+- Payment intent IDs, transfer IDs, and payout status tracked
+
+USER AUTHENTICATION:
+
+- Passwordless magic link email authentication (15-minute token expiration)
+- One-time-use tokens (32-byte random hex)
+- Sessions stored server-side in PostgreSQL (connect-pg-simple)
+- HttpOnly secure cookies with SameSite:lax
+- CSRF protection on state-changing requests
+- Rate limiting on authentication endpoints
+- 4 hardcoded admin email addresses for admin panel access
+
+EMPLOYEE AUTHENTICATION:
+
+- Bearer token format for internal team members
+- Role-based permissions (editor, manager) with 13+ granular permission categories
+- Employees can be deactivated/reactivated
+
+INSURANCE DOCUMENTS:
+
+- Declarations pages stored in Cloudflare R2 (encrypted at rest)
+- Accessible only to the host and Align administrators
+- Not shared with guests or other users
+
+BOOKING AGREEMENT RECORDS:
+
+- Timestamped with user ID, role, IP address, user agent
+- Agreement version tracked
+- Stored indefinitely for audit and dispute resolution purposes
+
+MESSAGING DATA:
+
+- Three separate messaging channels: booking messages, direct conversations, admin messages
+- All messages stored in plain text (no end-to-end encryption)
+- Admin has access to all user-to-user messages
+- Messages can include inline images (stored on R2)
+- Read timestamps tracked per participant
+
+PUSH NOTIFICATIONS:
+
+- Web Push API (VAPID protocol)
+- Subscription endpoints, p256dh keys, and auth tokens stored
+- Role-based targeting (guest/host/admin)
+- Notifications sent for: new bookings, status changes, reviews, admin messages
+
+ANALYTICS DATA:
+
+- Page views logged with: session ID, path, duration, IP, device, browser, OS, approximate location
+- Analytics events tracked with custom metadata
+- Used for platform performance analysis
+
+PROFESSIONAL PROFILES (GUEST, OPTIONAL):
+
+- Professional title, industry, license numbers, licensing state, insurance policy numbers stored if provided
+- Not displayed publicly (visible only to hosts reviewing bookings)
+- Guest can delete at any time
+
+CALENDAR INTEGRATION DATA:
+
+- Google Calendar OAuth refresh tokens stored for hosts who enable calendar sync
+- iCal feed URLs stored for external calendar imports
+- External calendar blocks stored (date, time ranges, all-day flags)
+
+IMAGE AND FILE STORAGE:
+
+- All images stored on Cloudflare R2 (S3-compatible)
+- Profile photos processed to 400x400 WebP
+- Space photos processed to fit within 2400x3200 WebP
+- Insurance documents (PDF/image, max 10MB)
+- Damage report photos (up to 10 per report)
+- Gallery images for photography service
+- Arrival guide step photos
+- Message attachment images
+
+EMAIL COMMUNICATIONS:
+
+- Transactional emails sent via Gmail API (OAuth 2.0)
+- Magic link sign-in emails
+- Booking confirmations and reminders
+- Insurance expiration reminders (30-day and 7-day)
+- Gallery ready notifications
+- Invoice delivery
+
+NEWSLETTER:
+
+- Managed through ConvertKit/Kit API
+- Subscriber data: email, first name, zip code, interests array
+- Tag-based segmentation
+- Subscribe/unsubscribe endpoints
+
+================================================================================
+9. REFERRAL SYSTEM
+================================================================================
+
+- Hosts can generate unique referral codes (8-character alphanumeric)
+- Referral links can be space-specific or apply to all host spaces
+- Tracking: click count, booking count, total revenue generated
+- Reduced host fee for referred bookings (10.5% vs standard 12.5%)
+- Referral source tracked in booking record via referralLinkId
+- Cookie/session-based referrer tracking
+
+================================================================================
+10. REFUND AND CANCELLATION POLICY
+================================================================================
+
+GUEST-INITIATED CANCELLATION:
+
+- 24-hour grace period: full refund including platform fees
+- 48+ hours before booking: full refund minus guest service fee
+- Less than 48 hours before booking: 50% refund minus guest service fee
+
+HOST-INITIATED CANCELLATION:
+
+- Full refund to guest including all fees
+
+NO-SHOWS:
+
+- Non-refundable
+
+REFUND PROCESSING:
+
+- Refunds processed to original payment method
+- 5-10 business day processing time
+- Refund status tracked in booking record
+
+ADMIN PAYOUT CONTROLS:
+
+- Manual hold, release, and reverse capabilities
+- Payouts can be held pending dispute resolution
+- Payout status: pending, processing, paid, held, reversed
+
+================================================================================
+11. COMMUNITY EVENTS SYSTEM
+================================================================================
+
+- Users can create community events (subject to admin approval)
+- Event data: title, description, date/time, location, image, capacity
+- RSVP tracking with attendance counts
+- Admin approval/rejection workflow
+- Events displayed publicly on the platform
+- Authentication required to RSVP
+
+================================================================================
+12. PHOTOGRAPHY SERVICE
+================================================================================
+
+Align also operates a portrait photography service managed by the founding team.
+
+- Clients book photo sessions through the platform
+- 50% downpayment at booking, 50% due at session
+- Photo galleries managed through the platform (folders, images, favorites)
+- Edit token system: 2 annual tokens per client, additional tokens purchasable
+- Edit requests submitted through platform with before/after tracking
+- Client-photographer messaging channel
+- Reviews system for photography sessions
+- Invoicing through Stripe
+
+This is a separate service line from the workspace marketplace but shares
+user accounts, authentication, and payment infrastructure.
+
+================================================================================
+13. ADMIN CAPABILITIES
+================================================================================
+
+The admin panel provides the following capabilities relevant to legal review:
+
+- User management: view, edit, delete user accounts and profiles
+- Workspace management: approve/reject listings, suspend spaces, transfer ownership
+- Payment management: hold/release/reverse payouts, revenue dashboard, tax reporting
+- Communications: message any user directly, view all conversations
+- Insurance management: view/upload insurance documents, track expirations
+- Damage reports: review evidence, determine responsibility, resolve disputes
+- Review moderation: publish, hide, flag, delete, respond to reviews
+- CRM pipeline: track leads and contacts with activity logging
+- Content management: featured professionals, portfolio, team bios
+- Analytics: revenue, bookings, user activity, host performance metrics
+- Employee management: create team members with role-based permissions
+- Meeting scheduling: admin availability calendars with booking links
+- Database backup capabilities
+
+NOTE FOR COUNSEL:
+
+- Admin has full access to all user data including messages, bookings, and documents
+- No end-to-end encryption on messaging
+- Admin actions create potential liability as determinations are "final"
+
+================================================================================
+14. AREAS FOR LEGAL REVIEW
+================================================================================
+
+We request counsel review the following:
+
+1. TERMS OF SERVICE (all 23 sections):
+
+- Published at alignworkspaces.com/terms
+- Particular attention to: limitation of liability, indemnification, arbitration clause, class action waiver, non-circumvention liquidated damages provision
+
+2. PROFESSIONAL USE CERTIFICATIONS:
+
+- Are the disclaimers sufficient to insulate Align from liability if a certified space does not meet a guest's regulatory requirements?
+- Is the self-certification model legally sound, or does hosting the certification framework create implied endorsement risk?
+- Are there specific Florida statutes (e.g., Ch. 476 barbering, Ch. 477 cosmetology, Ch. 480 massage, Ch. 491 mental health) that create space-specific requirements we should address?
+
+3. INSURANCE REQUIREMENTS:
+
+- Is the $1M minimum general liability requirement appropriate?
+- Are we exposed if a host's insurance turns out to be insufficient or invalid despite our verification?
+- Does our platform insurance disclaimer adequately protect us?
+- Admin ability to upload insurance on behalf of hosts: does this create additional liability?
+
+4. BOOKING AGREEMENT:
+
+- Is the mutual acknowledgment structure legally enforceable?
+- Is the digital acceptance (checkbox + timestamp + IP + user agent) sufficient evidence of agreement?
+- Does the agreement adequately allocate liability between host, guest, and platform?
+
+5. DAMAGE RESOLUTION:
+
+- Can we legally charge a guest's payment method on file for damages based on our determination?
+- What is our exposure if a damage determination is disputed?
+- Is the 14-day reporting window and 72-hour response window sufficient?
+
+6. HOST PROTECTION PLAN:
+
+- If we self-fund a damage reserve (1-2% of service fees), does this create an insurance product requiring state licensing?
+- How should we structure the HPP to avoid being classified as an insurance provider under Florida law?
+
+7. MARKETPLACE LIABILITY:
+
+- Under Florida law and Section 230 considerations, what is our exposure as a marketplace facilitator?
+- Are there specific risks from hosting regulated professionals (HIPAA-covered therapists, licensed barbers, etc.) that we should address?
+- Does admin access to all user messages affect our intermediary status?
+
+8. ARBITRATION AND DISPUTE RESOLUTION:
+
+- Is the binding arbitration clause enforceable in Florida?
+- Is the 30-day opt-out window sufficient?
+- Is the class action waiver enforceable under current Florida law?
+- Does our "final determination" language on disputes create additional liability?
+
+9. REFUND POLICY:
+
+- Is the tiered refund structure (24-hour grace, 48-hour window, <48-hour partial) compliant with Florida consumer protection law?
+- Does the no-show non-refundable policy require specific disclosure?
+- Can we legally hold payouts pending dispute resolution?
+
+10. DATA PRIVACY AND MESSAGING:
+
+- Does admin access to all user-to-user messages require specific disclosure?
+- Is plain text message storage sufficient, or should we implement encryption for regulated professional communications?
+- Are we compliant with CCPA for California resident users?
+- Is our data retention policy (indefinite for booking/agreement records) appropriate?
+- Does collection of IP address, device info, and approximate location require specific consent?
+
+11. RECURRING BOOKINGS:
+
+- Does the recurring booking structure create a lease-like arrangement that could be reclassified as a lease rather than a license?
+- What cancellation/modification rights should apply to recurring bookings?
+
+12. PHOTOGRAPHY SERVICE:
+
+- Does operating a photography service alongside the marketplace affect our intermediary status?
+- Is the 50% downpayment structure enforceable?
+- Does the edit token system create any consumer protection issues?
+
+13. EMPLOYEE CLASSIFICATION:
+
+- Team members are stored as "employees" with role-based permissions
+- Bearer token authentication for team access
+- Clarify employee vs. independent contractor classification
+
+14. COMMUNITY EVENTS:
+
+- What is our liability for user-created events hosted through the platform?
+- Does the approval workflow create additional responsibility?
+
+15. MULTI-STATE EXPANSION (FUTURE):
+
+- What changes would be needed to operate in other states?
+- Are there states with specific marketplace liability statutes we should be aware of?
+- Multi-state tax collection obligations
+
+16. REFERRAL PROGRAM:
+
+- Does the reduced fee for referred bookings comply with anti-kickback regulations in healthcare-adjacent industries?
+- Are there disclosure requirements for the referral commission structure?
+
+================================================================================
+15. CONTACT
+================================================================================
+
+Align Workspaces
+Miami, FL
+hello@alignworkspaces.com
+
+Platform: alignworkspaces.com
+Terms: alignworkspaces.com/terms
+Privacy: alignworkspaces.com/privacy
+Trust & Safety: alignworkspaces.com/trust

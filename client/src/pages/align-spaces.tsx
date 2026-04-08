@@ -328,7 +328,10 @@ function EventCard({ event }: { event: { id: string; title: string; category: st
 export default function AlignSpacesPage() {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showListModal, setShowListModal] = useState(false);
+  const [showListModal, setShowListModal] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("list") === "true";
+  });
   const [showPostEventModal, setShowPostEventModal] = useState(false);
   const [_showExplore, _setShowExplore] = useState(false);
   const spacesCarousel = useDragScroll();
