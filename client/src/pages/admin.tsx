@@ -6409,7 +6409,31 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
             const needsAttention = filteredContacts.filter(c =>
               (c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) && new Date(c.nextFollowUp) <= new Date()) ||
               (c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000)
-            );
+            ).sort((a, b) => {
+              // Most overdue first: overdue follow-ups by oldest, then no-action-yet by oldest created
+              const aTime = a.nextFollowUp && new Date(a.nextFollowUp) <= new Date() ? new Date(a.nextFollowUp).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : Date.now());
+              const bTime = b.nextFollowUp && new Date(b.nextFollowUp) <= new Date() ? new Date(b.nextFollowUp).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : Date.now());
+              return aTime - bTime;
+            });
+            const daysAgo = (date: string | Date | null | undefined) => {
+              if (!date) return 0;
+              const d = new Date(date);
+              if (isNaN(d.getTime())) return 0;
+              return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+            };
+            const overdueLabel = (days: number) => {
+              if (days <= 0) return "Due today";
+              if (days === 1) return "1 day overdue";
+              if (days < 7) return `${days} days overdue`;
+              const weeks = Math.floor(days / 7);
+              return weeks === 1 ? "1 week overdue" : `${weeks} weeks overdue`;
+            };
+            const noActionLabel = (days: number) => {
+              if (days === 1) return "Added 1 day ago";
+              if (days < 7) return `Added ${days} days ago`;
+              const weeks = Math.floor(days / 7);
+              return weeks === 1 ? "Added 1 week ago" : `Added ${weeks} weeks ago`;
+            };
             if (needsAttention.length === 0) return null;
             return (
               <div>
@@ -6417,7 +6441,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   <Clock className="w-3.5 h-3.5 text-red-500" /> Needs Attention
                 </h3>
                 <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-                  {needsAttention.map(c => (
+                  {needsAttention.map(c => {
+                    const isOverdue = c.nextFollowUp && new Date(c.nextFollowUp) <= new Date();
+                    const isNoAction = c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000;
+                    const days = isOverdue ? daysAgo(c.nextFollowUp) : daysAgo(c.createdAt);
+                    const subtitle = c.email || c.phone || null;
+                    return (
                     <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
                       data-testid={`attention-contact-${c.id}`}>
                       <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
@@ -6425,16 +6454,19 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                           <span className="text-xs font-medium text-red-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                          <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                          {(c as any).assignedTo && <span className={`text-[10px] ml-1 px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                            {(c as any).assignedTo && <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
+                          </div>
+                          {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
                         </div>
                         <div className="text-right shrink-0">
-                          {c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() && (
-                            <p className="text-[11px] text-red-500 font-medium">Overdue</p>
+                          {isOverdue && (
+                            <p className={`text-[11px] font-medium ${days >= 7 ? "text-red-600" : "text-red-500"}`}>{overdueLabel(days)}</p>
                           )}
-                          {c.stage === "new" && c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000 && (
-                            <p className="text-[11px] text-amber-600 font-medium">No action yet</p>
+                          {!isOverdue && isNoAction && (
+                            <p className={`text-[11px] font-medium ${days >= 7 ? "text-amber-700" : "text-amber-600"}`}>{noActionLabel(days)}</p>
                           )}
                         </div>
                       </button>
@@ -6460,7 +6492,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -6489,7 +6522,9 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                   <CalendarDays className="w-3.5 h-3.5 text-blue-500" /> Upcoming Follow-ups
                 </h3>
                 <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-                  {upcoming.map(c => (
+                  {upcoming.map(c => {
+                    const subtitle = c.email || c.phone || null;
+                    return (
                     <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
                       data-testid={`upcoming-contact-${c.id}`}>
                       <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
@@ -6497,9 +6532,12 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                           <span className="text-xs font-medium text-blue-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                          <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                          {(c as any).assignedTo && <span className={`text-[10px] ml-1 px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                            {(c as any).assignedTo && <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
+                          </div>
+                          {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
                         </div>
                         <span className="text-[11px] text-blue-600 font-medium shrink-0">{getLabel(new Date(c.nextFollowUp!))}</span>
                       </button>
@@ -6525,7 +6563,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -6550,7 +6589,9 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                 <Users className="w-3.5 h-3.5 text-gray-400" /> Contacts <span className="text-gray-400 font-normal">({rest.length})</span>
               </h3>
               <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
-                {rest.map(c => (
+                {rest.map(c => {
+                  const subtitle = c.email || c.phone || null;
+                  return (
                   <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors"
                     data-testid={`all-contact-${c.id}`}>
                     <button onClick={() => openDetail(c)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
@@ -6558,11 +6599,13 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                         <span className="text-xs font-medium text-stone-600">{c.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-900">{c.name}</span>
-                        {c.email && <span className="text-xs text-gray-400 ml-2 hidden sm:inline">{c.email}</span>}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">{c.name}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
+                          {(c as any).assignedTo && <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
+                        </div>
+                        {subtitle && <p className="text-xs text-gray-400 truncate">{subtitle}</p>}
                       </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${stageOf(c.stage)?.color || "bg-gray-100"}`}>{stageOf(c.stage)?.label}</span>
-                      {(c as any).assignedTo && <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${(c as any).assignedTo === "armando" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{(c as any).assignedTo === "armando" ? "A" : "E"}</span>}
                       {c.nextFollowUp && (
                         <span className={`text-[10px] shrink-0 hidden sm:inline ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
                           {new Date(c.nextFollowUp).toLocaleDateString()}
@@ -6591,7 +6634,8 @@ function PipelineManager({ token, onBack }: { token: string; onBack: () => void 
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             );
