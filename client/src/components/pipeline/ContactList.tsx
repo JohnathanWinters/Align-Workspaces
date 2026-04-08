@@ -11,7 +11,7 @@ function ColumnHeader() {
   return (
     <div className="flex items-center px-4 py-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-wider border-b border-gray-100 select-none">
       <div className="w-8 shrink-0 mr-3" />
-      <div className="flex-1 min-w-0 mr-3">Name</div>
+      <div className="flex-1 min-w-0 mr-3 max-w-[200px]">Name</div>
       <div className="w-6 shrink-0 mr-2 text-center">Asn</div>
       <div className="w-20 shrink-0 mr-2">Stage</div>
       <div className="w-32 shrink-0 text-right">Status</div>

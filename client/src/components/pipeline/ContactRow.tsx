@@ -39,8 +39,8 @@ export default function ContactRow({
         <span className="text-xs font-medium">{getInitials(c.name)}</span>
       </div>
 
-      {/* Name + subtitle - flexible, takes remaining space */}
-      <div className="flex-1 min-w-0 mr-3">
+      {/* Name + subtitle - flexible but capped */}
+      <div className="flex-1 min-w-0 mr-3 max-w-[200px]">
         <span className="text-sm font-medium text-gray-900 truncate block">{c.name}</span>
         {subtitle && <p className="text-[11px] text-gray-400 truncate">{subtitle}</p>}
       </div>
