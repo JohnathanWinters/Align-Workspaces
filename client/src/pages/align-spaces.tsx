@@ -600,39 +600,6 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
-      <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-professional-categories">
-        <div className="max-w-5xl mx-auto text-center">
-          <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-3">Find Your Fit</span>
-          <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight mb-6">Spaces Certified for Your Profession</h2>
-          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-            {[
-              { icon: Heart, title: "Clinical Ready", color: "bg-[#f0ebe6] text-[#7a6e62] border-[#e0d6cc]" },
-              { icon: Briefcase, title: "Consultation Ready", color: "bg-[#f5ede3] text-[#946b4a] border-[#e8ddd0]" },
-              { icon: Leaf, title: "Wellness Ready", color: "bg-[#eef0eb] text-[#687362] border-[#dde2d8]" },
-              { icon: Scissors, title: "Service Ready", color: "bg-[#f2ebe8] text-[#8a6560] border-[#e5d8d4]" },
-              { icon: Building2, title: "General Professional", color: "bg-stone-50 text-stone-600 border-stone-200" },
-            ].map((cat, i) => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={i}
-                  href="/workspaces"
-                  className={`group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border ${cat.color} hover:shadow-sm transition-all`}
-                  data-testid={`category-${i}`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{cat.title}</span>
-                </Link>
-              );
-            })}
-          </div>
-          <p className="text-[11px] text-stone-400 mt-4">
-            Certifications describe the space, not the person booking it.{" "}
-            <Link href="/trust" className="text-[#c4956a] hover:underline">Learn more</Link>
-          </p>
-        </div>
-      </section>
-
       <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-why-align">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
@@ -690,6 +657,39 @@ export default function AlignSpacesPage() {
               Learn more about Trust & Safety <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
+        </div>
+      </section>
+
+      <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-professional-categories">
+        <div className="max-w-5xl mx-auto text-center">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-3">Find Your Fit</span>
+          <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight mb-6">Spaces Certified for Your Profession</h2>
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+            {[
+              { icon: Heart, title: "Clinical Ready", color: "bg-[#f0ebe6] text-[#7a6e62] border-[#e0d6cc]" },
+              { icon: Briefcase, title: "Consultation Ready", color: "bg-[#f5ede3] text-[#946b4a] border-[#e8ddd0]" },
+              { icon: Leaf, title: "Wellness Ready", color: "bg-[#eef0eb] text-[#687362] border-[#dde2d8]" },
+              { icon: Scissors, title: "Service Ready", color: "bg-[#f2ebe8] text-[#8a6560] border-[#e5d8d4]" },
+              { icon: Building2, title: "General Professional", color: "bg-stone-50 text-stone-600 border-stone-200" },
+            ].map((cat, i) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={i}
+                  href="/workspaces"
+                  className={`group inline-flex items-center gap-2 px-4 py-2.5 rounded-full border ${cat.color} hover:shadow-sm transition-all`}
+                  data-testid={`category-${i}`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{cat.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-stone-400 mt-4">
+            Certifications describe the space, not the person booking it.{" "}
+            <Link href="/trust" className="text-[#c4956a] hover:underline">Learn more</Link>
+          </p>
         </div>
       </section>
 
