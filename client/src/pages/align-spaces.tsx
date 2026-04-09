@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { setPageMeta } from "@/lib/seo";
 import { Menu, X, Camera, Star, Info, Compass, User, Building2, ChevronDown, Search, MapPin, DollarSign, ArrowRight, Palette, Check, ChevronRight, Images, Plus, Clock, CalendarDays, Repeat, Shield, Sparkles, Users, HelpCircle, Heart, Briefcase, Leaf, Scissors, BadgeCheck, FileCheck, ShieldCheck, Percent } from "lucide-react";
