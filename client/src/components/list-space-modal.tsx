@@ -450,7 +450,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             ) : (
               <MagicLinkModal
                 spaceId="list-space"
-                returnTo="/workspaces"
+                returnTo="/?list=true"
                 onClose={() => setShowListMagicLink(false)}
                 onSuccess={() => {
                   setShowListMagicLink(false);
