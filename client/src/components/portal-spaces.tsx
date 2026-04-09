@@ -344,7 +344,10 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     type: space.type || "therapy",
     description: space.description || "",
     shortDescription: space.shortDescription || "",
-    address: space.address || "",
+    address: (() => { const parts = (space.address || "").split(",").map(s => s.trim()); return parts[0] || ""; })(),
+    city: (() => { const parts = (space.address || "").split(",").map(s => s.trim()); return parts[1] || ""; })(),
+    state: (() => { const parts = (space.address || "").split(",").map(s => s.trim()); return parts[2] || "FL"; })(),
+    zipCode: (() => { const parts = (space.address || "").split(",").map(s => s.trim()); return parts[3] || ""; })(),
     neighborhood: space.neighborhood || "",
     pricePerHour: String(space.pricePerHour || ""),
     pricePerDay: String(space.pricePerDay || ""),
@@ -365,8 +368,10 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
 
   const updateMutation = useMutation({
     mutationFn: async () => {
+      const fullAddress = [formData.address, formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ");
       const payload = {
         ...formData,
+        address: fullAddress,
         pricePerHour: formData.pricePerHour ? Number(formData.pricePerHour) : undefined,
         pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
         bufferMinutes: Number(formData.bufferMinutes),
@@ -463,9 +468,23 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                   <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
                   <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Maria S." data-testid={`edit-input-host-${space.id}`} />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs text-gray-500 mb-1 block">Street Address</label>
+                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile" data-testid={`edit-input-address-${space.id}`} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Address</label>
-                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile, Coral Gables, FL 33134" data-testid={`edit-input-address-${space.id}`} />
+                  <label className="text-xs text-gray-500 mb-1 block">City</label>
+                  <Input value={formData.city} onChange={(e) => update("city", e.target.value)} placeholder="e.g. Miami" data-testid={`edit-input-city-${space.id}`} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">State</label>
+                  <Input value={formData.state} onChange={(e) => update("state", e.target.value)} placeholder="FL" maxLength={2} data-testid={`edit-input-state-${space.id}`} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Zip Code</label>
+                  <Input value={formData.zipCode} onChange={(e) => update("zipCode", e.target.value)} placeholder="e.g. 33134" data-testid={`edit-input-zip-${space.id}`} />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
@@ -785,6 +804,9 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     description: "",
     shortDescription: "",
     address: "",
+    city: "",
+    state: "FL",
+    zipCode: "",
     neighborhood: "",
     pricePerHour: "",
     pricePerDay: "",
@@ -804,8 +826,10 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const fullAddress = [formData.address, formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ");
       const payload = {
         ...formData,
+        address: fullAddress,
         bufferMinutes: Number(formData.bufferMinutes),
         recurringMinBookings: Number(formData.recurringMinBookings) || 1,
         recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
@@ -900,9 +924,23 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                   <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
                   <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-host-name" />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs text-gray-500 mb-1 block">Street Address</label>
+                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile" data-testid="input-space-address" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Address</label>
-                  <Input value={formData.address} onChange={(e) => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile, Coral Gables, FL 33134" data-testid="input-space-address" />
+                  <label className="text-xs text-gray-500 mb-1 block">City</label>
+                  <Input value={formData.city} onChange={(e) => update("city", e.target.value)} placeholder="e.g. Miami" data-testid="input-space-city" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">State</label>
+                  <Input value={formData.state} onChange={(e) => update("state", e.target.value)} placeholder="FL" maxLength={2} data-testid="input-space-state" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Zip Code</label>
+                  <Input value={formData.zipCode} onChange={(e) => update("zipCode", e.target.value)} placeholder="e.g. 33134" data-testid="input-space-zip" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>

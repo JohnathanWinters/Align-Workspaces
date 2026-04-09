@@ -363,7 +363,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const isListLastStep = listStepIndex === listSteps.length - 1;
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
-    address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
+    address: "", city: "", state: "FL", zipCode: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     amenities: "", targetProfession: "", availableHours: "", hostName: "",
     bookingTypes: "both", recurringMinBookings: "1", recurringDiscountPercent: "0", recurringDiscountAfter: "0",
   });
@@ -382,8 +382,10 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const fullAddress = [formData.address, formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ");
       const payload = {
         ...formData,
+        address: fullAddress,
         type: formData.tags[0] || formData.type,
         amenities: amenitiesTags,
         pricePerHour: Number(formData.pricePerHour),
@@ -556,10 +558,22 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                       })}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Street Address *</label>
+                    <Input value={formData.address} onChange={e => update("address", e.target.value)} placeholder="e.g. 245 Miracle Mile" data-testid="input-list-address" />
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Address *</label>
-                      <Input value={formData.address} onChange={e => update("address", e.target.value)} placeholder="Full address" data-testid="input-list-address" />
+                      <label className="text-xs text-gray-500 mb-1 block">City *</label>
+                      <Input value={formData.city} onChange={e => update("city", e.target.value)} placeholder="e.g. Miami" data-testid="input-list-city" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">State *</label>
+                      <Input value={formData.state} onChange={e => update("state", e.target.value)} placeholder="FL" maxLength={2} data-testid="input-list-state" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">Zip Code *</label>
+                      <Input value={formData.zipCode} onChange={e => update("zipCode", e.target.value)} placeholder="e.g. 33134" data-testid="input-list-zip" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Neighborhood</label>
@@ -756,7 +770,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               {isListLastStep ? (
                 <Button
                   onClick={() => createMutation.mutate()}
-                  disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
+                  disabled={!formData.name || !formData.address || !formData.city || !formData.state || !formData.zipCode || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
                   size="sm"
                   className="bg-stone-900 text-white hover:bg-stone-800"
                   data-testid="button-submit-list-space"
