@@ -362,7 +362,8 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const [postStep, setPostStep] = useState<"photos" | "arrival" | "insurance" | null>(null);
   const [tab, setTab] = useState<ListTab>("details");
   const listSteps: ListTab[] = ["details", "pricing", "schedule", "extras"];
-  const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", schedule: "Availability", extras: "Extras" };
+  const allStepLabels = ["Details", "Pricing", "Availability", "Extras", "Photos", "Arrival Guide", "Insurance"];
+  const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", schedule: "Availability", extras: "Extras", photos: "Photos", arrival: "Arrival Guide" };
   const [schedule, setSchedule] = useState<WeekSchedule>({
     mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
     wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
@@ -370,6 +371,9 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   });
   const listStepIndex = listSteps.indexOf(tab);
   const isListLastStep = listStepIndex === listSteps.length - 1;
+  const totalSteps = 7;
+  const globalStepIndex = postStep === "photos" ? 4 : postStep === "arrival" ? 5 : postStep === "insurance" ? 6 : listStepIndex;
+  const globalStepLabel = allStepLabels[globalStepIndex] || "";
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", city: "", state: "FL", zipCode: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
@@ -481,33 +485,45 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             )}
           </div>
         ) : listingSubmitted && postStep === "photos" && createdSpaceId ? (
-          <div className="p-6 space-y-4">
-            <div className="text-center mb-2">
+          <div className="space-y-4">
+            <div className="px-6 pt-4 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
+              </div>
+              <div className="flex gap-1.5">
+                {allStepLabels.map((_, i) => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+                ))}
+              </div>
+            </div>
+            <div className="px-6 text-center mb-2">
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <Camera className="w-7 h-7 text-[#c4956a]" />
               </div>
               <h3 className="font-serif text-lg font-semibold mb-1">Add Photos</h3>
               <p className="text-xs text-stone-400">Upload photos of your space so renters know what to expect. You can always add more later from your portal.</p>
             </div>
-            <div className="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center">
-              <label className="cursor-pointer block">
-                <input type="file" accept="image/*" multiple className="hidden" onChange={async (e) => {
-                  const files = e.target.files;
-                  if (!files || files.length === 0) return;
-                  for (const file of Array.from(files)) {
-                    const fd = new FormData();
-                    fd.append("photo", file);
-                    await fetch(`/api/spaces/${createdSpaceId}/photos`, { method: "POST", body: fd });
-                  }
-                  toast({ title: `${files.length} photo${files.length > 1 ? "s" : ""} uploaded` });
-                  queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
-                }} />
-                <Upload className="w-8 h-8 text-stone-300 mx-auto mb-2" />
-                <p className="text-sm text-stone-500 font-medium">Click to upload photos</p>
-                <p className="text-xs text-stone-400 mt-1">JPG, PNG, or WebP</p>
-              </label>
+            <div className="px-6">
+              <div className="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center">
+                <label className="cursor-pointer block">
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={async (e) => {
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+                    for (const file of Array.from(files)) {
+                      const fd = new FormData();
+                      fd.append("photo", file);
+                      await fetch(`/api/spaces/${createdSpaceId}/photos`, { method: "POST", body: fd });
+                    }
+                    toast({ title: `${files.length} photo${files.length > 1 ? "s" : ""} uploaded` });
+                    queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+                  }} />
+                  <Upload className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+                  <p className="text-sm text-stone-500 font-medium">Click to upload photos</p>
+                  <p className="text-xs text-stone-400 mt-1">JPG, PNG, or WebP</p>
+                </label>
+              </div>
             </div>
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 px-6 pb-4 pt-2">
               <button onClick={() => setPostStep("arrival")} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
                 Skip
               </button>
@@ -517,16 +533,28 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
         ) : listingSubmitted && postStep === "arrival" && createdSpaceId ? (
-          <div className="p-6 space-y-4">
-            <div className="text-center mb-2">
+          <div className="space-y-4">
+            <div className="px-6 pt-4 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
+              </div>
+              <div className="flex gap-1.5">
+                {allStepLabels.map((_, i) => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+                ))}
+              </div>
+            </div>
+            <div className="px-6 text-center mb-2">
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <MapPin className="w-7 h-7 text-[#c4956a]" />
               </div>
               <h3 className="font-serif text-lg font-semibold mb-1">Arrival Guide</h3>
               <p className="text-xs text-stone-400">Help your renters find your space. Add parking info, door codes, WiFi, and step-by-step directions with photos.</p>
             </div>
-            <ArrivalGuideEditor spaceId={createdSpaceId} />
-            <div className="flex items-center gap-2 pt-2">
+            <div className="px-6">
+              <ArrivalGuideEditor spaceId={createdSpaceId} />
+            </div>
+            <div className="flex items-center gap-2 px-6 pb-4 pt-2">
               <button onClick={() => { if (insuranceStatus?.hasInsurance) { onClose(); } else { setPostStep("insurance"); } }} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
                 Skip
               </button>
@@ -537,6 +565,16 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
           </div>
         ) : listingSubmitted && postStep === "insurance" && !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
           <div>
+            <div className="px-6 pt-4 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — Insurance</span>
+              </div>
+              <div className="flex gap-1.5">
+                {allStepLabels.map((_, i) => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+                ))}
+              </div>
+            </div>
             <InsuranceUploadStep
               onComplete={() => { setInsuranceBypassed(true); onClose(); }}
               onGetCovered={() => {
@@ -577,12 +615,12 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 </div>
               )}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-stone-600">Step {listStepIndex + 1} of {listSteps.length} — {listStepLabels[tab]}</span>
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
                 <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
               <div className="flex gap-1.5">
-                {listSteps.map((s, i) => (
-                  <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${i <= listStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+                {allStepLabels.map((_, i) => (
+                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
                 ))}
               </div>
             </div>
