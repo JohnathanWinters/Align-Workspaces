@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { AmenityInput } from "./amenity-input";
+import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
 
 function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess }: { spaceId: string; returnTo?: string; onClose: () => void; onSuccess: () => void }) {
   const [magicEmail, setMagicEmail] = useState("");
@@ -333,7 +334,7 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
   );
 }
 
-type ListTab = "details" | "pricing" | "extras";
+type ListTab = "details" | "pricing" | "schedule" | "extras";
 
 function getListCompletionScore(formData: Record<string, any>, amenitiesTags: string[]) {
   const checks = [
@@ -357,8 +358,13 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const [insuranceBypassed, setInsuranceBypassed] = useState(false);
   const [listingSubmitted, setListingSubmitted] = useState(false);
   const [tab, setTab] = useState<ListTab>("details");
-  const listSteps: ListTab[] = ["details", "pricing", "extras"];
-  const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", extras: "Extras" };
+  const listSteps: ListTab[] = ["details", "pricing", "schedule", "extras"];
+  const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", schedule: "Availability", extras: "Extras" };
+  const [schedule, setSchedule] = useState<WeekSchedule>({
+    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
+    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
+    fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+  });
   const listStepIndex = listSteps.indexOf(tab);
   const isListLastStep = listStepIndex === listSteps.length - 1;
   const [formData, setFormData] = useState({
@@ -394,6 +400,8 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
         recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
         recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
         bookingTypes: formData.bookingTypes === "none" ? "both" : formData.bookingTypes,
+        availabilitySchedule: JSON.stringify(schedule),
+        availableHours: scheduleToDisplayText(schedule),
       };
       await apiRequest("POST", "/api/spaces", payload);
     },
@@ -736,21 +744,23 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 </div>
               )}
 
+              {tab === "schedule" && (
+                <div className="space-y-4">
+                  <p className="text-xs text-stone-400">Set the days and hours your space is available for bookings. Click a day to toggle it on or off.</p>
+                  <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
+                </div>
+              )}
+
               {tab === "extras" && (
                 <div className="space-y-4">
+                  <p className="text-xs text-stone-400">This step is optional — you can skip it and add these later.</p>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
                     <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
-                      <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists" data-testid="input-list-target" />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Available Hours</label>
-                      <Input value={formData.availableHours} onChange={e => update("availableHours", e.target.value)} placeholder="Mon-Fri 9am-5pm" data-testid="input-list-hours" />
-                    </div>
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
+                    <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists, Counselors" data-testid="input-list-target" />
                   </div>
                 </div>
               )}
@@ -771,20 +781,32 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 const stepValid: Record<string, boolean> = {
                   details: !!(formData.name && formData.address && formData.city && formData.state && formData.zipCode && formData.description && formData.hostName),
                   pricing: !!(formData.bookingTypes !== "none" && formData.pricePerHour),
+                  schedule: true,
                   extras: true,
                 };
                 const canContinue = stepValid[tab] ?? true;
                 return isListLastStep ? (
-                  <Button
-                    onClick={() => createMutation.mutate()}
-                    disabled={!canContinue || createMutation.isPending}
-                    size="sm"
-                    className="bg-stone-900 text-white hover:bg-stone-800"
-                    data-testid="button-submit-list-space"
-                  >
-                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-                    Continue
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => createMutation.mutate()}
+                      disabled={createMutation.isPending}
+                      className="text-stone-500"
+                    >
+                      Skip & Submit
+                    </Button>
+                    <Button
+                      onClick={() => createMutation.mutate()}
+                      disabled={createMutation.isPending}
+                      size="sm"
+                      className="bg-stone-900 text-white hover:bg-stone-800"
+                      data-testid="button-submit-list-space"
+                    >
+                      {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                      Continue
+                    </Button>
+                  </div>
                 ) : (
                   <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!canContinue} onClick={() => setTab(listSteps[listStepIndex + 1])}>
                     Continue
