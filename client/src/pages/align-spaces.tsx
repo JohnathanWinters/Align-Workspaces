@@ -804,7 +804,7 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
-      {(featuredPros || []).length > 0 && (
+      {false && (featuredPros || []).length > 0 && (
         <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-featured-pros">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-end justify-between mb-8 sm:mb-10">
