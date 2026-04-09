@@ -436,7 +436,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               </div>
               <h3 className="font-serif text-lg font-semibold mb-2">Get Started</h3>
               <p className="text-sm text-foreground/50 max-w-sm mx-auto">
-                Enter your email to get started. Your listing will be reviewed by our team.
+                Enter your email to sign in or create an account.
               </p>
             </div>
             {!showListMagicLink ? (
