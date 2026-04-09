@@ -533,7 +533,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     </div>
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">Your Name / Business *</label>
-                      <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-list-host" />
+                      <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Maria S." data-testid="input-list-host" />
                     </div>
                   </div>
                   <div>

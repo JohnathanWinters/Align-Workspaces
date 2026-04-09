@@ -932,7 +932,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Host Name</label>
-                  <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Dr. Maria Santos" data-testid="input-host-name" />
+                  <Input value={formData.hostName} onChange={(e) => update("hostName", e.target.value)} placeholder="e.g. Maria S." data-testid="input-host-name" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs text-gray-500 mb-1 block">Street Address</label>
