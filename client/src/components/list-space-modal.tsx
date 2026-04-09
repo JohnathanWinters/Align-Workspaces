@@ -84,9 +84,9 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
                 <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                   <Mail className="w-7 h-7 text-[#c4956a]" />
                 </div>
-                <h3 className="font-serif text-lg font-semibold mb-1">Sign In</h3>
+                <h3 className="font-serif text-lg font-semibold mb-1">Get Started</h3>
                 <p className="text-sm text-foreground/50">
-                  Enter your email and we'll send you a sign-in link.
+                  Enter your email to sign in or create an account.
                 </p>
               </div>
               <form onSubmit={(e) => {
@@ -434,7 +434,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <Mail className="w-7 h-7 text-[#c4956a]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-2">Sign In</h3>
+              <h3 className="font-serif text-lg font-semibold mb-2">Get Started</h3>
               <p className="text-sm text-foreground/50 max-w-sm mx-auto">
                 Enter your email to get started. Your listing will be reviewed by our team.
               </p>
@@ -445,7 +445,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 className="w-full bg-foreground text-background hover:opacity-90 py-3"
                 data-testid="button-auth-list-space"
               >
-                <Mail className="w-4 h-4 mr-2" /> Sign In with Email
+                <Mail className="w-4 h-4 mr-2" /> Continue with Email
               </Button>
             ) : (
               <MagicLinkModal

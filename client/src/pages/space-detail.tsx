@@ -353,8 +353,8 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
           {magicStep === "email" && (
             <div className="space-y-4">
               <div className="text-center mb-2">
-                <h3 className="font-serif text-lg font-semibold">Sign In</h3>
-                <p className="text-sm text-stone-500 mt-1">Enter your email and we'll send you a sign-in link</p>
+                <h3 className="font-serif text-lg font-semibold">Get Started</h3>
+                <p className="text-sm text-stone-500 mt-1">Enter your email to sign in or create an account</p>
               </div>
               {magicError && <p className="text-xs text-red-500 text-center">{magicError}</p>}
               <form onSubmit={e => { e.preventDefault(); sendMagicLink(magicEmail); }} className="space-y-3">

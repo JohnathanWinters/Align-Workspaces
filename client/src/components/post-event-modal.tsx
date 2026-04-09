@@ -354,14 +354,14 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
               <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
                 <Calendar className="w-7 h-7 text-[#c4956a]" />
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-2">Sign In</h3>
+              <h3 className="font-serif text-lg font-semibold mb-2">Get Started</h3>
               <p className="text-sm text-stone-500 max-w-sm mx-auto">
                 Enter your email to get started. Your event will be reviewed by our team.
               </p>
             </div>
             {!showAuth ? (
               <Button onClick={() => setShowAuth(true)} className="w-full bg-stone-900 text-white hover:bg-stone-800 py-3">
-                <Mail className="w-4 h-4 mr-2" /> Sign In with Email
+                <Mail className="w-4 h-4 mr-2" /> Continue with Email
               </Button>
             ) : authStep === "sent" ? (
               <div className="text-center py-4">
