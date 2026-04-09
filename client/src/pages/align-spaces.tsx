@@ -978,7 +978,7 @@ export default function AlignSpacesPage() {
 
       {/* ─── Community Events ─── */}
       {communityEvents && communityEvents.length > 0 && (
-        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-community-events">
+        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-[#faf8f5]" data-testid="section-community-events">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8">
               <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
