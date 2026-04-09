@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles, pipelineActivities, adminConversations, adminMessages } from "@shared/schema";
+import { insertLeadSchema, insertPortfolioPhotoSchema, insertShootSchema, insertFeaturedProfessionalSchema, insertNominationSchema, insertNewsletterSubscriberSchema, shoots, pageViews, analyticsEvents, spaceBookings, spaceMessages, referralLinks, arrivalGuides, arrivalGuideSteps, teamMembers, invoicePayments, hostInsuranceRecords, insertHostInsuranceSchema, spaceCertifications, bookingAgreements, damageReports, guestProfessionalProfiles, pipelineActivities, adminConversations, adminMessages } from "@shared/schema";
 import { db } from "./db";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -2759,6 +2759,29 @@ export async function registerRoutes(
           await storage.updateSpace(existing.id, { imageUrls: s.imageUrls, amenities: s.amenities });
         }
       }
+      // Seed sample insurance records for spaces that have a userId
+      for (const space of results) {
+        if (space.userId) {
+          const existingInsurance = await db.select().from(hostInsuranceRecords).where(eq(hostInsuranceRecords.userId, space.userId));
+          if (existingInsurance.length === 0) {
+            const expDate = new Date();
+            expDate.setFullYear(expDate.getFullYear() + 1);
+            await db.insert(hostInsuranceRecords).values({
+              userId: space.userId,
+              carrierName: "Sample Insurance Co.",
+              policyNumber: "SAMPLE-" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+              coverageType: "general_liability",
+              coverageAmount: 1000000,
+              policyExpirationDate: expDate.toISOString().split("T")[0],
+              documentUrl: "/images/logo-align-dark.png",
+              documentFilename: "sample-declarations.pdf",
+              status: "active",
+              verifiedAt: new Date(),
+            });
+          }
+        }
+      }
+
       res.json({ seeded: results.length, total: sampleSpaces.length });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -7239,6 +7262,24 @@ ${featuredSection}
     }
   });
 
+  // Delete seed/test booking messages
+  app.delete("/api/admin/seed-messages", isAdmin, async (_req, res) => {
+    try {
+      const testBookingIds = await db.select({ id: spaceBookings.id }).from(spaceBookings)
+        .where(sql`${spaceBookings.id} LIKE 'test-%'`);
+      let deleted = 0;
+      for (const b of testBookingIds) {
+        const result = await db.delete(spaceMessages).where(eq(spaceMessages.bookingId, b.id));
+        deleted += (result as any).rowCount || 0;
+      }
+      // Also delete the test bookings themselves
+      const bookingResult = await db.delete(spaceBookings).where(sql`${spaceBookings.id} LIKE 'test-%'`);
+      res.json({ deletedMessages: deleted, deletedBookings: (bookingResult as any).rowCount || 0 });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // ══════════════════════════════════════════════════════════════════
   // TRUST & SAFETY FRAMEWORK
   // ══════════════════════════════════════════════════════════════════
@@ -7307,6 +7348,18 @@ ${featuredSection}
       res.json({ hasInsurance: status !== "expired", status, daysUntilExpiry, expirationDate: record.policyExpirationDate, carrierName: record.carrierName, coverageAmount: record.coverageAmount });
     } catch (e) {
       res.status(500).json({ error: "Failed to check insurance status" });
+    }
+  });
+
+  app.get("/api/admin/insurance/:userId", isAdminOrEmployee, async (req, res) => {
+    try {
+      const [record] = await db.select().from(hostInsuranceRecords)
+        .where(eq(hostInsuranceRecords.userId, req.params.userId))
+        .orderBy(desc(hostInsuranceRecords.createdAt))
+        .limit(1);
+      res.json({ hasInsurance: !!record, record: record || null });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch insurance" });
     }
   });
 

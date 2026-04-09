@@ -3081,6 +3081,23 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                                 Geocode
                               </Button>
                             )}
+                            <Button size="sm" variant="outline" onClick={async () => {
+                              if (!space.userId) { toast({ title: "No host linked", variant: "destructive" }); return; }
+                              try {
+                                const res = await fetch(`/api/admin/insurance/${space.userId}`, { headers: { Authorization: `Bearer ${token}` } });
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  if (data.hasInsurance) {
+                                    toast({ title: `Insurance: ${data.record.carrierName}`, description: `Policy: ${data.record.policyNumber} · $${(data.record.coverageAmount || 0).toLocaleString()} · Expires: ${data.record.policyExpirationDate} · Status: ${data.record.status}` });
+                                  } else {
+                                    toast({ title: "No insurance on file", description: "This host has not uploaded insurance.", variant: "destructive" });
+                                  }
+                                }
+                              } catch { toast({ title: "Failed to check insurance", variant: "destructive" }); }
+                            }} className="border-amber-200 text-amber-600 hover:bg-amber-50" data-testid={`button-insurance-space-${space.id}`}>
+                              <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+                              Insurance
+                            </Button>
                             <Button size="sm" variant="outline" onClick={() => handleDeleteSpace(space.id, space.name)} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-delete-space-${space.id}`}>
                               <Trash2 className="w-3.5 h-3.5 mr-1" />
                               Delete
@@ -8508,7 +8525,7 @@ function AdminDashboard({ token }: { token: string }) {
           <button
             onClick={() => setDebugOpen(!debugOpen)}
             data-testid="button-toggle-debug"
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs transition-colors ${debugOpen ? "bg-amber-50 text-amber-700 border border-amber-200" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"}`}
           >
             <Bug className="w-3.5 h-3.5" />
             <span className="font-medium">Debug Tools</span>
@@ -8632,6 +8649,19 @@ function AdminDashboard({ token }: { token: string }) {
                       >
                         <RefreshCw className="w-3 h-3" />
                         Re-seed Test Client
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await adminFetch("/api/admin/seed-messages", token, { method: "DELETE" });
+                            const data = await res.json();
+                            toast({ title: `Cleared ${data.deletedMessages} seed messages, ${data.deletedBookings} test bookings` });
+                          } catch { toast({ title: "Failed to clear seed messages", variant: "destructive" }); }
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Clear Seed Messages
                       </button>
                       <button
                         onClick={async () => {
