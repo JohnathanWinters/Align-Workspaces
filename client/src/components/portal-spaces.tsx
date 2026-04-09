@@ -395,12 +395,10 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const tabs: { id: EditTab; label: string; icon: React.ReactNode }[] = [
-    { id: "details", label: "Details", icon: <Building2 className="w-3.5 h-3.5" /> },
-    { id: "pricing", label: "Pricing", icon: <DollarSign className="w-3.5 h-3.5" /> },
-    { id: "schedule", label: "Schedule", icon: <CalendarDays className="w-3.5 h-3.5" /> },
-    { id: "extras", label: "Extras", icon: <Star className="w-3.5 h-3.5" /> },
-  ];
+  const steps: EditTab[] = ["details", "pricing", "schedule", "extras"];
+  const stepLabels: Record<EditTab, string> = { details: "Details", pricing: "Pricing", schedule: "Schedule", extras: "Extras" };
+  const stepIndex = steps.indexOf(tab);
+  const isLastStep = stepIndex === steps.length - 1;
 
   const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
     ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
@@ -433,45 +431,17 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
           </button>
         </div>
 
-        {/* Completion Score */}
+        {/* Step indicator */}
         <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-stone-600">Listing completeness</span>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-stone-600">Step {stepIndex + 1} of {steps.length} — {stepLabels[tab]}</span>
             <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
           </div>
-          <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 70 ? "bg-amber-500" : "bg-stone-400"}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${score.percent}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            />
+          <div className="flex gap-1.5">
+            {steps.map((s, i) => (
+              <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${i <= stepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+            ))}
           </div>
-          {score.percent < 100 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {score.checks.filter((c) => !c.done).map((c) => (
-                <span key={c.label} className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 text-stone-500">{c.label}</span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-stone-100 px-6 gap-1 flex-shrink-0">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all ${
-                tab === t.id
-                  ? "border-[#c4956a] text-[#c4956a]"
-                  : "border-transparent text-stone-400 hover:text-stone-600"
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
         </div>
 
         {/* Tab Content */}
@@ -770,19 +740,31 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
-          <Button size="sm" variant="outline" onClick={onClose} data-testid={`button-cancel-edit-space-btn-${space.id}`}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => updateMutation.mutate()}
-            disabled={updateMutation.isPending || formData.bookingTypes === "none"}
-            size="sm"
-            className="bg-stone-900 text-white hover:bg-stone-800"
-            data-testid={`button-save-edit-space-${space.id}`}
-          >
-            {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-            Save Changes
-          </Button>
+          {stepIndex > 0 ? (
+            <Button size="sm" variant="outline" onClick={() => setTab(steps[stepIndex - 1])}>
+              Back
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={onClose} data-testid={`button-cancel-edit-space-btn-${space.id}`}>
+              Cancel
+            </Button>
+          )}
+          {isLastStep ? (
+            <Button
+              onClick={() => updateMutation.mutate()}
+              disabled={updateMutation.isPending || formData.bookingTypes === "none"}
+              size="sm"
+              className="bg-stone-900 text-white hover:bg-stone-800"
+              data-testid={`button-save-edit-space-${space.id}`}
+            >
+              {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+              Save Changes
+            </Button>
+          ) : (
+            <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" onClick={() => setTab(steps[stepIndex + 1])}>
+              Continue
+            </Button>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -850,12 +832,10 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const tabs: { id: EditTab; label: string; icon: React.ReactNode }[] = [
-    { id: "details", label: "Details", icon: <Building2 className="w-3.5 h-3.5" /> },
-    { id: "pricing", label: "Pricing", icon: <DollarSign className="w-3.5 h-3.5" /> },
-    { id: "schedule", label: "Schedule", icon: <CalendarDays className="w-3.5 h-3.5" /> },
-    { id: "extras", label: "Extras", icon: <Star className="w-3.5 h-3.5" /> },
-  ];
+  const steps: EditTab[] = ["details", "pricing", "schedule", "extras"];
+  const stepLabels: Record<EditTab, string> = { details: "Details", pricing: "Pricing", schedule: "Schedule", extras: "Extras" };
+  const stepIndex = steps.indexOf(tab);
+  const isLastStep = stepIndex === steps.length - 1;
 
   const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
     ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
@@ -888,48 +868,20 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Completion Score */}
+        {/* Step indicator */}
         <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-stone-600">Listing completeness</span>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-stone-600">Step {stepIndex + 1} of {steps.length} — {stepLabels[tab]}</span>
             <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
           </div>
-          <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 70 ? "bg-amber-500" : "bg-stone-400"}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${score.percent}%` }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            />
+          <div className="flex gap-1.5">
+            {steps.map((s, i) => (
+              <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${i <= stepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+            ))}
           </div>
-          {score.percent < 100 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {score.checks.filter((c) => !c.done).map((c) => (
-                <span key={c.label} className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 text-stone-500">{c.label}</span>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-stone-100 px-6 gap-1 flex-shrink-0">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all ${
-                tab === t.id
-                  ? "border-[#c4956a] text-[#c4956a]"
-                  : "border-transparent text-stone-400 hover:text-stone-600"
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
+        {/* Step Content */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {tab === "details" && (
             <div className="space-y-4">
@@ -1201,19 +1153,31 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
 
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
-          <Button size="sm" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => createMutation.mutate()}
-            disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending || formData.bookingTypes === "none"}
-            size="sm"
-            className="bg-stone-900 text-white hover:bg-stone-800"
-            data-testid="button-submit-space"
-          >
-            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-            Submit for Approval
-          </Button>
+          {stepIndex > 0 ? (
+            <Button size="sm" variant="outline" onClick={() => setTab(steps[stepIndex - 1])}>
+              Back
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          )}
+          {isLastStep ? (
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || createMutation.isPending || formData.bookingTypes === "none"}
+              size="sm"
+              className="bg-stone-900 text-white hover:bg-stone-800"
+              data-testid="button-submit-space"
+            >
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+              Submit for Approval
+            </Button>
+          ) : (
+            <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" onClick={() => setTab(steps[stepIndex + 1])}>
+              Continue
+            </Button>
+          )}
         </div>
       </motion.div>
     </motion.div>

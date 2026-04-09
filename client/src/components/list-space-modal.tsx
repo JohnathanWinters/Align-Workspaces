@@ -357,6 +357,10 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const [insuranceBypassed, setInsuranceBypassed] = useState(false);
   const [listingSubmitted, setListingSubmitted] = useState(false);
   const [tab, setTab] = useState<ListTab>("details");
+  const listSteps: ListTab[] = ["details", "pricing", "extras"];
+  const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", extras: "Extras" };
+  const listStepIndex = listSteps.indexOf(tab);
+  const isListLastStep = listStepIndex === listSteps.length - 1;
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
@@ -497,7 +501,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <>
-            {/* Completion Score */}
+            {/* Step indicator */}
             <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50 flex-shrink-0">
               {insuranceStatus?.hasInsurance && (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-100 mb-3">
@@ -505,47 +509,15 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                   <span className="text-xs font-medium text-emerald-700">Insurance verified</span>
                 </div>
               )}
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-stone-600">Listing completeness</span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-stone-600">Step {listStepIndex + 1} of {listSteps.length} — {listStepLabels[tab]}</span>
                 <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
-              <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden">
-                <motion.div
-                  className={`h-full rounded-full ${score.percent === 100 ? "bg-emerald-500" : score.percent >= 70 ? "bg-amber-500" : "bg-stone-400"}`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${score.percent}%` }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                />
+              <div className="flex gap-1.5">
+                {listSteps.map((s, i) => (
+                  <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${i <= listStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+                ))}
               </div>
-              {score.percent < 100 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {score.checks.filter(c => !c.done).map(c => (
-                    <span key={c.label} className="text-[10px] px-2 py-0.5 rounded-full bg-stone-200 text-stone-500">{c.label}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b border-stone-100 px-6 gap-1 flex-shrink-0">
-              {([
-                { id: "details" as const, label: "Details", icon: Building2 },
-                { id: "pricing" as const, label: "Pricing", icon: DollarSign },
-                { id: "extras" as const, label: "Extras", icon: Star },
-              ]).map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all ${
-                    tab === t.id
-                      ? "border-[#c4956a] text-[#c4956a]"
-                      : "border-transparent text-stone-400 hover:text-stone-600"
-                  }`}
-                >
-                  <t.icon className="w-3.5 h-3.5" />
-                  {t.label}
-                </button>
-              ))}
             </div>
 
             {/* Tab Content */}
@@ -772,19 +744,31 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
             {/* Footer */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-stone-100 bg-stone-50/50 flex-shrink-0">
-              <Button size="sm" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => createMutation.mutate()}
-                disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
-                size="sm"
-                className="bg-stone-900 text-white hover:bg-stone-800"
-                data-testid="button-submit-list-space"
-              >
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-                Continue
-              </Button>
+              {listStepIndex > 0 ? (
+                <Button size="sm" variant="outline" onClick={() => setTab(listSteps[listStepIndex - 1])}>
+                  Back
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+              )}
+              {isListLastStep ? (
+                <Button
+                  onClick={() => createMutation.mutate()}
+                  disabled={!formData.name || !formData.address || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
+                  size="sm"
+                  className="bg-stone-900 text-white hover:bg-stone-800"
+                  data-testid="button-submit-list-space"
+                >
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                  Continue
+                </Button>
+              ) : (
+                <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" onClick={() => setTab(listSteps[listStepIndex + 1])}>
+                  Continue
+                </Button>
+              )}
             </div>
           </>
         )}
