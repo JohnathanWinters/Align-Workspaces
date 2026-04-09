@@ -342,9 +342,20 @@ export default function AlignSpacesPage() {
     queryKey: ["/api/spaces"],
   });
 
-  const { data: featuredPros } = useQuery<FeaturedPro[]>({
+  const { data: featuredProsRaw } = useQuery<FeaturedPro[]>({
     queryKey: ["/api/featured"],
   });
+  const featuredPros = useMemo(() => {
+    if (!featuredProsRaw) return undefined;
+    const order = ["sabrina", "miriam", "cecilia"];
+    return [...featuredProsRaw].sort((a, b) => {
+      const aIdx = order.findIndex(n => a.name.toLowerCase().includes(n));
+      const bIdx = order.findIndex(n => b.name.toLowerCase().includes(n));
+      const aPri = aIdx >= 0 ? aIdx : 999;
+      const bPri = bIdx >= 0 ? bIdx : 999;
+      return aPri - bPri;
+    });
+  }, [featuredProsRaw]);
 
   const { data: communityEvents } = useQuery<{
     id: string; title: string; description: string; category: string;
