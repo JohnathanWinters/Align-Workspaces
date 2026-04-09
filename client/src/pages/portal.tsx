@@ -2656,7 +2656,7 @@ function PortalLogin() {
         )}
 
         {step === "name" && (
-          <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim()) sendMagicLink(email.trim(), firstName.trim(), lastName.trim()); }} className="space-y-3">
+          <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim() && lastName.trim()) sendMagicLink(email.trim(), firstName.trim(), lastName.trim()); }} className="space-y-3">
             <p className="text-white/60 text-sm mb-2">Welcome! What's your name?</p>
             <input
               type="text"
@@ -2673,9 +2673,10 @@ function PortalLogin() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
+              required
             />
             {error && <p className="text-xs text-red-400">{error}</p>}
-            <Button type="submit" disabled={loading || !firstName.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
+            <Button type="submit" disabled={loading || !firstName.trim() || !lastName.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
               {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : "Continue"}
             </Button>
           </form>

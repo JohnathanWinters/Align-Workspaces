@@ -135,6 +135,7 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
   const [showAuth, setShowAuth] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authName, setAuthName] = useState("");
+  const [authLastName, setAuthLastName] = useState("");
   const [authStep, setAuthStep] = useState<"email" | "name" | "sent">("email");
   const [authLoading, setAuthLoading] = useState(false);
   const [submittedEvent, setSubmittedEvent] = useState<{ id: string; title: string; eventDate: string; eventTime: string; location: string; hostName: string; category: string } | null>(null);
@@ -201,13 +202,13 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
         await fetch("/api/auth/magic-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: authEmail, firstName: authName }),
+          body: JSON.stringify({ email: authEmail, firstName: authName, lastName: authLastName }),
         });
       }
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: authEmail, firstName: authName, returnTo: "/" }),
+        body: JSON.stringify({ email: authEmail, firstName: authName, lastName: authLastName, returnTo: "/" }),
       });
       const data = await res.json();
       if (data.needsName) setAuthStep("name");
@@ -371,9 +372,10 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
               </div>
             ) : authStep === "name" ? (
               <div className="space-y-3">
-                <p className="text-sm text-stone-600">Welcome! What's your first name?</p>
-                <Input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="First name" className="h-10" />
-                <Button onClick={sendMagicLink} disabled={!authName.trim() || authLoading} className="w-full bg-stone-900 text-white">
+                <p className="text-sm text-stone-600">Welcome! What's your name?</p>
+                <Input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="First name" className="h-10" autoFocus />
+                <Input value={authLastName} onChange={e => setAuthLastName(e.target.value)} placeholder="Last name" className="h-10" />
+                <Button onClick={sendMagicLink} disabled={!authName.trim() || !authLastName.trim() || authLoading} className="w-full bg-stone-900 text-white">
                   {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
                 </Button>
               </div>

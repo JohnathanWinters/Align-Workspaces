@@ -298,11 +298,12 @@ function PhotoCarousel({ images, spaceName, onClose, initialIndex = 0 }: { image
 function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { spaceSlug: string; onClose: () => void; onSuccess: () => void; intent?: "book" | "contact" }) {
   const [magicEmail, setMagicEmail] = useState("");
   const [magicName, setMagicName] = useState("");
+  const [magicLastName, setMagicLastName] = useState("");
   const [magicStep, setMagicStep] = useState<"email" | "name" | "sent">("email");
   const [magicError, setMagicError] = useState("");
   const [magicLoading, setMagicLoading] = useState(false);
 
-  const sendMagicLink = async (email: string, firstName?: string) => {
+  const sendMagicLink = async (email: string, firstName?: string, lastName?: string) => {
     setMagicLoading(true);
     setMagicError("");
     try {
@@ -311,13 +312,13 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
         await fetch("/api/auth/magic-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, firstName }),
+          body: JSON.stringify({ email, firstName, lastName }),
         });
       }
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName, returnTo }),
+        body: JSON.stringify({ email, firstName, lastName, returnTo }),
       });
       const data = await res.json();
       if (data.needsName) {
@@ -368,11 +369,12 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
             <div className="space-y-4">
               <div className="text-center mb-2">
                 <h3 className="font-serif text-lg font-semibold">Welcome!</h3>
-                <p className="text-sm text-stone-500 mt-1">What's your first name?</p>
+                <p className="text-sm text-stone-500 mt-1">What's your name?</p>
               </div>
-              <form onSubmit={e => { e.preventDefault(); sendMagicLink(magicEmail, magicName); }} className="space-y-3">
+              <form onSubmit={e => { e.preventDefault(); sendMagicLink(magicEmail, magicName, magicLastName); }} className="space-y-3">
                 <Input placeholder="First name" value={magicName} onChange={e => setMagicName(e.target.value)} required autoFocus data-testid="input-magic-name" />
-                <button type="submit" disabled={magicLoading || !magicName} className="w-full py-2.5 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 disabled:opacity-50 transition-colors" data-testid="button-magic-name-submit">
+                <Input placeholder="Last name" value={magicLastName} onChange={e => setMagicLastName(e.target.value)} required data-testid="input-magic-lastname" />
+                <button type="submit" disabled={magicLoading || !magicName || !magicLastName} className="w-full py-2.5 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 disabled:opacity-50 transition-colors" data-testid="button-magic-name-submit">
                   {magicLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Send Link"}
                 </button>
               </form>

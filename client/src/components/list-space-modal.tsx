@@ -13,11 +13,12 @@ import { AmenityInput } from "./amenity-input";
 function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess }: { spaceId: string; returnTo?: string; onClose: () => void; onSuccess: () => void }) {
   const [magicEmail, setMagicEmail] = useState("");
   const [magicName, setMagicName] = useState("");
+  const [magicLastName, setMagicLastName] = useState("");
   const [magicStep, setMagicStep] = useState<"email" | "name" | "sent">("email");
   const [magicError, setMagicError] = useState("");
   const [magicLoading, setMagicLoading] = useState(false);
 
-  const sendMagicLink = async (email: string, firstName?: string) => {
+  const sendMagicLink = async (email: string, firstName?: string, lastName?: string) => {
     setMagicLoading(true);
     setMagicError("");
     try {
@@ -27,14 +28,14 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
         await fetch("/api/auth/magic-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, firstName }),
+          body: JSON.stringify({ email, firstName, lastName }),
         });
       }
 
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, firstName, returnTo }),
+        body: JSON.stringify({ email, firstName, lastName, returnTo }),
       });
       const data = await res.json();
 
@@ -126,12 +127,12 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
                 </div>
                 <h3 className="font-serif text-lg font-semibold mb-1">Welcome!</h3>
                 <p className="text-sm text-foreground/50">
-                  Looks like you're new here. What's your first name?
+                  Looks like you're new here. What's your name?
                 </p>
               </div>
               <form onSubmit={(e) => {
                 e.preventDefault();
-                if (magicName.trim()) sendMagicLink(magicEmail.trim(), magicName.trim());
+                if (magicName.trim() && magicLastName.trim()) sendMagicLink(magicEmail.trim(), magicName.trim(), magicLastName.trim());
               }}>
                 <div className="space-y-3">
                   <input
@@ -144,10 +145,19 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
                     required
                     data-testid="input-magic-name"
                   />
+                  <input
+                    type="text"
+                    placeholder="Last name"
+                    value={magicLastName}
+                    onChange={e => setMagicLastName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:border-[#c4956a] focus:ring-1 focus:ring-[#c4956a]/30 outline-none"
+                    required
+                    data-testid="input-magic-lastname"
+                  />
                   {magicError && <p className="text-xs text-red-500">{magicError}</p>}
                   <Button
                     type="submit"
-                    disabled={magicLoading || !magicName.trim()}
+                    disabled={magicLoading || !magicName.trim() || !magicLastName.trim()}
                     className="w-full bg-foreground text-background hover:opacity-90 py-3"
                     data-testid="button-send-magic-name"
                   >
