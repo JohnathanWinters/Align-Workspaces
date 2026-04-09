@@ -780,9 +780,19 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               Save Changes
             </Button>
           ) : (
-            <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" onClick={() => setTab(steps[stepIndex + 1])}>
-              Continue
-            </Button>
+            (() => {
+              const stepValid: Record<string, boolean> = {
+                details: !!(formData.name && formData.address && formData.city && formData.state && formData.zipCode && formData.description && formData.hostName),
+                pricing: !!(formData.bookingTypes !== "none" && formData.pricePerHour),
+                schedule: true,
+                extras: true,
+              };
+              return (
+                <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!stepValid[tab]} onClick={() => setTab(steps[stepIndex + 1])}>
+                  Continue
+                </Button>
+              );
+            })()
           )}
         </div>
       </motion.div>
@@ -1212,9 +1222,19 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
               Submit for Approval
             </Button>
           ) : (
-            <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" onClick={() => setTab(steps[stepIndex + 1])}>
-              Continue
-            </Button>
+            (() => {
+              const stepValid: Record<string, boolean> = {
+                details: !!(formData.name && formData.address && formData.city && formData.state && formData.zipCode && formData.description && formData.hostName),
+                pricing: !!(formData.bookingTypes !== "none" && formData.pricePerHour),
+                schedule: true,
+                extras: true,
+              };
+              return (
+                <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!stepValid[tab]} onClick={() => setTab(steps[stepIndex + 1])}>
+                  Continue
+                </Button>
+              );
+            })()
           )}
         </div>
       </motion.div>

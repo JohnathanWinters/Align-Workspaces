@@ -767,22 +767,30 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                   Cancel
                 </Button>
               )}
-              {isListLastStep ? (
-                <Button
-                  onClick={() => createMutation.mutate()}
-                  disabled={!formData.name || !formData.address || !formData.city || !formData.state || !formData.zipCode || !formData.pricePerHour || !formData.description || !formData.hostName || formData.bookingTypes === "none" || createMutation.isPending}
-                  size="sm"
-                  className="bg-stone-900 text-white hover:bg-stone-800"
-                  data-testid="button-submit-list-space"
-                >
-                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-                  Continue
-                </Button>
-              ) : (
-                <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" onClick={() => setTab(listSteps[listStepIndex + 1])}>
-                  Continue
-                </Button>
-              )}
+              {(() => {
+                const stepValid: Record<string, boolean> = {
+                  details: !!(formData.name && formData.address && formData.city && formData.state && formData.zipCode && formData.description && formData.hostName),
+                  pricing: !!(formData.bookingTypes !== "none" && formData.pricePerHour),
+                  extras: true,
+                };
+                const canContinue = stepValid[tab] ?? true;
+                return isListLastStep ? (
+                  <Button
+                    onClick={() => createMutation.mutate()}
+                    disabled={!canContinue || createMutation.isPending}
+                    size="sm"
+                    className="bg-stone-900 text-white hover:bg-stone-800"
+                    data-testid="button-submit-list-space"
+                  >
+                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                    Continue
+                  </Button>
+                ) : (
+                  <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!canContinue} onClick={() => setTab(listSteps[listStepIndex + 1])}>
+                    Continue
+                  </Button>
+                );
+              })()}
             </div>
           </>
         )}
