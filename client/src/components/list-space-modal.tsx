@@ -540,7 +540,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                       <Input value={formData.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Sunny Therapy Room" data-testid="input-list-name" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Your Name / Business *</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Host Name *</label>
                       <Input value={formData.hostName} onChange={e => update("hostName", e.target.value)} placeholder="e.g. Maria S." data-testid="input-list-host" />
                     </div>
                   </div>
@@ -681,36 +681,41 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                       <p className="text-[10px] text-stone-400 mt-1">per day (optional)</p>
                     </div>
                     <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "hourly" ? "border-2 border-emerald-600 bg-emerald-50" : "border-stone-200 bg-white opacity-40"}`}>
-                      <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Recurring Rate</p>
+                      <p className="text-[10px] uppercase tracking-wider text-emerald-600 font-medium mb-2">Weekly Regulars</p>
                       <div className="flex items-center justify-center gap-1">
-                        <span className="text-stone-400 text-lg">$</span>
+                        <span className="text-emerald-400 text-lg">$</span>
                         <span className="text-2xl font-bold text-emerald-600">{recurringPrice || (formData.pricePerHour || "0")}</span>
                       </div>
-                      <p className="text-[10px] text-stone-400 mt-1">per hour for regulars</p>
+                      <p className="text-[10px] text-stone-400 mt-1">per hour for repeat renters</p>
                     </div>
                   </div>
 
-                  {/* Recurring Discount */}
+                  {/* Discount for weekly renters */}
                   {formData.bookingTypes !== "hourly" && (
-                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
                       <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
                         <Repeat className="w-3.5 h-3.5 text-emerald-600" />
-                        Recurring Discount
+                        Give a discount to weekly renters?
                       </h4>
-                      <p className="text-[11px] text-stone-400 -mt-1">Reward loyal renters with a discount on their recurring rate</p>
+                      <p className="text-[11px] text-stone-500 -mt-1">If someone books your space every week, you can give them a lower rate to keep them coming back.</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Discount Percentage</label>
+                          <label className="text-xs text-gray-500 mb-1 block">How much off? (%)</label>
                           <div className="flex items-center gap-2">
                             <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={e => update("recurringDiscountPercent", e.target.value)} />
-                            <span className="text-sm text-stone-400 flex-shrink-0">%</span>
+                            <span className="text-sm text-stone-400 flex-shrink-0">% off</span>
                           </div>
+                          {formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0 && formData.pricePerHour && (
+                            <p className="text-[10px] text-emerald-600 mt-1">
+                              They'd pay ${(Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)}/hr instead of ${formData.pricePerHour}/hr
+                            </p>
+                          )}
                         </div>
                         <div>
-                          <label className="text-xs text-gray-500 mb-1 block">Discount Kicks In After</label>
+                          <label className="text-xs text-gray-500 mb-1 block">When does the discount start?</label>
                           <select value={formData.recurringDiscountAfter} onChange={e => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
-                            <option value="0">Immediately</option>
-                            <option value="1">After 1 week</option>
+                            <option value="0">Right away</option>
+                            <option value="1">After their 1st week</option>
                             <option value="2">After 2 weeks</option>
                             <option value="3">After 3 weeks</option>
                             <option value="5">After 5 weeks</option>
@@ -721,14 +726,14 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     </div>
                   )}
 
-                  {/* Minimum Recurring Commitment */}
+                  {/* How long must they book for */}
                   {formData.bookingTypes !== "hourly" && (
                     <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
                       <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
                         <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
-                        Minimum Recurring Commitment
+                        How long should they commit?
                       </h4>
-                      <p className="text-[11px] text-stone-400 -mt-1">How many weeks a renter must commit to (1 day per week)</p>
+                      <p className="text-[11px] text-stone-500 -mt-1">When someone books a weekly spot, how many weeks should they sign up for at minimum? Pick "No minimum" if you're flexible.</p>
                       <div className="flex flex-wrap gap-2">
                         {[1, 2, 3, 4, 8, 12].map(n => (
                           <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
