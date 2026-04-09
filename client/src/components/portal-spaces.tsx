@@ -642,7 +642,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       <label className="text-xs text-gray-500 mb-1 block">When does the discount start?</label>
                       <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-recurring-after-${space.id}`}>
                         <option value="0">Right away</option>
-                        <option value="1">After their 1st week</option>
+                        <option value="1">After 1 week</option>
                         <option value="2">After 2 weeks</option>
                         <option value="3">After 3 weeks</option>
                         <option value="5">After 5 weeks</option>
@@ -1078,7 +1078,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                       <label className="text-xs text-gray-500 mb-1 block">When does the discount start?</label>
                       <select value={formData.recurringDiscountAfter} onChange={(e) => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
                         <option value="0">Right away</option>
-                        <option value="1">After their 1st week</option>
+                        <option value="1">After 1 week</option>
                         <option value="2">After 2 weeks</option>
                         <option value="3">After 3 weeks</option>
                         <option value="5">After 5 weeks</option>

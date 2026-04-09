@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save } from "lucide-react";
+import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save, Camera, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { AmenityInput } from "./amenity-input";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
+import { ArrivalGuideEditor } from "./arrival-guide";
 
 function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess }: { spaceId: string; returnTo?: string; onClose: () => void; onSuccess: () => void }) {
   const [magicEmail, setMagicEmail] = useState("");
@@ -334,7 +335,7 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
   );
 }
 
-type ListTab = "details" | "pricing" | "schedule" | "extras";
+type ListTab = "details" | "pricing" | "schedule" | "extras" | "photos" | "arrival";
 
 function getListCompletionScore(formData: Record<string, any>, amenitiesTags: string[]) {
   const checks = [
@@ -357,6 +358,8 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const [showListMagicLink, setShowListMagicLink] = useState(false);
   const [insuranceBypassed, setInsuranceBypassed] = useState(false);
   const [listingSubmitted, setListingSubmitted] = useState(false);
+  const [createdSpaceId, setCreatedSpaceId] = useState<string | null>(null);
+  const [postStep, setPostStep] = useState<"photos" | "arrival" | "insurance" | null>(null);
   const [tab, setTab] = useState<ListTab>("details");
   const listSteps: ListTab[] = ["details", "pricing", "schedule", "extras"];
   const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", schedule: "Availability", extras: "Extras" };
@@ -403,16 +406,15 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
         availabilitySchedule: JSON.stringify(schedule),
         availableHours: scheduleToDisplayText(schedule),
       };
-      await apiRequest("POST", "/api/spaces", payload);
+      const res = await apiRequest("POST", "/api/spaces", payload);
+      return await res.json();
     },
-    onSuccess: () => {
-      toast({ title: "Space submitted!", description: "Your space listing is pending admin approval." });
+    onSuccess: (space: any) => {
+      toast({ title: "Space submitted!", description: "Now let's add some finishing touches." });
       queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
-      if (insuranceStatus?.hasInsurance) {
-        onClose();
-      } else {
-        setListingSubmitted(true);
-      }
+      setCreatedSpaceId(space.id);
+      setListingSubmitted(true);
+      setPostStep("photos");
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -478,7 +480,62 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               />
             )}
           </div>
-        ) : listingSubmitted && !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
+        ) : listingSubmitted && postStep === "photos" && createdSpaceId ? (
+          <div className="p-6 space-y-4">
+            <div className="text-center mb-2">
+              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                <Camera className="w-7 h-7 text-[#c4956a]" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold mb-1">Add Photos</h3>
+              <p className="text-xs text-stone-400">Upload photos of your space so renters know what to expect. You can always add more later from your portal.</p>
+            </div>
+            <div className="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center">
+              <label className="cursor-pointer block">
+                <input type="file" accept="image/*" multiple className="hidden" onChange={async (e) => {
+                  const files = e.target.files;
+                  if (!files || files.length === 0) return;
+                  for (const file of Array.from(files)) {
+                    const fd = new FormData();
+                    fd.append("photo", file);
+                    await fetch(`/api/spaces/${createdSpaceId}/photos`, { method: "POST", body: fd });
+                  }
+                  toast({ title: `${files.length} photo${files.length > 1 ? "s" : ""} uploaded` });
+                  queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+                }} />
+                <Upload className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+                <p className="text-sm text-stone-500 font-medium">Click to upload photos</p>
+                <p className="text-xs text-stone-400 mt-1">JPG, PNG, or WebP</p>
+              </label>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <button onClick={() => setPostStep("arrival")} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
+                Skip
+              </button>
+              <Button onClick={() => setPostStep("arrival")} className="flex-1 bg-stone-900 text-white hover:bg-stone-800">
+                Continue
+              </Button>
+            </div>
+          </div>
+        ) : listingSubmitted && postStep === "arrival" && createdSpaceId ? (
+          <div className="p-6 space-y-4">
+            <div className="text-center mb-2">
+              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                <MapPin className="w-7 h-7 text-[#c4956a]" />
+              </div>
+              <h3 className="font-serif text-lg font-semibold mb-1">Arrival Guide</h3>
+              <p className="text-xs text-stone-400">Help your renters find your space. Add parking info, door codes, WiFi, and step-by-step directions with photos.</p>
+            </div>
+            <ArrivalGuideEditor spaceId={createdSpaceId} />
+            <div className="flex items-center gap-2 pt-2">
+              <button onClick={() => { if (insuranceStatus?.hasInsurance) { onClose(); } else { setPostStep("insurance"); } }} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
+                Skip
+              </button>
+              <Button onClick={() => { if (insuranceStatus?.hasInsurance) { onClose(); } else { setPostStep("insurance"); } }} className="flex-1 bg-stone-900 text-white hover:bg-stone-800">
+                Continue
+              </Button>
+            </div>
+          </div>
+        ) : listingSubmitted && postStep === "insurance" && !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
           <div>
             <InsuranceUploadStep
               onComplete={() => { setInsuranceBypassed(true); onClose(); }}
@@ -715,7 +772,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                           <label className="text-xs text-gray-500 mb-1 block">When does the discount start?</label>
                           <select value={formData.recurringDiscountAfter} onChange={e => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
                             <option value="0">Right away</option>
-                            <option value="1">After their 1st week</option>
+                            <option value="1">After 1 week</option>
                             <option value="2">After 2 weeks</option>
                             <option value="3">After 3 weeks</option>
                             <option value="5">After 5 weeks</option>
