@@ -2764,7 +2764,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
     setSaving(false);
   };
 
-  const filtered = (filter === "all" ? spaces : spaces.filter(s => s.approvalStatus === filter)).filter(s => {
+  const filtered = (filter === "all" ? spaces : spaces.filter(s => filter === "pending" ? (s.approvalStatus === "pending" || s.approvalStatus === "draft") : s.approvalStatus === filter)).filter(s => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (s.name || "").toLowerCase().includes(q) ||

@@ -909,8 +909,8 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
                   {/* Discount for weekly renters */}
                   {formData.bookingTypes !== "hourly" && (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
-                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                    <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
+                      <h4 className="text-sm font-medium text-emerald-800 flex items-center gap-1.5">
                         <Repeat className="w-3.5 h-3.5 text-emerald-600" />
                         Give a discount to weekly renters?
                       </h4>
