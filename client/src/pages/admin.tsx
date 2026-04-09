@@ -2779,7 +2779,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   });
   const counts = {
     all: spaces.length,
-    pending: spaces.filter(s => s.approvalStatus === "pending").length,
+    pending: spaces.filter(s => s.approvalStatus === "pending" || s.approvalStatus === "draft").length,
     approved: spaces.filter(s => s.approvalStatus === "approved").length,
     rejected: spaces.filter(s => s.approvalStatus === "rejected").length,
   };
@@ -7473,7 +7473,7 @@ function AdminDashboard({ token }: { token: string }) {
   // Fetch pending spaces count for sidebar badge
   useEffect(() => {
     adminFetch("/api/admin/spaces/all", token).then(r => r.ok ? r.json() : []).then(data => {
-      if (Array.isArray(data)) setPendingSpacesCount(data.filter((s: any) => s.approvalStatus === "pending").length);
+      if (Array.isArray(data)) setPendingSpacesCount(data.filter((s: any) => s.approvalStatus === "pending" || s.approvalStatus === "draft").length);
     }).catch(() => {});
   }, [token, view]);
 
