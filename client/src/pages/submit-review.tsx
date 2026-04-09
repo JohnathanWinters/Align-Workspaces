@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Loader2, CheckCircle2, ArrowRight, ArrowLeft, User, MessageSquare, Sparkles, Building2, Camera } from "lucide-react";
+import { Star, Loader2, CheckCircle2, ArrowRight, ArrowLeft, User, MessageSquare, Sparkles, Building2, Camera, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +39,8 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
@@ -48,11 +49,10 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
     try {
       const endpoint = type === "photography" ? "/api/review/photography" : "/api/review/general";
       const nameField = type === "photography" ? "clientName" : "guestName";
-      const emailField = type === "photography" ? "clientEmail" : "guestEmail";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, title, comment, [nameField]: name, [emailField]: email }),
+        body: JSON.stringify({ rating, title, comment, [nameField]: name, photoUrl: photoUrl || undefined }),
       });
       if (!res.ok) throw new Error((await res.json()).message);
       setStep(3);
@@ -67,15 +67,13 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
   const progress = step === 3 ? 100 : Math.round(((step + (rating ? 0.5 : 0)) / 3) * 100);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
+    <div className="min-h-screen bg-[#faf8f5]">
       {/* Hero */}
-      <div className={`relative h-40 sm:h-48 overflow-hidden bg-gradient-to-br ${config.gradient}`}>
+      <div className="relative h-44 sm:h-52 overflow-hidden bg-[#1a1a1a]">
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <div className="w-14 h-14 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center mb-3 shadow-sm">
-            <Icon className="w-7 h-7 text-[#c4956a]" />
-          </div>
-          <h1 className="font-serif text-xl sm:text-2xl font-bold text-stone-900">{config.title}</h1>
-          <p className="text-stone-600 text-xs mt-0.5">{config.subtitle}</p>
+          <img src="/images/logo-align-mark.png" alt="Align" className="w-10 h-10 rounded-lg mb-3 opacity-90" />
+          <h1 className="font-serif text-xl sm:text-2xl font-bold text-white">{config.title}</h1>
+          <p className="text-white/50 text-xs mt-1">{config.subtitle}</p>
         </div>
       </div>
 
@@ -184,11 +182,37 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
                   <div className="space-y-3 flex-1">
                     <div>
                       <label className="text-xs text-stone-500 mb-1 block">Your name *</label>
-                      <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Maria Santos" />
+                      <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Maria S." />
                     </div>
                     <div>
-                      <label className="text-xs text-stone-500 mb-1 block">Email (optional)</label>
-                      <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" />
+                      <label className="text-xs text-stone-500 mb-1 block">Photo (optional)</label>
+                      {photoUrl ? (
+                        <div className="flex items-center gap-3">
+                          <img src={photoUrl} alt="Your photo" className="w-12 h-12 rounded-full object-cover border border-stone-200" />
+                          <button onClick={() => setPhotoUrl("")} className="text-xs text-stone-400 hover:text-red-500 flex items-center gap-1">
+                            <X className="w-3 h-3" /> Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] cursor-pointer transition-colors">
+                          <Upload className="w-4 h-4 text-stone-400" />
+                          <span className="text-xs text-stone-500">{uploadingPhoto ? "Uploading..." : "Add a headshot"}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingPhoto(true);
+                            try {
+                              const fd = new FormData();
+                              fd.append("photo", file);
+                              const res = await fetch("/api/upload/review-photo", { method: "POST", body: fd });
+                              if (res.ok) {
+                                const data = await res.json();
+                                setPhotoUrl(data.url);
+                              }
+                            } catch {} finally { setUploadingPhoto(false); }
+                          }} />
+                        </label>
+                      )}
                     </div>
                   </div>
 
@@ -235,7 +259,10 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-stone-300 mt-6">Powered by Align</p>
+        <div className="text-center mt-6 flex flex-col items-center gap-1">
+          <img src="/images/logo-align-mark.png" alt="Align" className="w-5 h-5 opacity-30" />
+          <p className="text-[10px] text-stone-300">alignworkspaces.com</p>
+        </div>
       </div>
     </div>
   );

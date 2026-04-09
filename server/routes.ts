@@ -5093,6 +5093,23 @@ export async function registerRoutes(
     } catch (err: any) { res.status(500).json({ message: err.message }); }
   });
 
+  // Review photo upload (public, no auth needed)
+  app.post("/api/upload/review-photo", upload.single("photo"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file provided" });
+      const buffer = await sharp(req.file.path)
+        .rotate()
+        .resize(200, 200, { fit: "cover" })
+        .webp({ quality: 85 })
+        .toBuffer();
+      await fs.promises.unlink(req.file.path).catch(() => {});
+      const url = await uploadBufferToObjectStorage(buffer, "image/webp");
+      res.json({ url });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // Public photography review submission
   app.post("/api/review/photography", async (req, res) => {
     try {
