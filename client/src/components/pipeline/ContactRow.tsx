@@ -30,7 +30,7 @@ export default function ContactRow({
       className={`grid items-center px-4 py-2.5 transition-colors cursor-pointer ${
         isSelected ? "bg-blue-50/60 border-l-2 border-blue-500" : isFocused ? "bg-gray-50 ring-1 ring-inset ring-blue-200" : "hover:bg-gray-50/50 border-l-2 border-transparent"
       }`}
-      style={{ gridTemplateColumns: "32px 1fr 28px 76px auto" }}
+      style={{ gridTemplateColumns: "32px 1fr 28px 80px 130px" }}
       onClick={() => onSelect(c.id)}
       data-testid={`contact-row-${c.id}`}
       data-contact-id={c.id}

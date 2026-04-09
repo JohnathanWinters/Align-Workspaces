@@ -11,7 +11,7 @@ function ColumnHeader() {
   return (
     <div
       className="grid items-center px-4 py-1.5 text-[10px] font-medium text-gray-400 uppercase tracking-wider border-b border-gray-100 select-none"
-      style={{ gridTemplateColumns: "32px 1fr 28px 76px auto" }}
+      style={{ gridTemplateColumns: "32px 1fr 28px 80px 130px" }}
     >
       <div />
       <div className="px-3">Name</div>
