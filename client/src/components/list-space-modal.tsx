@@ -682,27 +682,6 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
 
-                  {/* Minimum Recurring Commitment */}
-                  {formData.bookingTypes !== "hourly" && (
-                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
-                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
-                        <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
-                        Minimum Recurring Commitment
-                      </h4>
-                      <p className="text-[11px] text-stone-400 -mt-1">How many weeks a renter must commit to (1 day per week)</p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 8, 12].map(n => (
-                          <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                              String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
-                            }`}>
-                            {n === 1 ? "No minimum" : `${n} weeks`}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Recurring Discount */}
                   {formData.bookingTypes !== "hourly" && (
                     <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
@@ -730,6 +709,27 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                             <option value="10">After 10 weeks</option>
                           </select>
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Minimum Recurring Commitment */}
+                  {formData.bookingTypes !== "hourly" && (
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
+                        Minimum Recurring Commitment
+                      </h4>
+                      <p className="text-[11px] text-stone-400 -mt-1">How many weeks a renter must commit to (1 day per week)</p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 8, 12].map(n => (
+                          <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                              String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
+                            }`}>
+                            {n === 1 ? "No minimum" : `${n} weeks`}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}
