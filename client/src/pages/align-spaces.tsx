@@ -627,7 +627,7 @@ export default function AlignSpacesPage() {
           <div className="text-center mb-10 sm:mb-14">
             <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Why Align</span>
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900 tracking-tight">We Built This for You</h2>
-            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Because independent professionals deserve the same support and infrastructure that large practices have — without the overhead.</p>
+            <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">Because independent professionals deserve the same support and infrastructure that large practices have, without the overhead.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
