@@ -596,11 +596,11 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Short Description</label>
-                    <Input value={formData.shortDescription} onChange={e => update("shortDescription", e.target.value)} placeholder="Brief one-liner" data-testid="input-list-short-desc" />
+                    <Input value={formData.shortDescription} onChange={e => update("shortDescription", e.target.value)} placeholder="e.g. Bright, private therapy room in the heart of Brickell" data-testid="input-list-short-desc" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Description *</label>
-                    <Textarea value={formData.description} onChange={e => update("description", e.target.value)} placeholder="Describe your space in detail..." rows={3} data-testid="input-list-description" />
+                    <Textarea value={formData.description} onChange={e => update("description", e.target.value)} placeholder="e.g. A warm, soundproofed office perfect for therapists and counselors. Features comfortable seating, natural light, a white noise machine, and a private waiting area. Located on the 3rd floor with elevator access." rows={3} data-testid="input-list-description" />
                   </div>
                 </div>
               )}
@@ -783,7 +783,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 data-testid="button-submit-list-space"
               >
                 {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-                Submit for Approval
+                Continue
               </Button>
             </div>
           </>
