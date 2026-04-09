@@ -852,7 +852,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
               {tab === "schedule" && (
                 <div className="space-y-4">
-                  <p className="text-xs text-stone-400">Set the days and hours your space is available for bookings. Click a day to toggle it on or off.</p>
+                  <p className="text-xs text-stone-400">Set the days and hours your space is available. Click a day to toggle it on or off. Once your space is live, we'll sync your calendar automatically so you never get double-booked.</p>
                   <AvailabilityScheduleEditor value={schedule} onChange={setSchedule} />
                 </div>
               )}
