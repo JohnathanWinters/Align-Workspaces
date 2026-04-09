@@ -600,7 +600,7 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-why-align">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white" data-testid="section-why-align">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
             <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Why Align</span>
@@ -693,7 +693,7 @@ export default function AlignSpacesPage() {
         </div>
       </section>}
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-pricing-signal">
+      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-pricing-signal">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-14">
             <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Transparent Pricing</span>
@@ -731,7 +731,7 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
-      <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-portraits-feature">
+      <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white" data-testid="section-portraits-feature">
         <div className="max-w-5xl mx-auto">
           <p className="text-center font-serif text-lg sm:text-xl text-stone-400 italic mb-8 sm:mb-10" data-testid="text-portrait-bridge">
             Your space is only half the picture.
@@ -805,7 +805,7 @@ export default function AlignSpacesPage() {
       </section>
 
       {false && (featuredPros || []).length > 0 && (
-        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-featured-pros">
+        <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-featured-pros">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-end justify-between mb-8 sm:mb-10">
               <div>
@@ -978,7 +978,7 @@ export default function AlignSpacesPage() {
 
       {/* ─── Community Events ─── */}
       {communityEvents && communityEvents.length > 0 && (
-        <section className="py-14 sm:py-20 px-4 sm:px-6 bg-[#faf8f5]" data-testid="section-community-events">
+        <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-community-events">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-8">
               <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
