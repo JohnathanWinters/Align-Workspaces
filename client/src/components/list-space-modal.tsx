@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save, Camera, MapPin, Plus } from "lucide-react";
+import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save, Camera, MapPin, Plus, GripVertical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -335,6 +335,238 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
   );
 }
 
+function PhotoUploadStep({
+  spaceId,
+  globalStepIndex,
+  totalSteps,
+  globalStepLabel,
+  allStepLabels,
+  onStepClick,
+  onNext,
+}: {
+  spaceId: string;
+  globalStepIndex: number;
+  totalSteps: number;
+  globalStepLabel: string;
+  allStepLabels: string[];
+  onStepClick: (i: number) => void;
+  onNext: () => void;
+}) {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Fetch current photos
+  const { data: spaceData } = useQuery<{ imageUrls?: string[] }>({
+    queryKey: ["/api/spaces", spaceId, "photos-step"],
+    queryFn: async () => {
+      const res = await fetch(`/api/spaces/${spaceId}`, { credentials: "include" });
+      if (!res.ok) return { imageUrls: [] };
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (spaceData?.imageUrls) setPhotos(spaceData.imageUrls);
+  }, [spaceData?.imageUrls]);
+
+  const getPhotoUrl = (url: string) => url.startsWith("/") || url.startsWith("http") ? url : `/objects/${url}`;
+
+  const handleUpload = async (files: FileList) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      for (const file of Array.from(files)) {
+        fd.append("photos", file);
+      }
+      const res = await fetch(`/api/spaces/${spaceId}/photos`, { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      const updated = await res.json();
+      setPhotos(updated.imageUrls || []);
+      toast({ title: `${files.length} photo${files.length > 1 ? "s" : ""} uploaded` });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "photos-step"] });
+    } catch {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (url: string) => {
+    try {
+      const res = await fetch(`/api/spaces/${spaceId}/photos`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrl: url }),
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      const updated = await res.json();
+      setPhotos(updated.imageUrls || []);
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "photos-step"] });
+    } catch {
+      toast({ title: "Failed to delete photo", variant: "destructive" });
+    }
+  };
+
+  const handleSetCover = async (url: string) => {
+    const idx = photos.indexOf(url);
+    if (idx <= 0) return;
+    const newOrder = [url, ...photos.filter(u => u !== url)];
+    setPhotos(newOrder);
+    try {
+      await fetch(`/api/spaces/${spaceId}/photos/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrls: newOrder }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "photos-step"] });
+      toast({ title: "Cover photo updated" });
+    } catch {
+      toast({ title: "Failed to reorder", variant: "destructive" });
+    }
+  };
+
+  const handleDragEnd = async (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    const newPhotos = [...photos];
+    const [moved] = newPhotos.splice(fromIdx, 1);
+    newPhotos.splice(toIdx, 0, moved);
+    setPhotos(newPhotos);
+    try {
+      await fetch(`/api/spaces/${spaceId}/photos/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrls: newPhotos }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "photos-step"] });
+    } catch {
+      toast({ title: "Failed to reorder", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="px-6 pt-4 pb-2 flex-shrink-0">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
+        </div>
+        <div className="flex gap-1">
+          {allStepLabels.map((label, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onStepClick(i)}
+              title={label}
+              className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} cursor-pointer hover:opacity-70`}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-6 text-center mb-2">
+          <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+            <Camera className="w-7 h-7 text-[#c4956a]" />
+          </div>
+          <h3 className="font-serif text-lg font-semibold mb-1">Add Photos</h3>
+          <p className="text-xs text-stone-400">Upload photos of your space. The first photo will be the cover. Drag to reorder.</p>
+        </div>
+
+        {/* Photo grid */}
+        {photos.length > 0 && (
+          <div className="px-6 mb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {photos.map((url, i) => (
+                <div
+                  key={url}
+                  draggable
+                  onDragStart={() => setDragIdx(i)}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverIdx(i); }}
+                  onDragLeave={() => setDragOverIdx(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIdx !== null) handleDragEnd(dragIdx, i);
+                    setDragIdx(null);
+                    setDragOverIdx(null);
+                  }}
+                  onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+                  className={`relative group rounded-lg overflow-hidden border-2 transition-all cursor-grab active:cursor-grabbing ${
+                    i === 0 ? "border-[#c4956a]" : dragOverIdx === i ? "border-[#c4956a]/50" : "border-transparent"
+                  } ${dragIdx === i ? "opacity-40" : ""}`}
+                >
+                  <div className="aspect-[4/3] bg-stone-100">
+                    <img src={getPhotoUrl(url)} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                  {i === 0 && (
+                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-[#c4956a] text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                      <Star className="w-2.5 h-2.5 fill-current" /> Cover
+                    </div>
+                  )}
+                  {/* Hover actions */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <GripVertical className="w-4 h-4 text-white/80 absolute top-1.5 right-1.5" />
+                    {i !== 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSetCover(url); }}
+                        className="p-1.5 bg-white/90 rounded-full text-stone-700 hover:bg-white transition-colors"
+                        title="Set as cover"
+                      >
+                        <Star className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(url); }}
+                      className="p-1.5 bg-white/90 rounded-full text-red-500 hover:bg-white transition-colors"
+                      title="Delete photo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Upload area */}
+        <div className="px-6 pb-4">
+          <label className="cursor-pointer block">
+            <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) handleUpload(e.target.files);
+              e.target.value = "";
+            }} />
+            <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors ${photos.length > 0 ? "border-stone-200 hover:border-stone-300" : "border-stone-200 hover:border-[#c4956a]/40 p-6"}`}>
+              {uploading ? (
+                <Loader2 className="w-6 h-6 text-stone-300 mx-auto mb-1 animate-spin" />
+              ) : (
+                <Upload className={`text-stone-300 mx-auto mb-1 ${photos.length > 0 ? "w-5 h-5" : "w-8 h-8 mb-2"}`} />
+              )}
+              <p className="text-sm text-stone-500 font-medium">{uploading ? "Uploading..." : photos.length > 0 ? "Add more photos" : "Click to upload photos"}</p>
+              {photos.length === 0 && <p className="text-xs text-stone-400 mt-1">JPG, PNG, or WebP</p>}
+            </div>
+          </label>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 px-6 pb-4 pt-2 flex-shrink-0 border-t border-stone-100">
+        <button onClick={onNext} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
+          Skip
+        </button>
+        <Button onClick={onNext} className="flex-1 bg-stone-900 text-white hover:bg-stone-800">
+          <Save className="w-3.5 h-3.5 mr-1" /> Save & Continue
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 type ListTab = "details" | "pricing" | "schedule" | "extras" | "photos" | "arrival";
 
 function getListCompletionScore(formData: Record<string, any>, amenitiesTags: string[]) {
@@ -559,68 +791,23 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             )}
           </div>
         ) : listingSubmitted && postStep === "photos" && createdSpaceId ? (
-          <div className="space-y-4">
-            <div className="px-6 pt-4 pb-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
-              </div>
-              <div className="flex gap-1">
-                {allStepLabels.map((label, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
-                      else if (i === 4 && createdSpaceId) setPostStep("photos");
-                      else if (i === 5 && createdSpaceId) setPostStep("arrival");
-                      else if (i === 6 && createdSpaceId) setPostStep("insurance");
-                    }}
-                    disabled={i > 3 && !createdSpaceId}
-                    title={label}
-                    className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${i <= 3 || createdSpaceId ? "cursor-pointer hover:opacity-70" : "cursor-default"}`}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="px-6 text-center mb-2">
-              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
-                <Camera className="w-7 h-7 text-[#c4956a]" />
-              </div>
-              <h3 className="font-serif text-lg font-semibold mb-1">Add Photos</h3>
-              <p className="text-xs text-stone-400">Upload photos of your space so renters know what to expect. You can always add more later from your portal.</p>
-            </div>
-            <div className="px-6">
-              <div className="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center">
-                <label className="cursor-pointer block">
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={async (e) => {
-                    const files = e.target.files;
-                    if (!files || files.length === 0) return;
-                    for (const file of Array.from(files)) {
-                      const fd = new FormData();
-                      fd.append("photo", file);
-                      await fetch(`/api/spaces/${createdSpaceId}/photos`, { method: "POST", body: fd });
-                    }
-                    toast({ title: `${files.length} photo${files.length > 1 ? "s" : ""} uploaded` });
-                    queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
-                  }} />
-                  <Upload className="w-8 h-8 text-stone-300 mx-auto mb-2" />
-                  <p className="text-sm text-stone-500 font-medium">Click to upload photos</p>
-                  <p className="text-xs text-stone-400 mt-1">JPG, PNG, or WebP</p>
-                </label>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 px-6 pb-4 pt-2">
-              <button onClick={() => setPostStep("arrival")} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
-                Skip
-              </button>
-              <Button onClick={() => setPostStep("arrival")} className="flex-1 bg-stone-900 text-white hover:bg-stone-800">
-                <Save className="w-3.5 h-3.5 mr-1" /> Save & Continue
-              </Button>
-            </div>
-          </div>
+          <PhotoUploadStep
+            spaceId={createdSpaceId}
+            globalStepIndex={globalStepIndex}
+            totalSteps={totalSteps}
+            globalStepLabel={globalStepLabel}
+            allStepLabels={allStepLabels}
+            onStepClick={(i) => {
+              if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
+              else if (i === 4 && createdSpaceId) setPostStep("photos");
+              else if (i === 5 && createdSpaceId) setPostStep("arrival");
+              else if (i === 6 && createdSpaceId) setPostStep("insurance");
+            }}
+            onNext={() => setPostStep("arrival")}
+          />
         ) : listingSubmitted && postStep === "arrival" && createdSpaceId ? (
-          <div className="space-y-4">
-            <div className="px-6 pt-4 pb-2">
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="px-6 pt-4 pb-2 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
               </div>
@@ -642,17 +829,19 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 ))}
               </div>
             </div>
-            <div className="px-6 text-center mb-2">
-              <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
-                <MapPin className="w-7 h-7 text-[#c4956a]" />
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-6 text-center mb-2">
+                <div className="w-14 h-14 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-3">
+                  <MapPin className="w-7 h-7 text-[#c4956a]" />
+                </div>
+                <h3 className="font-serif text-lg font-semibold mb-1">Arrival Guide</h3>
+                <p className="text-xs text-stone-400">Help your renters find your space. Add parking info, door codes, WiFi, and step-by-step directions with photos.</p>
               </div>
-              <h3 className="font-serif text-lg font-semibold mb-1">Arrival Guide</h3>
-              <p className="text-xs text-stone-400">Help your renters find your space. Add parking info, door codes, WiFi, and step-by-step directions with photos.</p>
+              <div className="px-6">
+                <ArrivalGuideEditor spaceId={createdSpaceId} hideSaveButton />
+              </div>
             </div>
-            <div className="px-6">
-              <ArrivalGuideEditor spaceId={createdSpaceId} hideSaveButton />
-            </div>
-            <div className="flex items-center gap-2 px-6 pb-4 pt-2">
+            <div className="flex items-center gap-2 px-6 pb-4 pt-2 flex-shrink-0 border-t border-stone-100">
               <button onClick={() => { if (insuranceStatus?.hasInsurance) { onClose(); } else { setPostStep("insurance"); } }} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">
                 Skip
               </button>
@@ -662,8 +851,8 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
         ) : listingSubmitted && postStep === "insurance" && !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
-          <div>
-            <div className="px-6 pt-4 pb-2">
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="px-6 pt-4 pb-2 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — Insurance</span>
               </div>
@@ -685,33 +874,35 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 ))}
               </div>
             </div>
-            <InsuranceUploadStep
-              onComplete={() => { setInsuranceBypassed(true); onClose(); }}
-              onGetCovered={() => {
-                window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
-              }}
-            />
-            <div className="px-6 pb-6 -mt-2 space-y-3">
-              <div className="relative py-1">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200" /></div>
-                <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-stone-400">or</span></div>
-              </div>
-              <button
-                onClick={() => {
-                  toast({
-                    title: "Insurance required for bookings",
-                    description: "Your listing has been saved but will not receive bookings until insurance is uploaded. You can add it anytime from your Client Portal under Workspaces.",
-                    duration: 8000,
-                  });
-                  onClose();
+            <div className="flex-1 overflow-y-auto">
+              <InsuranceUploadStep
+                onComplete={() => { setInsuranceBypassed(true); onClose(); }}
+                onGetCovered={() => {
+                  window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
                 }}
-                className="w-full py-3 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors"
-              >
-                Continue Later
-              </button>
-              <p className="text-[10px] text-center text-stone-400 leading-relaxed">
-                Your space has been submitted but will not appear in search or accept bookings until insurance is verified.
-              </p>
+              />
+              <div className="px-6 pb-6 -mt-2 space-y-3">
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200" /></div>
+                  <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-stone-400">or</span></div>
+                </div>
+                <button
+                  onClick={() => {
+                    toast({
+                      title: "Insurance required for bookings",
+                      description: "Your listing has been saved but will not receive bookings until insurance is uploaded. You can add it anytime from your Client Portal under Workspaces.",
+                      duration: 8000,
+                    });
+                    onClose();
+                  }}
+                  className="w-full py-3 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors"
+                >
+                  Continue Later
+                </button>
+                <p className="text-[10px] text-center text-stone-400 leading-relaxed">
+                  Your space has been submitted but will not appear in search or accept bookings until insurance is verified.
+                </p>
+              </div>
             </div>
           </div>
         ) : (
@@ -729,21 +920,30 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
               <div className="flex gap-1">
-                {allStepLabels.map((label, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
-                      else if (i === 4 && createdSpaceId) setPostStep("photos");
-                      else if (i === 5 && createdSpaceId) setPostStep("arrival");
-                      else if (i === 6 && createdSpaceId) setPostStep("insurance");
-                    }}
-                    disabled={i > 3 && !createdSpaceId}
-                    title={label}
-                    className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${i <= 3 || createdSpaceId ? "cursor-pointer hover:opacity-70" : "cursor-default"}`}
-                  />
-                ))}
+                {allStepLabels.map((label, i) => {
+                  const enabled = i <= 3 || !!createdSpaceId;
+                  const isActive = i === globalStepIndex;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
+                        else if (i === 4 && createdSpaceId) setPostStep("photos");
+                        else if (i === 5 && createdSpaceId) setPostStep("arrival");
+                        else if (i === 6 && createdSpaceId) setPostStep("insurance");
+                      }}
+                      disabled={!enabled}
+                      title={label}
+                      className={`flex-1 flex flex-col items-center gap-1 group transition-all ${enabled ? "cursor-pointer" : "cursor-default"}`}
+                    >
+                      <div className={`h-2 w-full rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${enabled ? "group-hover:opacity-70" : ""}`} />
+                      <span className={`text-[9px] leading-tight transition-colors ${isActive ? "text-[#c4956a] font-semibold" : i <= globalStepIndex ? "text-stone-500" : "text-stone-300"} ${enabled ? "group-hover:text-[#c4956a]" : ""}`}>
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

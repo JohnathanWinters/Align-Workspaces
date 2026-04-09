@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Clock } from "lucide-react";
+import { Clock, Check } from "lucide-react";
 
 export type DaySchedule = { open: string; close: string } | null;
 export type WeekSchedule = {
@@ -182,10 +182,19 @@ export function AvailabilityScheduleEditor({ value, onChange }: ScheduleEditorPr
           <Clock className="w-3.5 h-3.5" />
           Weekly Availability
         </label>
-        <label className="flex items-center gap-1.5 cursor-pointer" data-testid="toggle-same-hours">
-          <input type="checkbox" checked={sameHours} onChange={toggleSameHours} className="rounded border-gray-300 text-gray-900 w-3.5 h-3.5" />
-          <span className="text-[11px] text-gray-500">Same hours every day</span>
-        </label>
+        <button
+          type="button"
+          onClick={toggleSameHours}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+            sameHours
+              ? "bg-stone-900 text-white border-stone-900"
+              : "bg-white text-stone-500 border-stone-300 hover:border-stone-400"
+          }`}
+          data-testid="toggle-same-hours"
+        >
+          {sameHours && <Check className="w-3 h-3" />}
+          Same hours every day
+        </button>
       </div>
 
       <div className="flex gap-1.5 flex-wrap">

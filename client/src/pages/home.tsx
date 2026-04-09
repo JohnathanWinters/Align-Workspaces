@@ -46,6 +46,7 @@ import {
   Images,
   HelpCircle,
   CalendarDays,
+  DollarSign,
 } from "lucide-react";
 import { getClothingRecommendations, fabricImageMap } from "@/lib/clothing-recommendations";
 import { TestimonialsSection } from "@/components/testimonials-section";
@@ -440,10 +441,17 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                           transition={{ duration: 0.2 }}
                           className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
                         >
+                          {/* Services */}
                           <button onClick={() => { setLocation("/"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-spaces-header">
                             <Building2 className="w-4 h-4" />
                             Align Workspaces
                           </button>
+                          <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-header">
+                            <DollarSign className="w-4 h-4" />
+                            Pricing
+                          </button>
+                          {/* Community */}
+                          <div className="border-t border-stone-100 my-1" />
                           <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-header">
                             <CalendarDays className="w-4 h-4" />
                             Community Events
@@ -456,6 +464,8 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
                             <Images className="w-4 h-4" />
                             Portfolio
                           </button>
+                          {/* About & Account */}
+                          <div className="border-t border-stone-100 my-1" />
                           <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-header">
                             <Compass className="w-4 h-4" />
                             Our Vision

@@ -439,6 +439,7 @@ export default function AlignSpacesPage() {
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-2xl py-2 min-w-[200px] z-50"
                   >
+                    {/* Services */}
                     <button onClick={() => { setLocation("/workspaces"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-browse-menu">
                       <Building2 className="w-4 h-4" />
                       Workspaces
@@ -447,6 +448,12 @@ export default function AlignSpacesPage() {
                       <Camera className="w-4 h-4" />
                       Portraits
                     </button>
+                    <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
+                      <DollarSign className="w-4 h-4" />
+                      Pricing
+                    </button>
+                    {/* Community */}
+                    <div className="border-t border-stone-100 my-1" />
                     <button onClick={() => { document.querySelector('[data-testid="section-community-events"]')?.scrollIntoView({ behavior: "smooth" }); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-menu">
                       <CalendarDays className="w-4 h-4" />
                       Community Events
@@ -459,10 +466,8 @@ export default function AlignSpacesPage() {
                       <Images className="w-4 h-4" />
                       Portfolio
                     </button>
-                    <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
-                      <DollarSign className="w-4 h-4" />
-                      Pricing
-                    </button>
+                    {/* About & Account */}
+                    <div className="border-t border-stone-100 my-1" />
                     <button onClick={() => { setLocation("/our-vision"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-menu">
                       <Compass className="w-4 h-4" />
                       Our Vision

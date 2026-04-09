@@ -16,6 +16,7 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
   const navLinks = [
     { label: "Workspaces", href: "/workspaces" },
     { label: "Portraits", href: "/portraits" },
+    { label: "Pricing", href: "/pricing" },
     { label: "Community Events", href: "/#events" },
     { label: "Featured Pros", href: "/featured" },
     { label: "Portfolio", href: "/portfolio" },
