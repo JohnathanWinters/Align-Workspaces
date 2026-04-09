@@ -188,10 +188,10 @@ export default function PricingPage() {
               </div>
               <div className="flex items-center justify-between py-3 border-b border-stone-100">
                 <div>
-                  <p className="text-sm font-medium text-stone-800">Repeat Guest Fee</p>
+                  <p className="text-sm font-medium text-emerald-700">Repeat Guest Fee</p>
                   <p className="text-xs text-stone-400">Book regularly and pay less</p>
                 </div>
-                <span className="text-lg font-bold text-stone-900">5%</span>
+                <span className="text-lg font-bold text-emerald-600">5%</span>
               </div>
               <div className="flex items-center justify-between py-3">
                 <div>
