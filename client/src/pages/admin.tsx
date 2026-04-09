@@ -2524,6 +2524,24 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                         <XCircle className="w-3.5 h-3.5" />
                       </Button>
                     )}
+                    <label title="Add photo" className="h-7 px-2 text-xs text-gray-400 hover:text-[#c4956a] hover:bg-[#c4956a]/10 rounded-md cursor-pointer inline-flex items-center justify-center transition-colors">
+                      <ImagePlus className="w-3.5 h-3.5" />
+                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const fd = new FormData();
+                          fd.append("photo", file);
+                          const uploadRes = await fetch("/api/upload/review-photo", { method: "POST", body: fd });
+                          if (!uploadRes.ok) throw new Error("Upload failed");
+                          const { url } = await uploadRes.json();
+                          const endpoint = review._type === "photography" ? `/api/admin/shoot-reviews/${review.id}` : `/api/admin/reviews/${review.id}`;
+                          await adminFetch(endpoint, token, { method: "PATCH", body: JSON.stringify({ photoUrl: url }) });
+                          toast({ title: "Photo added to review" });
+                          loadReviews();
+                        } catch { toast({ title: "Failed to add photo", variant: "destructive" }); }
+                      }} />
+                    </label>
                     <Button
                       size="sm"
                       variant="ghost"

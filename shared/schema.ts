@@ -727,6 +727,7 @@ export const spaceReviews = pgTable("space_reviews", {
   comment: text("comment"),
   hostResponse: text("host_response"),
   hostRespondedAt: timestamp("host_responded_at"),
+  photoUrl: text("photo_url"),
   status: text("status").default("published"),            // 'published' | 'hidden' | 'flagged'
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -751,9 +752,11 @@ export const shootReviews = pgTable("shoot_reviews", {
   comment: text("comment"),
   adminResponse: text("admin_response"),
   adminRespondedAt: timestamp("admin_responded_at"),
+  photoUrl: text("photo_url"),
   status: text("status").default("published"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
 
 export const insertShootReviewSchema = createInsertSchema(shootReviews, {
   rating: z.number().int().min(1).max(5),

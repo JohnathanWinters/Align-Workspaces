@@ -5053,11 +5053,16 @@ export async function registerRoutes(
   // Admin: update review status (hide/flag/publish)
   app.patch("/api/admin/reviews/:id", isAdmin, async (req: any, res) => {
     try {
-      const { status } = req.body;
-      if (!["published", "hidden", "flagged"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
+      const { status, photoUrl } = req.body;
+      const updates: any = {};
+      if (status) {
+        if (!["published", "hidden", "flagged"].includes(status)) {
+          return res.status(400).json({ message: "Invalid status" });
+        }
+        updates.status = status;
       }
-      const updated = await storage.updateSpaceReview(req.params.id, { status });
+      if (photoUrl !== undefined) updates.photoUrl = photoUrl;
+      const updated = await storage.updateSpaceReview(req.params.id, updates);
       res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });

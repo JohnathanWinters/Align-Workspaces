@@ -1,0 +1,2 @@
+ALTER TABLE space_reviews ADD COLUMN IF NOT EXISTS photo_url TEXT;
+ALTER TABLE shoot_reviews ADD COLUMN IF NOT EXISTS photo_url TEXT;
