@@ -660,7 +660,7 @@ export default function AlignSpacesPage() {
         </div>
       </section>
 
-      <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-professional-categories">
+      {false && <section className="py-10 sm:py-14 px-4 sm:px-6" data-testid="section-professional-categories">
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-3">Find Your Fit</span>
           <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 tracking-tight mb-6">Spaces Certified for Your Profession</h2>
@@ -691,7 +691,7 @@ export default function AlignSpacesPage() {
             <Link href="/trust" className="text-[#c4956a] hover:underline">Learn more</Link>
           </p>
         </div>
-      </section>
+      </section>}
 
       <section className="py-14 sm:py-20 px-4 sm:px-6 bg-white/60" data-testid="section-pricing-signal">
         <div className="max-w-5xl mx-auto">
