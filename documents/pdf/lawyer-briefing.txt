@@ -685,7 +685,158 @@ We request counsel review the following:
 - Are there disclosure requirements for the referral commission structure?
 
 ================================================================================
-15. CONTACT
+APPENDIX A: FULL TERMS OF SERVICE
+================================================================================
+
+The following is the complete Terms of Service published at
+alignworkspaces.com/terms. Last updated: March 2026.
+
+1. ACCEPTANCE OF TERMS
+
+By accessing or using Align Workspaces ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Platform. You must be at least 18 years of age to use the Platform.
+
+Align Workspaces reserves the right to update these Terms at any time. We will notify registered users of material changes via email. Your continued use of the Platform after such changes constitutes acceptance of the updated Terms.
+
+2. DEFINITIONS
+
+- "Platform" means the Align Workspaces website, applications, and all related services.
+- "Host" means a user who lists one or more workspaces for booking on the Platform.
+- "Guest" means a user who books or uses a workspace through the Platform, regardless of their profession, industry, or intended use.
+- "Booking" means a confirmed reservation for a specific workspace, date, time, and duration.
+- "Booking Agreement" means the mutual acknowledgment executed by both Host and Guest at the time of each Booking, incorporating these Terms and any additional conditions specific to the reserved workspace.
+- "Content" means any text, photos, reviews, messages, or other materials posted by users.
+- "Service Fee" means the fees charged by Align Workspaces for facilitating transactions.
+- "Space License" means the revocable, non-exclusive license granted by a Host to a Guest for the booked period. THIS IS NOT A LEASE OR ANY INTEREST IN REAL PROPERTY.
+- "Professional Use Certification" means a Host's voluntary self-certification that their workspace meets specific standards for a designated professional category. Current categories include Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, and General Professional. Certifications describe the space, not the credentials of the person booking it.
+- "Host Protection Plan" means the optional damage protection coverage available to Hosts through the Platform, subject to separate plan terms.
+- "Insurance Verification" means the process by which Hosts provide proof of active liability insurance coverage as a condition of listing on the Platform.
+
+3. PLATFORM ROLE
+
+Align Workspaces is a marketplace intermediary. We are not a workspace owner, operator, landlord, real estate broker, or employer of any Host or Guest. The Platform facilitates connections between Hosts and Guests but does not provide workspace services itself.
+
+When Hosts and Guests enter into Bookings, they enter into a direct contractual relationship with each other. Align Workspaces is not a party to that agreement. The arrangement between a Host and Guest creates a revocable license to occupy, not a lease or any other interest in real property.
+
+Align Workspaces does not endorse, verify, or guarantee any listing, workspace, Host, or Guest. We make no representations about the safety, suitability, legality, or quality of any workspace or service provided through the Platform. Professional Use Certifications are Host self-declarations and are not independently verified by Align Workspaces.
+
+4. USER ACCOUNTS
+
+To use certain features of the Platform, you must create an account. You agree to provide accurate, current, and complete information. You are responsible for maintaining the security of your account credentials and for all activity under your account.
+
+Align Workspaces reserves the right to suspend or terminate accounts at its sole discretion, including for violation of these Terms, fraudulent activity, failure to maintain required insurance documentation, or conduct that we determine is harmful to other users or the Platform.
+
+5. HOST OBLIGATIONS
+
+As a Host, you represent and warrant that:
+- You have the legal authority to list the workspace (you own it or have written permission from the owner).
+- Your listing descriptions, photos, and amenities are accurate and not misleading.
+- Your workspace complies with all applicable laws, regulations, zoning requirements, building codes, and health department requirements applicable to the services you are permitting in the space.
+- You are solely responsible for the condition, safety, maintenance, and legal compliance of your workspace, including ADA accessibility requirements.
+- You will disclose any surveillance devices present in or around the workspace.
+- You maintain appropriate liability insurance for your workspace and will provide proof of coverage as required by the Platform (see Section 14).
+- You are responsible for determining and paying all applicable taxes related to your Host earnings.
+- If you elect to obtain a Professional Use Certification for your workspace, you are solely responsible for the accuracy of that certification and for maintaining the stated conditions at all times the workspace is available for booking.
+- You will accurately represent the suitability of your workspace for specific professional uses and will disclose any known limitations that could affect a Guest's ability to conduct their professional activities.
+- If your space is used for services that require specific health, safety, or sanitation standards, you are solely responsible for ensuring the space meets those standards as required by applicable local and state regulations.
+
+6. GUEST OBLIGATIONS
+
+As a Guest, you agree that:
+- You will use workspaces in accordance with the listing description and any Host rules.
+- You are responsible for your conduct and the conduct of anyone you bring to the workspace.
+- You are liable for any damage you or your invitees cause to the workspace or its contents.
+- You will not use workspaces for illegal activities.
+- You will leave the workspace in the condition you found it.
+- You are solely responsible for verifying your own compliance with all professional licensing, regulatory, health department, and ethical requirements applicable to your practice or business activities.
+- If your professional practice or business requires specific environmental conditions, you are responsible for independently verifying that a workspace meets those requirements before booking, regardless of any Professional Use Certification displayed on the listing.
+- You will maintain your own professional liability, malpractice, or errors and omissions insurance if required by your licensure, professional standards, or industry norms.
+- You are responsible for obtaining and maintaining any permits, licenses, or approvals required to conduct your specific business activities at the booked location.
+- A Professional Use Certification on a listing describes the features of the space. It does not guarantee the space is compliant with the specific regulatory requirements of your profession or jurisdiction.
+
+7. BOOKING AGREEMENT
+
+Each Booking on the Platform incorporates a Booking Agreement between the Host and Guest.
+
+Host Acknowledgment: The Host confirms that the workspace is accurately described in the listing, is maintained in safe and functional condition, is covered by active liability insurance, and meets any Professional Use Certification standards the Host has elected, if applicable.
+
+Guest Acknowledgment: The Guest confirms that they accept responsibility for their own professional conduct and the conduct of any individuals they bring to the workspace, that they carry their own professional liability or business insurance if required by their profession or industry, that they have independently evaluated the workspace for suitability to their professional and regulatory needs, that they will comply with all applicable laws and regulations, and that they will report any damage or safety concerns promptly.
+
+Mutual Acknowledgment: Both parties acknowledge that Align Workspaces is a marketplace facilitator and is not a party to the Booking Agreement. The Host bears responsibility for premises liability and the condition of the space. The Guest bears responsibility for professional liability, regulatory compliance, and their use of the space.
+
+8. PAYMENTS AND PROCESSING
+
+All payments are processed through Stripe. Align Workspaces acts as the Host's limited payment collection agent solely for the purpose of accepting payments from Guests on the Host's behalf. By making a Booking, you authorize Align Workspaces to charge the payment method on file. Hosts will receive payouts according to the Platform's payout schedule, less applicable Service Fees.
+
+9. CANCELLATION AND REFUNDS
+
+- 24+ hours before start time: Eligible for a full refund per the Host's policy.
+- Less than 24 hours: Non-refundable per standard policy.
+- Host-initiated cancellation: Guest receives a full refund. Hosts who cancel confirmed Bookings may face penalties including listing demotion or account suspension.
+- No-shows: Guests who do not arrive forfeit payment. Hosts who are unavailable for confirmed Bookings must provide a full refund.
+- Refunds are processed to the original payment method within 5 to 10 business days.
+
+10. NON-CIRCUMVENTION
+
+Users may not use contact information obtained through the Platform to transact outside the Platform in order to avoid paying Service Fees. If you are found to have circumvented the Platform, you agree to pay Align Workspaces an amount equal to 30% of the booking subtotal as liquidated damages.
+
+11. USER-GENERATED CONTENT
+
+You retain ownership of Content you post on the Platform. By posting Content, you grant Align Workspaces a non-exclusive, worldwide, royalty-free, perpetual license to use, copy, modify, display, distribute, and sublicense your Content for the purpose of operating and marketing the Platform.
+
+12. PROFESSIONAL USE DISCLAIMER
+
+The Platform serves professionals across all industries. Align Workspaces makes no representations about the professional credentials, licenses, permits, or qualifications of any Host or Guest. Users who are licensed, certified, or regulated professionals are solely responsible for their own compliance. Align Workspaces is not responsible for any professional malpractice, misconduct, regulatory violation, health code violation, or breach of professional duty that occurs in booked workspaces.
+
+13. PROFESSIONAL USE CERTIFICATIONS
+
+Hosts may voluntarily self-certify their workspace for specific professional use categories. Current categories: Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, General Professional. Professional Use Certifications are self-reported by the Host and are not independently verified, audited, or endorsed by Align Workspaces.
+
+14. INSURANCE REQUIREMENTS
+
+Host Insurance (Required): All Hosts must maintain active general liability insurance covering their workspace with a minimum coverage amount of $1,000,000 per occurrence. Listings associated with lapsed or unverified insurance will be suspended.
+
+Guest Insurance (Recommended/Conditional): Guests who are licensed or regulated professionals are strongly encouraged to maintain active professional liability insurance.
+
+Platform Insurance Disclaimer: Align Workspaces does not provide insurance coverage for Hosts, Guests, or workspaces. Insurance Verification is limited to confirming that a Host has submitted documentation that appears to reflect active coverage.
+
+15. HOST PROTECTION PLAN
+
+Align Workspaces offers an optional Host Protection Plan ("HPP") that provides damage coverage for eligible incidents caused by Guests during confirmed Bookings. The HPP is a voluntary, supplementary benefit and does not replace the Host's obligation to maintain their own liability insurance.
+
+16. DAMAGE RESOLUTION
+
+Hosts must document damage within 48 hours of the Booking end time. Guests have 72 hours to respond. Guests found responsible may be charged through their payment method on file.
+
+17. DISCLAIMER OF WARRANTIES
+
+THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND. ALIGN WORKSPACES DISCLAIMS ALL WARRANTIES, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+18. LIMITATION OF LIABILITY
+
+ALIGN WORKSPACES' AGGREGATE LIABILITY SHALL NOT EXCEED THE AMOUNTS PAID BY YOU IN THE TWELVE (12) MONTHS PRIOR TO THE EVENT GIVING RISE TO THE CLAIM, OR ONE HUNDRED DOLLARS ($100), WHICHEVER IS GREATER. ALIGN WORKSPACES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
+
+19. INDEMNIFICATION
+
+You agree to indemnify, defend, and hold harmless Align Workspaces from and against any claims arising out of your breach of these Terms, your use of the Platform, your interaction with any other user, any damage you cause, your violation of any applicable law, your Content, and any claim arising from your professional activities or failure to maintain required licenses or insurance.
+
+20. DISPUTE RESOLUTION
+
+For disputes between Hosts and Guests, users agree to first attempt resolution directly. The Platform's determination is final. For disputes between a user and Align Workspaces, you agree to binding arbitration on an individual basis. You waive any right to participate in a class action. This may be opted out of within 30 days of account creation.
+
+21. GOVERNING LAW
+
+These Terms shall be governed by the laws of the State of Florida. Any legal action outside of arbitration shall be brought in Miami-Dade County, Florida.
+
+22. GENERAL
+
+If any provision is found unenforceable, the remaining provisions continue in full force. These Terms constitute the entire agreement between you and Align Workspaces.
+
+23. CONTACT
+
+For questions about these Terms, contact us at hello@alignworkspaces.com.
+
+================================================================================
+16. CONTACT
 ================================================================================
 
 Align Workspaces
