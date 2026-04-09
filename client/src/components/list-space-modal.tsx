@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save, Camera, MapPin } from "lucide-react";
@@ -361,6 +361,8 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const [createdSpaceId, setCreatedSpaceId] = useState<string | null>(null);
   const [postStep, setPostStep] = useState<"photos" | "arrival" | "insurance" | null>(null);
   const [tab, setTab] = useState<ListTab>("details");
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
   const listSteps: ListTab[] = ["details", "pricing", "schedule", "extras"];
   const allStepLabels = ["Details", "Pricing", "Availability", "Extras", "Photos", "Arrival Guide", "Insurance"];
   const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", schedule: "Availability", extras: "Extras", photos: "Photos", arrival: "Arrival Guide" };
@@ -382,6 +384,110 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   });
   const [amenitiesTags, setAmenitiesTags] = useState<string[]>([]);
 
+  // Check for existing draft space to resume
+  useEffect(() => {
+    if (!isAuthenticated || draftLoaded) return;
+    fetch("/api/my-spaces", { credentials: "include" })
+      .then(r => r.ok ? r.json() : [])
+      .then((spaces: any[]) => {
+        const draft = spaces.find((s: any) => s.approvalStatus === "draft");
+        if (draft) {
+          setCreatedSpaceId(draft.id);
+          const addrParts = (draft.address || "").split(",").map((s: string) => s.trim());
+          setFormData({
+            name: draft.name || "", type: draft.type || "therapy",
+            tags: draft.tags || [draft.type].filter(Boolean),
+            description: draft.description || "", shortDescription: draft.shortDescription || "",
+            address: addrParts[0] || "", city: addrParts[1] || "", state: addrParts[2] || "FL", zipCode: addrParts[3] || "",
+            neighborhood: draft.neighborhood || "",
+            pricePerHour: draft.pricePerHour ? String(draft.pricePerHour) : "",
+            pricePerDay: draft.pricePerDay ? String(draft.pricePerDay) : "",
+            amenities: "", targetProfession: draft.targetProfession || "",
+            availableHours: draft.availableHours || "",
+            hostName: draft.hostName || "",
+            bookingTypes: draft.bookingTypes || "both",
+            recurringMinBookings: String(draft.recurringMinBookings ?? "1"),
+            recurringDiscountPercent: String(draft.recurringDiscountPercent ?? "0"),
+            recurringDiscountAfter: String(draft.recurringDiscountAfter ?? "0"),
+          });
+          setAmenitiesTags((draft.amenities || []) as string[]);
+          if (draft.availabilitySchedule) {
+            try { setSchedule(JSON.parse(draft.availabilitySchedule)); } catch {}
+          }
+          // Determine which step to resume at
+          if (draft.pricePerHour && draft.pricePerHour > 0) {
+            if (draft.availabilitySchedule) {
+              setTab("extras"); // was on step 4
+            } else {
+              setTab("schedule"); // was on step 3
+            }
+          } else if (draft.description) {
+            setTab("pricing"); // was on step 2
+          }
+          toast({ title: "Draft found", description: "Continuing where you left off." });
+        }
+        setDraftLoaded(true);
+      })
+      .catch(() => setDraftLoaded(true));
+  }, [isAuthenticated, draftLoaded]);
+
+  // Save current step data to server
+  const saveStep = async (nextTab?: ListTab) => {
+    setSaving(true);
+    try {
+      const fullAddress = [formData.address, formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ");
+      const payload: any = {
+        ...formData,
+        address: fullAddress,
+        type: formData.tags[0] || formData.type,
+        amenities: amenitiesTags,
+        pricePerHour: Number(formData.pricePerHour) || 0,
+        pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
+        recurringMinBookings: Number(formData.recurringMinBookings) || 1,
+        recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
+        recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
+        bookingTypes: formData.bookingTypes === "none" ? "both" : formData.bookingTypes,
+        availabilitySchedule: JSON.stringify(schedule),
+        availableHours: scheduleToDisplayText(schedule),
+      };
+
+      if (createdSpaceId) {
+        // PATCH existing draft
+        if (isListLastStep && nextTab === undefined) {
+          payload.approvalStatus = "pending"; // Step 4 submit → mark as complete
+        }
+        await fetch(`/api/spaces/${createdSpaceId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // POST new draft
+        payload.isDraft = true;
+        const res = await apiRequest("POST", "/api/spaces", payload);
+        const space = await res.json();
+        setCreatedSpaceId(space.id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-spaces"] });
+
+      if (isListLastStep && nextTab === undefined) {
+        // Final step → go to post-submission
+        toast({ title: "Space submitted!", description: "Now let's add some finishing touches." });
+        setListingSubmitted(true);
+        setPostStep("photos");
+      } else if (nextTab) {
+        setTab(nextTab);
+      }
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const { data: insuranceStatus, isLoading: insuranceLoading } = useQuery<{ hasInsurance: boolean; status: string }>({
     queryKey: ["/api/host/insurance/status"],
     enabled: isAuthenticated,
@@ -392,38 +498,6 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
     ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
     : null;
-
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      const fullAddress = [formData.address, formData.city, formData.state, formData.zipCode].filter(Boolean).join(", ");
-      const payload = {
-        ...formData,
-        address: fullAddress,
-        type: formData.tags[0] || formData.type,
-        amenities: amenitiesTags,
-        pricePerHour: Number(formData.pricePerHour),
-        pricePerDay: formData.pricePerDay ? Number(formData.pricePerDay) : undefined,
-        recurringMinBookings: Number(formData.recurringMinBookings) || 1,
-        recurringDiscountPercent: formData.recurringDiscountPercent ? Number(formData.recurringDiscountPercent) : null,
-        recurringDiscountAfter: formData.recurringDiscountAfter ? Number(formData.recurringDiscountAfter) : 0,
-        bookingTypes: formData.bookingTypes === "none" ? "both" : formData.bookingTypes,
-        availabilitySchedule: JSON.stringify(schedule),
-        availableHours: scheduleToDisplayText(schedule),
-      };
-      const res = await apiRequest("POST", "/api/spaces", payload);
-      return await res.json();
-    },
-    onSuccess: (space: any) => {
-      toast({ title: "Space submitted!", description: "Now let's add some finishing touches." });
-      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
-      setCreatedSpaceId(space.id);
-      setListingSubmitted(true);
-      setPostStep("photos");
-    },
-    onError: (err: any) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
 
   const update = (field: string, value: string) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -941,18 +1015,18 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 const canContinue = stepValid[tab] ?? true;
                 return isListLastStep ? (
                   <Button
-                    onClick={() => createMutation.mutate()}
-                    disabled={!canContinue || createMutation.isPending}
+                    onClick={() => saveStep()}
+                    disabled={!canContinue || saving}
                     size="sm"
                     className="bg-stone-900 text-white hover:bg-stone-800"
                     data-testid="button-submit-list-space"
                   >
-                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
                     Save & Continue
                   </Button>
                 ) : (
-                  <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!canContinue} onClick={() => setTab(listSteps[listStepIndex + 1])}>
-                    <Save className="w-3.5 h-3.5 mr-1" /> Save & Continue
+                  <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!canContinue || saving} onClick={() => saveStep(listSteps[listStepIndex + 1])}>
+                    {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Save className="w-3.5 h-3.5 mr-1" />} Save & Continue
                   </Button>
                 );
               })()}

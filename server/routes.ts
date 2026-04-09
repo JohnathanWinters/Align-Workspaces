@@ -2768,7 +2768,9 @@ export async function registerRoutes(
   app.post("/api/spaces", isAuthenticated, async (req: any, res) => {
     try {
       const user = req.user;
-      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName, bookingTypes, recurringMinBookings, recurringDiscountPercent, recurringDiscountAfter, cancellationPolicy, availabilitySchedule } = req.body;
+      const { name, type, description, shortDescription, address, neighborhood, pricePerHour, pricePerDay, amenities, targetProfession, availableHours, hostName, bookingTypes, recurringMinBookings, recurringDiscountPercent, recurringDiscountAfter, cancellationPolicy, availabilitySchedule, isDraft } = req.body;
+
+      if (!name) return res.status(400).json({ message: "Space name is required" });
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -2792,14 +2794,14 @@ export async function registerRoutes(
       const space = await storage.createSpace({
         name,
         slug,
-        type,
-        description,
+        type: type || "therapy",
+        description: description || "",
         shortDescription: shortDescription || null,
-        address,
+        address: address || "",
         neighborhood: neighborhood || null,
         latitude,
         longitude,
-        pricePerHour: parseInt(pricePerHour),
+        pricePerHour: pricePerHour ? parseInt(pricePerHour) : 0,
         pricePerDay: pricePerDay ? parseInt(pricePerDay) : null,
         capacity: null,
         amenities: amenities || [],
@@ -2809,7 +2811,7 @@ export async function registerRoutes(
         contactEmail: user.claims?.email || null,
         hostName: hostName || user.claims?.first_name || "Space Host",
         userId: user.claims.sub,
-        approvalStatus: "pending",
+        approvalStatus: isDraft ? "draft" : "pending",
         bookingTypes: bookingTypes && ["hourly", "recurring", "both"].includes(bookingTypes) ? bookingTypes : "both",
         recurringMinBookings: recurringMinBookings ? parseInt(recurringMinBookings) : 1,
         recurringDiscountPercent: recurringDiscountPercent ? parseInt(recurringDiscountPercent) : null,
