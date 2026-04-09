@@ -355,6 +355,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
   const [showListMagicLink, setShowListMagicLink] = useState(false);
   const [insuranceBypassed, setInsuranceBypassed] = useState(false);
+  const [listingSubmitted, setListingSubmitted] = useState(false);
   const [tab, setTab] = useState<ListTab>("details");
   const [formData, setFormData] = useState({
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
@@ -393,7 +394,11 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
     onSuccess: () => {
       toast({ title: "Space submitted!", description: "Your space listing is pending admin approval." });
       queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
-      onClose();
+      if (insuranceStatus?.hasInsurance) {
+        onClose();
+      } else {
+        setListingSubmitted(true);
+      }
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -459,17 +464,37 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               />
             )}
           </div>
-        ) : insuranceLoading ? (
-          <div className="p-10 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
+        ) : listingSubmitted && !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
+          <div>
+            <InsuranceUploadStep
+              onComplete={() => { setInsuranceBypassed(true); onClose(); }}
+              onGetCovered={() => {
+                window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
+              }}
+            />
+            <div className="px-6 pb-6 -mt-2 space-y-3">
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200" /></div>
+                <div className="relative flex justify-center"><span className="bg-white px-3 text-xs text-stone-400">or</span></div>
+              </div>
+              <button
+                onClick={() => {
+                  toast({
+                    title: "Insurance required for bookings",
+                    description: "Your listing has been saved but will not receive bookings until insurance is uploaded. You can add it anytime from your Client Portal under Workspaces.",
+                    duration: 8000,
+                  });
+                  onClose();
+                }}
+                className="w-full py-3 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors"
+              >
+                Continue Later
+              </button>
+              <p className="text-[10px] text-center text-stone-400 leading-relaxed">
+                Your space has been submitted but will not appear in search or accept bookings until insurance is verified.
+              </p>
+            </div>
           </div>
-        ) : !insuranceStatus?.hasInsurance && !insuranceBypassed ? (
-          <InsuranceUploadStep
-            onComplete={() => setInsuranceBypassed(true)}
-            onGetCovered={() => {
-              window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
-            }}
-          />
         ) : (
           <>
             {/* Completion Score */}
