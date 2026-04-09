@@ -53,9 +53,12 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
     }
   };
 
+  // Scroll to top when modal opens so it's visible
+  useState(() => { window.scrollTo({ top: 0, behavior: "smooth" }); });
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center" onClick={onClose}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -67,7 +70,7 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: "spring", damping: 28, stiffness: 350 }}
-          className="relative bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm shadow-2xl"
+          className="relative bg-white rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl"
           onClick={e => e.stopPropagation()}
           data-testid={`magic-link-modal-${spaceId}`}
         >
@@ -125,9 +128,9 @@ function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess 
                 <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
                   <User className="w-7 h-7 text-emerald-500" />
                 </div>
-                <h3 className="font-serif text-lg font-semibold mb-1">Welcome!</h3>
+                <h3 className="font-serif text-lg font-semibold mb-1">Sign Up</h3>
                 <p className="text-sm text-foreground/50">
-                  Looks like you're new here. What's your name?
+                  Welcome! Enter your name to create an account.
                 </p>
               </div>
               <form onSubmit={(e) => {

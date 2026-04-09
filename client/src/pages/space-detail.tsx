@@ -337,10 +337,10 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center" onClick={onClose}>
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center" onClick={onClose}>
         <motion.div className="absolute inset-0 bg-black/50 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
         <motion.div
-          className="relative bg-white w-full sm:w-[400px] sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl"
+          className="relative bg-white w-[400px] max-w-[calc(100%-2rem)] rounded-2xl p-6 shadow-2xl"
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
@@ -368,8 +368,8 @@ function MagicLinkModal({ spaceSlug, onClose, onSuccess, intent = "book" }: { sp
           {magicStep === "name" && (
             <div className="space-y-4">
               <div className="text-center mb-2">
-                <h3 className="font-serif text-lg font-semibold">Welcome!</h3>
-                <p className="text-sm text-stone-500 mt-1">What's your name?</p>
+                <h3 className="font-serif text-lg font-semibold">Sign Up</h3>
+                <p className="text-sm text-stone-500 mt-1">Welcome! Enter your name to create an account.</p>
               </div>
               <form onSubmit={e => { e.preventDefault(); sendMagicLink(magicEmail, magicName, magicLastName); }} className="space-y-3">
                 <Input placeholder="First name" value={magicName} onChange={e => setMagicName(e.target.value)} required autoFocus data-testid="input-magic-name" />

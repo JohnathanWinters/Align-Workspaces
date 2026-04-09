@@ -2657,7 +2657,8 @@ function PortalLogin() {
 
         {step === "name" && (
           <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim() && lastName.trim()) sendMagicLink(email.trim(), firstName.trim(), lastName.trim()); }} className="space-y-3">
-            <p className="text-white/60 text-sm mb-2">Welcome! What's your name?</p>
+            <h2 className="font-serif text-2xl text-white mb-2">Sign Up</h2>
+            <p className="text-white/60 text-sm mb-2">Welcome! Enter your name to create an account.</p>
             <input
               type="text"
               placeholder="First name"

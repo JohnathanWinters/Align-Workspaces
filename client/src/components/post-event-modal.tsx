@@ -372,7 +372,8 @@ export function PostEventModal({ onClose }: { onClose: () => void }) {
               </div>
             ) : authStep === "name" ? (
               <div className="space-y-3">
-                <p className="text-sm text-stone-600">Welcome! What's your name?</p>
+                <h3 className="font-serif text-lg font-semibold mb-1">Sign Up</h3>
+                <p className="text-sm text-stone-600">Welcome! Enter your name to create an account.</p>
                 <Input value={authName} onChange={e => setAuthName(e.target.value)} placeholder="First name" className="h-10" autoFocus />
                 <Input value={authLastName} onChange={e => setAuthLastName(e.target.value)} placeholder="Last name" className="h-10" />
                 <Button onClick={sendMagicLink} disabled={!authName.trim() || !authLastName.trim() || authLoading} className="w-full bg-stone-900 text-white">
