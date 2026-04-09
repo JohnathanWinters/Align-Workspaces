@@ -43,6 +43,7 @@ import {
   getAvailableTimeSlots,
   getMaxHoursFromSlot,
   formatTime,
+  normalizeSchedule,
 } from "./availability-schedule-editor";
 import type { SpaceBooking, SpaceMessage, DirectMessage } from "@shared/schema";
 
@@ -351,7 +352,7 @@ export function ConversationView({
   }, [messages.length]);
 
   const spaceSchedule: import("./availability-schedule-editor").WeekSchedule | null = (() => {
-    try { return booking.spaceSchedule ? JSON.parse(booking.spaceSchedule) : null; } catch { return null; }
+    try { return booking.spaceSchedule ? normalizeSchedule(JSON.parse(booking.spaceSchedule)) : null; } catch { return null; }
   })();
   const bufferMins = booking.spaceBufferMinutes ?? 15;
 

@@ -54,6 +54,7 @@ import {
   getAvailableTimeSlots,
   getMaxHoursFromSlot,
   formatTime,
+  normalizeSchedule,
 } from "@/components/availability-schedule-editor";
 import { SiteFooter } from "@/components/site-footer";
 import { trackEvent } from "@/hooks/use-analytics";
@@ -453,45 +454,52 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
   const { toast } = useToast();
 
   const DEFAULT_SCHEDULE: WeekSchedule = {
-    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
-    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
-    fri: { open: "09:00", close: "17:00" }, sat: { open: "10:00", close: "15:00" }, sun: null,
+    mon: [{ open: "09:00", close: "17:00" }], tue: [{ open: "09:00", close: "17:00" }],
+    wed: [{ open: "09:00", close: "17:00" }], thu: [{ open: "09:00", close: "17:00" }],
+    fri: [{ open: "09:00", close: "17:00" }], sat: [{ open: "10:00", close: "15:00" }], sun: null,
   };
-  const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
+  const effectiveSchedule = normalizeSchedule(schedule) || DEFAULT_SCHEDULE;
 
   // Available days based on schedule
   const availableDays = DAY_KEYS.map((key, i) => ({
     index: i, name: DAY_NAMES[i], key,
-    available: effectiveSchedule[key] !== null,
+    available: effectiveSchedule[key] !== null && effectiveSchedule[key]!.length > 0,
   }));
 
   // Available time slots for selected day
   const timeSlots = dayOfWeek !== null ? (() => {
     const dayKey = DAY_KEYS[dayOfWeek];
-    const daySchedule = effectiveSchedule[dayKey];
-    if (!daySchedule) return [];
+    const blocks = effectiveSchedule[dayKey];
+    if (!blocks || blocks.length === 0) return [];
     const slots: string[] = [];
-    const [openH, openM] = daySchedule.open.split(":").map(Number);
-    const [closeH, closeM] = daySchedule.close.split(":").map(Number);
-    const openMin = openH * 60 + openM;
-    const closeMin = closeH * 60 + closeM;
-    for (let m = openMin; m < closeMin; m += 60) {
-      const h = Math.floor(m / 60);
-      const mi = m % 60;
-      slots.push(`${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`);
+    for (const block of blocks) {
+      const [openH, openM] = block.open.split(":").map(Number);
+      const [closeH, closeM] = block.close.split(":").map(Number);
+      const openMin = openH * 60 + openM;
+      const closeMin = closeH * 60 + closeM;
+      for (let m = openMin; m < closeMin; m += 60) {
+        const h = Math.floor(m / 60);
+        const mi = m % 60;
+        slots.push(`${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`);
+      }
     }
     return slots;
   })() : [];
 
   const maxHours = startTime && dayOfWeek !== null ? (() => {
     const dayKey = DAY_KEYS[dayOfWeek];
-    const daySchedule = effectiveSchedule[dayKey];
-    if (!daySchedule) return 1;
-    const [closeH, closeM] = daySchedule.close.split(":").map(Number);
-    const closeMin = closeH * 60 + closeM;
+    const blocks = effectiveSchedule[dayKey];
+    if (!blocks || blocks.length === 0) return 1;
     const [startH, startM] = startTime.split(":").map(Number);
     const startMin = startH * 60 + startM;
-    return Math.max(1, Math.floor((closeMin - startMin) / 60));
+    for (const block of blocks) {
+      const [openH, openM] = block.open.split(":").map(Number);
+      const [closeH, closeM] = block.close.split(":").map(Number);
+      if (startMin >= openH * 60 + openM && startMin < closeH * 60 + closeM) {
+        return Math.max(1, Math.floor((closeH * 60 + closeM - startMin) / 60));
+      }
+    }
+    return 1;
   })() : 8;
 
   const minBookings = (space as any).recurringMinBookings || 1;
@@ -667,8 +675,8 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                           </div>
                           <span className={`text-sm font-medium ${dayOfWeek === d.index ? "text-emerald-800" : "text-stone-700"}`}>{d.name}</span>
                         </div>
-                        {daySchedule && (
-                          <span className="text-xs text-stone-400">{formatTime(daySchedule.open)} – {formatTime(daySchedule.close)}</span>
+                        {daySchedule && daySchedule.length > 0 && (
+                          <span className="text-xs text-stone-400">{daySchedule.map(b => `${formatTime(b.open)} – ${formatTime(b.close)}`).join(", ")}</span>
                         )}
                       </button>
                     );
@@ -856,15 +864,15 @@ function BookingPopup({ space, onClose, schedule, bufferMinutes, bookMutation }:
   }, []);
 
   const DEFAULT_SCHEDULE: WeekSchedule = {
-    mon: { open: "09:00", close: "17:00" },
-    tue: { open: "09:00", close: "17:00" },
-    wed: { open: "09:00", close: "17:00" },
-    thu: { open: "09:00", close: "17:00" },
-    fri: { open: "09:00", close: "17:00" },
-    sat: { open: "10:00", close: "15:00" },
+    mon: [{ open: "09:00", close: "17:00" }],
+    tue: [{ open: "09:00", close: "17:00" }],
+    wed: [{ open: "09:00", close: "17:00" }],
+    thu: [{ open: "09:00", close: "17:00" }],
+    fri: [{ open: "09:00", close: "17:00" }],
+    sat: [{ open: "10:00", close: "15:00" }],
     sun: null,
   };
-  const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
+  const effectiveSchedule = normalizeSchedule(schedule) || DEFAULT_SCHEDULE;
 
   // Fetch booked slots for the first selected date (used for time picker)
   const { data: bookedData } = useQuery<{ bookedSlots: Array<{ startMin: number; endMin: number }> }>({
@@ -1846,7 +1854,7 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
   const primaryTag = space.tags && space.tags.length > 0 ? space.tags[space.tags.length - 1] : space.type;
 
   const schedule: WeekSchedule | null = (() => {
-    try { return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null; } catch { return null; }
+    try { return space.availabilitySchedule ? normalizeSchedule(JSON.parse(space.availabilitySchedule)) : null; } catch { return null; }
   })();
   const bufferMinutes = space.bufferMinutes ?? 15;
 

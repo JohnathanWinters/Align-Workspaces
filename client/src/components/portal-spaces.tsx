@@ -49,7 +49,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
-import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
+import { AvailabilityScheduleEditor, scheduleToDisplayText, normalizeSchedule, type WeekSchedule } from "./availability-schedule-editor";
 import { ArrivalGuideEditor } from "./arrival-guide";
 import BookingCalendar from "./booking-calendar";
 import { CalendarSyncSettings } from "./calendar-sync-settings";
@@ -333,12 +333,8 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
   const [tab, setTab] = useState<EditTab>("details");
   const [schedule, setSchedule] = useState<WeekSchedule>(() => {
     try {
-      return space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : {
-        mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
-        wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
-        fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
-      };
-    } catch { return { mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" }, wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" }, fri: { open: "09:00", close: "17:00" }, sat: null, sun: null }; }
+      return normalizeSchedule(space.availabilitySchedule ? JSON.parse(space.availabilitySchedule) : null);
+    } catch { return normalizeSchedule(null); }
   });
   const [formData, setFormData] = useState({
     name: space.name || "",

@@ -126,8 +126,30 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     }
   };
 
-  const removeStep = (index: number) => {
-    setSteps(prev => prev.filter((_, i) => i !== index));
+  const removeStep = async (index: number) => {
+    const step = steps[index];
+    const updatedSteps = steps.filter((_, i) => i !== index);
+    setSteps(updatedSteps);
+    try {
+      // Delete the image from storage
+      await fetch(`/api/spaces/${spaceId}/arrival-guide/image`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrl: step.imageUrl }),
+      });
+      // Auto-save so the removal persists
+      await apiRequest("PUT", `/api/spaces/${spaceId}/arrival-guide`, {
+        wifiName: wifiName.trim() || null,
+        wifiPassword: wifiPassword.trim() || null,
+        doorCode: doorCode.trim() || null,
+        notes: notes.trim() || null,
+        steps: updatedSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
+    } catch {
+      toast({ title: "Failed to delete photo", variant: "destructive" });
+    }
   };
 
   const updateCaption = (index: number, caption: string) => {

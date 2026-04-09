@@ -61,6 +61,7 @@ import {
   getAvailableTimeSlots,
   getMaxHoursFromSlot,
   formatTime,
+  normalizeSchedule,
 } from "@/components/availability-schedule-editor";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -823,15 +824,15 @@ function BookingPopup({
   }, []);
 
   const DEFAULT_SCHEDULE: WeekSchedule = {
-    mon: { open: "09:00", close: "17:00" },
-    tue: { open: "09:00", close: "17:00" },
-    wed: { open: "09:00", close: "17:00" },
-    thu: { open: "09:00", close: "17:00" },
-    fri: { open: "09:00", close: "17:00" },
-    sat: { open: "10:00", close: "15:00" },
+    mon: [{ open: "09:00", close: "17:00" }],
+    tue: [{ open: "09:00", close: "17:00" }],
+    wed: [{ open: "09:00", close: "17:00" }],
+    thu: [{ open: "09:00", close: "17:00" }],
+    fri: [{ open: "09:00", close: "17:00" }],
+    sat: [{ open: "10:00", close: "15:00" }],
     sun: null,
   };
-  const effectiveSchedule = schedule || DEFAULT_SCHEDULE;
+  const effectiveSchedule = normalizeSchedule(schedule) || DEFAULT_SCHEDULE;
 
   // Fetch booked slots for the selected date
   const { data: bookedData } = useQuery<{ bookedSlots: Array<{ startMin: number; endMin: number }> }>({
@@ -1448,7 +1449,7 @@ export default function SpacesBrowsePage() {
       result = result.filter(s => {
         if (!s.availabilitySchedule) return true;
         try {
-          const sched = typeof s.availabilitySchedule === "string" ? JSON.parse(s.availabilitySchedule) : s.availabilitySchedule;
+          const sched = normalizeSchedule(typeof s.availabilitySchedule === "string" ? JSON.parse(s.availabilitySchedule) : s.availabilitySchedule);
           const dayKey = getDayOfWeek(dateStr);
           return dayKey ? sched[dayKey] !== null && sched[dayKey] !== undefined : true;
         } catch { return true; }

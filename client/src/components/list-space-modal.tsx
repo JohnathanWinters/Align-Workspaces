@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { AmenityInput } from "./amenity-input";
-import { AvailabilityScheduleEditor, scheduleToDisplayText, type WeekSchedule } from "./availability-schedule-editor";
+import { AvailabilityScheduleEditor, scheduleToDisplayText, normalizeSchedule, type WeekSchedule } from "./availability-schedule-editor";
 import { ArrivalGuideEditor } from "./arrival-guide";
 
 function MagicLinkModal({ spaceId, returnTo: customReturnTo, onClose, onSuccess }: { spaceId: string; returnTo?: string; onClose: () => void; onSuccess: () => void }) {
@@ -244,7 +244,7 @@ function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => v
       fd.append("coverageAmount", form.coverageAmount);
       fd.append("policyExpirationDate", form.policyExpirationDate);
       fd.append("document", file);
-      const res = await fetch("/api/host/insurance", { method: "POST", body: fd });
+      const res = await fetch("/api/host/insurance", { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Upload failed");
@@ -599,9 +599,9 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const allStepLabels = ["Details", "Pricing", "Availability", "Extras", "Photos", "Arrival Guide", "Insurance"];
   const listStepLabels: Record<ListTab, string> = { details: "Details", pricing: "Pricing", schedule: "Availability", extras: "Extras", photos: "Photos", arrival: "Arrival Guide" };
   const [schedule, setSchedule] = useState<WeekSchedule>({
-    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
-    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
-    fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+    mon: [{ open: "09:00", close: "17:00" }], tue: [{ open: "09:00", close: "17:00" }],
+    wed: [{ open: "09:00", close: "17:00" }], thu: [{ open: "09:00", close: "17:00" }],
+    fri: [{ open: "09:00", close: "17:00" }], sat: null, sun: null,
   });
   const listStepIndex = listSteps.indexOf(tab);
   const isListLastStep = listStepIndex === listSteps.length - 1;
@@ -644,7 +644,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
           });
           setAmenitiesTags((draft.amenities || []) as string[]);
           if (draft.availabilitySchedule) {
-            try { setSchedule(JSON.parse(draft.availabilitySchedule)); } catch {}
+            try { setSchedule(normalizeSchedule(JSON.parse(draft.availabilitySchedule))); } catch {}
           }
           // Determine which step to resume at
           if (draft.pricePerHour && draft.pricePerHour > 0) {

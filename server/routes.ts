@@ -7170,6 +7170,21 @@ ${featuredSection}
     }
   });
 
+  // Host: delete arrival guide step image
+  app.delete("/api/spaces/:id/arrival-guide/image", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space || space.userId !== userId) return res.status(403).json({ message: "Not your space" });
+      const { imageUrl } = req.body;
+      if (!imageUrl) return res.status(400).json({ message: "No imageUrl provided" });
+      await deleteObject(imageUrl);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
   // Host: upload arrival guide step image
   app.post("/api/spaces/:id/arrival-guide/upload", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {
@@ -7179,9 +7194,8 @@ ${featuredSection}
       if (!req.file) return res.status(400).json({ message: "No image provided" });
 
       const buffer = await sharp(req.file.buffer).resize(1200, 900, { fit: "cover" }).webp({ quality: 80 }).toBuffer();
-      const key = `arrival-guides/${req.params.id}/${randomUUID()}.webp`;
-      await uploadBuffer(buffer, key, "image/webp");
-      res.json({ imageUrl: key });
+      const imageUrl = await uploadBuffer(buffer, "image/webp");
+      res.json({ imageUrl });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -7264,9 +7278,8 @@ ${featuredSection}
     try {
       if (!req.file) return res.status(400).json({ message: "No photo" });
       const buffer = await sharp(req.file.buffer).resize(1024, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
-      const key = `team-members/${req.params.id}-${randomUUID()}.webp`;
-      await uploadBuffer(buffer, key, "image/webp");
-      const [updated] = await db.update(teamMembers).set({ photoUrl: key }).where(eq(teamMembers.id, req.params.id)).returning();
+      const photoUrl = await uploadBuffer(buffer, "image/webp");
+      const [updated] = await db.update(teamMembers).set({ photoUrl }).where(eq(teamMembers.id, req.params.id)).returning();
       res.json(updated);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -7885,27 +7898,30 @@ ${featuredSection}
 
       const dayOfWeek = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(date + "T12:00:00").getDay()];
       const weekly = schedule.weeklySchedule ? JSON.parse(schedule.weeklySchedule) : {};
-      const daySchedule = weekly[dayOfWeek];
+      const dayScheduleRaw = weekly[dayOfWeek];
 
       // Check overrides
       const overrides = await storage.getScheduleOverrides(schedule.id);
-      const override = overrides.find(o => o.overrideDate === date);
+      const override = overrides.find((o: any) => o.overrideDate === date);
       if (override?.isBlocked) return res.json({ slots: [] });
 
-      const open = override?.customOpen || daySchedule?.open;
-      const close = override?.customClose || daySchedule?.close;
-      if (!open || !close) return res.json({ slots: [] });
+      // Normalize day schedule to array of time blocks (backward compat with single-block format)
+      let timeBlocks: { open: string; close: string }[] = [];
+      if (override?.customOpen && override?.customClose) {
+        timeBlocks = [{ open: override.customOpen, close: override.customClose }];
+      } else if (Array.isArray(dayScheduleRaw)) {
+        timeBlocks = dayScheduleRaw;
+      } else if (dayScheduleRaw?.open && dayScheduleRaw?.close) {
+        timeBlocks = [{ open: dayScheduleRaw.open, close: dayScheduleRaw.close }];
+      }
+      if (timeBlocks.length === 0) return res.json({ slots: [] });
 
       const duration = schedule.meetingDurationMinutes || 30;
       const buffer = schedule.bufferMinutes || 15;
-      const [openH, openM] = open.split(":").map(Number);
-      const [closeH, closeM] = close.split(":").map(Number);
-      const openMin = openH * 60 + openM;
-      const closeMin = closeH * 60 + closeM;
 
       // Get existing bookings for this date
       const existingBookings = await storage.getMeetingBookingsByDate(schedule.id, date);
-      const bookedRanges = existingBookings.map(b => {
+      const bookedRanges = existingBookings.map((b: any) => {
         const [h, m] = b.meetingStartTime.split(":").map(Number);
         const start = h * 60 + m;
         return { start, end: start + b.meetingDurationMinutes + buffer };
@@ -7922,14 +7938,20 @@ ${featuredSection}
 
       const allBlocked = [...bookedRanges, ...gcalRanges];
 
-      // Generate available slots
+      // Generate available slots across all time blocks
       const slots: string[] = [];
-      for (let t = openMin; t + duration <= closeMin; t += duration + buffer) {
-        const isBlocked = allBlocked.some(r => t < r.end && t + duration > r.start);
-        if (!isBlocked) {
-          const h = Math.floor(t / 60);
-          const m = t % 60;
-          slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+      for (const block of timeBlocks) {
+        const [openH, openM] = block.open.split(":").map(Number);
+        const [closeH, closeM] = block.close.split(":").map(Number);
+        const openMin = openH * 60 + openM;
+        const closeMin = closeH * 60 + closeM;
+        for (let t = openMin; t + duration <= closeMin; t += duration + buffer) {
+          const isBlocked = allBlocked.some(r => t < r.end && t + duration > r.start);
+          if (!isBlocked) {
+            const h = Math.floor(t / 60);
+            const m = t % 60;
+            slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+          }
         }
       }
 

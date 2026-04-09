@@ -88,7 +88,7 @@ import { playNotificationSound } from "@/lib/notification-sound";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
 import AdminTeamMembers from "@/components/admin-team-members";
-import { AvailabilityScheduleEditor } from "@/components/availability-schedule-editor";
+import { AvailabilityScheduleEditor, normalizeSchedule } from "@/components/availability-schedule-editor";
 import PipelineManager from "@/components/pipeline";
 
 interface EditToken {
@@ -5272,9 +5272,9 @@ function SchedulingManager({ token, onBack }: { token: string; onBack: () => voi
   const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [schedule, setSchedule] = useState<any>({
-    mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
-    wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
-    fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
+    mon: [{ open: "09:00", close: "17:00" }], tue: [{ open: "09:00", close: "17:00" }],
+    wed: [{ open: "09:00", close: "17:00" }], thu: [{ open: "09:00", close: "17:00" }],
+    fri: [{ open: "09:00", close: "17:00" }], sat: null, sun: null,
   });
   const [form, setForm] = useState({
     adminName: "", adminEmail: "", slug: "", meetingDurationMinutes: "30",
@@ -5345,11 +5345,7 @@ function SchedulingManager({ token, onBack }: { token: string; onBack: () => voi
       meetingTitle: s.meetingTitle || "Meeting with Align", meetingDescription: s.meetingDescription || "",
       location: s.location || "",
     });
-    setSchedule(s.weeklySchedule ? JSON.parse(s.weeklySchedule) : {
-      mon: { open: "09:00", close: "17:00" }, tue: { open: "09:00", close: "17:00" },
-      wed: { open: "09:00", close: "17:00" }, thu: { open: "09:00", close: "17:00" },
-      fri: { open: "09:00", close: "17:00" }, sat: null, sun: null,
-    });
+    setSchedule(normalizeSchedule(s.weeklySchedule ? JSON.parse(s.weeklySchedule) : null));
     setShowCreate(true);
   };
 
