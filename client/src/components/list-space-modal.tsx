@@ -436,7 +436,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               </div>
               <h3 className="font-serif text-lg font-semibold mb-2">Get Started</h3>
               <p className="text-sm text-foreground/50 max-w-sm mx-auto">
-                Enter your email to sign in or create an account.
+                Enter your email to sign up.
               </p>
             </div>
             {!showListMagicLink ? (
@@ -445,7 +445,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 className="w-full bg-foreground text-background hover:opacity-90 py-3"
                 data-testid="button-auth-list-space"
               >
-                <Mail className="w-4 h-4 mr-2" /> Continue with Email
+                <Mail className="w-4 h-4 mr-2" /> Sign Up with Email
               </Button>
             ) : (
               <MagicLinkModal
