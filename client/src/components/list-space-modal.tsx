@@ -821,7 +821,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
               {tab === "extras" && (
                 <div className="space-y-4">
-                  <p className="text-xs text-stone-400">This step is optional — you can skip it and add these later.</p>
+                  <p className="text-xs text-stone-400">Add amenities and details to help renters find your space.</p>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
                     <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
@@ -854,27 +854,16 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 };
                 const canContinue = stepValid[tab] ?? true;
                 return isListLastStep ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => createMutation.mutate()}
-                      disabled={createMutation.isPending}
-                      className="text-stone-500"
-                    >
-                      Skip & Submit
-                    </Button>
-                    <Button
-                      onClick={() => createMutation.mutate()}
-                      disabled={createMutation.isPending}
-                      size="sm"
-                      className="bg-stone-900 text-white hover:bg-stone-800"
-                      data-testid="button-submit-list-space"
-                    >
-                      {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-                      Continue
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => createMutation.mutate()}
+                    disabled={!canContinue || createMutation.isPending}
+                    size="sm"
+                    className="bg-stone-900 text-white hover:bg-stone-800"
+                    data-testid="button-submit-list-space"
+                  >
+                    {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+                    Submit
+                  </Button>
                 ) : (
                   <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!canContinue} onClick={() => setTab(listSteps[listStepIndex + 1])}>
                     Continue

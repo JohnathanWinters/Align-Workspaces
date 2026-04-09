@@ -2690,6 +2690,11 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
       hostName: space.hostName || "",
       contactEmail: space.contactEmail || "",
       amenities: (space.amenities || []).join(", "),
+      bookingTypes: (space as any).bookingTypes || "both",
+      recurringMinBookings: String((space as any).recurringMinBookings ?? "1"),
+      recurringDiscountPercent: String((space as any).recurringDiscountPercent ?? "0"),
+      recurringDiscountAfter: String((space as any).recurringDiscountAfter ?? "0"),
+      cancellationPolicy: (space as any).cancellationPolicy || "flexible",
     });
   };
 
@@ -2714,6 +2719,11 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
         pricePerDay: parseInt(editForm.pricePerDay) || null,
         bufferMinutes: parseInt(editForm.bufferMinutes) || 15,
         amenities: editForm.amenities.split(",").map((a: string) => a.trim()).filter(Boolean),
+        bookingTypes: editForm.bookingTypes || "both",
+        recurringMinBookings: parseInt(editForm.recurringMinBookings) || 1,
+        recurringDiscountPercent: editForm.recurringDiscountPercent ? parseInt(editForm.recurringDiscountPercent) : null,
+        recurringDiscountAfter: editForm.recurringDiscountAfter ? parseInt(editForm.recurringDiscountAfter) : 0,
+        cancellationPolicy: editForm.cancellationPolicy || "flexible",
         tags: derivedTags.length > 0 ? derivedTags : editForm.tags,
         type: derivedTags[0] || editForm.type,
       };
@@ -2920,6 +2930,34 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                             <option value="30">30 minutes</option>
                             <option value="60">1 hour</option>
                           </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Booking Types</label>
+                          <select value={editForm.bookingTypes} onChange={e => setEditForm({ ...editForm, bookingTypes: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                            <option value="both">Single + Recurring</option>
+                            <option value="hourly">Single Only</option>
+                            <option value="recurring">Recurring Only</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Cancellation Policy</label>
+                          <select value={editForm.cancellationPolicy} onChange={e => setEditForm({ ...editForm, cancellationPolicy: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                            <option value="flexible">Flexible</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="strict">Strict</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Recurring Discount (%)</label>
+                          <input type="number" min="0" max="50" value={editForm.recurringDiscountPercent} onChange={e => setEditForm({ ...editForm, recurringDiscountPercent: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Discount After (weeks)</label>
+                          <input type="number" min="0" value={editForm.recurringDiscountAfter} onChange={e => setEditForm({ ...editForm, recurringDiscountAfter: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">Min Recurring Weeks</label>
+                          <input type="number" min="1" value={editForm.recurringMinBookings} onChange={e => setEditForm({ ...editForm, recurringMinBookings: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-sm" />
                         </div>
                       </div>
                       <div>
@@ -7241,6 +7279,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [editUserForm, setEditUserForm] = useState({ firstName: "", lastName: "", email: "" });
   const [savingUser, setSavingUser] = useState(false);
   const [uploadingUserPhoto, setUploadingUserPhoto] = useState<string | null>(null);
+  const [pendingSpacesCount, setPendingSpacesCount] = useState(0);
   const userPhotoInputRef = useRef<HTMLInputElement>(null);
   const [deletingUser, setDeletingUser] = useState<UserType | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
@@ -7395,6 +7434,13 @@ function AdminDashboard({ token }: { token: string }) {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  // Fetch pending spaces count for sidebar badge
+  useEffect(() => {
+    adminFetch("/api/admin/spaces/all", token).then(r => r.ok ? r.json() : []).then(data => {
+      if (Array.isArray(data)) setPendingSpacesCount(data.filter((s: any) => s.approvalStatus === "pending").length);
+    }).catch(() => {});
+  }, [token, view]);
 
   const getUserShoots = (userId: string) => shoots.filter((s) => s.userId === userId);
 
@@ -8444,7 +8490,12 @@ function AdminDashboard({ token }: { token: string }) {
                     }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate flex-1">{item.label}</span>
+                    {item.id === "spaces" && pendingSpacesCount > 0 && (
+                      <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full min-w-[18px] text-center">
+                        {pendingSpacesCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
