@@ -981,14 +981,30 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
               {tab === "extras" && (
                 <div className="space-y-4">
-                  <p className="text-xs text-stone-400">Add amenities and details to help renters find your space.</p>
+                  <p className="text-xs text-stone-400">Add amenities and select who this space is best for.</p>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Amenities</label>
                     <AmenityInput value={amenitiesTags} onChange={setAmenitiesTags} data-testid="input-list-amenities" />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Target Profession</label>
-                    <Input value={formData.targetProfession} onChange={e => update("targetProfession", e.target.value)} placeholder="e.g. Therapists, Counselors" data-testid="input-list-target" />
+                    <label className="text-xs text-gray-500 mb-1.5 block">Who is this space for?</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {LIST_SPACE_TYPES.map(t => {
+                        const selected = (formData.targetProfession || "").split(",").map(s => s.trim()).filter(Boolean).includes(t.label);
+                        return (
+                          <button key={t.value} type="button" onClick={() => {
+                            const current = (formData.targetProfession || "").split(",").map(s => s.trim()).filter(Boolean);
+                            const next = selected ? current.filter(s => s !== t.label) : [...current, t.label];
+                            update("targetProfession", next.join(", "));
+                          }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                              selected ? "bg-stone-900 text-white border-stone-900" : "bg-white text-stone-500 border-stone-200 hover:border-stone-400"
+                            }`}>
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
