@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save, Camera, MapPin } from "lucide-react";
+import { X, Mail, User, Check, Loader2, Shield, ShieldCheck, Upload, ExternalLink, AlertCircle, Building2, DollarSign, Star, Clock, Repeat, CalendarDays, Save, Camera, MapPin, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1004,6 +1004,48 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                           </button>
                         );
                       })}
+                      {/* Custom professions */}
+                      {(formData.targetProfession || "").split(",").map(s => s.trim()).filter(Boolean)
+                        .filter(s => !LIST_SPACE_TYPES.some(t => t.label === s))
+                        .map(custom => (
+                          <span key={custom} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#c4956a]/10 text-[#946b4a] border border-[#c4956a]/30">
+                            {custom}
+                            <button type="button" onClick={() => {
+                              const current = (formData.targetProfession || "").split(",").map(s => s.trim()).filter(Boolean);
+                              update("targetProfession", current.filter(s => s !== custom).join(", "));
+                            }} className="text-[#946b4a]/60 hover:text-[#946b4a]">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <input type="text" placeholder="Add a custom profession..." className="flex-1 h-8 text-xs bg-white border border-stone-200 rounded-md px-2.5 outline-none focus:border-stone-400"
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (!val) return;
+                            const current = (formData.targetProfession || "").split(",").map(s => s.trim()).filter(Boolean);
+                            if (!current.some(s => s.toLowerCase() === val.toLowerCase())) {
+                              update("targetProfession", [...current, val].join(", "));
+                            }
+                            (e.target as HTMLInputElement).value = "";
+                          }
+                        }}
+                      />
+                      <button type="button" onClick={e => {
+                        const input = (e.target as HTMLElement).previousElementSibling as HTMLInputElement;
+                        const val = input?.value?.trim();
+                        if (!val) return;
+                        const current = (formData.targetProfession || "").split(",").map(s => s.trim()).filter(Boolean);
+                        if (!current.some(s => s.toLowerCase() === val.toLowerCase())) {
+                          update("targetProfession", [...current, val].join(", "));
+                        }
+                        input.value = "";
+                      }} className="h-8 px-3 text-xs font-medium bg-stone-100 text-stone-600 rounded-md hover:bg-stone-200 transition-colors flex items-center gap-1">
+                        <Plus className="w-3 h-3" /> Add
+                      </button>
                     </div>
                   </div>
                 </div>
