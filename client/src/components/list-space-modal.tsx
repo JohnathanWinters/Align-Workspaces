@@ -650,7 +650,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <p className="text-xs text-stone-400">Help your renters find your space. Add parking info, door codes, WiFi, and step-by-step directions with photos.</p>
             </div>
             <div className="px-6">
-              <ArrivalGuideEditor spaceId={createdSpaceId} />
+              <ArrivalGuideEditor spaceId={createdSpaceId} hideSaveButton />
             </div>
             <div className="flex items-center gap-2 px-6 pb-4 pt-2">
               <button onClick={() => { if (insuranceStatus?.hasInsurance) { onClose(); } else { setPostStep("insurance"); } }} className="flex-1 py-2.5 rounded-lg border border-stone-200 text-sm font-medium text-stone-500 hover:bg-stone-50 transition-colors">

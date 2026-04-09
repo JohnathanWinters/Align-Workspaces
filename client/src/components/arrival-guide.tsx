@@ -53,7 +53,7 @@ const STEP_SUGGESTIONS = [
 ];
 
 // ── Host Editor ───────────────────────────────────────────────────
-export function ArrivalGuideEditor({ spaceId }: { spaceId: string }) {
+export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: string; hideSaveButton?: boolean }) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -197,24 +197,24 @@ export function ArrivalGuideEditor({ spaceId }: { spaceId: string }) {
             disabled={uploading}
             className="w-full rounded-xl border-2 border-dashed border-gray-200 hover:border-[#c4956a]/40 transition-colors group"
           >
-            <div className="px-4 py-5">
-              <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="px-5 py-6">
+              <div className="flex items-center justify-center gap-4 mb-4">
                 {/* Wide shot example */}
-                <div className="w-20 h-14 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
-                  <Building2 className="w-5 h-5 text-stone-300 group-hover:text-[#c4956a]/50 transition-colors" />
-                  <span className="text-[8px] text-stone-300 font-medium uppercase tracking-wide">Wide</span>
+                <div className="w-24 h-16 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
+                  <Building2 className="w-6 h-6 text-stone-400 group-hover:text-[#c4956a]/60 transition-colors" />
+                  <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wide">Wide</span>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-stone-300" />
+                <ArrowRight className="w-4 h-4 text-stone-400" />
                 {/* Close-up example */}
-                <div className="w-20 h-14 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
-                  <ZoomIn className="w-5 h-5 text-stone-300 group-hover:text-[#c4956a]/50 transition-colors" />
-                  <span className="text-[8px] text-stone-300 font-medium uppercase tracking-wide">Close-up</span>
+                <div className="w-24 h-16 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
+                  <ZoomIn className="w-6 h-6 text-stone-400 group-hover:text-[#c4956a]/60 transition-colors" />
+                  <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wide">Close-up</span>
                 </div>
               </div>
-              <p className="text-xs text-stone-400 group-hover:text-stone-500 transition-colors font-medium mb-1">
+              <p className="text-sm text-stone-600 group-hover:text-stone-700 transition-colors font-medium mb-1.5">
                 {uploading ? "Uploading..." : "Add your first step"}
               </p>
-              <p className="text-[10px] text-stone-300 group-hover:text-stone-400 transition-colors leading-relaxed">
+              <p className="text-xs text-stone-400 group-hover:text-stone-500 transition-colors leading-relaxed max-w-sm mx-auto">
                 Start with a wide shot of the building, then add close-ups of the entrance, hallway, and door so guests can find you easily.
               </p>
             </div>
@@ -260,15 +260,17 @@ export function ArrivalGuideEditor({ spaceId }: { spaceId: string }) {
         </div>
       </div>
 
-      <Button
-        onClick={() => saveMutation.mutate()}
-        disabled={saveMutation.isPending}
-        className="w-full bg-[#1a1a1a] text-white text-xs"
-        size="sm"
-      >
-        {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />}
-        Save Arrival Guide
-      </Button>
+      {!hideSaveButton && (
+        <Button
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending}
+          className="w-full bg-[#1a1a1a] text-white text-xs"
+          size="sm"
+        >
+          {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />}
+          Save Arrival Guide
+        </Button>
+      )}
     </div>
   );
 }
