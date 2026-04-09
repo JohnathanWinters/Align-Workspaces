@@ -490,9 +490,21 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
               </div>
-              <div className="flex gap-1.5">
-                {allStepLabels.map((_, i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+              <div className="flex gap-1">
+                {allStepLabels.map((label, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
+                      else if (i === 4 && createdSpaceId) setPostStep("photos");
+                      else if (i === 5 && createdSpaceId) setPostStep("arrival");
+                      else if (i === 6 && createdSpaceId) setPostStep("insurance");
+                    }}
+                    disabled={i > 3 && !createdSpaceId}
+                    title={label}
+                    className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${i <= 3 || createdSpaceId ? "cursor-pointer hover:opacity-70" : "cursor-default"}`}
+                  />
                 ))}
               </div>
             </div>
@@ -528,7 +540,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 Skip
               </button>
               <Button onClick={() => setPostStep("arrival")} className="flex-1 bg-stone-900 text-white hover:bg-stone-800">
-                Continue
+                <Save className="w-3.5 h-3.5 mr-1" /> Save & Continue
               </Button>
             </div>
           </div>
@@ -538,9 +550,21 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
               </div>
-              <div className="flex gap-1.5">
-                {allStepLabels.map((_, i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+              <div className="flex gap-1">
+                {allStepLabels.map((label, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
+                      else if (i === 4 && createdSpaceId) setPostStep("photos");
+                      else if (i === 5 && createdSpaceId) setPostStep("arrival");
+                      else if (i === 6 && createdSpaceId) setPostStep("insurance");
+                    }}
+                    disabled={i > 3 && !createdSpaceId}
+                    title={label}
+                    className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${i <= 3 || createdSpaceId ? "cursor-pointer hover:opacity-70" : "cursor-default"}`}
+                  />
                 ))}
               </div>
             </div>
@@ -559,7 +583,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 Skip
               </button>
               <Button onClick={() => { if (insuranceStatus?.hasInsurance) { onClose(); } else { setPostStep("insurance"); } }} className="flex-1 bg-stone-900 text-white hover:bg-stone-800">
-                Continue
+                <Save className="w-3.5 h-3.5 mr-1" /> Save & Continue
               </Button>
             </div>
           </div>
@@ -569,9 +593,21 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — Insurance</span>
               </div>
-              <div className="flex gap-1.5">
-                {allStepLabels.map((_, i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+              <div className="flex gap-1">
+                {allStepLabels.map((label, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
+                      else if (i === 4 && createdSpaceId) setPostStep("photos");
+                      else if (i === 5 && createdSpaceId) setPostStep("arrival");
+                      else if (i === 6 && createdSpaceId) setPostStep("insurance");
+                    }}
+                    disabled={i > 3 && !createdSpaceId}
+                    title={label}
+                    className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${i <= 3 || createdSpaceId ? "cursor-pointer hover:opacity-70" : "cursor-default"}`}
+                  />
                 ))}
               </div>
             </div>
@@ -618,9 +654,21 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
                 <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
-              <div className="flex gap-1.5">
-                {allStepLabels.map((_, i) => (
-                  <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"}`} />
+              <div className="flex gap-1">
+                {allStepLabels.map((label, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (i <= 3) { setPostStep(null); setTab(listSteps[i]); }
+                      else if (i === 4 && createdSpaceId) setPostStep("photos");
+                      else if (i === 5 && createdSpaceId) setPostStep("arrival");
+                      else if (i === 6 && createdSpaceId) setPostStep("insurance");
+                    }}
+                    disabled={i > 3 && !createdSpaceId}
+                    title={label}
+                    className={`h-2 flex-1 rounded-full transition-all ${i <= globalStepIndex ? "bg-[#c4956a]" : "bg-stone-200"} ${i <= 3 || createdSpaceId ? "cursor-pointer hover:opacity-70" : "cursor-default"}`}
+                  />
                 ))}
               </div>
             </div>
@@ -900,11 +948,11 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     data-testid="button-submit-list-space"
                   >
                     {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-                    Submit
+                    Save & Continue
                   </Button>
                 ) : (
                   <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!canContinue} onClick={() => setTab(listSteps[listStepIndex + 1])}>
-                    Continue
+                    <Save className="w-3.5 h-3.5 mr-1" /> Save & Continue
                   </Button>
                 );
               })()}
