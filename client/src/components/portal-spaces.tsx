@@ -45,6 +45,7 @@ import {
   Play,
   XCircle,
   BookOpen,
+  AlertCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -671,6 +672,12 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       </button>
                     ))}
                   </div>
+                  {Number(formData.recurringMinBookings) > 1 && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1107,6 +1114,12 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                       </button>
                     ))}
                   </div>
+                  {Number(formData.recurringMinBookings) > 1 && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
