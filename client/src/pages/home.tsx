@@ -411,7 +411,11 @@ export default function HomePage({ autoStart }: { autoStart?: boolean } = {}) {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
               <div className="flex items-center relative">
                 <button
-                  onClick={() => autoStart ? setLocation("/") : setCurrentStep(0)}
+                  onClick={() => {
+                    if (!autoStart) { setCurrentStep(0); return; }
+                    const params = new URLSearchParams(window.location.search);
+                    setLocation(params.get("from") === "portal" ? "/portal?tab=overview" : "/");
+                  }}
                   className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10"
                   data-testid="link-home-logo"
                 >

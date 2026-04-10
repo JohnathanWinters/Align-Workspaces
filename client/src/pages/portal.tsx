@@ -2390,7 +2390,7 @@ function PortalContent() {
                       <span className="text-xs font-medium text-gray-700">Browse Workspaces</span>
                     </div>
                   </Link>
-                  <Link href="/portraits?from=portal">
+                  <Link href="/portrait-builder?from=portal">
                     <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
                       <Camera className="w-5 h-5 text-[#c4956a]" />
                       <span className="text-xs font-medium text-gray-700">Book a Shoot</span>
