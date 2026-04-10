@@ -2710,21 +2710,29 @@ function PortalLogin() {
               required
             />
             <label
-              className={`flex items-start gap-2.5 cursor-pointer select-none rounded-lg px-3 py-2.5 transition-all ${
-                termsShake ? "animate-[shake_0.5s_ease-in-out] bg-red-500/20 border border-red-400/40" : agreedToTerms ? "bg-white/5" : ""
+              className={`flex items-center justify-center gap-3 cursor-pointer select-none rounded-xl px-4 py-3 transition-all border ${
+                termsShake ? "animate-[shake_0.5s_ease-in-out] bg-red-500/10 border-red-400/40" :
+                agreedToTerms ? "bg-white/5 border-white/20" : "border-white/10 hover:border-white/20"
               }`}
             >
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                agreedToTerms ? "bg-white border-white" : termsShake ? "border-red-400" : "border-white/30"
+              }`}>
+                {agreedToTerms && (
+                  <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </div>
               <input
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-white/30 bg-white/10 text-white accent-white flex-shrink-0"
+                className="sr-only"
               />
-              <span className={`text-[11px] leading-relaxed text-left ${termsShake ? "text-red-300" : "text-white/40"}`}>
+              <span className={`text-[11px] leading-relaxed ${termsShake ? "text-red-300" : "text-white/50"}`}>
                 I agree to the{" "}
-                <a href="/terms" target="_blank" className="text-white/60 hover:text-white/80 underline" onClick={(e) => e.stopPropagation()}>Terms of Service</a>
+                <a href="/terms" target="_blank" className="text-white/70 hover:text-white underline" onClick={(e) => e.stopPropagation()}>Terms of Service</a>
                 {" "}and{" "}
-                <a href="/privacy" target="_blank" className="text-white/60 hover:text-white/80 underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
+                <a href="/privacy" target="_blank" className="text-white/70 hover:text-white underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
               </span>
             </label>
             {error && <p className="text-xs text-red-400">{error}</p>}
