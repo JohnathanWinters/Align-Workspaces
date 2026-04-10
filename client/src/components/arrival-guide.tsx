@@ -173,7 +173,9 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       // Invalidate both the space-level and all booking-level arrival guide queries
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
       queryClient.invalidateQueries({ predicate: (q) => (q.queryKey as string[])?.includes?.("arrival-guide") });
-    } catch { /* silent — user can still manually save */ }
+    } catch {
+      toast({ title: "Failed to auto-save arrival guide", variant: "destructive" });
+    }
   };
 
   const handleFileSelected = async (file: File) => {

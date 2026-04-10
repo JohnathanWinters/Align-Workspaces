@@ -2228,32 +2228,155 @@ function MyBookingsTab() {
     );
   };
 
+  // All bookings sorted by date (newest first) for history log
+  const allSorted = [...bookings]
+    .filter((b: any) => b.bookingDate && b.status !== "rejected")
+    .sort((a: any, b: any) => new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime());
+
+  // Group by month
+  const monthGroups: { label: string; bookings: any[] }[] = [];
+  for (const b of allSorted) {
+    const d = new Date(b.bookingDate + "T12:00:00");
+    const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    let group = monthGroups.find(g => g.label === label);
+    if (!group) { group = { label, bookings: [] }; monthGroups.push(group); }
+    group.bookings.push(b);
+  }
+
   return (
     <div className="space-y-4">
-      {/* Calendar View */}
-      <BookingCalendar
-        bookings={calendarBookings}
-        recurringBookings={recurringData}
-      />
-
       {/* Recurring Bookings Management */}
       <RecurringBookingsSection />
 
-      {/* Upcoming */}
-      {upcomingBookings.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Upcoming ({upcomingBookings.length})</h3>
-          {upcomingBookings.map((booking: any) => renderBookingCard(booking, "upcoming"))}
-        </div>
-      )}
+      {/* History log */}
+      {monthGroups.map(({ label: monthLabel, bookings: monthBookings }) => (
+        <div key={monthLabel}>
+          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-2 px-1">{monthLabel}</h3>
+          <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
+            {monthBookings.map((booking: any) => {
+              const space = spaceMap.get(booking.spaceId);
+              const isExpanded = expandedBookingId === booking.id;
+              const amount = booking._role === "host"
+                ? (booking.hostPayoutAmount || booking.hostEarnings || 0)
+                : (booking.totalGuestCharged || booking.paymentAmount || 0);
+              const isUpcoming = new Date(booking.bookingDate + "T23:59:59") >= now;
+              const isCancelled = booking.status === "cancelled";
 
-      {/* Past */}
-      {pastBookings.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium text-stone-500 uppercase tracking-wider">Past ({pastBookings.length})</h3>
-          {pastBookings.map((booking: any) => renderBookingCard(booking, "past"))}
+              return (
+                <div key={booking.id} data-testid={`history-row-${booking.id}`}>
+                  <button
+                    onClick={() => setExpandedBookingId(isExpanded ? null : booking.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-stone-50/50 transition-colors"
+                  >
+                    {/* Date column */}
+                    <div className="w-10 text-center flex-shrink-0">
+                      <p className="text-[10px] text-stone-400 uppercase">{new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { month: "short" })}</p>
+                      <p className="text-lg font-semibold text-stone-700 -mt-0.5">{new Date(booking.bookingDate + "T12:00:00").getDate()}</p>
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-gray-900 truncate">{booking.spaceName || space?.name || "Space"}</p>
+                        <span className={`text-[8px] font-bold px-1 py-0 rounded border ${
+                          booking._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"
+                        }`}>
+                          {booking._role === "host" ? "HOST" : "GUEST"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-stone-400">
+                        {booking.bookingStartTime ? formatBookingTime(booking.bookingStartTime) : ""}
+                        {booking.bookingHours ? ` · ${booking.bookingHours}hr${booking.bookingHours > 1 ? "s" : ""}` : ""}
+                        {booking._role === "host" && booking.userName ? ` · ${booking.userName}` : ""}
+                      </p>
+                    </div>
+
+                    {/* Amount + status */}
+                    <div className="text-right flex-shrink-0">
+                      {amount > 0 && (
+                        <p className={`text-sm font-semibold ${
+                          isCancelled ? "text-stone-300 line-through" :
+                          booking._role === "host" ? "text-emerald-600" : "text-stone-700"
+                        }`}>
+                          {booking._role === "host" ? "+" : "-"}${(amount / 100).toFixed(2)}
+                        </p>
+                      )}
+                      <p className={`text-[10px] ${
+                        isCancelled ? "text-red-400" :
+                        isUpcoming ? "text-blue-500" :
+                        booking.status === "completed" ? "text-stone-400" :
+                        booking.status === "checked_in" ? "text-emerald-500" :
+                        "text-stone-400"
+                      }`}>
+                        {isCancelled ? "Cancelled" :
+                         booking.status === "checked_in" ? "In Session" :
+                         isUpcoming ? "Upcoming" :
+                         booking.status === "completed" ? "Completed" :
+                         booking.status === "approved" ? "Confirmed" :
+                         booking.status}
+                      </p>
+                    </div>
+
+                    <ChevronDown className={`w-3.5 h-3.5 text-stone-300 transition-transform flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {/* Expanded */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-3 pb-3 pt-0 border-t border-gray-50">
+                          <div className="flex gap-3 mt-3">
+                            {space && (space.imageUrls as string[])?.[0] && (
+                              <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                <img src={(space.imageUrls as string[])[0]} alt={space?.name || "Space"} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              {booking.createdAt && (
+                                <p className="text-[11px] text-stone-400">Booked {formatPaidDate(booking.createdAt)}</p>
+                              )}
+                              {booking.checkedInAt && (
+                                <p className="text-[11px] text-stone-400 flex items-center gap-2">
+                                  <span>In: {new Date(booking.checkedInAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
+                                  {booking.checkedOutAt && <span>Out: {new Date(booking.checkedOutAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>}
+                                  {(booking.overtimeMinutes ?? 0) > 0 && <span className="text-amber-600">{booking.overtimeMinutes}m overtime</span>}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {booking.feeTier === "repeat_guest" && (
+                                  <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                                    <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty
+                                  </Badge>
+                                )}
+                                {booking.feeTier === "host_referred" && (
+                                  <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">Referred</Badge>
+                                )}
+                                {isCancelled && booking.refundAmount && (
+                                  <Badge className="text-[10px] bg-red-50 text-red-700 border-red-200">
+                                    Refund: ${(booking.refundAmount / 100).toFixed(2)}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          {isUpcoming && !isCancelled && (
+                            <ArrivalGuideInline bookingId={booking.id} />
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -3482,7 +3605,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
 
   const tabs = [
     { key: "my-spaces" as const, label: "My Workspaces", icon: Building2 },
-    { key: "calendar" as const, label: "Calendar", icon: CalendarDays },
+    { key: "calendar" as const, label: "History", icon: CalendarDays },
     ...(isHost ? [{ key: "earnings" as const, label: "Earnings", icon: DollarSign }] : []),
     { key: "saved" as const, label: "Saved", icon: Heart },
   ];
