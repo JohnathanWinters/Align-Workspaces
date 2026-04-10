@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -80,9 +80,9 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
   const [doorCode, setDoorCode] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [steps, setSteps] = useState<ArrivalStep[]>([]);
-  const [initialized, setInitialized] = useState(false);
   const [customCaption, setCustomCaption] = useState("");
   const [flow, setFlow] = useState<FlowState>({ phase: "idle" });
+  const [lastSyncedGuideId, setLastSyncedGuideId] = useState<string | null>(null);
 
   const { data: guide, isLoading } = useQuery<ArrivalGuideData | null>({
     queryKey: ["/api/spaces", spaceId, "arrival-guide"],
@@ -93,18 +93,17 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     },
   });
 
-  // Sync form from server data on load and after refetch
-  if (guide && !initialized) {
+  // Sync form from server data only on initial load (when guide ID changes)
+  useEffect(() => {
+    if (!guide) return;
+    if (guide.id === lastSyncedGuideId) return; // already synced this guide
     setWifiName(guide.wifiName || "");
     setWifiPassword(guide.wifiPassword || "");
     setDoorCode(guide.doorCode || "");
     setEmergencyPhone(guide.emergencyPhone || "");
     setSteps(guide.steps || []);
-    setInitialized(true);
-  }
-  if (!guide && !initialized && !isLoading) {
-    setInitialized(true);
-  }
+    setLastSyncedGuideId(guide.id);
+  }, [guide?.id]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -117,7 +116,6 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       });
     },
     onSuccess: () => {
-      setInitialized(false); // allow re-sync from server
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
       toast({ title: "Arrival guide saved" });
     },
@@ -156,7 +154,6 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         emergencyPhone: emergencyPhone.trim() || null,
         steps: newSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
-      setInitialized(false);
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
     } catch { /* silent — user can still manually save */ }
   };
@@ -203,7 +200,6 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         emergencyPhone: emergencyPhone.trim() || null,
         steps: updatedSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
-      setInitialized(false);
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
     } catch {
       toast({ title: "Failed to delete photo", variant: "destructive" });
