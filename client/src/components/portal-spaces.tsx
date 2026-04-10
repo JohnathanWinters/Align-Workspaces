@@ -2262,115 +2262,69 @@ function MyBookingsTab() {
               const isUpcoming = new Date(booking.bookingDate + "T23:59:59") >= now;
               const isCancelled = booking.status === "cancelled";
 
+              const spaceImage = space && (space.imageUrls as string[])?.[0];
+              const spaceAddress = space?.address || "";
+              const neighborhood = space?.neighborhood || "";
+
               return (
-                <div key={booking.id} data-testid={`history-row-${booking.id}`}>
-                  <button
-                    onClick={() => setExpandedBookingId(isExpanded ? null : booking.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-stone-50/50 transition-colors"
-                  >
-                    {/* Date column */}
-                    <div className="w-10 text-center flex-shrink-0">
-                      <p className="text-[10px] text-stone-400 uppercase">{new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { month: "short" })}</p>
-                      <p className="text-lg font-semibold text-stone-700 -mt-0.5">{new Date(booking.bookingDate + "T12:00:00").getDate()}</p>
+                <div key={booking.id} className="flex items-center gap-3 px-3 py-2.5" data-testid={`history-row-${booking.id}`}>
+                  {/* Space photo */}
+                  {spaceImage ? (
+                    <div className="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                      <img src={spaceImage} alt={booking.spaceName || "Space"} className="w-full h-full object-cover" />
                     </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium text-gray-900 truncate">{booking.spaceName || space?.name || "Space"}</p>
-                        <span className={`text-[8px] font-bold px-1 py-0 rounded border ${
-                          booking._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"
-                        }`}>
-                          {booking._role === "host" ? "HOST" : "GUEST"}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-stone-400">
-                        {booking.bookingStartTime ? formatBookingTime(booking.bookingStartTime) : ""}
-                        {booking.bookingHours ? ` · ${booking.bookingHours}hr${booking.bookingHours > 1 ? "s" : ""}` : ""}
-                        {booking._role === "host" && booking.userName ? ` · ${booking.userName}` : ""}
-                      </p>
+                  ) : (
+                    <div className="w-11 h-11 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-5 h-5 text-stone-400" />
                     </div>
+                  )}
 
-                    {/* Amount + status */}
-                    <div className="text-right flex-shrink-0">
-                      {amount > 0 && (
-                        <p className={`text-sm font-semibold ${
-                          isCancelled ? "text-stone-300 line-through" :
-                          booking._role === "host" ? "text-emerald-600" : "text-stone-700"
-                        }`}>
-                          {booking._role === "host" ? "+" : "-"}${(amount / 100).toFixed(2)}
-                        </p>
-                      )}
-                      <p className={`text-[10px] ${
-                        isCancelled ? "text-red-400" :
-                        isUpcoming ? "text-blue-500" :
-                        booking.status === "completed" ? "text-stone-400" :
-                        booking.status === "checked_in" ? "text-emerald-500" :
-                        "text-stone-400"
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-gray-900 truncate">{booking.spaceName || space?.name || "Space"}</p>
+                      <span className={`text-[8px] font-bold px-1 py-0 rounded border ${
+                        booking._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"
                       }`}>
-                        {isCancelled ? "Cancelled" :
-                         booking.status === "checked_in" ? "In Session" :
-                         isUpcoming ? "Upcoming" :
-                         booking.status === "completed" ? "Completed" :
-                         booking.status === "approved" ? "Confirmed" :
-                         booking.status}
-                      </p>
+                        {booking._role === "host" ? "HOST" : "GUEST"}
+                      </span>
                     </div>
+                    <p className="text-[11px] text-stone-400">
+                      {new Date(booking.bookingDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                      {booking.bookingStartTime ? ` · ${formatBookingTime(booking.bookingStartTime)}` : ""}
+                      {booking.bookingHours ? ` · ${booking.bookingHours}hr${booking.bookingHours > 1 ? "s" : ""}` : ""}
+                    </p>
+                    <p className="text-[10px] text-stone-300 truncate">
+                      {neighborhood || spaceAddress}
+                      {booking._role === "host" && booking.userName ? ` · ${booking.userName}` : ""}
+                    </p>
+                  </div>
 
-                    <ChevronDown className={`w-3.5 h-3.5 text-stone-300 transition-transform flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`} />
-                  </button>
-
-                  {/* Expanded */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-3 pb-3 pt-0 border-t border-gray-50">
-                          <div className="flex gap-3 mt-3">
-                            {space && (space.imageUrls as string[])?.[0] && (
-                              <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                                <img src={(space.imageUrls as string[])[0]} alt={space?.name || "Space"} className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0 space-y-1">
-                              {booking.createdAt && (
-                                <p className="text-[11px] text-stone-400">Booked {formatPaidDate(booking.createdAt)}</p>
-                              )}
-                              {booking.checkedInAt && (
-                                <p className="text-[11px] text-stone-400 flex items-center gap-2">
-                                  <span>In: {new Date(booking.checkedInAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>
-                                  {booking.checkedOutAt && <span>Out: {new Date(booking.checkedOutAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</span>}
-                                  {(booking.overtimeMinutes ?? 0) > 0 && <span className="text-amber-600">{booking.overtimeMinutes}m overtime</span>}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                {booking.feeTier === "repeat_guest" && (
-                                  <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
-                                    <Star className="w-2.5 h-2.5 mr-0.5" /> Loyalty
-                                  </Badge>
-                                )}
-                                {booking.feeTier === "host_referred" && (
-                                  <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">Referred</Badge>
-                                )}
-                                {isCancelled && booking.refundAmount && (
-                                  <Badge className="text-[10px] bg-red-50 text-red-700 border-red-200">
-                                    Refund: ${(booking.refundAmount / 100).toFixed(2)}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          {isUpcoming && !isCancelled && (
-                            <ArrivalGuideInline bookingId={booking.id} />
-                          )}
-                        </div>
-                      </motion.div>
+                  {/* Amount + status */}
+                  <div className="text-right flex-shrink-0">
+                    {amount > 0 && (
+                      <p className={`text-sm font-semibold ${
+                        isCancelled ? "text-stone-300 line-through" :
+                        booking._role === "host" ? "text-emerald-600" : "text-stone-700"
+                      }`}>
+                        {booking._role === "host" ? "+" : "-"}${(amount / 100).toFixed(2)}
+                      </p>
                     )}
-                  </AnimatePresence>
+                    <p className={`text-[10px] ${
+                      isCancelled ? "text-red-400" :
+                      isUpcoming ? "text-blue-500" :
+                      booking.status === "completed" ? "text-stone-400" :
+                      booking.status === "checked_in" ? "text-emerald-500" :
+                      "text-stone-400"
+                    }`}>
+                      {isCancelled ? "Cancelled" :
+                       booking.status === "checked_in" ? "In Session" :
+                       isUpcoming ? "Upcoming" :
+                       booking.status === "completed" ? "Completed" :
+                       booking.status === "approved" ? "Confirmed" :
+                       booking.status}
+                    </p>
+                  </div>
                 </div>
               );
             })}
