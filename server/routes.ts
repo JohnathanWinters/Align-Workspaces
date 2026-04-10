@@ -7199,10 +7199,12 @@ ${featuredSection}
       if (!space || space.userId !== userId) return res.status(403).json({ message: "Not your space" });
       if (!req.file) return res.status(400).json({ message: "No image provided" });
 
-      const buffer = await sharp(req.file.buffer).resize(1200, 900, { fit: "cover" }).webp({ quality: 80 }).toBuffer();
+      const buffer = await sharp(req.file.path).rotate().resize(1200, 900, { fit: "cover" }).webp({ quality: 80 }).toBuffer();
+      await fs.promises.unlink(req.file.path).catch(() => {});
       const imageUrl = await uploadBuffer(buffer, "image/webp");
       res.json({ imageUrl });
     } catch (err: any) {
+      if (req.file?.path) await fs.promises.unlink(req.file.path).catch(() => {});
       res.status(500).json({ message: err.message });
     }
   });
@@ -7283,11 +7285,13 @@ ${featuredSection}
   app.post("/api/admin/team-members/:id/photo", isAdmin, upload.single("photo"), async (req: any, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No photo" });
-      const buffer = await sharp(req.file.buffer).resize(1024, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+      const buffer = await sharp(req.file.path).rotate().resize(1024, null, { withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+      await fs.promises.unlink(req.file.path).catch(() => {});
       const photoUrl = await uploadBuffer(buffer, "image/webp");
       const [updated] = await db.update(teamMembers).set({ photoUrl }).where(eq(teamMembers.id, req.params.id)).returning();
       res.json(updated);
     } catch (err: any) {
+      if (req.file?.path) await fs.promises.unlink(req.file.path).catch(() => {});
       res.status(500).json({ message: err.message });
     }
   });
