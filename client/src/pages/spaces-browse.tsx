@@ -1546,7 +1546,10 @@ export default function SpacesBrowsePage() {
       <div className="min-h-screen bg-[#f5f0e8] flex flex-col" data-testid="category-picker">
         <nav className="px-4 sm:px-6 py-4 flex items-center relative">
           <button
-            onClick={() => setLocation("/")}
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              setLocation(params.get("from") === "portal" ? "/portal?tab=overview" : "/");
+            }}
             className="flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-800 transition-colors z-10"
             data-testid="link-back-home"
           >

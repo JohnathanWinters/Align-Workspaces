@@ -2135,6 +2135,42 @@ function PortalContent() {
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
             <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide" data-testid="portal-tabs">
+              <button
+                onClick={() => setActiveTab("overview")}
+                data-testid="tab-overview"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "overview"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Overview
+                {activeTab === "overview" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("spaces")}
+                data-testid="tab-my-spaces"
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
+                  activeTab === "spaces"
+                    ? "text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                Workspaces
+                {activeTab === "spaces" && (
+                  <motion.div
+                    layoutId="portal-tab-indicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
+                  />
+                )}
+              </button>
               {(isPhotoClient || isNewUser) && (
                 <button
                   onClick={() => setActiveTab("shoots")}
@@ -2175,42 +2211,6 @@ function PortalContent() {
                   )}
                 </button>
               )}
-              <button
-                onClick={() => setActiveTab("overview")}
-                data-testid="tab-overview"
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "overview"
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Overview
-                {activeTab === "overview" && (
-                  <motion.div
-                    layoutId="portal-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                  />
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab("spaces")}
-                data-testid="tab-my-spaces"
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "spaces"
-                    ? "text-gray-900"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
-              >
-                <Building2 className="w-4 h-4" />
-                Workspaces
-                {activeTab === "spaces" && (
-                  <motion.div
-                    layoutId="portal-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                  />
-                )}
-              </button>
               <button
                 onClick={() => setActiveTab("settings")}
                 data-testid="tab-settings"
@@ -2383,19 +2383,23 @@ function PortalContent() {
               {/* Quick actions */}
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Actions</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <Link href="/portraits">
-                    <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
-                      <Camera className="w-5 h-5 text-[#c4956a]" />
-                      <span className="text-xs font-medium text-gray-700">Book a Shoot</span>
-                    </div>
-                  </Link>
-                  <Link href="/workspaces">
+                <div className="grid grid-cols-2 gap-3">
+                  <Link href="/workspaces?from=portal">
                     <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
                       <Building2 className="w-5 h-5 text-[#c4956a]" />
                       <span className="text-xs font-medium text-gray-700">Browse Workspaces</span>
                     </div>
                   </Link>
+                  <Link href="/portraits?from=portal">
+                    <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
+                      <Camera className="w-5 h-5 text-[#c4956a]" />
+                      <span className="text-xs font-medium text-gray-700">Book a Shoot</span>
+                    </div>
+                  </Link>
+                  <button onClick={() => setActiveTab("edits")} className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+                    <ImagePlus className="w-5 h-5 text-[#c4956a]" />
+                    <span className="text-xs font-medium text-gray-700">Request a Photo Edit</span>
+                  </button>
                   <button onClick={() => setActiveTab("messages")} className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
                     <MessageCircle className="w-5 h-5 text-[#c4956a]" />
                     <span className="text-xs font-medium text-gray-700">Messages</span>

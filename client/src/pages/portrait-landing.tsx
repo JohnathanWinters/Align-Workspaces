@@ -149,11 +149,14 @@ export default function PortraitLandingPage() {
           <div className="flex items-center gap-3 z-10">
             <UserIndicator />
             <button
-              onClick={() => setLocation("/")}
+              onClick={() => {
+                const params = new URLSearchParams(window.location.search);
+                setLocation(params.get("from") === "portal" ? "/portal?tab=overview" : "/");
+              }}
               className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
           </div>
 

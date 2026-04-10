@@ -79,7 +79,7 @@ export default function PhotographersPage() {
       <header className="sticky top-0 z-50 bg-[#faf8f5]/95 backdrop-blur-sm border-b border-stone-200/60">
         <div className="px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between relative">
-            <Link href="/" className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10" data-testid="button-back-home-photographers">
+            <Link href={new URLSearchParams(window.location.search).get("from") === "portal" ? "/portal?tab=overview" : "/"} className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10" data-testid="button-back-home-photographers">
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Back</span>
             </Link>
