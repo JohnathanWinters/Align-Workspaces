@@ -63,7 +63,7 @@ BOOKING FLOW:
 - Guest service fee: 7% (5% for repeat guests)
 - Sales tax: 7% (Miami-Dade County)
 - Total charged to guest
-- Booking Agreement is presented (see Section 4)
+- Booking Rules is presented (see Section 4)
 - Guest confirms and proceeds to Stripe checkout
 - Payment is collected via Stripe
 - Booking is confirmed, both parties notified via email and push notification
@@ -111,7 +111,7 @@ SECTION 2 - DEFINITIONS:
 
 - "Space License" is defined as a revocable, non-exclusive license, explicitly NOT a lease or any interest in real property
 - "Professional Use Guidelines" are general workspace standards, not certifications — not independently verified by Align
-- "Booking Agreement" is defined as the mutual acknowledgment executed at the time of each booking
+- "Booking Rules" is defined as the mutual acknowledgment executed at the time of each booking
 
 SECTION 3 - PLATFORM ROLE AND NO LEGAL RELATIONSHIP:
 
@@ -217,7 +217,7 @@ SECTION 18 - GOVERNING LAW:
 4. BOOKING AGREEMENT (IMPLEMENTED IN PRODUCT)
 ================================================================================
 
-Every booking on the platform includes a Booking Agreement step before
+Every booking on the platform includes a Booking Rules step before
 payment. This is not a separate document but a transactional acknowledgment
 layered on top of the Terms of Service.
 

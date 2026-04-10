@@ -42,7 +42,7 @@ export default function TermsPage() {
           <p><strong>"Host"</strong> means a user who lists one or more workspaces for booking on the Platform.</p>
           <p><strong>"Guest"</strong> means a user who books or uses a workspace through the Platform, regardless of their profession, industry, or intended use.</p>
           <p><strong>"Booking"</strong> means a confirmed reservation for a specific workspace, date, time, and duration.</p>
-          <p><strong>"Booking Agreement"</strong> means the mutual acknowledgment executed by both Host and Guest at the time of each Booking, incorporating these Terms and any additional conditions specific to the reserved workspace.</p>
+          <p><strong>"Booking Rules"</strong> means the mutual acknowledgment executed by both Host and Guest at the time of each Booking, incorporating these Terms and any additional conditions specific to the reserved workspace.</p>
           <p><strong>"Content"</strong> means any text, photos, reviews, messages, or other materials posted by users.</p>
           <p><strong>"Service Fee"</strong> means the fees charged by Align Workspaces for facilitating transactions.</p>
           <p><strong>"Space License"</strong> means the revocable, non-exclusive license granted by a Host to a Guest for the booked period. <strong>THIS IS NOT A LEASE OR ANY INTEREST IN REAL PROPERTY.</strong></p>
@@ -89,8 +89,8 @@ export default function TermsPage() {
             <li>A Professional Use category on a listing describes general features of the space. It does not guarantee the space is compliant with the specific regulatory requirements of your profession or jurisdiction. You are solely responsible for making that determination.</li>
           </ol>
 
-          <h2>7. Booking Agreement</h2>
-          <p>Each Booking on the Platform incorporates a Booking Agreement between the Host and Guest. By confirming a Booking, both parties acknowledge and agree to the following:</p>
+          <h2>7. Booking Rules</h2>
+          <p>Each Booking on the Platform incorporates a Booking Rules between the Host and Guest. By confirming a Booking, both parties acknowledge and agree to the following:</p>
 
           <h4>Host Acknowledgment</h4>
           <p>The Host confirms that the workspace is accurately described in the listing, is maintained in safe and functional condition, is covered by active liability insurance, and meets any Professional Use Guidelines the Host has elected, if applicable.</p>
@@ -99,7 +99,7 @@ export default function TermsPage() {
           <p>The Guest confirms that they accept responsibility for their own professional conduct and the conduct of any individuals they bring to the workspace, that they carry their own professional liability or business insurance if required by their profession or industry, that they have independently evaluated the workspace for suitability to their professional and regulatory needs, that they will comply with all applicable laws and regulations in connection with their use of the space, and that they will report any damage or safety concerns to the Host and to Align Workspaces promptly.</p>
 
           <h4>Mutual Acknowledgment</h4>
-          <p>Both parties acknowledge that Align Workspaces is a marketplace facilitator and is not a party to the Booking Agreement. The Host bears responsibility for premises liability and the condition of the space. The Guest bears responsibility for professional liability, regulatory compliance, and their use of the space. Neither party may hold Align Workspaces liable for the actions, omissions, or representations of the other party.</p>
+          <p>Both parties acknowledge that Align Workspaces is a marketplace facilitator and is not a party to the Booking Rules. The Host bears responsibility for premises liability and the condition of the space. The Guest bears responsibility for professional liability, regulatory compliance, and their use of the space. Neither party may hold Align Workspaces liable for the actions, omissions, or representations of the other party.</p>
 
           <h2>8. Payments and Processing</h2>
           <p>All payments are processed through Stripe, our third-party payment processor. Align Workspaces acts as the Host's limited payment collection agent solely for the purpose of accepting payments from Guests on the Host's behalf.</p>

@@ -1011,7 +1011,7 @@ export const spaceCertifications = pgTable("space_certifications", {
 export type SpaceCertification = typeof spaceCertifications.$inferSelect;
 export type InsertSpaceCertification = typeof spaceCertifications.$inferInsert;
 
-// ── Booking Agreements ─────────────────────────────────────────────
+// ── Booking Rules ──────────────────────────────────────────────────
 export const bookingAgreements = pgTable("booking_agreements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   bookingId: varchar("booking_id").notNull(),

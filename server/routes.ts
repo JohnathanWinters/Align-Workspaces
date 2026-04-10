@@ -7496,7 +7496,7 @@ ${featuredSection}
     }
   });
 
-  // ── Booking Agreements (2C) ─────────────────────────────────────
+  // ── Booking Rules (2C) ──────────────────────────────────────────
 
   app.post("/api/space-bookings/:id/agreement", isAuthenticated, async (req: any, res) => {
     try {

@@ -8,7 +8,7 @@ export default function TrustPage() {
   useEffect(() => {
     setPageMeta({
       title: "Trust & Safety | Align Workspaces",
-      description: "How Align Workspaces protects hosts and guests. Insurance verification, professional use certifications, booking agreements, and damage protection.",
+      description: "How Align Workspaces protects hosts and guests. Insurance verification, professional use certifications, booking rules, and damage protection.",
       url: "https://alignworkspaces.com/trust",
     });
     window.scrollTo(0, 0);
@@ -51,7 +51,7 @@ export default function TrustPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {[
               { icon: ShieldCheck, title: "Verified Insurance", desc: "Every host maintains $1M+ general liability insurance. Listings are automatically suspended if coverage lapses. Your documentation is stored securely and tracked for expiration." },
-              { icon: FileCheck, title: "Booking Agreements", desc: "Every booking includes a mutual acknowledgment. Guests confirm responsibility for their conduct, their professional compliance, and any damage to the space." },
+              { icon: FileCheck, title: "Booking Ruless", desc: "Every booking includes a mutual acknowledgment. Guests confirm responsibility for their conduct, their professional compliance, and any damage to the space." },
               { icon: Shield, title: "Damage Protection", desc: "If something goes wrong, our damage reporting tool lets you document issues with photos, notify the guest, and escalate to Align support within a structured resolution process." },
               { icon: BadgeCheck, title: "Professional Certifications", desc: "Certify your space for specific professional categories. Clinical Ready, Wellness Ready, Service Ready, and more. Attract the right professionals with clear trust signals." },
             ].map((item, i) => {
@@ -79,7 +79,7 @@ export default function TrustPage() {
             {[
               { icon: ShieldCheck, title: "Insured Spaces", desc: "Every workspace on Align is backed by verified host insurance. You never have to wonder if a space is covered." },
               { icon: BadgeCheck, title: "Certification Badges", desc: "Professional Use Certifications tell you exactly what a space is equipped for before you book. Soundproofing, running water, ventilation, whatever your profession requires." },
-              { icon: FileCheck, title: "Clear Expectations", desc: "The Booking Agreement confirms what the host has guaranteed about their space and what you're responsible for. No surprises on either side." },
+              { icon: FileCheck, title: "Clear Expectations", desc: "The Booking Rules confirms what the host has guaranteed about their space and what you're responsible for. No surprises on either side." },
               { icon: CheckCircle2, title: "Transparent Pricing", desc: "See the full price breakdown before you book. 7% service fee (5% for repeat guests). No hidden charges, no deposits, no membership." },
             ].map((item, i) => {
               const Icon = item.icon;
@@ -149,7 +149,7 @@ export default function TrustPage() {
               { q: "Do guests need insurance?", a: "Guests who are licensed or regulated professionals are strongly encouraged to maintain their own professional liability insurance. The platform may require proof for certain certified spaces. All guests are responsible for insuring their own equipment and property." },
               { q: "What if something gets damaged during a booking?", a: "Hosts can file a damage report within 14 days of the booking with photos and a description. The guest is notified and has 72 hours to respond. If unresolved, the report escalates to Align support." },
               { q: "Who verifies Professional Use Certifications?", a: "Certifications are self-reported by hosts. Align does not independently verify them. Guests should independently confirm a space meets their professional requirements. We reserve the right to remove certifications if we receive credible reports of non-compliance." },
-              { q: "What does the Booking Agreement cover?", a: "Every booking includes a mutual acknowledgment where the host confirms their space is accurately described and insured, and the guest confirms responsibility for their conduct and professional compliance. This creates an audit trail for dispute resolution." },
+              { q: "What does the Booking Rules cover?", a: "Every booking includes a mutual acknowledgment where the host confirms their space is accurately described and insured, and the guest confirms responsibility for their conduct and professional compliance. This creates an audit trail for dispute resolution." },
             ].map((item, i) => (
               <div key={i} className="bg-white rounded-xl border border-stone-100 p-5 sm:p-6">
                 <div className="flex items-start gap-3">
