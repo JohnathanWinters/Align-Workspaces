@@ -618,7 +618,7 @@ export function ConversationView({
                     Maps
                   </a>
                 )}
-                {!isHost && <ArrivalGuideViewer bookingId={booking.id} />}
+                <ArrivalGuideViewer bookingId={booking.id} />
               </div>
             )}
 
