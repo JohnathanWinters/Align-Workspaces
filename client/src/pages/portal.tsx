@@ -75,6 +75,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ArrivalGuideViewer, ArrivalGuideInline } from "@/components/arrival-guide";
+import BookingCalendar from "@/components/booking-calendar";
 
 type EditToken = {
   id: string;
@@ -2273,6 +2274,27 @@ function PortalContent() {
 
           {activeTab === "overview" ? (
             <div className="space-y-6">
+              {/* Week calendar */}
+              {(() => {
+                const allCal = [
+                  ...(spaceBookings?.guestBookings || []).map((b: any) => ({ ...b, _role: "guest" })),
+                  ...(spaceBookings?.hostBookings || []).map((b: any) => ({ ...b, _role: "host" })),
+                ];
+                const calBookings = allCal.map((b: any) => ({
+                  id: b.id,
+                  bookingDate: b.bookingDate,
+                  bookingStartTime: b.bookingStartTime,
+                  bookingHours: b.bookingHours,
+                  spaceName: b.spaceName || "Space",
+                  spaceImageUrl: b.spaceImageUrl || null,
+                  status: b.status,
+                  paymentStatus: b.paymentStatus,
+                  role: b._role || "guest",
+                  recurringBookingId: b.recurringBookingId || null,
+                }));
+                return calBookings.length > 0 ? <BookingCalendar bookings={calBookings} recurringBookings={[]} /> : null;
+              })()}
+
               {/* Upcoming shoots */}
               {(() => {
                 const upcoming = shoots.filter(s => s.shootDate && new Date(s.shootDate) >= new Date()).sort((a, b) => new Date(a.shootDate!).getTime() - new Date(b.shootDate!).getTime());
