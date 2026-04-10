@@ -3,7 +3,7 @@ import { Plus, X } from "lucide-react";
 
 const STANDARD_AMENITIES = [
   "Wi-Fi",
-  "Dedicated Wi-Fi",
+  "Secure Wi-Fi Network",
   "Natural Light",
   "Sound Insulated",
   "White Noise Machine",

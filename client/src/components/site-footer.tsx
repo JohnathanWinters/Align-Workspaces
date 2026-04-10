@@ -80,7 +80,10 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
             <span className={`text-[10px] ${textColor} ${hoverColor} transition-colors cursor-pointer`}>Privacy Policy</span>
           </Link>
         </div>
-        <p className={`text-center text-[10px] ${textColor}`} data-testid="text-footer-copyright">
+        <p className={`text-center text-[10px] ${textColor} font-semibold mt-3`}>
+          Align Workspaces is a facilitator only. There is no legal relationship between Align Workspaces and any Host, Guest, or third party beyond the Terms of Service.
+        </p>
+        <p className={`text-center text-[10px] ${textColor} mt-2`} data-testid="text-footer-copyright">
           &copy; 2026 Align Workspaces
         </p>
       </div>

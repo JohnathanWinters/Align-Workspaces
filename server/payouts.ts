@@ -154,13 +154,29 @@ export async function reversePayout(bookingId: string): Promise<void> {
 }
 
 /**
- * Calculate refund amount based on cancellation policy.
+ * Calculate refund amount based on who cancelled and the cancellation policy.
  *
- * - Guest cancels within 24hrs of BOOKING creation: full refund including guest fee
- * - Guest cancels 48+ hours before booking date: full refund minus guest fee
- * - Guest cancels under 48 hours before booking date: 50% refund minus guest fee
- * - Host cancels: full refund including guest fee
+ * Fee philosophy:
+ *   - The cancelling party's service fee is retained by Align as a cancellation penalty.
+ *   - The non-cancelling party's service fee is refunded / waived.
+ *
+ * Host cancels:
+ *   - Guest receives a full refund (subtotal + guest fee + tax).
+ *   - Align retains the host fee (12.5%) as a cancellation penalty against the host.
+ *   - The guest service fee is refunded in full.
+ *
+ * Guest cancels:
+ *   - Align retains the guest service fee (7%).
+ *   - The host fee is waived — the host is not penalized.
+ *   - Refund amount depends on timing / cancellation policy.
  */
+export interface RefundResult {
+  amount: number;
+  reason: string;
+  guestFeeRefunded: boolean;
+  hostFeeWaived: boolean;
+}
+
 export function calculateRefundAmount(booking: {
   createdAt: Date | null;
   bookingDate: string | null;
@@ -169,26 +185,40 @@ export function calculateRefundAmount(booking: {
   paymentAmount: number | null;
   guestFeeAmount: number | null;
   renterFeeAmount: number | null;
-}, cancelledBy: "guest" | "host"): { amount: number; reason: string } {
+  hostFeeAmount?: number | null;
+}, cancelledBy: "guest" | "host"): RefundResult {
   const totalCharged = booking.totalGuestCharged ?? booking.paymentAmount ?? 0;
   const guestFee = booking.guestFeeAmount ?? booking.renterFeeAmount ?? 0;
 
-  if (totalCharged <= 0) return { amount: 0, reason: "No payment to refund" };
+  if (totalCharged <= 0) return { amount: 0, reason: "No payment to refund", guestFeeRefunded: false, hostFeeWaived: false };
 
-  // Host cancels → full refund including guest fee
+  // Host cancels → full refund to guest (including guest fee + tax); host fee retained by Align
   if (cancelledBy === "host") {
-    return { amount: totalCharged, reason: "Host cancelled — full refund issued" };
+    return {
+      amount: totalCharged,
+      reason: "Host cancelled — full refund issued. Guest service fee refunded; host service fee retained by Align.",
+      guestFeeRefunded: true,
+      hostFeeWaived: false,
+    };
   }
 
-  // Check 24-hour grace period from booking creation
+  // ── Guest cancels ──
+  // Guest fee is always retained by Align; host fee is always waived.
+
+  // 24-hour grace period from booking creation → full refund including guest fee
   const createdAt = booking.createdAt ? new Date(booking.createdAt).getTime() : 0;
   const hoursSinceBooking = (Date.now() - createdAt) / (1000 * 60 * 60);
 
   if (hoursSinceBooking <= 24) {
-    return { amount: totalCharged, reason: "Cancelled within 24-hour grace period — full refund issued" };
+    return {
+      amount: totalCharged,
+      reason: "Cancelled within 24-hour grace period — full refund issued.",
+      guestFeeRefunded: true,
+      hostFeeWaived: true,
+    };
   }
 
-  // Check time until booking date
+  // Time-based policy: refundable base excludes the guest fee (Align keeps it)
   const bookingDateTime = new Date(
     `${booking.bookingDate}T${booking.bookingStartTime || "00:00"}:00`
   );
@@ -198,15 +228,19 @@ export function calculateRefundAmount(booking: {
   if (hoursUntilBooking >= 48) {
     return {
       amount: refundableBase,
-      reason: "Cancelled 48+ hours before booking — full refund minus service fee",
+      reason: "Cancelled 48+ hours before booking — full refund minus service fee. Host fee waived.",
+      guestFeeRefunded: false,
+      hostFeeWaived: true,
     };
   }
 
-  // Under 48 hours: 50% of (subtotal + tax), guest fee non-refundable
+  // Under 48 hours: 50% of (subtotal + tax), guest fee non-refundable, host fee waived
   const halfRefund = Math.round(refundableBase * 0.5);
   return {
     amount: halfRefund,
-    reason: "Cancelled under 48 hours before booking — 50% refund, service fee non-refundable",
+    reason: "Cancelled under 48 hours before booking — 50% refund, service fee non-refundable. Host fee waived.",
+    guestFeeRefunded: false,
+    hostFeeWaived: true,
   };
 }
 

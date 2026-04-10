@@ -699,16 +699,16 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
                 <select value={formData.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-cancellation-${space.id}`}>
-                  <option value="flexible">Flexible, full refund up to 24 hours before</option>
-                  <option value="moderate">Moderate, full refund up to 5 days, 50% after</option>
-                  <option value="strict">Strict, 50% refund up to 7 days, none after</option>
+                  <option value="flexible">Flexible — full refund up to 24 hours, 50% after</option>
+                  <option value="moderate">Moderate — full refund up to 5 days, 50% up to 24 hours</option>
+                  <option value="strict">Strict — full refund up to 7 days, none after</option>
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">
                   {formData.cancellationPolicy === "flexible"
-                    ? "Recommended for new hosts to attract more bookings"
+                    ? "Recommended for new hosts. If a guest cancels, their service fee is kept by Align and you are not charged a host fee."
                     : formData.cancellationPolicy === "moderate"
-                    ? "Good balance between flexibility and protection"
-                    : "Best for high-demand spaces with consistent bookings"}
+                    ? "Good balance between flexibility and protection. Guest service fee kept by Align on cancellation; your host fee is waived."
+                    : "Best for high-demand spaces. Guest service fee kept by Align on cancellation; your host fee is waived."}
                 </p>
               </div>
               <ArrivalGuideEditor spaceId={space.id} />

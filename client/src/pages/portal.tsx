@@ -2590,6 +2590,8 @@ function PortalLogin() {
   const [step, setStep] = useState<"email" | "name" | "sent">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsShake, setTermsShake] = useState(false);
 
   const sendMagicLink = async (e?: string, fName?: string, lName?: string) => {
     setLoading(true);
@@ -2632,7 +2634,15 @@ function PortalLogin() {
         </p>
 
         {step === "email" && (
-          <form onSubmit={(e) => { e.preventDefault(); if (email.trim()) sendMagicLink(email.trim()); }} className="space-y-3">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!agreedToTerms) {
+              setTermsShake(true);
+              setTimeout(() => setTermsShake(false), 600);
+              return;
+            }
+            if (email.trim()) sendMagicLink(email.trim());
+          }} className="space-y-3">
             <input
               type="email"
               placeholder="your@email.com"
@@ -2642,16 +2652,28 @@ function PortalLogin() {
               autoFocus
               required
             />
+            <label
+              className={`flex items-start gap-2.5 cursor-pointer select-none rounded-lg px-3 py-2.5 transition-all ${
+                termsShake ? "animate-[shake_0.5s_ease-in-out] bg-red-500/20 border border-red-400/40" : agreedToTerms ? "bg-white/5" : ""
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-white/30 bg-white/10 text-white accent-white flex-shrink-0"
+              />
+              <span className={`text-[11px] leading-relaxed text-left ${termsShake ? "text-red-300" : "text-white/40"}`}>
+                I agree to the{" "}
+                <a href="/terms" target="_blank" className="text-white/60 hover:text-white/80 underline" onClick={(e) => e.stopPropagation()}>Terms of Service</a>
+                {" "}and{" "}
+                <a href="/privacy" target="_blank" className="text-white/60 hover:text-white/80 underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
+              </span>
+            </label>
             {error && <p className="text-xs text-red-400">{error}</p>}
             <Button type="submit" disabled={loading || !email.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
               {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : <><Mail className="w-4 h-4 mr-2" /> Send Sign-In Link</>}
             </Button>
-            <p className="text-white/30 text-[11px] text-center mt-3 leading-relaxed">
-              By signing in, you agree to our{" "}
-              <a href="/terms" target="_blank" className="text-white/50 hover:text-white/70 underline">Terms of Service</a>
-              {" "}and{" "}
-              <a href="/privacy" target="_blank" className="text-white/50 hover:text-white/70 underline">Privacy Policy</a>.
-            </p>
           </form>
         )}
 

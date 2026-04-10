@@ -1242,19 +1242,19 @@ function CancellationPolicy() {
               <ul className="space-y-1.5">
                 <li className="flex items-start gap-2 text-[11px] text-foreground/60">
                   <Check className="w-3 h-3 mt-0.5 text-[#c4956a] flex-shrink-0" />
-                  <span>Full refund if canceled 24+ hours before booking</span>
+                  <span>Full refund if canceled 24+ hours before booking (per host policy)</span>
+                </li>
+                <li className="flex items-start gap-2 text-[11px] text-foreground/60">
+                  <Check className="w-3 h-3 mt-0.5 text-[#c4956a] flex-shrink-0" />
+                  <span>Host cancels: full refund including your service fee</span>
                 </li>
                 <li className="flex items-start gap-2 text-[11px] text-foreground/60">
                   <X className="w-3 h-3 mt-0.5 text-red-400 flex-shrink-0" />
-                  <span>Cancellations within 24 hours are non-refundable</span>
+                  <span>Guest cancels: service fee is non-refundable</span>
                 </li>
                 <li className="flex items-start gap-2 text-[11px] text-foreground/60">
                   <X className="w-3 h-3 mt-0.5 text-red-400 flex-shrink-0" />
                   <span>No-shows are non-refundable</span>
-                </li>
-                <li className="flex items-start gap-2 text-[11px] text-foreground/60">
-                  <X className="w-3 h-3 mt-0.5 text-red-400 flex-shrink-0" />
-                  <span>Service fees may not be refunded</span>
                 </li>
               </ul>
               <div className="border-t border-stone-100 pt-2">

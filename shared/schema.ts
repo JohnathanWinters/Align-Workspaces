@@ -463,6 +463,7 @@ export const spaceBookings = pgTable("space_bookings", {
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   refundStatus: text("refund_status"),
   refundAmount: integer("refund_amount"),
+  cancelledBy: text("cancelled_by"),                 // 'host' | 'guest' — who initiated cancellation
   googleCalendarEventId: text("google_calendar_event_id"),
   checkedInAt: timestamp("checked_in_at"),
   checkedOutAt: timestamp("checked_out_at"),

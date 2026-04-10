@@ -39,7 +39,7 @@ const faqs = [
   },
   {
     q: "What is the cancellation policy?",
-    a: "Cancellations made 24+ hours before your booking start time are eligible for a full refund. Cancellations within 24 hours are non-refundable.",
+    a: "Each workspace has its own cancellation policy (Flexible, Moderate, or Strict) set by the host. If the host cancels, you receive a full refund including your service fee. If you cancel, your service fee is non-refundable but the host is not charged their host fee. Refund timing depends on the host's policy. See the listing page for details.",
   },
   {
     q: "How do I message my host?",

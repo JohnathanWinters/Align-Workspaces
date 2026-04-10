@@ -181,7 +181,8 @@ function getSpaceHighlights(space: Space) {
   if (a.some((x) => x.includes("natural light") || x.includes("window"))) items.push({ icon: Sun, text: "Abundant natural light" });
   if (a.some((x) => x.includes("sound") || x.includes("speaker") || x.includes("audio"))) items.push({ icon: Volume2, text: "Sound system available" });
   if (a.some((x) => x.includes("dressing") || x.includes("changing"))) items.push({ icon: Sparkles, text: "Private dressing room" });
-  if (a.some((x) => x.includes("wifi") || x.includes("internet"))) items.push({ icon: Wifi, text: "High-speed WiFi" });
+  if (a.some((x) => x.includes("secure wi-fi") || x.includes("secure wifi"))) items.push({ icon: Wifi, text: "Secure Wi-Fi network" });
+  else if (a.some((x) => x.includes("wifi") || x.includes("wi-fi") || x.includes("internet"))) items.push({ icon: Wifi, text: "Wi-Fi available" });
   if (a.some((x) => x.includes("kitchen") || x.includes("coffee"))) items.push({ icon: Coffee, text: "Kitchen & refreshments" });
 
   return items.slice(0, 6);

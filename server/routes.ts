@@ -4446,10 +4446,15 @@ export async function registerRoutes(
       }
 
       let refundResult: { refunded: boolean; amount?: number; reason?: string } = { refunded: false };
+      const cancelledBy = (space?.userId === userId) ? "host" as const : "guest" as const;
+
+      // Store who cancelled on the booking
+      if (status === "cancelled") {
+        await storage.updateSpaceBooking(booking.id, { cancelledBy, updatedAt: new Date() });
+      }
 
       if (status === "cancelled" && booking.paymentStatus === "paid" && booking.stripePaymentIntentId) {
-        const cancelledBy = (space?.userId === userId) ? "host" as const : "guest" as const;
-        const { amount: refundAmount, reason: refundReason } = calculateRefundAmount(booking, cancelledBy);
+        const { amount: refundAmount, reason: refundReason, hostFeeWaived } = calculateRefundAmount(booking, cancelledBy);
 
         if (refundAmount > 0) {
           try {
@@ -4462,7 +4467,7 @@ export async function registerRoutes(
               refundStatus: "refunded",
               refundAmount: refund.amount,
               paymentStatus: refundAmount >= (booking.totalGuestCharged ?? booking.paymentAmount ?? 0) ? "refunded" : "partial_refund",
-              payoutStatus: "reversed", // Stripe auto-reverses the host transfer on refund
+              payoutStatus: hostFeeWaived ? "cancelled" : "reversed",
               updatedAt: new Date(),
             });
             refundResult = { refunded: true, amount: refund.amount, reason: refundReason };
@@ -4473,7 +4478,7 @@ export async function registerRoutes(
         } else {
           await storage.updateSpaceBooking(booking.id, {
             refundStatus: "non_refundable",
-            payoutStatus: "pending",
+            payoutStatus: hostFeeWaived ? "cancelled" : "pending",
             updatedAt: new Date(),
           });
           refundResult = { refunded: false, reason: refundReason };
@@ -5889,28 +5894,29 @@ export async function registerRoutes(
       if (!space) return res.status(404).json({ message: "Space not found" });
 
       const policy = space.cancellationPolicy || "flexible";
+      const feeNote = "If the guest cancels, the guest service fee is retained by Align and the host is not charged a host fee. If the host cancels, the guest receives a full refund including their service fee.";
       const details = {
         flexible: {
           name: "Flexible",
-          description: "Full refund up to 24 hours before the booking. 50% refund if cancelled within 24 hours.",
+          description: `Full refund up to 24 hours before the booking. 50% refund if cancelled within 24 hours. ${feeNote}`,
           fullRefundHours: 24,
           partialRefundPercent: 50,
         },
         moderate: {
           name: "Moderate",
-          description: "Full refund up to 5 days before the booking. 50% refund up to 24 hours before.",
+          description: `Full refund up to 5 days before the booking. 50% refund up to 24 hours before. ${feeNote}`,
           fullRefundHours: 120,
           partialRefundPercent: 50,
         },
         strict: {
           name: "Strict",
-          description: "Full refund up to 7 days before the booking. No refund within 7 days.",
+          description: `Full refund up to 7 days before the booking. No refund within 7 days. ${feeNote}`,
           fullRefundHours: 168,
           partialRefundPercent: 0,
         },
       }[policy];
 
-      res.json({ policy, ...(details || { name: "Flexible", description: "Full refund up to 24 hours before the booking.", fullRefundHours: 24, partialRefundPercent: 50 }) });
+      res.json({ policy, ...(details || { name: "Flexible", description: `Full refund up to 24 hours before the booking. ${feeNote}`, fullRefundHours: 24, partialRefundPercent: 50 }) });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -6280,7 +6286,7 @@ Professionals can find flexible workspaces that suit their work style, client ne
 5. Booking is confirmed automatically and added to your calendar
 
 #### Cancellation policy
-Full refund if cancelled 24+ hours before booking. Non-refundable within 24 hours.
+Each workspace has its own cancellation policy (Flexible, Moderate, or Strict) set by the host. If the host cancels, the guest receives a full refund including their service fee. If the guest cancels, the guest service fee is non-refundable but the host is not charged their host fee.
 
 #### Listing your space
 Space owners can submit listings through the Client Portal. Listings go through approval before appearing on the platform. Hosts receive payouts via Stripe Connect.

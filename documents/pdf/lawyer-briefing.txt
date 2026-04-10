@@ -2,8 +2,8 @@ ALIGN WORKSPACES
 Legal Briefing Document
 Prepared: April 2026
 
-For review by outside counsel prior to publishing revised Terms of Service
-and enforcing platform trust and safety policies.
+For review by outside counsel. This document reflects the current state of
+the platform Terms of Service, policies, and technical implementation.
 
 ================================================================================
 1. WHAT ALIGN WORKSPACES IS
@@ -21,10 +21,15 @@ agents, wellness practitioners, tattoo artists, photographers, etc.) who need
 flexible, profession-appropriate workspace to see clients without signing a
 traditional lease.
 
-Align is a marketplace intermediary. We do not own, operate, or manage any
-workspace. When a host and guest enter into a booking, they enter into a
-direct contractual relationship with each other. Align facilitates the
-connection, processes payment, and provides trust and safety tools.
+ALIGN IS A FACILITATOR ONLY. Align Workspaces is not legally bound to,
+responsible for, or a party to any agreement, dispute, or interaction
+between Hosts and Guests. There is no legal relationship between Align
+Workspaces and any Host, Guest, or third party beyond the Terms of Service.
+
+Align does not own, operate, or manage any workspace. When a host and guest
+enter into a booking, they enter into a direct contractual relationship with
+each other. Align facilitates the connection, processes payment, and
+provides trust and safety tools.
 
 The arrangement between host and guest creates a revocable license to
 occupy, not a lease or any interest in real property.
@@ -45,12 +50,12 @@ LISTING FLOW:
 - Hosts without insurance are directed to Thimble (partner) where they can purchase general liability starting at $17/month
 - Host creates a listing with space details, pricing, photos, amenities, availability
 - Listing is reviewed by Align team before going live
-- Host can optionally self-certify their space under one of five Professional Use Certification tiers (see Section 5)
+- Host can list under one of five Professional Use categories (guidelines, not certifications — see Section 5)
 - Host can create an Arrival Guide with step-by-step photos, WiFi credentials, and door codes
 
 BOOKING FLOW:
 
-- Guest browses available spaces, filters by type, neighborhood, price, certification
+- Guest browses available spaces, filters by type, neighborhood, price, category
 - Guest selects date, time, and duration
 - System checks availability (prevents double-booking via advisory locks and external calendar sync)
 - Booking fee breakdown is displayed:
@@ -73,6 +78,13 @@ FEE STRUCTURE:
 - Stripe processes all payments (host is a Stripe Connected Account)
 - Complete fee breakdown stored in fee_audit_log for every transaction
 
+CANCELLATION FEE POLICY:
+
+- The cancelling party's service fee is retained by Align as a cancellation penalty
+- The non-cancelling party's service fee is refunded or waived
+- Host cancels: guest receives full refund including guest service fee; host service fee retained by Align
+- Guest cancels: guest service fee retained by Align; host is not charged their host fee
+
 RECURRING BOOKINGS:
 
 - Guests can request recurring weekly bookings (same day/time each week)
@@ -86,7 +98,6 @@ POST-BOOKING:
 - Guest can check in and check out through the platform (timestamps logged)
 - Overtime minutes are tracked if guest exceeds booking duration
 - Guest can leave a review after completion
-- Host can file a damage report within 14 days (see Section 7)
 - Arrival Guide automatically sent to guest with check-in instructions
 
 ================================================================================
@@ -94,31 +105,32 @@ POST-BOOKING:
 ================================================================================
 
 The full Terms of Service are published at alignworkspaces.com/terms and
-contain 23 sections. Key provisions for legal review:
+contain 20 sections. Key provisions:
 
 SECTION 2 - DEFINITIONS:
 
 - "Space License" is defined as a revocable, non-exclusive license, explicitly NOT a lease or any interest in real property
-- "Professional Use Certification" is defined as a host's voluntary self-certification, describing the space not the guest's credentials
+- "Professional Use Guidelines" are general workspace standards, not certifications — not independently verified by Align
 - "Booking Agreement" is defined as the mutual acknowledgment executed at the time of each booking
 
-SECTION 3 - PLATFORM ROLE:
+SECTION 3 - PLATFORM ROLE AND NO LEGAL RELATIONSHIP:
 
-- Align is a marketplace intermediary, not a party to the booking
+- Align is a facilitator only, not a party to the booking
+- There is no legal relationship between Align and any Host, Guest, or third party beyond the Terms of Service
 - Align does not endorse, verify, or guarantee any listing, host, or guest
-- Professional Use Certifications are host self-declarations, not independently verified by Align
+- Professional Use Guidelines are host self-declarations, not independently verified
 
 SECTION 5 - HOST OBLIGATIONS (10 items):
 
 - Legal authority to list the space
-- Accurate descriptions
+- Accurate descriptions — hosts may not misrepresent their space (misrepresentation may result in immediate removal and suspension)
 - Compliance with all applicable laws, zoning, building codes, and health department requirements
 - Sole responsibility for condition, safety, maintenance, ADA compliance
 - Disclosure of surveillance devices
-- Maintain appropriate liability insurance with proof (Section 14)
-- Accurate Professional Use Certifications if elected
+- Maintain appropriate liability insurance with proof (Section 13)
+- Accurate Professional Use Guidelines if elected
 - Disclosure of known limitations (soundproofing, ventilation, etc.)
-- Responsibility for health/safety/sanitation standards for regulated services (barbering, cosmetology, bodywork, food prep)
+- Responsibility for health/safety/sanitation standards for regulated services
 
 SECTION 6 - GUEST OBLIGATIONS (10 items):
 
@@ -126,89 +138,77 @@ SECTION 6 - GUEST OBLIGATIONS (10 items):
 - Responsible for own conduct and invitees
 - Liable for damage
 - Sole responsibility for professional licensing, regulatory compliance, health department compliance, privacy, recordkeeping, confidentiality
-- Responsible for independently verifying space meets their professional requirements regardless of any certification
+- Responsible for independently verifying space meets their professional requirements regardless of any category listing
 - Maintain own professional liability/malpractice/E&O insurance if required by their profession
 - Responsible for own permits, licenses, approvals
 
 SECTION 7 - BOOKING AGREEMENT:
 
 - Mutual acknowledgment incorporated into every booking
-- Host confirms: accurate listing, safe condition, active insurance, certification accuracy
+- Host confirms: accurate listing, safe condition, active insurance, guideline accuracy
 - Guest confirms: responsibility for conduct, own insurance if required, independently evaluated space, will comply with all laws, will report damage promptly
 - Mutual: Align is not a party, host bears premises liability, guest bears professional liability, neither party may hold Align liable
 - Timestamped record stored with version tracking, IP address, and user agent
 
-SECTION 10 - NON-CIRCUMVENTION:
+SECTION 9 - CANCELLATION AND REFUNDS:
 
-- 30% of booking subtotal as liquidated damages if users transact outside the platform to avoid service fees
+- Three policy tiers available: Flexible, Moderate, Strict (set by host)
+- Guest cancels within 24-hour grace period: full refund including guest fee
+- Guest cancels after grace period: refund per policy, guest service fee non-refundable, host fee waived
+- Host cancels: full refund to guest including guest service fee, host fee retained by Align as penalty
+- No-shows: guest no-show (non-refundable), host no-show (full refund), repeated no-shows may result in suspension or ban
 
-SECTION 11 - CONTENT AND INTELLECTUAL PROPERTY:
+SECTION 10 - USER-GENERATED CONTENT:
 
 - Users grant Align a non-exclusive, worldwide license to use content uploaded to the platform
 - This includes photos, reviews, listing descriptions, and messages
 
-SECTION 12 - PROFESSIONAL USE DISCLAIMER:
+SECTION 11 - PROFESSIONAL USE DISCLAIMER:
 
 - Platform serves all industries (therapists through tattoo artists)
 - Align makes no representations about credentials of any user
 - Users solely responsible for their own compliance including HIPAA, state privacy laws, professional board regulations, health codes
 - Align not responsible for malpractice, misconduct, regulatory violations, or health code violations
 
-SECTION 13 - PROFESSIONAL USE CERTIFICATIONS:
+SECTION 12 - PROFESSIONAL USE GUIDELINES:
 
-- Five tiers: Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, General Professional
+- Five categories: Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, General Professional
+- These are general guidelines, NOT certifications — Align does not issue, grant, or confer any certifications
 - Self-reported by host, not verified by Align
 - Describes the space, not the guest
-- Any guest can book any space regardless of certification
-- Align reserves right to remove certifications for non-compliance
+- Any guest can book any space regardless of category
+- Failure to comply may result in listing removal, suspension, or permanent ban
 
-SECTION 14 - INSURANCE REQUIREMENTS:
+SECTION 13 - INSURANCE REQUIREMENTS:
 
 - Host insurance: Required, $1M+ general liability, proof uploaded during onboarding, automated expiration tracking, listings suspended if lapsed
-- Guest insurance: Recommended/conditional, platform may require proof for certain certified spaces
+- Guest insurance: Recommended/conditional, platform may require proof for certain categories
 - Platform disclaimer: Align does not provide insurance, does not verify terms/exclusions/adequacy of any policy
 
-SECTION 15 - HOST PROTECTION PLAN:
-
-- Optional damage coverage for eligible incidents
-- Coverage details, exclusions, and claims process defined
-- Not an insurance contract between Align and host
-- Does not replace host's own liability insurance
-
-SECTION 16 - DAMAGE RESOLUTION:
-
-- 48-hour documentation window for hosts (14 days to initiate report)
-- Platform damage reporting tool with photo evidence
-- 72-hour guest response window
-- Escalation to Align support if unresolved
-- Guest may be charged through payment method on file
-
-SECTION 17 - DISCLAIMER OF WARRANTIES:
+SECTION 14 - DISCLAIMER OF WARRANTIES:
 
 - Platform provided "as is" and "as available"
 - No warranty on suitability, legality, quality of any workspace
 - No warranty that any space complies with regulatory/licensing/health department requirements of any guest's profession
 
-SECTION 18 - LIMITATION OF LIABILITY:
+SECTION 15 - ENFORCEMENT AND ACCOUNT ACTIONS:
 
-- Aggregate liability capped at amounts paid in prior 12 months or $100
-- No liability for indirect, incidental, special, consequential, or punitive damages
-- Applies to all claims including those arising from host/guest actions, workspace condition, certifications, insurance adequacy, regulatory non-compliance, health/safety/sanitation issues
+- Align reserves the right to remove listings, suspend accounts, or permanently ban any user
+- Triggers include: misrepresentation, guideline non-compliance, repeated no-shows, fraud, abusive conduct, insurance lapses, legal violations
 
-SECTION 19 - INDEMNIFICATION:
+SECTION 16 - INDEMNIFICATION:
 
 - Users indemnify Align for breach, platform use, workspace interactions, damage, legal violations, content, professional activities, failure to maintain required licenses/permits/insurance
-- Hosts additionally indemnify for: workspace condition/safety/legality, building code compliance, guest injury/loss, certification inaccuracy, services performed by guests if host was aware space was unsuitable
+- Hosts additionally indemnify for: workspace condition/safety/legality, building code compliance, guest injury/loss, guideline inaccuracy, services performed by guests if host was aware space was unsuitable
 
-SECTION 20 - DISPUTE RESOLUTION:
+SECTION 17 - DISPUTE RESOLUTION:
 
-- Host-guest disputes: direct resolution first, then Align determination (final)
+- Host-guest disputes: direct resolution first, then Align determination (final). Align acts solely as a facilitator and is not a party to any dispute.
 - User-Align disputes: binding individual arbitration (AAA rules)
 - Class action waiver
 - 30-day opt-out window from account creation
-- Written notice to hello@alignworkspaces.com
 
-SECTION 21 - GOVERNING LAW:
+SECTION 18 - GOVERNING LAW:
 
 - State of Florida
 - Miami-Dade County courts for actions outside arbitration
@@ -228,8 +228,8 @@ The confirmation screen displays two sections:
 - Space is accurately described in the listing
 - Space is maintained in safe, functional condition
 - Host maintains active liability insurance
-- Any Professional Use Certifications are accurate
-- [If certified]: "This space is certified as [tier name]"
+- Any Professional Use Guidelines are followed
+- [If categorized]: "This space is listed as [category name]"
 
 "By booking, you confirm:"
 
@@ -249,14 +249,15 @@ Technical implementation:
 - Creates an audit trail for dispute resolution
 
 ================================================================================
-5. PROFESSIONAL USE CERTIFICATIONS (IMPLEMENTED IN PRODUCT)
+5. PROFESSIONAL USE GUIDELINES (IMPLEMENTED IN PRODUCT)
 ================================================================================
 
-Hosts can voluntarily self-certify their workspace. Certifications are about
-the SPACE, not the person booking it. Any guest can book any space regardless
-of certification status.
+Hosts can list their workspace under a professional use category. These
+categories describe GENERAL GUIDELINES for the SPACE, not certifications.
+Align does not issue, grant, or confer any certifications, credentials, or
+licenses. Any guest can book any space regardless of category.
 
-Five tiers:
+Five categories:
 
 CLINICAL READY
 
@@ -307,11 +308,11 @@ Target: Photographers, podcasters, remote workers, freelancers, tutors
 
 Implementation:
 
-- Host selects a tier, completes checklist in listing management
+- Host selects a category, completes checklist in listing management
 - Badge appears on listing when all items are checked
-- Guests can filter search results by certification type
-- Disclaimer displayed: "Professional Use Certifications are self-reported by the Host and are not independently verified, audited, or endorsed by Align Workspaces."
-- Align reserves the right to remove certifications for non-compliance with documented reason
+- Guests can filter search results by category type
+- Disclaimer displayed: "Professional Use Guidelines are self-reported by the Host and are not independently verified, audited, or endorsed by Align Workspaces."
+- Align reserves the right to remove listings, suspend accounts, or permanently ban users who fail to meet guidelines or misrepresent their workspace
 
 ================================================================================
 6. INSURANCE VERIFICATION SYSTEM (IMPLEMENTED IN PRODUCT)
@@ -340,7 +341,6 @@ THIMBLE PARTNERSHIP (FOR HOSTS WITHOUT COVERAGE):
 - Hosts who do not have insurance are presented with an option to purchase general liability coverage through Thimble
 - Thimble offers policies starting at $17/month with $1M+ coverage
 - Currently implemented as a referral link; API integration pending partner approval
-- Align will earn commission on policies sold through the platform
 
 PLATFORM DISCLAIMER:
 
@@ -348,47 +348,8 @@ PLATFORM DISCLAIMER:
 - Insurance Verification is limited to confirming that a host has submitted documentation that appears to reflect active coverage
 - Align does not verify terms, exclusions, adequacy, or validity of any insurance policy
 
-NOTE FOR COUNSEL:
-
-- The $1M minimum is a platform policy, not a citation of Florida statute
-- Florida does not have a specific statute requiring liability insurance to rent out workspace by the hour
-- The requirement is within Align's rights as a private marketplace
-- Hosts have premises liability obligations under Florida common law regardless of insurance status
-
 ================================================================================
-7. DAMAGE REPORTING AND RESOLUTION (IMPLEMENTED IN PRODUCT)
-================================================================================
-
-REPORTING:
-
-- "Report Issue" button available on completed bookings for 14 days after booking end time
-- Host selects issue type: Property Damage, Cleanliness Issue, Policy Violation, or Other
-- Host uploads photos (minimum 2, maximum 10, stored on Cloudflare R2)
-- Host provides written description
-- Host provides estimated repair/replacement cost (optional, stored in cents)
-
-RESOLUTION PROCESS:
-
-- Host submits report through platform (status: pending)
-- Guest is notified through platform messaging (status: guest_notified)
-- Guest has 72 hours to respond (status: guest_responded)
-- If unresolved after 72 hours, report escalates to Align support (status: escalated)
-- Align reviews evidence and issues determination
-- Guest found responsible may be charged through payment method on file, up to documented repair or replacement cost
-- If host is enrolled in Host Protection Plan, eligible claims processed under HPP terms
-- Final resolution recorded with notes (status: resolved)
-
-ALL RECORDS STORED:
-
-- Report details, photos, timestamps
-- Guest response and timestamp
-- Resolution outcome and resolution notes
-- Resolved by indicator (host, guest, or admin)
-- Escalation timestamp
-- Stored as part of the booking record for audit purposes
-
-================================================================================
-8. DATA AND PRIVACY CONSIDERATIONS
+7. DATA AND PRIVACY CONSIDERATIONS
 ================================================================================
 
 PAYMENT DATA:
@@ -407,7 +368,7 @@ USER AUTHENTICATION:
 - HttpOnly secure cookies with SameSite:lax
 - CSRF protection on state-changing requests
 - Rate limiting on authentication endpoints
-- 4 hardcoded admin email addresses for admin panel access
+- Terms of Service agreement required via checkbox before account creation
 
 EMPLOYEE AUTHENTICATION:
 
@@ -466,7 +427,6 @@ IMAGE AND FILE STORAGE:
 - Profile photos processed to 400x400 WebP
 - Space photos processed to fit within 2400x3200 WebP
 - Insurance documents (PDF/image, max 10MB)
-- Damage report photos (up to 10 per report)
 - Gallery images for photography service
 - Arrival guide step photos
 - Message attachment images
@@ -488,7 +448,7 @@ NEWSLETTER:
 - Subscribe/unsubscribe endpoints
 
 ================================================================================
-9. REFERRAL SYSTEM
+8. REFERRAL SYSTEM
 ================================================================================
 
 - Hosts can generate unique referral codes (8-character alphanumeric)
@@ -499,37 +459,48 @@ NEWSLETTER:
 - Cookie/session-based referrer tracking
 
 ================================================================================
-10. REFUND AND CANCELLATION POLICY
+9. REFUND AND CANCELLATION POLICY
 ================================================================================
+
+CANCELLATION FEE PHILOSOPHY:
+
+- The cancelling party's service fee is retained by Align
+- The non-cancelling party's service fee is refunded or waived
+
+HOST-INITIATED CANCELLATION:
+
+- Full refund to guest including guest service fee and tax
+- Host service fee (12.5%) retained by Align as cancellation penalty
+- Host may face additional penalties: listing demotion, suspension, or ban
 
 GUEST-INITIATED CANCELLATION:
 
 - 24-hour grace period: full refund including platform fees
-- 48+ hours before booking: full refund minus guest service fee
-- Less than 48 hours before booking: 50% refund minus guest service fee
+- After grace period: refund amount depends on host's cancellation policy (Flexible, Moderate, or Strict)
+- Guest service fee (7%) is non-refundable and retained by Align
+- Host service fee is waived — the host is not penalized
 
-HOST-INITIATED CANCELLATION:
+NO-SHOW POLICY:
 
-- Full refund to guest including all fees
-
-NO-SHOWS:
-
-- Non-refundable
+- Guest no-show: if guest does not arrive within 30 minutes of booking start without prior notice, booking is non-refundable. Host receives payout as if booking was completed.
+- Host no-show: if host is unavailable or workspace inaccessible at booking time, guest receives full refund including service fee. Host may face penalties.
+- Repeated no-shows: users with a pattern of no-shows may be suspended or permanently banned.
 
 REFUND PROCESSING:
 
 - Refunds processed to original payment method
 - 5-10 business day processing time
 - Refund status tracked in booking record
+- cancelledBy field tracks who initiated cancellation (host or guest)
 
 ADMIN PAYOUT CONTROLS:
 
 - Manual hold, release, and reverse capabilities
 - Payouts can be held pending dispute resolution
-- Payout status: pending, processing, paid, held, reversed
+- Payout status: pending, processing, paid, held, reversed, cancelled
 
 ================================================================================
-11. COMMUNITY EVENTS SYSTEM
+10. COMMUNITY EVENTS SYSTEM
 ================================================================================
 
 - Users can create community events (subject to admin approval)
@@ -540,7 +511,7 @@ ADMIN PAYOUT CONTROLS:
 - Authentication required to RSVP
 
 ================================================================================
-12. PHOTOGRAPHY SERVICE
+11. PHOTOGRAPHY SERVICE
 ================================================================================
 
 Align also operates a portrait photography service managed by the founding team.
@@ -558,285 +529,42 @@ This is a separate service line from the workspace marketplace but shares
 user accounts, authentication, and payment infrastructure.
 
 ================================================================================
-13. ADMIN CAPABILITIES
+12. ADMIN CAPABILITIES
 ================================================================================
 
-The admin panel provides the following capabilities relevant to legal review:
+The admin panel provides the following capabilities:
 
 - User management: view, edit, delete user accounts and profiles
 - Workspace management: approve/reject listings, suspend spaces, transfer ownership
 - Payment management: hold/release/reverse payouts, revenue dashboard, tax reporting
 - Communications: message any user directly, view all conversations
 - Insurance management: view/upload insurance documents, track expirations
-- Damage reports: review evidence, determine responsibility, resolve disputes
 - Review moderation: publish, hide, flag, delete, respond to reviews
 - CRM pipeline: track leads and contacts with activity logging
 - Content management: featured professionals, portfolio, team bios
 - Analytics: revenue, bookings, user activity, host performance metrics
 - Employee management: create team members with role-based permissions
 - Meeting scheduling: admin availability calendars with booking links
-- Database backup capabilities
-
-NOTE FOR COUNSEL:
-
-- Admin has full access to all user data including messages, bookings, and documents
-- No end-to-end encryption on messaging
-- Admin actions create potential liability as determinations are "final"
+- Enforcement: remove listings, suspend accounts, ban users for violations
 
 ================================================================================
-14. AREAS FOR LEGAL REVIEW
+13. ENFORCEMENT AND ACCOUNT ACTIONS
 ================================================================================
 
-We request counsel review the following:
+Align Workspaces reserves the right to remove listings, suspend accounts, or
+permanently ban any Host or Guest from the Platform at its sole discretion
+for any violation of the Terms of Service, including but not limited to:
 
-1. TERMS OF SERVICE (all 23 sections):
-
-- Published at alignworkspaces.com/terms
-- Particular attention to: limitation of liability, indemnification, arbitration clause, class action waiver, non-circumvention liquidated damages provision
-
-2. PROFESSIONAL USE CERTIFICATIONS:
-
-- Are the disclaimers sufficient to insulate Align from liability if a certified space does not meet a guest's regulatory requirements?
-- Is the self-certification model legally sound, or does hosting the certification framework create implied endorsement risk?
-- Are there specific Florida statutes (e.g., Ch. 476 barbering, Ch. 477 cosmetology, Ch. 480 massage, Ch. 491 mental health) that create space-specific requirements we should address?
-
-3. INSURANCE REQUIREMENTS:
-
-- Is the $1M minimum general liability requirement appropriate?
-- Are we exposed if a host's insurance turns out to be insufficient or invalid despite our verification?
-- Does our platform insurance disclaimer adequately protect us?
-- Admin ability to upload insurance on behalf of hosts: does this create additional liability?
-
-4. BOOKING AGREEMENT:
-
-- Is the mutual acknowledgment structure legally enforceable?
-- Is the digital acceptance (checkbox + timestamp + IP + user agent) sufficient evidence of agreement?
-- Does the agreement adequately allocate liability between host, guest, and platform?
-
-5. DAMAGE RESOLUTION:
-
-- Can we legally charge a guest's payment method on file for damages based on our determination?
-- What is our exposure if a damage determination is disputed?
-- Is the 14-day reporting window and 72-hour response window sufficient?
-
-6. HOST PROTECTION PLAN:
-
-- If we self-fund a damage reserve (1-2% of service fees), does this create an insurance product requiring state licensing?
-- How should we structure the HPP to avoid being classified as an insurance provider under Florida law?
-
-7. MARKETPLACE LIABILITY:
-
-- Under Florida law and Section 230 considerations, what is our exposure as a marketplace facilitator?
-- Are there specific risks from hosting regulated professionals (HIPAA-covered therapists, licensed barbers, etc.) that we should address?
-- Does admin access to all user messages affect our intermediary status?
-
-8. ARBITRATION AND DISPUTE RESOLUTION:
-
-- Is the binding arbitration clause enforceable in Florida?
-- Is the 30-day opt-out window sufficient?
-- Is the class action waiver enforceable under current Florida law?
-- Does our "final determination" language on disputes create additional liability?
-
-9. REFUND POLICY:
-
-- Is the tiered refund structure (24-hour grace, 48-hour window, <48-hour partial) compliant with Florida consumer protection law?
-- Does the no-show non-refundable policy require specific disclosure?
-- Can we legally hold payouts pending dispute resolution?
-
-10. DATA PRIVACY AND MESSAGING:
-
-- Does admin access to all user-to-user messages require specific disclosure?
-- Is plain text message storage sufficient, or should we implement encryption for regulated professional communications?
-- Are we compliant with CCPA for California resident users?
-- Is our data retention policy (indefinite for booking/agreement records) appropriate?
-- Does collection of IP address, device info, and approximate location require specific consent?
-
-11. RECURRING BOOKINGS:
-
-- Does the recurring booking structure create a lease-like arrangement that could be reclassified as a lease rather than a license?
-- What cancellation/modification rights should apply to recurring bookings?
-
-12. PHOTOGRAPHY SERVICE:
-
-- Does operating a photography service alongside the marketplace affect our intermediary status?
-- Is the 50% downpayment structure enforceable?
-- Does the edit token system create any consumer protection issues?
-
-13. EMPLOYEE CLASSIFICATION:
-
-- Team members are stored as "employees" with role-based permissions
-- Bearer token authentication for team access
-- Clarify employee vs. independent contractor classification
-
-14. COMMUNITY EVENTS:
-
-- What is our liability for user-created events hosted through the platform?
-- Does the approval workflow create additional responsibility?
-
-15. MULTI-STATE EXPANSION (FUTURE):
-
-- What changes would be needed to operate in other states?
-- Are there states with specific marketplace liability statutes we should be aware of?
-- Multi-state tax collection obligations
-
-16. REFERRAL PROGRAM:
-
-- Does the reduced fee for referred bookings comply with anti-kickback regulations in healthcare-adjacent industries?
-- Are there disclosure requirements for the referral commission structure?
+- Misrepresentation of a workspace, its features, condition, or suitability
+- Failure to meet Professional Use Guidelines for a listed category
+- Repeated no-shows (as Host or Guest)
+- Fraudulent activity or misuse of the Platform
+- Conduct that is harmful, abusive, or disruptive to other users
+- Failure to maintain required insurance documentation
+- Any violation of applicable laws or regulations while using the Platform
 
 ================================================================================
-APPENDIX A: FULL TERMS OF SERVICE
-================================================================================
-
-The following is the complete Terms of Service published at
-alignworkspaces.com/terms. Last updated: March 2026.
-
-1. ACCEPTANCE OF TERMS
-
-By accessing or using Align Workspaces ("Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Platform. You must be at least 18 years of age to use the Platform.
-
-Align Workspaces reserves the right to update these Terms at any time. We will notify registered users of material changes via email. Your continued use of the Platform after such changes constitutes acceptance of the updated Terms.
-
-2. DEFINITIONS
-
-- "Platform" means the Align Workspaces website, applications, and all related services.
-- "Host" means a user who lists one or more workspaces for booking on the Platform.
-- "Guest" means a user who books or uses a workspace through the Platform, regardless of their profession, industry, or intended use.
-- "Booking" means a confirmed reservation for a specific workspace, date, time, and duration.
-- "Booking Agreement" means the mutual acknowledgment executed by both Host and Guest at the time of each Booking, incorporating these Terms and any additional conditions specific to the reserved workspace.
-- "Content" means any text, photos, reviews, messages, or other materials posted by users.
-- "Service Fee" means the fees charged by Align Workspaces for facilitating transactions.
-- "Space License" means the revocable, non-exclusive license granted by a Host to a Guest for the booked period. THIS IS NOT A LEASE OR ANY INTEREST IN REAL PROPERTY.
-- "Professional Use Certification" means a Host's voluntary self-certification that their workspace meets specific standards for a designated professional category. Current categories include Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, and General Professional. Certifications describe the space, not the credentials of the person booking it.
-- "Host Protection Plan" means the optional damage protection coverage available to Hosts through the Platform, subject to separate plan terms.
-- "Insurance Verification" means the process by which Hosts provide proof of active liability insurance coverage as a condition of listing on the Platform.
-
-3. PLATFORM ROLE
-
-Align Workspaces is a marketplace intermediary. We are not a workspace owner, operator, landlord, real estate broker, or employer of any Host or Guest. The Platform facilitates connections between Hosts and Guests but does not provide workspace services itself.
-
-When Hosts and Guests enter into Bookings, they enter into a direct contractual relationship with each other. Align Workspaces is not a party to that agreement. The arrangement between a Host and Guest creates a revocable license to occupy, not a lease or any other interest in real property.
-
-Align Workspaces does not endorse, verify, or guarantee any listing, workspace, Host, or Guest. We make no representations about the safety, suitability, legality, or quality of any workspace or service provided through the Platform. Professional Use Certifications are Host self-declarations and are not independently verified by Align Workspaces.
-
-4. USER ACCOUNTS
-
-To use certain features of the Platform, you must create an account. You agree to provide accurate, current, and complete information. You are responsible for maintaining the security of your account credentials and for all activity under your account.
-
-Align Workspaces reserves the right to suspend or terminate accounts at its sole discretion, including for violation of these Terms, fraudulent activity, failure to maintain required insurance documentation, or conduct that we determine is harmful to other users or the Platform.
-
-5. HOST OBLIGATIONS
-
-As a Host, you represent and warrant that:
-- You have the legal authority to list the workspace (you own it or have written permission from the owner).
-- Your listing descriptions, photos, and amenities are accurate and not misleading.
-- Your workspace complies with all applicable laws, regulations, zoning requirements, building codes, and health department requirements applicable to the services you are permitting in the space.
-- You are solely responsible for the condition, safety, maintenance, and legal compliance of your workspace, including ADA accessibility requirements.
-- You will disclose any surveillance devices present in or around the workspace.
-- You maintain appropriate liability insurance for your workspace and will provide proof of coverage as required by the Platform (see Section 14).
-- You are responsible for determining and paying all applicable taxes related to your Host earnings.
-- If you elect to obtain a Professional Use Certification for your workspace, you are solely responsible for the accuracy of that certification and for maintaining the stated conditions at all times the workspace is available for booking.
-- You will accurately represent the suitability of your workspace for specific professional uses and will disclose any known limitations that could affect a Guest's ability to conduct their professional activities.
-- If your space is used for services that require specific health, safety, or sanitation standards, you are solely responsible for ensuring the space meets those standards as required by applicable local and state regulations.
-
-6. GUEST OBLIGATIONS
-
-As a Guest, you agree that:
-- You will use workspaces in accordance with the listing description and any Host rules.
-- You are responsible for your conduct and the conduct of anyone you bring to the workspace.
-- You are liable for any damage you or your invitees cause to the workspace or its contents.
-- You will not use workspaces for illegal activities.
-- You will leave the workspace in the condition you found it.
-- You are solely responsible for verifying your own compliance with all professional licensing, regulatory, health department, and ethical requirements applicable to your practice or business activities.
-- If your professional practice or business requires specific environmental conditions, you are responsible for independently verifying that a workspace meets those requirements before booking, regardless of any Professional Use Certification displayed on the listing.
-- You will maintain your own professional liability, malpractice, or errors and omissions insurance if required by your licensure, professional standards, or industry norms.
-- You are responsible for obtaining and maintaining any permits, licenses, or approvals required to conduct your specific business activities at the booked location.
-- A Professional Use Certification on a listing describes the features of the space. It does not guarantee the space is compliant with the specific regulatory requirements of your profession or jurisdiction.
-
-7. BOOKING AGREEMENT
-
-Each Booking on the Platform incorporates a Booking Agreement between the Host and Guest.
-
-Host Acknowledgment: The Host confirms that the workspace is accurately described in the listing, is maintained in safe and functional condition, is covered by active liability insurance, and meets any Professional Use Certification standards the Host has elected, if applicable.
-
-Guest Acknowledgment: The Guest confirms that they accept responsibility for their own professional conduct and the conduct of any individuals they bring to the workspace, that they carry their own professional liability or business insurance if required by their profession or industry, that they have independently evaluated the workspace for suitability to their professional and regulatory needs, that they will comply with all applicable laws and regulations, and that they will report any damage or safety concerns promptly.
-
-Mutual Acknowledgment: Both parties acknowledge that Align Workspaces is a marketplace facilitator and is not a party to the Booking Agreement. The Host bears responsibility for premises liability and the condition of the space. The Guest bears responsibility for professional liability, regulatory compliance, and their use of the space.
-
-8. PAYMENTS AND PROCESSING
-
-All payments are processed through Stripe. Align Workspaces acts as the Host's limited payment collection agent solely for the purpose of accepting payments from Guests on the Host's behalf. By making a Booking, you authorize Align Workspaces to charge the payment method on file. Hosts will receive payouts according to the Platform's payout schedule, less applicable Service Fees.
-
-9. CANCELLATION AND REFUNDS
-
-- 24+ hours before start time: Eligible for a full refund per the Host's policy.
-- Less than 24 hours: Non-refundable per standard policy.
-- Host-initiated cancellation: Guest receives a full refund. Hosts who cancel confirmed Bookings may face penalties including listing demotion or account suspension.
-- No-shows: Guests who do not arrive forfeit payment. Hosts who are unavailable for confirmed Bookings must provide a full refund.
-- Refunds are processed to the original payment method within 5 to 10 business days.
-
-10. NON-CIRCUMVENTION
-
-Users may not use contact information obtained through the Platform to transact outside the Platform in order to avoid paying Service Fees. If you are found to have circumvented the Platform, you agree to pay Align Workspaces an amount equal to 30% of the booking subtotal as liquidated damages.
-
-11. USER-GENERATED CONTENT
-
-You retain ownership of Content you post on the Platform. By posting Content, you grant Align Workspaces a non-exclusive, worldwide, royalty-free, perpetual license to use, copy, modify, display, distribute, and sublicense your Content for the purpose of operating and marketing the Platform.
-
-12. PROFESSIONAL USE DISCLAIMER
-
-The Platform serves professionals across all industries. Align Workspaces makes no representations about the professional credentials, licenses, permits, or qualifications of any Host or Guest. Users who are licensed, certified, or regulated professionals are solely responsible for their own compliance. Align Workspaces is not responsible for any professional malpractice, misconduct, regulatory violation, health code violation, or breach of professional duty that occurs in booked workspaces.
-
-13. PROFESSIONAL USE CERTIFICATIONS
-
-Hosts may voluntarily self-certify their workspace for specific professional use categories. Current categories: Clinical Ready, Consultation Ready, Wellness Ready, Service Ready, General Professional. Professional Use Certifications are self-reported by the Host and are not independently verified, audited, or endorsed by Align Workspaces.
-
-14. INSURANCE REQUIREMENTS
-
-Host Insurance (Required): All Hosts must maintain active general liability insurance covering their workspace with a minimum coverage amount of $1,000,000 per occurrence. Listings associated with lapsed or unverified insurance will be suspended.
-
-Guest Insurance (Recommended/Conditional): Guests who are licensed or regulated professionals are strongly encouraged to maintain active professional liability insurance.
-
-Platform Insurance Disclaimer: Align Workspaces does not provide insurance coverage for Hosts, Guests, or workspaces. Insurance Verification is limited to confirming that a Host has submitted documentation that appears to reflect active coverage.
-
-15. HOST PROTECTION PLAN
-
-Align Workspaces offers an optional Host Protection Plan ("HPP") that provides damage coverage for eligible incidents caused by Guests during confirmed Bookings. The HPP is a voluntary, supplementary benefit and does not replace the Host's obligation to maintain their own liability insurance.
-
-16. DAMAGE RESOLUTION
-
-Hosts must document damage within 48 hours of the Booking end time. Guests have 72 hours to respond. Guests found responsible may be charged through their payment method on file.
-
-17. DISCLAIMER OF WARRANTIES
-
-THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND. ALIGN WORKSPACES DISCLAIMS ALL WARRANTIES, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-
-18. LIMITATION OF LIABILITY
-
-ALIGN WORKSPACES' AGGREGATE LIABILITY SHALL NOT EXCEED THE AMOUNTS PAID BY YOU IN THE TWELVE (12) MONTHS PRIOR TO THE EVENT GIVING RISE TO THE CLAIM, OR ONE HUNDRED DOLLARS ($100), WHICHEVER IS GREATER. ALIGN WORKSPACES SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
-
-19. INDEMNIFICATION
-
-You agree to indemnify, defend, and hold harmless Align Workspaces from and against any claims arising out of your breach of these Terms, your use of the Platform, your interaction with any other user, any damage you cause, your violation of any applicable law, your Content, and any claim arising from your professional activities or failure to maintain required licenses or insurance.
-
-20. DISPUTE RESOLUTION
-
-For disputes between Hosts and Guests, users agree to first attempt resolution directly. The Platform's determination is final. For disputes between a user and Align Workspaces, you agree to binding arbitration on an individual basis. You waive any right to participate in a class action. This may be opted out of within 30 days of account creation.
-
-21. GOVERNING LAW
-
-These Terms shall be governed by the laws of the State of Florida. Any legal action outside of arbitration shall be brought in Miami-Dade County, Florida.
-
-22. GENERAL
-
-If any provision is found unenforceable, the remaining provisions continue in full force. These Terms constitute the entire agreement between you and Align Workspaces.
-
-23. CONTACT
-
-For questions about these Terms, contact us at hello@alignworkspaces.com.
-
-================================================================================
-16. CONTACT
+14. CONTACT
 ================================================================================
 
 Align Workspaces
