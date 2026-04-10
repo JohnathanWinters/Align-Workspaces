@@ -147,6 +147,20 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     }
   };
 
+  const autoSave = async (newSteps: ArrivalStep[]) => {
+    try {
+      await apiRequest("PUT", `/api/spaces/${spaceId}/arrival-guide`, {
+        wifiName: wifiName.trim() || null,
+        wifiPassword: wifiPassword.trim() || null,
+        doorCode: doorCode.trim() || null,
+        emergencyPhone: emergencyPhone.trim() || null,
+        steps: newSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
+      });
+      setInitialized(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
+    } catch { /* silent — user can still manually save */ }
+  };
+
   const handleFileSelected = async (file: File) => {
     if (flow.phase === "uploading") {
       const imageUrl = await uploadPhoto(file);
@@ -159,11 +173,13 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       const imageUrl = await uploadPhoto(file);
       if (imageUrl) {
         const secondShot: ShotType = flow.firstShot === "wide" ? "closeup" : "wide";
-        setSteps(prev => [
-          ...prev,
-          { imageUrl: flow.firstImageUrl, caption: `${flow.category} — ${flow.firstShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: prev.length },
-          { imageUrl, caption: `${flow.category} — ${secondShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: prev.length + 1 },
-        ]);
+        const newSteps = [
+          ...steps,
+          { imageUrl: flow.firstImageUrl, caption: `${flow.category} — ${flow.firstShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: steps.length },
+          { imageUrl, caption: `${flow.category} — ${secondShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: steps.length + 1 },
+        ];
+        setSteps(newSteps);
+        autoSave(newSteps);
       }
       setFlow({ phase: "idle" });
     }
@@ -366,7 +382,9 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
             </div>
             <button type="button" onClick={() => {
               // Skip second photo — just add the first one
-              setSteps(prev => [...prev, { imageUrl: flow.firstImageUrl, caption: `${flow.category} — ${flow.firstShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: prev.length }]);
+              const newSteps = [...steps, { imageUrl: flow.firstImageUrl, caption: `${flow.category} — ${flow.firstShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: steps.length }];
+              setSteps(newSteps);
+              autoSave(newSteps);
               setFlow({ phase: "idle" });
             }} className="w-full text-center text-[10px] text-stone-400 hover:text-stone-600 mt-1">Skip — add only the first photo</button>
           </div>
