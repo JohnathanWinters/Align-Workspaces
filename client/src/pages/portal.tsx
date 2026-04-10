@@ -74,6 +74,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { ArrivalGuideViewer } from "@/components/arrival-guide";
 
 type EditToken = {
   id: string;
@@ -2295,23 +2296,39 @@ function PortalContent() {
                 ) : null;
               })()}
 
-              {/* Upcoming workspace bookings */}
+              {/* Upcoming workspace bookings (guest + host) */}
               {(() => {
-                const guestBookings = (spaceBookings?.guestBookings || []).filter((b: any) => b.bookingDate && new Date(b.bookingDate) >= new Date()).sort((a: any, b: any) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
-                return guestBookings.length > 0 ? (
+                const allBookings = [
+                  ...(spaceBookings?.guestBookings || []).map((b: any) => ({ ...b, _role: "guest" })),
+                  ...(spaceBookings?.hostBookings || []).map((b: any) => ({ ...b, _role: "host" })),
+                ].filter((b: any) => b.bookingDate && new Date(b.bookingDate) >= new Date() && b.status !== "cancelled" && b.status !== "rejected")
+                  .sort((a: any, b: any) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime());
+                return allBookings.length > 0 ? (
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#c4956a]" /> Upcoming Workspace Bookings</h3>
                     <div className="space-y-2">
-                      {guestBookings.slice(0, 3).map((b: any) => (
-                        <div key={b.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 text-left">
-                          <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
-                            <Building2 className="w-5 h-5 text-[#c4956a]" />
+                      {allBookings.slice(0, 5).map((b: any) => (
+                        <div key={b.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                          <div className="flex items-center gap-4 p-4 text-left">
+                            <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
+                              <Building2 className="w-5 h-5 text-[#c4956a]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-gray-900 truncate">{b.spaceName || "Workspace"}</p>
+                                <span className={`text-[9px] font-semibold px-1.5 rounded-full border ${b._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"}`}>
+                                  {b._role === "host" ? "Hosting" : "Renting"}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500">{new Date(b.bookingDate).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{b.bookingStartTime ? ` at ${b.bookingStartTime}` : ""}</p>
+                            </div>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "confirmed" || b.status === "approved" ? "bg-green-100 text-green-700" : b.status === "checked_in" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{b.status || "pending"}</span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{b.spaceName || "Workspace"}</p>
-                            <p className="text-xs text-gray-500">{new Date(b.bookingDate).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{b.bookingStartTime ? ` at ${b.bookingStartTime}` : ""}</p>
-                          </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "confirmed" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{b.status || "pending"}</span>
+                          {["approved", "confirmed", "checked_in"].includes(b.status) && (
+                            <div className="px-4 pb-3">
+                              <ArrivalGuideViewer bookingId={b.id} />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
