@@ -52,6 +52,13 @@ const STEP_SUGGESTIONS = [
   { icon: CheckCircle2, label: "You're here", placeholder: "What the door looks like" },
 ];
 
+const STEP_CATEGORIES = [
+  { id: "parking", icon: Car, label: "Where to Park" },
+  { id: "enter", icon: DoorOpen, label: "How to Enter" },
+  { id: "keys", icon: Key, label: "How to Get Your Keys" },
+  { id: "other", icon: FileText, label: "Other" },
+] as const;
+
 // ── Host Editor ───────────────────────────────────────────────────
 export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: string; hideSaveButton?: boolean }) {
   const { toast } = useToast();
@@ -63,6 +70,8 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
   const [notes, setNotes] = useState("");
   const [steps, setSteps] = useState<ArrivalStep[]>([]);
   const [initialized, setInitialized] = useState(false);
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
+  const [customCaption, setCustomCaption] = useState("");
 
   const { data: guide, isLoading } = useQuery<ArrivalGuideData | null>({
     queryKey: ["/api/spaces", spaceId, "arrival-guide"],
@@ -117,13 +126,20 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       });
       if (!res.ok) throw new Error("Upload failed");
       const { imageUrl } = await res.json();
-      const suggestion = STEP_SUGGESTIONS[steps.length] || STEP_SUGGESTIONS[STEP_SUGGESTIONS.length - 1];
-      setSteps(prev => [...prev, { imageUrl, caption: "", sortOrder: prev.length }]);
+      setPendingImageUrl(imageUrl);
+      setCustomCaption("");
     } catch {
       toast({ title: "Upload failed", variant: "destructive" });
     } finally {
       setUploading(false);
     }
+  };
+
+  const finalizePendingStep = (caption: string) => {
+    if (!pendingImageUrl) return;
+    setSteps(prev => [...prev, { imageUrl: pendingImageUrl, caption, sortOrder: prev.length }]);
+    setPendingImageUrl(null);
+    setCustomCaption("");
   };
 
   const removeStep = async (index: number) => {
@@ -171,8 +187,9 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       {/* Steps */}
       <div className="space-y-2">
         {steps.map((step, i) => {
-          const suggestion = STEP_SUGGESTIONS[i] || STEP_SUGGESTIONS[STEP_SUGGESTIONS.length - 1];
-          const SugIcon = suggestion.icon;
+          const matchedCat = STEP_CATEGORIES.find(c => step.caption === c.label);
+          const StepIcon = matchedCat?.icon || STEP_SUGGESTIONS[i]?.icon || FileText;
+          const stepLabel = step.caption || STEP_SUGGESTIONS[i]?.label || `Step ${i + 1}`;
           return (
             <div key={i} className="flex items-start gap-3 p-2 rounded-lg bg-gray-50 border border-gray-100">
               <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-200 shrink-0">
@@ -184,13 +201,13 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <SugIcon className="w-3 h-3 text-gray-400" />
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">{suggestion.label}</span>
+                  <StepIcon className="w-3 h-3 text-gray-400" />
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">{stepLabel}</span>
                 </div>
                 <Input
                   value={step.caption}
                   onChange={(e) => updateCaption(i, e.target.value)}
-                  placeholder={suggestion.placeholder}
+                  placeholder="Add a description..."
                   className="h-7 text-xs"
                   maxLength={80}
                 />
@@ -202,7 +219,61 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
           );
         })}
 
-        {steps.length < 6 && steps.length > 0 && (
+        {/* Category picker for pending upload */}
+        {pendingImageUrl && (
+          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+                <img
+                  src={pendingImageUrl.startsWith("/") || pendingImageUrl.startsWith("http") ? pendingImageUrl : `/objects/${pendingImageUrl}`}
+                  alt="New step"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-stone-700">What is this photo of?</p>
+                <p className="text-[10px] text-stone-400">Select a category for this step</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {STEP_CATEGORIES.filter(c => c.id !== "other").map(cat => {
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => finalizePendingStep(cat.label)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-xs font-medium text-stone-600 hover:border-[#c4956a]/50 hover:text-[#c4956a] transition-all"
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {cat.label}
+                  </button>
+                );
+              })}
+              <div className="col-span-2 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={customCaption}
+                  onChange={(e) => setCustomCaption(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && customCaption.trim()) finalizePendingStep(customCaption.trim()); }}
+                  placeholder="Other — type a custom label..."
+                  className="flex-1 h-9 text-xs bg-white border border-stone-200 rounded-lg px-3 outline-none focus:border-[#c4956a]/50"
+                  maxLength={60}
+                />
+                <button
+                  type="button"
+                  onClick={() => { if (customCaption.trim()) finalizePendingStep(customCaption.trim()); }}
+                  disabled={!customCaption.trim()}
+                  className="h-9 px-3 text-xs font-medium bg-stone-900 text-white rounded-lg hover:bg-stone-800 disabled:opacity-30 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {steps.length < 6 && steps.length > 0 && !pendingImageUrl && (
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
@@ -213,7 +284,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
           </button>
         )}
 
-        {steps.length === 0 && (
+        {steps.length === 0 && !pendingImageUrl && (
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
