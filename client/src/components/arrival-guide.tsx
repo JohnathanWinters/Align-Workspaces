@@ -61,6 +61,21 @@ const STEP_CATEGORIES = [
   { id: "other", icon: FileText, label: "Other" },
 ] as const;
 
+// Normalize old verbose labels to short display names
+function normalizeCategory(raw: string) {
+  const l = raw.toLowerCase();
+  if (l.includes("where to park") || l === "parking") return "Parking";
+  if (l.includes("how to enter") || l === "entrance") return "Entrance";
+  if (l.includes("how to get") || l.includes("keys")) return "Keys";
+  return raw;
+}
+
+function formatStepLabel(caption: string) {
+  const category = caption.replace(/ — (Wide|Close-up)$/i, "").trim();
+  const suffix = caption.includes("Wide") ? " — Wide" : caption.includes("Close-up") ? " — Close-up" : "";
+  return normalizeCategory(category) + suffix;
+}
+
 // ── Host Editor ───────────────────────────────────────────────────
 type ShotType = "wide" | "closeup";
 type FlowState =
@@ -237,7 +252,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
                   <StepIcon className="w-3 h-3 text-gray-400" />
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">{step.caption || `Step ${i + 1}`}</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">{step.caption ? formatStepLabel(step.caption) : `Step ${i + 1}`}</span>
                 </div>
               </div>
               <button onClick={() => removeStep(i)} className="p-1 text-gray-300 hover:text-red-400 transition-colors shrink-0">
@@ -620,7 +635,8 @@ export function ArrivalGuideInline({ bookingId }: { bookingId: string }) {
   if (guide.steps) {
     const groupMap = new Map<string, ArrivalStep[]>();
     for (const step of guide.steps) {
-      const category = (step.caption || "").replace(/ — (Wide|Close-up)$/i, "").trim() || "Step";
+      const rawCategory = (step.caption || "").replace(/ — (Wide|Close-up)$/i, "").trim() || "Step";
+      const category = normalizeCategory(rawCategory);
       if (!groupMap.has(category)) groupMap.set(category, []);
       groupMap.get(category)!.push(step);
     }
