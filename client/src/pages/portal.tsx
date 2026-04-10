@@ -2425,7 +2425,13 @@ function PortalContent() {
           ) : activeTab === "settings" ? (
             <PortalSettings />
           ) : activeTab === "messages" ? (
-            <PortalMessagesSection userId={user?.id || ""} />
+            <div>
+              <button onClick={() => setActiveTab("overview")} className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600 mb-3 transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back to Overview
+              </button>
+              <PortalMessagesSection userId={user?.id || ""} />
+            </div>
           ) : activeTab === "spaces" ? (
             <PortalSpacesSection userId={user?.id || ""} initialTab={spacesSubTab} />
           ) : activeTab === "edits" ? (
