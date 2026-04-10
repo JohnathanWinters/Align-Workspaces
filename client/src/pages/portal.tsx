@@ -2687,7 +2687,7 @@ function PortalLogin() {
         </div>
         <h1 className="font-serif text-3xl text-white mb-3">Client Portal</h1>
         <p className="text-white/60 text-sm mb-8 leading-relaxed">
-          Sign in to view your photoshoot galleries, track your sessions, and download your photos.
+          Enter your email to sign in below. If you do not have an account, enter the email you wish to sign up with.
         </p>
 
         {step === "email" && (
