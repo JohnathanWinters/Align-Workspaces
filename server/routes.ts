@@ -7215,8 +7215,11 @@ ${featuredSection}
       const userId = req.user.claims.sub;
       const booking = await storage.getSpaceBookingById(req.params.id);
       if (!booking) return res.status(404).json({ message: "Booking not found" });
-      if (booking.userId !== userId) return res.status(403).json({ message: "Not your booking" });
-      if (!["approved", "confirmed", "checked_in"].includes(booking.status || "")) {
+      const space = await storage.getSpaceById(booking.spaceId);
+      const isGuest = booking.userId === userId;
+      const isHost = space?.userId === userId;
+      if (!isGuest && !isHost) return res.status(403).json({ message: "Not your booking" });
+      if (isGuest && !["approved", "confirmed", "checked_in"].includes(booking.status || "")) {
         return res.json(null); // Only show after confirmation
       }
 
