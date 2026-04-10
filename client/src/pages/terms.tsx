@@ -217,7 +217,8 @@ export default function TermsPage() {
           <p className="uppercase text-xs leading-relaxed"><strong>THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED. ALIGN WORKSPACES DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. ALIGN WORKSPACES DOES NOT WARRANT THAT THE PLATFORM WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE. ALIGN WORKSPACES DOES NOT ENDORSE OR WARRANT THE EXISTENCE, CONDUCT, PERFORMANCE, SAFETY, QUALITY, LEGALITY, OR SUITABILITY OF ANY GUEST, HOST, WORKSPACE, OR LISTING. ALIGN WORKSPACES DOES NOT WARRANT THAT ANY WORKSPACE IS COMPLIANT WITH THE REGULATORY, LICENSING, PERMITTING, OR HEALTH DEPARTMENT REQUIREMENTS APPLICABLE TO ANY GUEST'S PROFESSION, TRADE, OR BUSINESS ACTIVITY.</strong></p>
 
           <h2>15. Enforcement and Account Actions</h2>
-          <p><strong>Align Workspaces reserves the right to remove listings, suspend accounts, or permanently ban any Host or Guest from the Platform</strong> at its sole discretion for any violation of these Terms, including but not limited to:</p>
+          <p><strong>Align Workspaces reserves the right to remove any listing, suspend or terminate any account, revoke access to any feature, or permanently ban any user (Host or Guest) from the Platform at any time, with or without cause, and with or without prior notice, at its sole discretion.</strong></p>
+          <p>Examples of actions that may result in enforcement include, but are not limited to:</p>
           <ul>
             <li>Misrepresentation of a workspace, its features, condition, or suitability</li>
             <li>Failure to meet Professional Use Guidelines for a listed category</li>
@@ -226,7 +227,9 @@ export default function TermsPage() {
             <li>Conduct that is harmful, abusive, or disruptive to other users</li>
             <li>Failure to maintain required insurance documentation</li>
             <li>Any violation of applicable laws or regulations while using the Platform</li>
+            <li>Any other reason Align Workspaces deems necessary to protect the safety, integrity, or reputation of the Platform and its users</li>
           </ul>
+          <p>Align Workspaces is not required to provide a reason for any enforcement action and is not liable for any losses resulting from the removal of a listing, suspension of an account, or revocation of Platform access.</p>
 
           <h2>16. Indemnification</h2>
           <p><strong>You agree to indemnify, defend, and hold harmless Align Workspaces</strong>, its affiliates, officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses (including reasonable attorneys' fees) arising out of or in connection with:</p>
