@@ -705,11 +705,16 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">
                   {formData.cancellationPolicy === "flexible"
-                    ? "Recommended for new hosts. If a guest cancels, their service fee is kept by Align and you are not charged a host fee."
+                    ? "Recommended for new hosts to attract more bookings."
                     : formData.cancellationPolicy === "moderate"
-                    ? "Good balance between flexibility and protection. Guest service fee kept by Align on cancellation; your host fee is waived."
-                    : "Best for high-demand spaces. Guest service fee kept by Align on cancellation; your host fee is waived."}
+                    ? "Good balance between flexibility and protection."
+                    : "Best for high-demand spaces with consistent bookings."}
                 </p>
+                <div className="mt-2 p-2.5 rounded-lg bg-stone-50 border border-stone-100 space-y-1">
+                  <p className="text-[10px] font-semibold text-stone-600">How fees work on cancellation:</p>
+                  <p className="text-[10px] text-stone-500 leading-relaxed"><span className="font-medium text-stone-600">Guest cancels:</span> Guest service fee (7%) is kept by Align. Your host fee (12.5%) is waived — you are not charged.</p>
+                  <p className="text-[10px] text-stone-500 leading-relaxed"><span className="font-medium text-stone-600">You cancel:</span> Guest receives a full refund including their service fee. Your host fee is retained by Align as a cancellation penalty.</p>
+                </div>
               </div>
               <ArrivalGuideEditor spaceId={space.id} />
               <CalendarSyncSettings spaceId={space.id} />
