@@ -132,6 +132,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
+      queryClient.invalidateQueries({ predicate: (q) => (q.queryKey as string[])?.includes?.("arrival-guide") });
       toast({ title: "Arrival guide saved" });
     },
     onError: () => {
@@ -169,7 +170,9 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         emergencyPhone: emergencyPhone.trim() || null,
         steps: newSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
+      // Invalidate both the space-level and all booking-level arrival guide queries
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
+      queryClient.invalidateQueries({ predicate: (q) => (q.queryKey as string[])?.includes?.("arrival-guide") });
     } catch { /* silent — user can still manually save */ }
   };
 
@@ -216,6 +219,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         steps: updatedSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
+      queryClient.invalidateQueries({ predicate: (q) => (q.queryKey as string[])?.includes?.("arrival-guide") });
     } catch {
       toast({ title: "Failed to delete photo", variant: "destructive" });
     }
