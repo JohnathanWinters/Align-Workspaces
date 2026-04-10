@@ -7145,14 +7145,14 @@ ${featuredSection}
       const space = await storage.getSpaceById(req.params.id);
       if (!space || space.userId !== userId) return res.status(403).json({ message: "Not your space" });
 
-      const { wifiName, wifiPassword, doorCode, notes, steps } = req.body;
+      const { wifiName, wifiPassword, doorCode, emergencyPhone, steps } = req.body;
 
       // Upsert guide
       let [guide] = await db.select().from(arrivalGuides).where(eq(arrivalGuides.spaceId, req.params.id));
       if (guide) {
-        await db.update(arrivalGuides).set({ wifiName, wifiPassword, doorCode, notes, updatedAt: new Date() }).where(eq(arrivalGuides.id, guide.id));
+        await db.update(arrivalGuides).set({ wifiName, wifiPassword, doorCode, emergencyPhone, updatedAt: new Date() }).where(eq(arrivalGuides.id, guide.id));
       } else {
-        const [newGuide] = await db.insert(arrivalGuides).values({ spaceId: req.params.id, wifiName, wifiPassword, doorCode, notes }).returning();
+        const [newGuide] = await db.insert(arrivalGuides).values({ spaceId: req.params.id, wifiName, wifiPassword, doorCode, emergencyPhone }).returning();
         guide = newGuide;
       }
 

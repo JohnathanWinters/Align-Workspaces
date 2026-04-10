@@ -25,6 +25,7 @@ import {
   Building2,
   ZoomIn,
   ArrowRight,
+  Phone,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,6 +43,7 @@ interface ArrivalGuideData {
   wifiPassword: string | null;
   doorCode: string | null;
   notes: string | null;
+  emergencyPhone: string | null;
   steps: ArrivalStep[];
 }
 
@@ -67,7 +69,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
   const [wifiName, setWifiName] = useState("");
   const [wifiPassword, setWifiPassword] = useState("");
   const [doorCode, setDoorCode] = useState("");
-  const [notes, setNotes] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
   const [steps, setSteps] = useState<ArrivalStep[]>([]);
   const [initialized, setInitialized] = useState(false);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     setWifiName(guide.wifiName || "");
     setWifiPassword(guide.wifiPassword || "");
     setDoorCode(guide.doorCode || "");
-    setNotes(guide.notes || "");
+    setEmergencyPhone(guide.emergencyPhone || "");
     setSteps(guide.steps || []);
     setInitialized(true);
   }
@@ -101,7 +103,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         wifiName: wifiName.trim() || null,
         wifiPassword: wifiPassword.trim() || null,
         doorCode: doorCode.trim() || null,
-        notes: notes.trim() || null,
+        emergencyPhone: emergencyPhone.trim() || null,
         steps: steps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
     },
@@ -159,7 +161,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         wifiName: wifiName.trim() || null,
         wifiPassword: wifiPassword.trim() || null,
         doorCode: doorCode.trim() || null,
-        notes: notes.trim() || null,
+        emergencyPhone: emergencyPhone.trim() || null,
         steps: updatedSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
@@ -347,9 +349,9 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         </div>
         <div>
           <label className="text-[10px] text-gray-500 uppercase tracking-wide flex items-center gap-1 mb-1">
-            <FileText className="w-3 h-3" /> Extra Notes
+            <Phone className="w-3 h-3" /> Emergency Phone
           </label>
-          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else" className="h-8 text-xs" />
+          <Input value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} placeholder="(555) 123-4567" className="h-8 text-xs" type="tel" />
         </div>
       </div>
 
@@ -382,7 +384,7 @@ export function ArrivalGuideViewer({ bookingId }: { bookingId: string }) {
     },
   });
 
-  if (!guide || (!guide.steps?.length && !guide.wifiName && !guide.doorCode)) return null;
+  if (!guide || (!guide.steps?.length && !guide.wifiName && !guide.doorCode && !guide.emergencyPhone)) return null;
 
   const hasSteps = guide.steps && guide.steps.length > 0;
 
@@ -500,10 +502,11 @@ export function ArrivalGuideViewer({ bookingId }: { bookingId: string }) {
                     <span className="font-medium text-gray-900 font-mono">{guide.doorCode}</span>
                   </div>
                 )}
-                {guide.notes && (
-                  <div className="flex items-start gap-2 text-sm">
-                    <FileText className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                    <p className="text-gray-600">{guide.notes}</p>
+                {guide.emergencyPhone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <span className="text-gray-500">Emergency:</span>
+                    <a href={`tel:${guide.emergencyPhone}`} className="font-medium text-gray-900 hover:text-[#c4956a] transition-colors">{guide.emergencyPhone}</a>
                   </div>
                 )}
               </div>

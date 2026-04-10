@@ -549,6 +549,7 @@ export async function sendArrivalGuideEmail(data: {
   const detailRows = [
     data.guide.wifiName ? infoRow('WiFi', `${escapeHtml(data.guide.wifiName)}${data.guide.wifiPassword ? ` / ${escapeHtml(data.guide.wifiPassword)}` : ''}`) : '',
     data.guide.doorCode ? infoRow('Access Code', `<span style="font-family:monospace;font-size:15px;">${escapeHtml(data.guide.doorCode)}</span>`) : '',
+    (data.guide as any).emergencyPhone ? infoRow('Emergency Phone', `<a href="tel:${escapeHtml((data.guide as any).emergencyPhone)}" style="color:#1a1a1a;text-decoration:none;font-weight:600;">${escapeHtml((data.guide as any).emergencyPhone)}</a>`) : '',
   ].filter(Boolean).join('');
 
   const html = emailLayout(`
@@ -564,8 +565,6 @@ export async function sendArrivalGuideEmail(data: {
     ${stepsHtml ? `${sectionHeading('Getting There')}${stepsHtml}` : ''}
 
     ${detailRows ? `${sectionHeading('Access Details')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e4df;border-radius:8px;padding:12px 16px;">${detailRows}</table>` : ''}
-
-    ${data.guide.notes ? `${sectionHeading('Notes')}<div style="background-color:#f5f3f0;border-radius:8px;padding:16px;"><p style="margin:0;font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${escapeHtml(data.guide.notes)}</p></div>` : ''}
 
     <div style="text-align:center;margin-top:24px;">
       <a href="${SITE_URL}/portal?tab=messages" style="display:inline-block;background-color:#1a1a1a;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">

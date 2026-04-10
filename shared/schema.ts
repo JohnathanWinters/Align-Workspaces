@@ -838,6 +838,7 @@ export const arrivalGuides = pgTable("arrival_guides", {
   wifiPassword: text("wifi_password"),
   doorCode: text("door_code"),
   notes: text("notes"),
+  emergencyPhone: text("emergency_phone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
