@@ -50,7 +50,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, normalizeSchedule, type WeekSchedule } from "./availability-schedule-editor";
-import { ArrivalGuideEditor, ArrivalGuideViewer } from "./arrival-guide";
+import { ArrivalGuideEditor, ArrivalGuideViewer, ArrivalGuideInline } from "./arrival-guide";
 import BookingCalendar from "./booking-calendar";
 import { CalendarSyncSettings } from "./calendar-sync-settings";
 import { AmenityInput } from "./amenity-input";
@@ -2215,13 +2215,11 @@ function MyBookingsTab() {
                         <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">Referred</Badge>
                       )}
                     </div>
-                    {variant === "upcoming" && (
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <ArrivalGuideViewer bookingId={booking.id} />
-                      </div>
-                    )}
                   </div>
                 </div>
+                {variant === "upcoming" && (
+                  <ArrivalGuideInline bookingId={booking.id} />
+                )}
               </div>
             </motion.div>
           )}

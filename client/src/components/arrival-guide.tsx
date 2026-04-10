@@ -597,3 +597,70 @@ export function ArrivalGuideViewer({ bookingId }: { bookingId: string }) {
     </>
   );
 }
+
+// ── Inline Guide (shown inside expanded booking cards) ───────────
+export function ArrivalGuideInline({ bookingId }: { bookingId: string }) {
+  const { data: guide } = useQuery<ArrivalGuideData | null>({
+    queryKey: ["/api/space-bookings", bookingId, "arrival-guide"],
+    queryFn: async () => {
+      const res = await fetch(`/api/space-bookings/${bookingId}/arrival-guide`, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  if (!guide || (!guide.steps?.length && !guide.wifiName && !guide.doorCode && !guide.emergencyPhone)) return null;
+
+  const imgSrc = (url: string) => url.startsWith("/") || url.startsWith("http") ? url : `/objects/${url}`;
+
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2.5">
+      <div className="flex items-center gap-1.5">
+        <Navigation className="w-3 h-3 text-[#c4956a]" />
+        <span className="text-[10px] font-semibold text-stone-600 uppercase tracking-wide">Arrival Guide</span>
+      </div>
+
+      {/* Step photos */}
+      {guide.steps && guide.steps.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {guide.steps.map((step, i) => (
+            <div key={i} className="shrink-0">
+              <div className="w-20 h-14 rounded-md overflow-hidden bg-gray-100">
+                <img src={imgSrc(step.imageUrl)} alt={step.caption || `Step ${i + 1}`} className="w-full h-full object-cover" />
+              </div>
+              {step.caption && (
+                <p className="text-[9px] text-stone-400 mt-0.5 w-20 truncate">{step.caption}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Details */}
+      <div className="space-y-1.5">
+        {guide.wifiName && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <Wifi className="w-3 h-3 text-stone-400 shrink-0" />
+            <span className="text-stone-500">WiFi:</span>
+            <span className="font-medium text-stone-700">{guide.wifiName}</span>
+            {guide.wifiPassword && <span className="text-stone-400">/ {guide.wifiPassword}</span>}
+          </div>
+        )}
+        {guide.doorCode && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <Key className="w-3 h-3 text-stone-400 shrink-0" />
+            <span className="text-stone-500">Access:</span>
+            <span className="font-medium text-stone-700 font-mono">{guide.doorCode}</span>
+          </div>
+        )}
+        {guide.emergencyPhone && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <Phone className="w-3 h-3 text-stone-400 shrink-0" />
+            <span className="text-stone-500">Emergency:</span>
+            <a href={`tel:${guide.emergencyPhone}`} className="font-medium text-stone-700 hover:text-[#c4956a]">{guide.emergencyPhone}</a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

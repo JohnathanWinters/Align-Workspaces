@@ -74,7 +74,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrivalGuideViewer } from "@/components/arrival-guide";
+import { ArrivalGuideViewer, ArrivalGuideInline } from "@/components/arrival-guide";
 
 type EditToken = {
   id: string;
@@ -1874,6 +1874,7 @@ function ShootGallery({ shoot, onBack }: { shoot: Shoot; onBack: () => void }) {
 function PortalContent() {
   const { user, logout, isLoggingOut } = useAuth();
   const [selectedShoot, setSelectedShoot] = useState<Shoot | null>(null);
+  const [expandedOverviewBookingId, setExpandedOverviewBookingId] = useState<string | null>(null);
   const [spacesSubTab, setSpacesSubTab] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTabState] = useState<"overview" | "shoots" | "edits" | "messages" | "spaces" | "settings">(() => {
     const params = new URLSearchParams(window.location.search);
@@ -2307,30 +2308,37 @@ function PortalContent() {
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-[#c4956a]" /> Upcoming Workspace Bookings</h3>
                     <div className="space-y-2">
-                      {allBookings.slice(0, 5).map((b: any) => (
-                        <div key={b.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                          <div className="flex items-center gap-4 p-4 text-left">
-                            <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
-                              <Building2 className="w-5 h-5 text-[#c4956a]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-sm font-medium text-gray-900 truncate">{b.spaceName || "Workspace"}</p>
-                                <span className={`text-[9px] font-semibold px-1.5 rounded-full border ${b._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"}`}>
-                                  {b._role === "host" ? "Hosting" : "Renting"}
-                                </span>
+                      {allBookings.slice(0, 5).map((b: any) => {
+                        const isExpanded = expandedOverviewBookingId === b.id;
+                        return (
+                          <div key={b.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                            <button
+                              onClick={() => setExpandedOverviewBookingId(isExpanded ? null : b.id)}
+                              className="w-full flex items-center gap-4 p-4 text-left hover:bg-stone-50/50 transition-colors"
+                            >
+                              <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
+                                <Building2 className="w-5 h-5 text-[#c4956a]" />
                               </div>
-                              <p className="text-xs text-gray-500">{new Date(b.bookingDate).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{b.bookingStartTime ? ` at ${b.bookingStartTime}` : ""}</p>
-                            </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "confirmed" || b.status === "approved" ? "bg-green-100 text-green-700" : b.status === "checked_in" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{b.status || "pending"}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{b.spaceName || "Workspace"}</p>
+                                  <span className={`text-[9px] font-semibold px-1.5 rounded-full border ${b._role === "host" ? "bg-violet-50 text-violet-600 border-violet-200" : "bg-sky-50 text-sky-600 border-sky-200"}`}>
+                                    {b._role === "host" ? "Hosting" : "Renting"}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500">{new Date(b.bookingDate).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{b.bookingStartTime ? ` at ${b.bookingStartTime}` : ""}</p>
+                              </div>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "confirmed" || b.status === "approved" ? "bg-green-100 text-green-700" : b.status === "checked_in" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{b.status || "pending"}</span>
+                              <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            </button>
+                            {isExpanded && (
+                              <div className="px-4 pb-4 border-t border-gray-50">
+                                <ArrivalGuideInline bookingId={b.id} />
+                              </div>
+                            )}
                           </div>
-                          {["approved", "confirmed", "checked_in"].includes(b.status) && (
-                            <div className="px-4 pb-3">
-                              <ArrivalGuideViewer bookingId={b.id} />
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null;
