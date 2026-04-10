@@ -62,6 +62,15 @@ const STEP_CATEGORIES = [
 ] as const;
 
 // ── Host Editor ───────────────────────────────────────────────────
+type ShotType = "wide" | "closeup";
+type FlowState =
+  | { phase: "idle" }
+  | { phase: "pick_shot" }                                          // user picks WIDE or CLOSE-UP
+  | { phase: "pick_category"; shotType: ShotType }                  // user picks what it's for
+  | { phase: "uploading"; shotType: ShotType; category: string }    // uploading photo
+  | { phase: "first_done"; firstShot: ShotType; category: string; firstImageUrl: string } // prompt for 2nd
+  | { phase: "uploading_second"; firstShot: ShotType; category: string; firstImageUrl: string }; // uploading 2nd
+
 export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: string; hideSaveButton?: boolean }) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,8 +81,8 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
   const [emergencyPhone, setEmergencyPhone] = useState("");
   const [steps, setSteps] = useState<ArrivalStep[]>([]);
   const [initialized, setInitialized] = useState(false);
-  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const [customCaption, setCustomCaption] = useState("");
+  const [flow, setFlow] = useState<FlowState>({ phase: "idle" });
 
   const { data: guide, isLoading } = useQuery<ArrivalGuideData | null>({
     queryKey: ["/api/spaces", spaceId, "arrival-guide"],
@@ -84,7 +93,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     },
   });
 
-  // Initialize form from loaded data
+  // Sync form from server data on load and after refetch
   if (guide && !initialized) {
     setWifiName(guide.wifiName || "");
     setWifiPassword(guide.wifiPassword || "");
@@ -108,6 +117,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       });
     },
     onSuccess: () => {
+      setInitialized(false); // allow re-sync from server
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
       toast({ title: "Arrival guide saved" });
     },
@@ -116,7 +126,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     },
   });
 
-  const handleUpload = async (file: File) => {
+  const uploadPhoto = async (file: File): Promise<string | null> => {
     setUploading(true);
     try {
       const formData = new FormData();
@@ -128,20 +138,35 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
       });
       if (!res.ok) throw new Error("Upload failed");
       const { imageUrl } = await res.json();
-      setPendingImageUrl(imageUrl);
-      setCustomCaption("");
+      return imageUrl;
     } catch {
       toast({ title: "Upload failed", variant: "destructive" });
+      return null;
     } finally {
       setUploading(false);
     }
   };
 
-  const finalizePendingStep = (caption: string) => {
-    if (!pendingImageUrl) return;
-    setSteps(prev => [...prev, { imageUrl: pendingImageUrl, caption, sortOrder: prev.length }]);
-    setPendingImageUrl(null);
-    setCustomCaption("");
+  const handleFileSelected = async (file: File) => {
+    if (flow.phase === "uploading") {
+      const imageUrl = await uploadPhoto(file);
+      if (imageUrl) {
+        setFlow({ phase: "first_done", firstShot: flow.shotType, category: flow.category, firstImageUrl: imageUrl });
+      } else {
+        setFlow({ phase: "idle" });
+      }
+    } else if (flow.phase === "uploading_second") {
+      const imageUrl = await uploadPhoto(file);
+      if (imageUrl) {
+        const secondShot: ShotType = flow.firstShot === "wide" ? "closeup" : "wide";
+        setSteps(prev => [
+          ...prev,
+          { imageUrl: flow.firstImageUrl, caption: `${flow.category} — ${flow.firstShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: prev.length },
+          { imageUrl, caption: `${flow.category} — ${secondShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: prev.length + 1 },
+        ]);
+      }
+      setFlow({ phase: "idle" });
+    }
   };
 
   const removeStep = async (index: number) => {
@@ -149,14 +174,12 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
     const updatedSteps = steps.filter((_, i) => i !== index);
     setSteps(updatedSteps);
     try {
-      // Delete the image from storage
       await fetch(`/api/spaces/${spaceId}/arrival-guide/image`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ imageUrl: step.imageUrl }),
       });
-      // Auto-save so the removal persists
       await apiRequest("PUT", `/api/spaces/${spaceId}/arrival-guide`, {
         wifiName: wifiName.trim() || null,
         wifiPassword: wifiPassword.trim() || null,
@@ -164,19 +187,22 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         emergencyPhone: emergencyPhone.trim() || null,
         steps: updatedSteps.map((s, i) => ({ imageUrl: s.imageUrl, caption: s.caption, sortOrder: i })),
       });
+      setInitialized(false);
       queryClient.invalidateQueries({ queryKey: ["/api/spaces", spaceId, "arrival-guide"] });
     } catch {
       toast({ title: "Failed to delete photo", variant: "destructive" });
     }
   };
 
-  const updateCaption = (index: number, caption: string) => {
-    setSteps(prev => prev.map((s, i) => i === index ? { ...s, caption } : s));
-  };
+  const imgSrc = (url: string) => url.startsWith("/") || url.startsWith("http") ? url : `/objects/${url}`;
 
   if (isLoading) {
     return <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>;
   }
+
+  const secondShotLabel = flow.phase === "first_done"
+    ? (flow.firstShot === "wide" ? "Close-up" : "Wide")
+    : "";
 
   return (
     <div className="space-y-4 mt-4 pt-4 border-t border-gray-100">
@@ -186,33 +212,21 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
         <span className="text-[10px] text-gray-400">Help guests find you</span>
       </div>
 
-      {/* Steps */}
+      {/* Completed steps */}
       <div className="space-y-2">
         {steps.map((step, i) => {
-          const matchedCat = STEP_CATEGORIES.find(c => step.caption === c.label);
-          const StepIcon = matchedCat?.icon || STEP_SUGGESTIONS[i]?.icon || FileText;
-          const stepLabel = step.caption || STEP_SUGGESTIONS[i]?.label || `Step ${i + 1}`;
+          const isWide = step.caption?.includes("Wide");
+          const StepIcon = isWide ? Building2 : ZoomIn;
           return (
             <div key={i} className="flex items-start gap-3 p-2 rounded-lg bg-gray-50 border border-gray-100">
               <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-200 shrink-0">
-                <img
-                  src={step.imageUrl.startsWith("/") || step.imageUrl.startsWith("http") ? step.imageUrl : `/objects/${step.imageUrl}`}
-                  alt={step.caption || `Step ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
+                <img src={imgSrc(step.imageUrl)} alt={step.caption || `Step ${i + 1}`} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
                   <StepIcon className="w-3 h-3 text-gray-400" />
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">{stepLabel}</span>
+                  <span className="text-[10px] text-gray-400 uppercase tracking-wide">{step.caption || `Step ${i + 1}`}</span>
                 </div>
-                <Input
-                  value={step.caption}
-                  onChange={(e) => updateCaption(i, e.target.value)}
-                  placeholder="Add a description..."
-                  className="h-7 text-xs"
-                  maxLength={80}
-                />
               </div>
               <button onClick={() => removeStep(i)} className="p-1 text-gray-300 hover:text-red-400 transition-colors shrink-0">
                 <Trash2 className="w-3.5 h-3.5" />
@@ -221,99 +235,151 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
           );
         })}
 
-        {/* Category picker for pending upload */}
-        {pendingImageUrl && (
-          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-200 shrink-0">
-                <img
-                  src={pendingImageUrl.startsWith("/") || pendingImageUrl.startsWith("http") ? pendingImageUrl : `/objects/${pendingImageUrl}`}
-                  alt="New step"
-                  className="w-full h-full object-cover"
-                />
+        {/* ── Flow: pick shot type (WIDE or CLOSE-UP) ── */}
+        {flow.phase === "idle" && steps.length < 12 && (
+          <div
+            className="w-full rounded-xl border-2 border-dashed border-gray-200 hover:border-[#c4956a]/30 transition-colors cursor-pointer"
+            onClick={() => setFlow({ phase: "pick_shot" })}
+          >
+            <div className="px-5 py-6 text-center">
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <div className="w-24 h-16 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1">
+                  <Building2 className="w-6 h-6 text-stone-400" />
+                  <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wide">Wide</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <div className="w-24 h-16 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1">
+                  <ZoomIn className="w-6 h-6 text-stone-400" />
+                  <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wide">Close-up</span>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-stone-700">What is this photo of?</p>
-                <p className="text-[10px] text-stone-400">Select a category for this step</p>
-              </div>
+              <p className="text-sm text-stone-600 font-medium mb-1.5">
+                {steps.length === 0 ? "Add your first step" : "Add another step"}
+              </p>
+              <p className="text-xs text-stone-400 leading-relaxed max-w-sm mx-auto">
+                Each step includes a wide shot and a close-up so guests can find you easily.
+              </p>
             </div>
+          </div>
+        )}
+
+        {flow.phase === "pick_shot" && (
+          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 space-y-3">
+            <p className="text-sm font-medium text-stone-700 text-center">Start with a wide or close-up shot?</p>
+            <div className="flex items-center justify-center gap-3">
+              <button type="button" onClick={() => setFlow({ phase: "pick_category", shotType: "wide" })}
+                className="flex flex-col items-center gap-2 w-28 py-4 rounded-xl border-2 border-stone-200 bg-white hover:border-[#c4956a] transition-all">
+                <Building2 className="w-7 h-7 text-stone-500" />
+                <span className="text-xs font-semibold text-stone-700">Wide</span>
+              </button>
+              <button type="button" onClick={() => setFlow({ phase: "pick_category", shotType: "closeup" })}
+                className="flex flex-col items-center gap-2 w-28 py-4 rounded-xl border-2 border-stone-200 bg-white hover:border-[#c4956a] transition-all">
+                <ZoomIn className="w-7 h-7 text-stone-500" />
+                <span className="text-xs font-semibold text-stone-700">Close-up</span>
+              </button>
+            </div>
+            <button type="button" onClick={() => setFlow({ phase: "idle" })} className="w-full text-center text-[10px] text-stone-400 hover:text-stone-600 mt-1">Cancel</button>
+          </div>
+        )}
+
+        {/* ── Flow: pick category ── */}
+        {flow.phase === "pick_category" && (
+          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 space-y-3">
+            <p className="text-sm font-medium text-stone-700 text-center">
+              What is this {flow.shotType === "wide" ? "wide" : "close-up"} shot of?
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {STEP_CATEGORIES.filter(c => c.id !== "other").map(cat => {
                 const Icon = cat.icon;
                 return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => finalizePendingStep(cat.label)}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-xs font-medium text-stone-600 hover:border-[#c4956a]/50 hover:text-[#c4956a] transition-all"
-                  >
+                  <button key={cat.id} type="button"
+                    onClick={() => { setFlow({ phase: "uploading", shotType: flow.shotType, category: cat.label }); setTimeout(() => fileInputRef.current?.click(), 50); }}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-stone-200 bg-white text-xs font-medium text-stone-600 hover:border-[#c4956a]/50 hover:text-[#c4956a] transition-all">
                     <Icon className="w-3.5 h-3.5" />
                     {cat.label}
                   </button>
                 );
               })}
               <div className="col-span-2 flex items-center gap-2">
-                <input
-                  type="text"
-                  value={customCaption}
-                  onChange={(e) => setCustomCaption(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && customCaption.trim()) finalizePendingStep(customCaption.trim()); }}
+                <input type="text" value={customCaption} onChange={(e) => setCustomCaption(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && customCaption.trim()) {
+                      setFlow({ phase: "uploading", shotType: flow.shotType, category: customCaption.trim() });
+                      setCustomCaption("");
+                      setTimeout(() => fileInputRef.current?.click(), 50);
+                    }
+                  }}
                   placeholder="Other — type a custom label..."
-                  className="flex-1 h-9 text-xs bg-white border border-stone-200 rounded-lg px-3 outline-none focus:border-[#c4956a]/50"
-                  maxLength={60}
-                />
-                <button
-                  type="button"
-                  onClick={() => { if (customCaption.trim()) finalizePendingStep(customCaption.trim()); }}
+                  className="flex-1 h-9 text-xs bg-white border border-stone-200 rounded-lg px-3 outline-none focus:border-[#c4956a]/50" maxLength={60} />
+                <button type="button"
+                  onClick={() => {
+                    if (customCaption.trim()) {
+                      setFlow({ phase: "uploading", shotType: flow.shotType, category: customCaption.trim() });
+                      setCustomCaption("");
+                      setTimeout(() => fileInputRef.current?.click(), 50);
+                    }
+                  }}
                   disabled={!customCaption.trim()}
-                  className="h-9 px-3 text-xs font-medium bg-stone-900 text-white rounded-lg hover:bg-stone-800 disabled:opacity-30 transition-colors"
-                >
-                  Add
-                </button>
+                  className="h-9 px-3 text-xs font-medium bg-stone-900 text-white rounded-lg hover:bg-stone-800 disabled:opacity-30 transition-colors">Add</button>
               </div>
             </div>
+            <button type="button" onClick={() => setFlow({ phase: "pick_shot" })} className="w-full text-center text-[10px] text-stone-400 hover:text-stone-600 mt-1">Back</button>
           </div>
         )}
 
-        {steps.length < 6 && steps.length > 0 && !pendingImageUrl && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors text-xs"
-          >
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            {uploading ? "Uploading..." : "Add another step"}
-          </button>
+        {/* ── Flow: uploading first photo ── */}
+        {flow.phase === "uploading" && (
+          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 text-center">
+            <Loader2 className="w-5 h-5 animate-spin text-[#c4956a] mx-auto mb-2" />
+            <p className="text-xs text-stone-500">
+              Uploading {flow.shotType === "wide" ? "wide" : "close-up"} shot for <strong>{flow.category}</strong>...
+            </p>
+          </div>
         )}
 
-        {steps.length === 0 && !pendingImageUrl && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full rounded-xl border-2 border-dashed border-gray-200 hover:border-[#c4956a]/40 transition-colors group"
-          >
-            <div className="px-5 py-6">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                {/* Wide shot example */}
-                <div className="w-24 h-16 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
-                  <Building2 className="w-6 h-6 text-stone-400 group-hover:text-[#c4956a]/60 transition-colors" />
-                  <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wide">Wide</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
-                {/* Close-up example */}
-                <div className="w-24 h-16 rounded-lg bg-stone-100 border border-stone-200 flex flex-col items-center justify-center gap-1 group-hover:border-[#c4956a]/30 transition-colors">
-                  <ZoomIn className="w-6 h-6 text-stone-400 group-hover:text-[#c4956a]/60 transition-colors" />
-                  <span className="text-[9px] text-stone-400 font-medium uppercase tracking-wide">Close-up</span>
-                </div>
+        {/* ── Flow: first photo done, prompt for second ── */}
+        {flow.phase === "first_done" && (
+          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-200 shrink-0">
+                <img src={imgSrc(flow.firstImageUrl)} alt="First shot" className="w-full h-full object-cover" />
               </div>
-              <p className="text-sm text-stone-600 group-hover:text-stone-700 transition-colors font-medium mb-1.5">
-                {uploading ? "Uploading..." : "Add your first step"}
-              </p>
-              <p className="text-xs text-stone-400 group-hover:text-stone-500 transition-colors leading-relaxed max-w-sm mx-auto">
-                Start with a wide shot of the building, then add close-ups of the entrance, hallway, and door so guests can find you easily.
-              </p>
+              <div>
+                <p className="text-xs text-stone-400">{flow.firstShot === "wide" ? "Wide" : "Close-up"} shot uploaded</p>
+                <p className="text-sm font-medium text-stone-700">{flow.category}</p>
+              </div>
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 ml-auto shrink-0" />
             </div>
-          </button>
+            <div className="border-t border-[#c4956a]/20 pt-3 text-center">
+              <p className="text-sm font-medium text-stone-700 mb-3">
+                Now add the {secondShotLabel.toLowerCase()} shot for {flow.category}
+              </p>
+              <button type="button"
+                onClick={() => {
+                  setFlow({ phase: "uploading_second", firstShot: flow.firstShot, category: flow.category, firstImageUrl: flow.firstImageUrl });
+                  setTimeout(() => fileInputRef.current?.click(), 50);
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 transition-colors">
+                {flow.firstShot === "wide" ? <ZoomIn className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}
+                Upload {secondShotLabel} Photo
+              </button>
+            </div>
+            <button type="button" onClick={() => {
+              // Skip second photo — just add the first one
+              setSteps(prev => [...prev, { imageUrl: flow.firstImageUrl, caption: `${flow.category} — ${flow.firstShot === "wide" ? "Wide" : "Close-up"}`, sortOrder: prev.length }]);
+              setFlow({ phase: "idle" });
+            }} className="w-full text-center text-[10px] text-stone-400 hover:text-stone-600 mt-1">Skip — add only the first photo</button>
+          </div>
+        )}
+
+        {/* ── Flow: uploading second photo ── */}
+        {flow.phase === "uploading_second" && (
+          <div className="rounded-xl border-2 border-[#c4956a]/40 bg-[#c4956a]/5 p-4 text-center">
+            <Loader2 className="w-5 h-5 animate-spin text-[#c4956a] mx-auto mb-2" />
+            <p className="text-xs text-stone-500">
+              Uploading {flow.firstShot === "wide" ? "close-up" : "wide"} shot for <strong>{flow.category}</strong>...
+            </p>
+          </div>
         )}
 
         <input
@@ -321,7 +387,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); e.target.value = ""; }}
+          onChange={(e) => { if (e.target.files?.[0]) handleFileSelected(e.target.files[0]); e.target.value = ""; }}
         />
       </div>
 
