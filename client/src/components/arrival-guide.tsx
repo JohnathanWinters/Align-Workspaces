@@ -55,9 +55,9 @@ const STEP_SUGGESTIONS = [
 ];
 
 const STEP_CATEGORIES = [
-  { id: "parking", icon: Car, label: "Where to Park" },
-  { id: "enter", icon: DoorOpen, label: "How to Enter" },
-  { id: "keys", icon: Key, label: "How to Get Your Keys" },
+  { id: "parking", icon: Car, label: "Parking" },
+  { id: "enter", icon: DoorOpen, label: "Entrance" },
+  { id: "keys", icon: Key, label: "Keys" },
   { id: "other", icon: FileText, label: "Other" },
 ] as const;
 
@@ -600,6 +600,8 @@ export function ArrivalGuideViewer({ bookingId }: { bookingId: string }) {
 
 // ── Inline Guide (shown inside expanded booking cards) ───────────
 export function ArrivalGuideInline({ bookingId }: { bookingId: string }) {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+
   const { data: guide } = useQuery<ArrivalGuideData | null>({
     queryKey: ["/api/space-bookings", bookingId, "arrival-guide"],
     queryFn: async () => {
@@ -613,54 +615,101 @@ export function ArrivalGuideInline({ bookingId }: { bookingId: string }) {
 
   const imgSrc = (url: string) => url.startsWith("/") || url.startsWith("http") ? url : `/objects/${url}`;
 
+  // Group steps by category (strip " — Wide" / " — Close-up" suffix)
+  const stepGroups: { category: string; steps: ArrivalStep[] }[] = [];
+  if (guide.steps) {
+    const groupMap = new Map<string, ArrivalStep[]>();
+    for (const step of guide.steps) {
+      const category = (step.caption || "").replace(/ — (Wide|Close-up)$/i, "").trim() || "Step";
+      if (!groupMap.has(category)) groupMap.set(category, []);
+      groupMap.get(category)!.push(step);
+    }
+    groupMap.forEach((steps, category) => stepGroups.push({ category, steps }));
+  }
+
+  // Find matching icon for a category
+  const getCatIcon = (cat: string) => {
+    const l = cat.toLowerCase();
+    if (l.includes("park")) return Car;
+    if (l.includes("enter") || l.includes("entrance")) return DoorOpen;
+    if (l.includes("key")) return Key;
+    return Navigation;
+  };
+
   return (
-    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2.5">
+    <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
       <div className="flex items-center gap-1.5">
         <Navigation className="w-3 h-3 text-[#c4956a]" />
         <span className="text-[10px] font-semibold text-stone-600 uppercase tracking-wide">Arrival Guide</span>
       </div>
 
-      {/* Step photos */}
-      {guide.steps && guide.steps.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {guide.steps.map((step, i) => (
-            <div key={i} className="shrink-0">
-              <div className="w-20 h-14 rounded-md overflow-hidden bg-gray-100">
-                <img src={imgSrc(step.imageUrl)} alt={step.caption || `Step ${i + 1}`} className="w-full h-full object-cover" />
+      {/* Step groups — click to expand with wide + close-up side by side */}
+      {stepGroups.length > 0 && (
+        <div className="space-y-1.5">
+          {stepGroups.map(({ category, steps: groupSteps }) => {
+            const Icon = getCatIcon(category);
+            const isOpen = expandedGroup === category;
+            return (
+              <div key={category} className="rounded-lg border border-stone-100 overflow-hidden">
+                <button
+                  onClick={() => setExpandedGroup(isOpen ? null : category)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-stone-50 transition-colors"
+                >
+                  <Icon className="w-3.5 h-3.5 text-[#c4956a] shrink-0" />
+                  <span className="text-xs font-medium text-stone-700 flex-1">{category}</span>
+                  <span className="text-[10px] text-stone-400">{groupSteps.length} photo{groupSteps.length > 1 ? "s" : ""}</span>
+                  <ChevronRight className={`w-3 h-3 text-stone-400 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                </button>
+                {isOpen && (
+                  <div className="px-3 pb-3 pt-1">
+                    <div className="flex gap-2">
+                      {groupSteps.map((step, i) => {
+                        const isWide = step.caption?.includes("Wide");
+                        return (
+                          <div key={i} className="flex-1 min-w-0">
+                            <div className="aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
+                              <img src={imgSrc(step.imageUrl)} alt={step.caption || ""} className="w-full h-full object-cover" />
+                            </div>
+                            <p className="text-[10px] text-stone-400 mt-1 text-center">{isWide ? "Wide" : "Close-up"}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-              {step.caption && (
-                <p className="text-[9px] text-stone-400 mt-0.5 w-20 truncate">{step.caption}</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Details */}
-      <div className="space-y-1.5">
-        {guide.wifiName && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <Wifi className="w-3 h-3 text-stone-400 shrink-0" />
-            <span className="text-stone-500">WiFi:</span>
-            <span className="font-medium text-stone-700">{guide.wifiName}</span>
-            {guide.wifiPassword && <span className="text-stone-400">/ {guide.wifiPassword}</span>}
-          </div>
-        )}
-        {guide.doorCode && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <Key className="w-3 h-3 text-stone-400 shrink-0" />
-            <span className="text-stone-500">Access:</span>
-            <span className="font-medium text-stone-700 font-mono">{guide.doorCode}</span>
-          </div>
-        )}
-        {guide.emergencyPhone && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <Phone className="w-3 h-3 text-stone-400 shrink-0" />
-            <span className="text-stone-500">Emergency:</span>
-            <a href={`tel:${guide.emergencyPhone}`} className="font-medium text-stone-700 hover:text-[#c4956a]">{guide.emergencyPhone}</a>
-          </div>
-        )}
-      </div>
+      {/* Details — WiFi, door code, emergency phone */}
+      {(guide.wifiName || guide.doorCode || guide.emergencyPhone) && (
+        <div className="rounded-lg bg-stone-50 border border-stone-100 p-3 space-y-2">
+          {guide.wifiName && (
+            <div className="flex items-center gap-2 text-xs">
+              <Wifi className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <span className="text-stone-500">WiFi:</span>
+              <span className="font-medium text-stone-700">{guide.wifiName}</span>
+              {guide.wifiPassword && <span className="text-stone-400">/ {guide.wifiPassword}</span>}
+            </div>
+          )}
+          {guide.doorCode && (
+            <div className="flex items-center gap-2 text-xs">
+              <Key className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <span className="text-stone-500">Access code:</span>
+              <span className="font-medium text-stone-700 font-mono">{guide.doorCode}</span>
+            </div>
+          )}
+          {guide.emergencyPhone && (
+            <div className="flex items-center gap-2 text-xs">
+              <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <span className="text-stone-500">Emergency:</span>
+              <a href={`tel:${guide.emergencyPhone}`} className="font-medium text-stone-700 hover:text-[#c4956a]">{guide.emergencyPhone}</a>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
