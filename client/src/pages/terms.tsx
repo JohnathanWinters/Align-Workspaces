@@ -29,7 +29,7 @@ export default function TermsPage() {
 
       <main className="max-w-3xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
         <h1 className="font-serif text-3xl sm:text-4xl text-[#2a2a2a] mb-2">Terms of Service</h1>
-        <p className="text-sm text-stone-400 mb-10">Last updated: March 2026</p>
+        <p className="text-sm text-stone-400 mb-10">Last updated: April 2026</p>
 
         <div className="prose prose-stone prose-sm max-w-none [&_h2]:font-serif [&_h2]:text-xl [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:text-[#2a2a2a] [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:uppercase [&_h3]:tracking-wider [&_h3]:text-stone-500 [&_h3]:mt-6 [&_h3]:mb-2 [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:text-[#2a2a2a] [&_h4]:mt-4 [&_h4]:mb-2 [&_p]:text-stone-600 [&_p]:leading-relaxed [&_p]:mb-4 [&_ul]:text-stone-600 [&_li]:mb-1 [&_ol]:text-stone-600">
 
