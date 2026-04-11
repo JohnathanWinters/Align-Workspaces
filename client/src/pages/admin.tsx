@@ -2223,6 +2223,9 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [cropSource, setCropSource] = useState<{ file: File; reviewId: string; reviewType: string } | null>(null);
   const [uploadingCrop, setUploadingCrop] = useState(false);
+  const [shoots, setShoots] = useState<any[]>([]);
+  const [linkingReviewId, setLinkingReviewId] = useState<string | null>(null);
+  const [expandedCommentId, setExpandedCommentId] = useState<string | null>(null);
 
   const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
@@ -2233,14 +2236,16 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const [spaceRes, shootRes] = await Promise.all([
+      const [spaceRes, shootRes, shootsRes] = await Promise.all([
         adminFetchLocal("/api/admin/reviews"),
         adminFetchLocal("/api/admin/shoot-reviews"),
+        adminFetchLocal("/api/admin/shoots"),
       ]);
       const spaceReviews = spaceRes.ok ? (await spaceRes.json()).map((r: any) => ({ ...r, _type: "workspaces" })) : [];
       const shootReviews = shootRes.ok ? (await shootRes.json()).map((r: any) => ({ ...r, _type: "photography" })) : [];
       const merged = [...spaceReviews, ...shootReviews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setReviews(merged);
+      if (shootsRes.ok) setShoots(await shootsRes.json());
     } catch (err) {
       console.error(err);
     }
@@ -2456,9 +2461,19 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     ) : (
                       <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
                     )}
-                    <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
-                      {review._type === "photography" ? (review.shootTitle || "Photography") : (review.spaceName || "Workspace")}
-                    </span>
+                    {review._type === "photography" && !review.shootTitle ? (
+                      <button
+                        onClick={() => setLinkingReviewId(linkingReviewId === review.id ? null : review.id)}
+                        className="text-sm font-medium text-amber-600 hover:text-amber-700 truncate underline decoration-dashed"
+                        title="Click to link a shoot"
+                      >
+                        Unknown Shoot
+                      </button>
+                    ) : (
+                      <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
+                        {review._type === "photography" ? (review.shootTitle || "Photography") : (review.spaceName || "Workspace")}
+                      </span>
+                    )}
                   </div>
 
                   {/* Client name */}
@@ -2472,10 +2487,15 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     {renderStars(review.rating || 0)}
                   </div>
 
-                  {/* Comment (truncated) */}
-                  <div className="text-sm text-gray-500 truncate" title={review.comment || ""} data-testid={`text-review-comment-${review.id}`}>
-                    {review.comment ? (review.comment.length > 60 ? review.comment.slice(0, 60) + "..." : review.comment) : <span className="italic text-gray-300">No comment</span>}
-                  </div>
+                  {/* Comment (click to expand) */}
+                  <button
+                    onClick={() => setExpandedCommentId(expandedCommentId === review.id ? null : review.id)}
+                    className={`text-sm text-left ${review.comment ? "text-gray-500 hover:text-gray-700 cursor-pointer" : "text-gray-300 italic"} ${expandedCommentId === review.id ? "whitespace-normal" : "truncate"}`}
+                    title={expandedCommentId === review.id ? "Click to collapse" : "Click to read full comment"}
+                    data-testid={`text-review-comment-${review.id}`}
+                  >
+                    {review.comment || "No comment"}
+                  </button>
 
                   {/* Status badge */}
                   <div>
@@ -2490,6 +2510,35 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                   </div>
 
                   {/* Actions */}
+                  {/* Link shoot dropdown */}
+                  {linkingReviewId === review.id && review._type === "photography" && (
+                    <div className="col-span-full bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-medium text-amber-800">Link this review to a shoot:</p>
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {shoots.map((s: any) => (
+                          <button
+                            key={s.id}
+                            onClick={async () => {
+                              try {
+                                await adminFetchLocal(`/api/admin/shoot-reviews/${review.id}`, { method: "PATCH", body: JSON.stringify({ shootId: s.id }) });
+                                toast({ title: `Linked to "${s.title}"` });
+                                setLinkingReviewId(null);
+                                loadReviews();
+                              } catch { toast({ title: "Failed to link", variant: "destructive" }); }
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-amber-100 transition-colors flex items-center gap-2"
+                          >
+                            <Camera className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span className="font-medium text-stone-700">{s.title}</span>
+                            <span className="text-stone-400 ml-auto">{s.clientName || ""}</span>
+                          </button>
+                        ))}
+                        {shoots.length === 0 && <p className="text-xs text-stone-400 italic">No shoots found</p>}
+                      </div>
+                      <button onClick={() => setLinkingReviewId(null)} className="text-[10px] text-stone-400 hover:text-stone-600">Cancel</button>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-1 justify-end">
                     {review.status !== "published" && (
                       <Button

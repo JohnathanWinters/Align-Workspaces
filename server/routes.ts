@@ -5200,14 +5200,19 @@ export async function registerRoutes(
     }
   });
 
-  // Admin: update shoot review status
+  // Admin: update shoot review (status, shootId, photoUrl)
   app.patch("/api/admin/shoot-reviews/:id", isAdmin, async (req, res) => {
     try {
-      const { status } = req.body;
-      if (!["published", "hidden", "flagged"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
+      const updates: any = {};
+      if (req.body.status) {
+        if (!["published", "hidden", "flagged"].includes(req.body.status)) {
+          return res.status(400).json({ message: "Invalid status" });
+        }
+        updates.status = req.body.status;
       }
-      const review = await storage.updateShootReview(req.params.id as string, { status });
+      if (req.body.shootId !== undefined) updates.shootId = req.body.shootId;
+      if (req.body.photoUrl !== undefined) updates.photoUrl = req.body.photoUrl;
+      const review = await storage.updateShootReview(req.params.id as string, updates);
       res.json(review);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
