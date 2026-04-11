@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -3501,6 +3502,7 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
   const resolvedInitialTab = initialTab ? resolveLegacyTab(initialTab) : undefined;
   const [spacesTab, setSpacesTab] = useState<SpacesTabKey>(resolvedInitialTab || "my-spaces");
   const [tabResolved, setTabResolved] = useState(!!initialTab);
+  const subtabsDrag = useDragScroll();
 
   // Fetch counts to auto-detect best sub-tab
   const { data: mySpaces = [], isLoading: mySpacesLoading } = useQuery<Space[]>({
@@ -3583,12 +3585,22 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
         </div>
       )}
 
-      <div className="flex gap-1 bg-stone-100 rounded-lg p-1" data-testid="spaces-subtabs">
+      <div
+        ref={subtabsDrag.ref}
+        onMouseDown={subtabsDrag.onMouseDown}
+        onMouseMove={subtabsDrag.onMouseMove}
+        onMouseUp={subtabsDrag.onMouseUp}
+        onMouseLeave={subtabsDrag.onMouseLeave}
+        onDragStart={subtabsDrag.onDragStart}
+        className="flex gap-1 bg-stone-100 rounded-lg p-1 overflow-x-auto cursor-grab select-none scrollbar-hide"
+        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+        data-testid="spaces-subtabs"
+      >
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setSpacesTab(key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
               spacesTab === key
                 ? "bg-white text-gray-900 shadow-sm"
                 : "text-gray-500 hover:text-gray-700"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { setPageMeta } from "@/lib/seo";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -1302,6 +1303,7 @@ export default function SpacesBrowsePage() {
   });
   const [zipError, setZipError] = useState<string>("");
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const recentDrag = useDragScroll();
 
   // Availability search state
   const [availDate, setAvailDate] = useState<string>("");
@@ -2013,7 +2015,16 @@ export default function SpacesBrowsePage() {
                     Clear
                   </button>
                 </div>
-                <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin">
+                <div
+                  ref={recentDrag.ref}
+                  onMouseDown={recentDrag.onMouseDown}
+                  onMouseMove={recentDrag.onMouseMove}
+                  onMouseUp={recentDrag.onMouseUp}
+                  onMouseLeave={recentDrag.onMouseLeave}
+                  onDragStart={recentDrag.onDragStart}
+                  className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide cursor-grab select-none"
+                  style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+                >
                   {recentSpaces.map((space) => (
                     <Link
                       key={space.id}

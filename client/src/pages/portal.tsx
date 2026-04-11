@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -1896,6 +1897,7 @@ function PortalContent() {
   const unreadCount = useUnreadCount();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const portalTabsDrag = useDragScroll();
 
   const { data: shoots = [], isLoading } = useQuery<(Shoot & { galleryCount?: number; coverImageUrl?: string | null })[]>({
     queryKey: ["/api/shoots"],
@@ -2134,7 +2136,17 @@ function PortalContent() {
           <div className="relative mb-8 -mx-4 sm:mx-0" data-testid="portal-tabs-wrapper">
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 sm:hidden" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 sm:hidden" />
-            <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide" data-testid="portal-tabs">
+            <div
+              ref={portalTabsDrag.ref}
+              onMouseDown={portalTabsDrag.onMouseDown}
+              onMouseMove={portalTabsDrag.onMouseMove}
+              onMouseUp={portalTabsDrag.onMouseUp}
+              onMouseLeave={portalTabsDrag.onMouseLeave}
+              onDragStart={portalTabsDrag.onDragStart}
+              className="flex gap-1 border-b border-gray-200 overflow-x-auto px-4 sm:px-0 sm:justify-center scrollbar-hide cursor-grab select-none"
+              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+              data-testid="portal-tabs"
+            >
               <button
                 onClick={() => setActiveTab("overview")}
                 data-testid="tab-overview"

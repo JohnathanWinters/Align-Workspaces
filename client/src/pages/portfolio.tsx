@@ -5,6 +5,7 @@ import { ArrowLeft, Palette, Tag, X, Menu, Camera, MapPin, Users, Star, Building
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { setPageMeta } from "@/lib/seo";
 import type { PortfolioPhoto, ColorSwatch, Space } from "@shared/schema";
 import { UserIndicator } from "@/components/user-indicator";
@@ -328,6 +329,8 @@ export default function PortfolioPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<PortfolioPhoto | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"people" | "spaces">("people");
+  const reviewsDrag = useDragScroll();
+  const beforeAfterDrag = useDragScroll();
 
   const handlePhotoClick = (photo: PortfolioPhoto) => {
     trackEvent("portfolio_photo_click", { photoId: photo.id });
@@ -473,7 +476,16 @@ export default function PortfolioPage() {
             className="max-w-3xl mx-auto mb-10 px-4"
             data-testid="portfolio-testimonial"
           >
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div
+              ref={reviewsDrag.ref}
+              onMouseDown={reviewsDrag.onMouseDown}
+              onMouseMove={reviewsDrag.onMouseMove}
+              onMouseUp={reviewsDrag.onMouseUp}
+              onMouseLeave={reviewsDrag.onMouseLeave}
+              onDragStart={reviewsDrag.onDragStart}
+              className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide cursor-grab select-none"
+              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+            >
               {photoReviews.map((r: any) => (
                 <div key={r.id} className="flex-shrink-0 w-72 bg-white rounded-xl border border-stone-100 p-4">
                   <div className="flex items-center gap-0.5 mb-2">
@@ -517,7 +529,16 @@ export default function PortfolioPage() {
                 <h2 className="font-serif text-xl sm:text-2xl text-stone-800 mb-1">Before & After</h2>
                 <p className="text-sm text-stone-500">Drag the slider to see the transformation</p>
               </div>
-              <div className="flex gap-5 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap sm:flex-nowrap">
+              <div
+                ref={beforeAfterDrag.ref}
+                onMouseDown={beforeAfterDrag.onMouseDown}
+                onMouseMove={beforeAfterDrag.onMouseMove}
+                onMouseUp={beforeAfterDrag.onMouseUp}
+                onMouseLeave={beforeAfterDrag.onMouseLeave}
+                onDragStart={beforeAfterDrag.onDragStart}
+                className="flex gap-5 overflow-x-auto pb-4 px-2 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap sm:flex-nowrap cursor-grab select-none"
+                style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+              >
                 {beforeAfterPhotos.map((photo) => (
                   <div key={photo.id} className="snap-center">
                     <BeforeAfterSlider photo={photo} />

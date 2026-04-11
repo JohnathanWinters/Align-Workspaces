@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { setPageMeta } from "@/lib/seo";
@@ -412,8 +413,19 @@ function EditorialCard({ pro, index }: { pro: FeaturedProfessional; index: numbe
 }
 
 function CategoryFilter({ categories, active, onChange }: { categories: string[]; active: string | null; onChange: (cat: string | null) => void }) {
+  const drag = useDragScroll();
   return (
-    <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide" data-testid="category-filter-bar">
+    <div
+      ref={drag.ref}
+      onMouseDown={drag.onMouseDown}
+      onMouseMove={drag.onMouseMove}
+      onMouseUp={drag.onMouseUp}
+      onMouseLeave={drag.onMouseLeave}
+      onDragStart={drag.onDragStart}
+      className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide cursor-grab select-none"
+      style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+      data-testid="category-filter-bar"
+    >
       <button
         onClick={() => onChange(null)}
         className={`px-4 py-2 text-sm whitespace-nowrap transition-all duration-200 border-b-2 ${
@@ -1013,6 +1025,7 @@ function ProfilePage({ slug }: { slug: string }) {
   const [newsletterName, setNewsletterName] = useState("");
   const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "success" | "already">("idle");
+  const relatedDrag = useDragScroll();
 
   const { data: pro, isLoading, error } = useQuery<FeaturedProfessional>({
     queryKey: ["/api/featured", slug],
@@ -1377,7 +1390,16 @@ function ProfilePage({ slug }: { slug: string }) {
           </div>
           {/* Mobile: horizontal carousel */}
           <div className="sm:hidden">
-            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-6 pb-4 scrollbar-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}>
+            <div
+              ref={relatedDrag.ref}
+              onMouseDown={relatedDrag.onMouseDown}
+              onMouseMove={relatedDrag.onMouseMove}
+              onMouseUp={relatedDrag.onMouseUp}
+              onMouseLeave={relatedDrag.onMouseLeave}
+              onDragStart={relatedDrag.onDragStart}
+              className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-6 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none"
+              style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+            >
               {relatedPros.map((p, idx) => (
                 <div key={p.id} className="snap-start flex-shrink-0 w-[80%]">
                   <EditorialCard pro={p} index={idx} />
