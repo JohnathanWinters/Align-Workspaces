@@ -85,6 +85,7 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { ImageAttachButton, MessageImage } from "@/components/image-attach-button";
 import { playNotificationSound } from "@/lib/notification-sound";
+import { PhotoCropModal } from "@/components/portal-settings";
 import { Badge } from "@/components/ui/badge";
 import type { Shoot, User as UserType, GalleryImage, GalleryFolder, PipelineContact } from "@shared/schema";
 import AdminTeamMembers from "@/components/admin-team-members";
@@ -2220,6 +2221,8 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [typeFilter, setTypeFilter] = useState<"all" | "photography" | "workspaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSharePanel, setShowSharePanel] = useState(false);
+  const [cropSource, setCropSource] = useState<{ file: File; reviewId: string; reviewType: string } | null>(null);
+  const [uploadingCrop, setUploadingCrop] = useState(false);
 
   const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
@@ -2526,20 +2529,10 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     )}
                     <label title="Add photo" className="h-7 px-2 text-xs text-gray-400 hover:text-[#c4956a] hover:bg-[#c4956a]/10 rounded-md cursor-pointer inline-flex items-center justify-center transition-colors">
                       <ImagePlus className="w-3.5 h-3.5" />
-                      <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const fd = new FormData();
-                          fd.append("photo", file);
-                          const uploadRes = await fetch("/api/upload/review-photo", { method: "POST", body: fd });
-                          if (!uploadRes.ok) throw new Error("Upload failed");
-                          const { url } = await uploadRes.json();
-                          const endpoint = review._type === "photography" ? `/api/admin/shoot-reviews/${review.id}` : `/api/admin/reviews/${review.id}`;
-                          await adminFetch(endpoint, token, { method: "PATCH", body: JSON.stringify({ photoUrl: url }) });
-                          toast({ title: "Photo added to review" });
-                          loadReviews();
-                        } catch { toast({ title: "Failed to add photo", variant: "destructive" }); }
+                        if (file) setCropSource({ file, reviewId: review.id, reviewType: review._type });
+                        e.target.value = "";
                       }} />
                     </label>
                     <Button
@@ -2559,6 +2552,31 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
           </div>
         )}
       </main>
+
+      <AnimatePresence>
+        {cropSource && (
+          <PhotoCropModal
+            source={cropSource.file}
+            uploading={uploadingCrop}
+            onConfirm={async (blob) => {
+              setUploadingCrop(true);
+              try {
+                const fd = new FormData();
+                fd.append("photo", blob, "headshot.webp");
+                const uploadRes = await fetch("/api/upload/review-photo", { method: "POST", body: fd });
+                if (!uploadRes.ok) throw new Error("Upload failed");
+                const { url } = await uploadRes.json();
+                const endpoint = cropSource.reviewType === "photography" ? `/api/admin/shoot-reviews/${cropSource.reviewId}` : `/api/admin/reviews/${cropSource.reviewId}`;
+                await adminFetchLocal(endpoint, { method: "PATCH", body: JSON.stringify({ photoUrl: url }) });
+                toast({ title: "Photo added to review" });
+                loadReviews();
+              } catch { toast({ title: "Failed to add photo", variant: "destructive" }); }
+              finally { setUploadingCrop(false); setCropSource(null); }
+            }}
+            onClose={() => setCropSource(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

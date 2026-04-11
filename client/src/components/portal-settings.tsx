@@ -143,7 +143,7 @@ function ProfilePhotoSection({ user }: { user: AuthUser }) {
   );
 }
 
-function PhotoCropModal({
+export function PhotoCropModal({
   source,
   uploading,
   onConfirm,

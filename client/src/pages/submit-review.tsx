@@ -4,6 +4,7 @@ import { Star, Loader2, CheckCircle2, ArrowRight, ArrowLeft, User, MessageSquare
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PhotoCropModal } from "@/components/portal-settings";
 
 const STEP_LABELS = ["Rate", "Review", "You", "Done"];
 
@@ -41,6 +42,7 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
   const [name, setName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [cropSource, setCropSource] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
@@ -197,19 +199,10 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
                         <label className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] cursor-pointer transition-colors">
                           <Upload className="w-4 h-4 text-stone-400" />
                           <span className="text-xs text-stone-500">{uploadingPhoto ? "Uploading..." : "Add a headshot"}</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (!file) return;
-                            setUploadingPhoto(true);
-                            try {
-                              const fd = new FormData();
-                              fd.append("photo", file);
-                              const res = await fetch("/api/upload/review-photo", { method: "POST", body: fd });
-                              if (res.ok) {
-                                const data = await res.json();
-                                setPhotoUrl(data.url);
-                              }
-                            } catch {} finally { setUploadingPhoto(false); }
+                            if (file) setCropSource(file);
+                            e.target.value = "";
                           }} />
                         </label>
                       )}
@@ -264,6 +257,31 @@ export default function SubmitReviewPage({ params }: { params: { slug: string } 
           <p className="text-[10px] text-stone-300">alignworkspaces.com</p>
         </div>
       </div>
+
+      <AnimatePresence>
+        {cropSource && (
+          <PhotoCropModal
+            source={cropSource}
+            uploading={uploadingPhoto}
+            onConfirm={async (blob) => {
+              setUploadingPhoto(true);
+              try {
+                const fd = new FormData();
+                fd.append("photo", blob, "headshot.webp");
+                const res = await fetch("/api/upload/review-photo", { method: "POST", body: fd });
+                if (res.ok) {
+                  const data = await res.json();
+                  setPhotoUrl(data.url);
+                }
+              } catch {} finally {
+                setUploadingPhoto(false);
+                setCropSource(null);
+              }
+            }}
+            onClose={() => setCropSource(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
