@@ -26,7 +26,6 @@ import {
   CheckCircle2,
   ExternalLink,
   CreditCard,
-  ShieldCheck,
   Heart,
   CalendarDays,
   Share2,
@@ -1318,37 +1317,29 @@ function StripeConnectSection({ hasSpaces }: { hasSpaces: boolean }) {
 
   return (
     <Card className="border-stone-200 bg-gradient-to-br from-white to-stone-50" data-testid="stripe-connect-setup">
-      <CardContent className="py-6 px-5">
-        <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
-            <CreditCard className="w-5 h-5 text-stone-600" />
+      <CardContent className="py-4 px-5">
+        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+          <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+            <CreditCard className="w-4 h-4 text-stone-600" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Set up payouts to receive earnings</h3>
-            <p className="text-xs text-gray-500 leading-relaxed mb-3">
-              Connect your bank account to receive payments when guests book your space. Keep 87.5% of every booking, or 89.5% when you refer clients.
-            </p>
-            <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-stone-50 border border-stone-100">
-              <ShieldCheck className="w-4 h-4 text-stone-500 flex-shrink-0" />
-              <p className="text-[11px] text-stone-500">
-                Payments are securely processed by Stripe. Your earnings are automatically deposited to your bank account.
-              </p>
-            </div>
-            <Button
-              onClick={() => onboardMutation.mutate()}
-              disabled={onboardMutation.isPending}
-              size="sm"
-              className="bg-stone-900 text-white hover:bg-stone-800 text-xs"
-              data-testid="button-connect-stripe"
-            >
-              {onboardMutation.isPending ? (
-                <Loader2 className="w-3 h-3 animate-spin mr-1" />
-              ) : (
-                <CreditCard className="w-3 h-3 mr-1" />
-              )}
-              {connectStatus?.connected ? "Continue Setup" : "Connect with Stripe"}
-            </Button>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-900">Set up payouts</h3>
+            <p className="text-xs text-gray-500">Connect your bank account to receive earnings via Stripe</p>
           </div>
+          <Button
+            onClick={() => onboardMutation.mutate()}
+            disabled={onboardMutation.isPending}
+            size="sm"
+            className="bg-stone-900 text-white hover:bg-stone-800 text-xs flex-shrink-0"
+            data-testid="button-connect-stripe"
+          >
+            {onboardMutation.isPending ? (
+              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+            ) : (
+              <CreditCard className="w-3 h-3 mr-1" />
+            )}
+            {connectStatus?.connected ? "Continue" : "Connect"}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -2383,33 +2374,28 @@ function CalendarSyncSection({ hasSpaces }: { hasSpaces: boolean }) {
 
   return (
     <Card className="border-stone-200 bg-gradient-to-br from-white to-stone-50">
-      <CardContent className="py-6 px-5">
-        <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
-            <CalendarDays className="w-5 h-5 text-stone-600" />
+      <CardContent className="py-4 px-5">
+        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+          <div className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+            <CalendarDays className="w-4 h-4 text-stone-600" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Prevent double bookings with calendar sync</h3>
-            <p className="text-xs text-gray-500 leading-relaxed mb-1">
-              Connect a Google Calendar to automatically block its events from your availability and sync new Align bookings back to your calendar.
-            </p>
-            <p className="text-[11px] text-stone-400 leading-relaxed mb-3">
-              We recommend using a calendar dedicated to your workspace. All events on the connected calendar will block booking times, including personal events.
-            </p>
-            <Button
-              onClick={() => connectGcal.mutate()}
-              disabled={connectGcal.isPending}
-              size="sm"
-              className="bg-stone-900 text-white hover:bg-stone-800 text-xs"
-            >
-              {connectGcal.isPending ? (
-                <Loader2 className="w-3 h-3 animate-spin mr-1" />
-              ) : (
-                <CalendarDays className="w-3 h-3 mr-1" />
-              )}
-              Connect Google Calendar
-            </Button>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-900">Calendar sync</h3>
+            <p className="text-xs text-gray-500">Sync Google Calendar to prevent double bookings</p>
           </div>
+          <Button
+            onClick={() => connectGcal.mutate()}
+            disabled={connectGcal.isPending}
+            size="sm"
+            className="bg-stone-900 text-white hover:bg-stone-800 text-xs flex-shrink-0"
+          >
+            {connectGcal.isPending ? (
+              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+            ) : (
+              <CalendarDays className="w-3 h-3 mr-1" />
+            )}
+            Connect
+          </Button>
         </div>
       </CardContent>
     </Card>
