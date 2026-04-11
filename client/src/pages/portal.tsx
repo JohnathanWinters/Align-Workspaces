@@ -2295,30 +2295,6 @@ function PortalContent() {
                 return calBookings.length > 0 ? <BookingCalendar bookings={calBookings} recurringBookings={[]} /> : null;
               })()}
 
-              {/* Upcoming shoots */}
-              {(() => {
-                const upcoming = shoots.filter(s => s.shootDate && new Date(s.shootDate) >= new Date()).sort((a, b) => new Date(a.shootDate!).getTime() - new Date(b.shootDate!).getTime());
-                return upcoming.length > 0 ? (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-[#c4956a]" /> Upcoming Sessions</h3>
-                    <div className="space-y-2">
-                      {upcoming.slice(0, 3).map(s => (
-                        <button key={s.id} onClick={() => setSelectedShoot(s)} className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors text-left">
-                          <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
-                            <Camera className="w-5 h-5 text-[#c4956a]" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{s.title}</p>
-                            <p className="text-xs text-gray-500">{new Date(s.shootDate!).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{s.shootTime ? ` at ${s.shootTime}` : ""}</p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
-
               {/* Upcoming workspace bookings (guest + host) */}
               {(() => {
                 const allBookings = [
@@ -2361,6 +2337,30 @@ function PortalContent() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Upcoming shoots */}
+              {(() => {
+                const upcoming = shoots.filter(s => s.shootDate && new Date(s.shootDate) >= new Date()).sort((a, b) => new Date(a.shootDate!).getTime() - new Date(b.shootDate!).getTime());
+                return upcoming.length > 0 ? (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-[#c4956a]" /> Upcoming Sessions</h3>
+                    <div className="space-y-2">
+                      {upcoming.slice(0, 3).map(s => (
+                        <button key={s.id} onClick={() => setSelectedShoot(s)} className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors text-left">
+                          <div className="w-10 h-10 rounded-lg bg-[#faf8f5] border border-[#e0d5c7] flex items-center justify-center shrink-0">
+                            <Camera className="w-5 h-5 text-[#c4956a]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{s.title}</p>
+                            <p className="text-xs text-gray-500">{new Date(s.shootDate!).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}{s.shootTime ? ` at ${s.shootTime}` : ""}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                        </button>
+                      ))}
                     </div>
                   </div>
                 ) : null;
