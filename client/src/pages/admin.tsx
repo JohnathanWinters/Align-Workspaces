@@ -17,6 +17,7 @@ import {
   Camera,
   Plus,
   Trash2,
+  Link2,
   Edit,
   FileText,
   ChevronLeft,
@@ -2461,13 +2462,14 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     ) : (
                       <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
                     )}
-                    {review._type === "photography" && !review.shootTitle ? (
+                    {review._type === "photography" && (!review.shootTitle || review.shootTitle === "Unknown Shoot") ? (
                       <button
                         onClick={() => setLinkingReviewId(linkingReviewId === review.id ? null : review.id)}
-                        className="text-sm font-medium text-amber-600 hover:text-amber-700 truncate underline decoration-dashed"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md transition-colors"
                         title="Click to link a shoot"
                       >
-                        Unknown Shoot
+                        <Link2 className="w-3 h-3" />
+                        Link Shoot
                       </button>
                     ) : (
                       <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
