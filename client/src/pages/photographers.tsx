@@ -75,16 +75,8 @@ export default function PhotographersPage() {
                           Align Workspaces
                         </button>
                       </Link>
-                      <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <CalendarDays className="w-4 h-4" />
-                        Community Events
-                      </Link>
-                      <Link href="/featured">
-                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-photographers">
-                          <Star className="w-4 h-4" />
-                          Featured Pros
-                        </button>
-                      </Link>
+                      {/* Photography */}
+                      <div className="border-t border-stone-100 my-1" />
                       <Link href="/portraits">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-photographers">
                           <Camera className="w-4 h-4" />
@@ -97,6 +89,20 @@ export default function PhotographersPage() {
                           Portfolio
                         </button>
                       </Link>
+                      {/* Community */}
+                      <div className="border-t border-stone-100 my-1" />
+                      <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <CalendarDays className="w-4 h-4" />
+                        Community Events
+                      </Link>
+                      <Link href="/featured">
+                        <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-photographers">
+                          <Star className="w-4 h-4" />
+                          Featured Pros
+                        </button>
+                      </Link>
+                      {/* About & Account */}
+                      <div className="border-t border-stone-100 my-1" />
                       <Link href="/our-vision">
                         <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-photographers">
                           <Compass className="w-4 h-4" />

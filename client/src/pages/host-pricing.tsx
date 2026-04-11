@@ -75,16 +75,8 @@ export default function PricingPage() {
                         Workspaces
                       </button>
                     </Link>
-                    <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                      <CalendarDays className="w-4 h-4" />
-                      Community Events
-                    </Link>
-                    <Link href="/featured">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Heart className="w-4 h-4" />
-                        Featured Pros
-                      </button>
-                    </Link>
+                    {/* Photography */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Camera className="w-4 h-4" />
@@ -97,6 +89,20 @@ export default function PricingPage() {
                         Portfolio
                       </button>
                     </Link>
+                    {/* Community */}
+                    <div className="border-t border-stone-100 my-1" />
+                    <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                      <CalendarDays className="w-4 h-4" />
+                      Community Events
+                    </Link>
+                    <Link href="/featured">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <Heart className="w-4 h-4" />
+                        Featured Pros
+                      </button>
+                    </Link>
+                    {/* About & Account */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Compass className="w-4 h-4" />

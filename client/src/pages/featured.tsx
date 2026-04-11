@@ -162,12 +162,8 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
                         Workspaces
                       </button>
                     </Link>
-                    <Link href="/#events">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <CalendarDays className="w-4 h-4" />
-                        Community Events
-                      </button>
-                    </Link>
+                    {/* Photography */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Camera className="w-4 h-4" />
@@ -180,6 +176,16 @@ function FeaturedNav({ backTo = "/featured" }: { backTo?: string }) {
                         Portfolio
                       </button>
                     </Link>
+                    {/* Community */}
+                    <div className="border-t border-stone-100 my-1" />
+                    <Link href="/#events">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <CalendarDays className="w-4 h-4" />
+                        Community Events
+                      </button>
+                    </Link>
+                    {/* About & Account */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                         <Compass className="w-4 h-4" />

@@ -363,6 +363,16 @@ export default function AlignSpacesPage() {
                       <DollarSign className="w-4 h-4" />
                       Pricing
                     </button>
+                    {/* Photography */}
+                    <div className="border-t border-stone-100 my-1" />
+                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
+                      <Camera className="w-4 h-4" />
+                      Portraits
+                    </button>
+                    <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
+                      <Images className="w-4 h-4" />
+                      Portfolio
+                    </button>
                     {/* Community */}
                     <div className="border-t border-stone-100 my-1" />
                     <button onClick={() => { document.querySelector('[data-testid="section-community-events"]')?.scrollIntoView({ behavior: "smooth" }); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-menu">
@@ -372,14 +382,6 @@ export default function AlignSpacesPage() {
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-menu">
                       <Star className="w-4 h-4" />
                       Featured Pros
-                    </button>
-                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
-                      <Camera className="w-4 h-4" />
-                      Portraits
-                    </button>
-                    <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
-                      <Images className="w-4 h-4" />
-                      Portfolio
                     </button>
                     {/* About & Account */}
                     <div className="border-t border-stone-100 my-1" />

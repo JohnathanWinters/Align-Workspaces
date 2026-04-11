@@ -408,12 +408,16 @@ export default function PortfolioPage() {
                         Align Workspaces
                       </button>
                     </Link>
+                    {/* Photography */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/portraits">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-portfolio">
                         <Camera className="w-4 h-4" />
                         Portraits
                       </button>
                     </Link>
+                    {/* Community */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                       <CalendarDays className="w-4 h-4" />
                       Community Events
@@ -424,6 +428,8 @@ export default function PortfolioPage() {
                         Featured Pros
                       </button>
                     </Link>
+                    {/* About & Account */}
+                    <div className="border-t border-stone-100 my-1" />
                     <Link href="/our-vision">
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-about-portfolio">
                         <Compass className="w-4 h-4" />
