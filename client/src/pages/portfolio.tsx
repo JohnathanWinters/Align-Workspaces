@@ -351,6 +351,13 @@ export default function PortfolioPage() {
     queryKey: ["/api/spaces"],
   });
 
+  const { data: testimonials } = useQuery<{ photography: any[] }>({
+    queryKey: ["/api/testimonials"],
+    queryFn: async () => { const r = await fetch("/api/testimonials"); return r.ok ? r.json() : { photography: [] }; },
+    staleTime: 60000,
+  });
+  const photoReviews = testimonials?.photography || [];
+
   const spaceMap = (spaces || []).reduce<Record<string, Space>>((acc, s) => { acc[s.id] = s; return acc; }, {});
 
   const filteredPhotos = (photos?.filter(p => (p.category || "people") === activeCategory) || [])
@@ -458,22 +465,40 @@ export default function PortfolioPage() {
           </p>
         </motion.div>
 
-        {activeCategory === "people" && (
+        {activeCategory === "people" && photoReviews.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="max-w-xl mx-auto text-center mb-10 px-4"
+            className="max-w-3xl mx-auto mb-10 px-4"
             data-testid="portfolio-testimonial"
           >
-            <blockquote>
-              <p className="text-[15px] sm:text-base text-stone-600 italic leading-relaxed">
-                <span className="text-[#c9a96e]/50 font-serif not-italic">&ldquo;</span>I get shy when taking pictures, but Armando made it so natural, supportive, and engaging. The pictures feel reflective of the moment together and I wanted clients to feel that presence too!<span className="text-[#c9a96e]/50 font-serif not-italic">&rdquo;</span>
-              </p>
-              <footer className="mt-3 text-xs text-stone-400 tracking-wide uppercase">
-                Sebrina C. · Therapist, Miami
-              </footer>
-            </blockquote>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {photoReviews.map((r: any) => (
+                <div key={r.id} className="flex-shrink-0 w-72 bg-white rounded-xl border border-stone-100 p-4">
+                  <div className="flex items-center gap-0.5 mb-2">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`w-3 h-3 ${s <= r.rating ? "fill-[#c4956a] text-[#c4956a]" : "text-stone-200"}`} />
+                    ))}
+                  </div>
+                  {r.comment && (
+                    <p className="text-sm text-stone-600 italic leading-relaxed line-clamp-3 mb-3">
+                      &ldquo;{r.comment}&rdquo;
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {r.photoUrl ? (
+                      <img src={r.photoUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-stone-100" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center text-[10px] font-bold text-stone-400">
+                        {(r.clientName || "C").charAt(0)}
+                      </div>
+                    )}
+                    <span className="text-xs font-medium text-stone-700">{r.clientName || "Client"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
 
