@@ -5215,6 +5215,7 @@ export async function registerRoutes(
         updates.status = req.body.status;
       }
       if (req.body.shootId !== undefined) updates.shootId = req.body.shootId;
+      if (req.body.clientId !== undefined) updates.clientId = req.body.clientId;
       if (req.body.photoUrl !== undefined) updates.photoUrl = req.body.photoUrl;
       if (req.body.title !== undefined) updates.title = req.body.title;
       if (req.body.comment !== undefined) updates.comment = req.body.comment;

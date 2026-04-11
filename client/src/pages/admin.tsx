@@ -2224,8 +2224,9 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [cropSource, setCropSource] = useState<{ file: File; reviewId: string; reviewType: string } | null>(null);
   const [uploadingCrop, setUploadingCrop] = useState(false);
-  const [shoots, setShoots] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [linkingReviewId, setLinkingReviewId] = useState<string | null>(null);
+  const [linkSearch, setLinkSearch] = useState("");
   const [expandedCommentId, setExpandedCommentId] = useState<string | null>(null);
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ title: string; comment: string; clientName: string; rating: number }>({ title: "", comment: "", clientName: "", rating: 5 });
@@ -2239,16 +2240,16 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const loadReviews = useCallback(async () => {
     setLoading(true);
     try {
-      const [spaceRes, shootRes, shootsRes] = await Promise.all([
+      const [spaceRes, shootRes, usersRes] = await Promise.all([
         adminFetchLocal("/api/admin/reviews"),
         adminFetchLocal("/api/admin/shoot-reviews"),
-        adminFetchLocal("/api/admin/shoots"),
+        adminFetchLocal("/api/admin/users"),
       ]);
       const spaceReviews = spaceRes.ok ? (await spaceRes.json()).map((r: any) => ({ ...r, _type: "workspaces" })) : [];
       const shootReviews = shootRes.ok ? (await shootRes.json()).map((r: any) => ({ ...r, _type: "photography" })) : [];
       const merged = [...spaceReviews, ...shootReviews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setReviews(merged);
-      if (shootsRes.ok) setShoots(await shootsRes.json());
+      if (usersRes.ok) setAllUsers(await usersRes.json());
     } catch (err) {
       console.error(err);
     }
@@ -2468,16 +2469,16 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     )}
                     {review._type === "photography" ? (
                       <button
-                        onClick={() => setLinkingReviewId(linkingReviewId === review.id ? null : review.id)}
+                        onClick={() => { setLinkingReviewId(linkingReviewId === review.id ? null : review.id); setLinkSearch(""); }}
                         className={`inline-flex items-center gap-1 text-sm font-medium px-2 py-0.5 rounded-md transition-colors ${
-                          !review.shootTitle || review.shootTitle === "Unknown Shoot"
+                          !review.clientId || review.clientId === "anonymous"
                             ? "text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100"
                             : "text-gray-900 hover:text-[#c4956a] hover:bg-stone-50"
                         }`}
-                        title={review.shootTitle && review.shootTitle !== "Unknown Shoot" ? "Click to change or unlink shoot" : "Click to link a shoot"}
+                        title={review.clientId && review.clientId !== "anonymous" ? "Click to change or unlink account" : "Click to link an account"}
                       >
                         <Link2 className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{review.shootTitle && review.shootTitle !== "Unknown Shoot" ? review.shootTitle : "Link Shoot"}</span>
+                        <span className="truncate">{review.clientId && review.clientId !== "anonymous" ? (review.shootTitle || review.clientName || "Linked") : "Link Account"}</span>
                       </button>
                     ) : (
                       <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
@@ -2523,41 +2524,61 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                   {/* Link shoot dropdown */}
                   {linkingReviewId === review.id && review._type === "photography" && (
                     <div className="col-span-full bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
-                      <p className="text-xs font-medium text-amber-800">Link this review to a shoot:</p>
+                      <p className="text-xs font-medium text-amber-800">Link this review to a client account:</p>
+                      <Input
+                        value={linkSearch}
+                        onChange={e => setLinkSearch(e.target.value)}
+                        placeholder="Search by name or email..."
+                        className="h-8 text-xs bg-white"
+                      />
                       <div className="max-h-40 overflow-y-auto space-y-1">
-                        {shoots.map((s: any) => (
+                        {allUsers
+                          .filter((u: any) => {
+                            if (!linkSearch.trim()) return true;
+                            const q = linkSearch.toLowerCase();
+                            return (u.firstName || "").toLowerCase().includes(q) || (u.lastName || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
+                          })
+                          .slice(0, 20)
+                          .map((u: any) => (
                           <button
-                            key={s.id}
+                            key={u.id}
                             onClick={async () => {
                               try {
-                                await adminFetchLocal(`/api/admin/shoot-reviews/${review.id}`, { method: "PATCH", body: JSON.stringify({ shootId: s.id }) });
-                                toast({ title: `Linked to "${s.title}"` });
+                                const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
+                                await adminFetchLocal(`/api/admin/shoot-reviews/${review.id}`, { method: "PATCH", body: JSON.stringify({ clientId: u.id, clientName: name }) });
+                                toast({ title: `Linked to ${name}` });
                                 setLinkingReviewId(null);
                                 loadReviews();
                               } catch { toast({ title: "Failed to link", variant: "destructive" }); }
                             }}
                             className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-amber-100 transition-colors flex items-center gap-2"
                           >
-                            <Camera className="w-3 h-3 text-amber-600 shrink-0" />
-                            <span className="font-medium text-stone-700">{s.title}</span>
-                            <span className="text-stone-400 ml-auto">{s.clientName || ""}</span>
+                            {u.profileImageUrl ? (
+                              <img src={u.profileImageUrl} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                            ) : (
+                              <div className="w-5 h-5 rounded-full bg-stone-200 flex items-center justify-center shrink-0 text-[8px] font-bold text-stone-500">
+                                {(u.firstName || u.email || "?").charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="font-medium text-stone-700">{[u.firstName, u.lastName].filter(Boolean).join(" ") || "No name"}</span>
+                            <span className="text-stone-400 ml-auto truncate max-w-[120px]">{u.email}</span>
                           </button>
                         ))}
-                        {shoots.length === 0 && <p className="text-xs text-stone-400 italic">No shoots found</p>}
+                        {allUsers.length === 0 && <p className="text-xs text-stone-400 italic">No users found</p>}
                       </div>
                       <div className="flex items-center gap-2 pt-1 border-t border-amber-200">
-                        {review.shootTitle && review.shootTitle !== "Unknown Shoot" && (
+                        {review.clientId && review.clientId !== "anonymous" && (
                           <button
                             onClick={async () => {
                               try {
-                                await adminFetchLocal(`/api/admin/shoot-reviews/${review.id}`, { method: "PATCH", body: JSON.stringify({ shootId: "" }) });
-                                toast({ title: "Shoot unlinked" });
+                                await adminFetchLocal(`/api/admin/shoot-reviews/${review.id}`, { method: "PATCH", body: JSON.stringify({ clientId: "anonymous", clientName: "" }) });
+                                toast({ title: "Account unlinked" });
                                 setLinkingReviewId(null);
                                 loadReviews();
                               } catch { toast({ title: "Failed to unlink", variant: "destructive" }); }
                             }}
                             className="text-[10px] text-red-500 hover:text-red-700 font-medium"
-                          >Unlink Shoot</button>
+                          >Unlink Account</button>
                         )}
                         <button onClick={() => setLinkingReviewId(null)} className="text-[10px] text-stone-400 hover:text-stone-600 ml-auto">Cancel</button>
                       </div>
