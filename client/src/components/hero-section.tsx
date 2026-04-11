@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import { User, Menu, X, Building2, Camera, Star, Info, Compass, Images, HelpCircle } from "lucide-react";
-import { motion, useSpring, useTransform, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "./site-footer";
 import { UserIndicator } from "./user-indicator";
@@ -12,65 +12,15 @@ interface HeroSectionProps {
 export function HeroSection({ onStart }: HeroSectionProps) {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
-  const scrollOffset = useSpring(0, { stiffness: 400, damping: 35 });
-  const y = useTransform(scrollOffset, (v) => v);
-  const scale = useTransform(scrollOffset, [-10, 0, 10], [0.997, 1, 0.997]);
-
-  const handleWheel = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-    const delta = Math.max(-10, Math.min(10, e.deltaY * 0.1));
-    scrollOffset.set(delta);
-
-    setTimeout(() => {
-      scrollOffset.set(0);
-    }, 120);
-  }, [scrollOffset]);
-
-  const touchStartY = useRef(0);
-
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    e.preventDefault();
-    const delta = (touchStartY.current - e.touches[0].clientY) * 0.5;
-    const clamped = Math.max(-10, Math.min(10, delta * 0.3));
-    scrollOffset.set(clamped);
-  }, [scrollOffset]);
-
-  const handleTouchEnd = useCallback(() => {
-    scrollOffset.set(0);
-  }, [scrollOffset]);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: false });
-    el.addEventListener("touchend", handleTouchEnd, { passive: true });
-
-    return () => {
-      el.removeEventListener("wheel", handleWheel);
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
-      el.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
-    <section ref={sectionRef} className="relative h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-stone-900">
-      <motion.div
+    <section className="relative h-[100dvh] min-h-screen flex flex-col overflow-hidden bg-stone-900">
+      <div
         className="absolute inset-0 bg-cover"
         style={{
           backgroundImage: "url(/images/hero-bg-bright.webp)",
           backgroundPosition: "43% 25%",
           filter: "brightness(0.85) contrast(1.05)",
-          y,
-          scale,
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 via-40% to-black/80" />
@@ -141,7 +91,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.1 }}
           className="text-center max-w-2xl mx-auto"
-          style={{ y }}
         >
           <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-tight">
             Your Portrait Is

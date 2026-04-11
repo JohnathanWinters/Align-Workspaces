@@ -190,10 +190,6 @@ export default function SupportPage() {
                       <Building2 className="w-4 h-4" />
                       Workspaces
                     </button>
-                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-support">
-                      <Camera className="w-4 h-4" />
-                      Portraits
-                    </button>
                     <button onClick={() => { setLocation("/#events"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-events-support">
                       <CalendarDays className="w-4 h-4" />
                       Community Events
@@ -201,6 +197,10 @@ export default function SupportPage() {
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-support">
                       <Star className="w-4 h-4" />
                       Featured Pros
+                    </button>
+                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-support">
+                      <Camera className="w-4 h-4" />
+                      Portraits
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-support">
                       <Images className="w-4 h-4" />

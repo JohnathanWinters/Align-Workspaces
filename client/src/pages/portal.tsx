@@ -2058,12 +2058,6 @@ function PortalContent() {
                         Align Workspaces
                       </button>
                     </Link>
-                    <Link href="/portraits">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-portal">
-                        <Camera className="w-4 h-4" />
-                        Portraits
-                      </button>
-                    </Link>
                     <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
                       <CalendarDays className="w-4 h-4" />
                       Community Events
@@ -2072,6 +2066,12 @@ function PortalContent() {
                       <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-featured-portal">
                         <Star className="w-4 h-4" />
                         Featured Pros
+                      </button>
+                    </Link>
+                    <Link href="/portraits">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-3" data-testid="link-portraits-portal">
+                        <Camera className="w-4 h-4" />
+                        Portraits
                       </button>
                     </Link>
                     <Link href="/portfolio">

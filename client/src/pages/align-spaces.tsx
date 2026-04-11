@@ -359,10 +359,6 @@ export default function AlignSpacesPage() {
                       <Building2 className="w-4 h-4" />
                       Workspaces
                     </button>
-                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
-                      <Camera className="w-4 h-4" />
-                      Portraits
-                    </button>
                     <button onClick={() => { setLocation("/pricing"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-pricing-menu">
                       <DollarSign className="w-4 h-4" />
                       Pricing
@@ -376,6 +372,10 @@ export default function AlignSpacesPage() {
                     <button onClick={() => { setLocation("/featured"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-featured-menu">
                       <Star className="w-4 h-4" />
                       Featured Pros
+                    </button>
+                    <button onClick={() => { setLocation("/portraits"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portraits-menu">
+                      <Camera className="w-4 h-4" />
+                      Portraits
                     </button>
                     <button onClick={() => { setLocation("/portfolio"); setMenuOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors flex items-center gap-3" data-testid="link-portfolio-menu">
                       <Images className="w-4 h-4" />

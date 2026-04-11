@@ -15,10 +15,10 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
 
   const navLinks = [
     { label: "Workspaces", href: "/workspaces" },
-    { label: "Portraits", href: "/portraits" },
     { label: "Pricing", href: "/pricing" },
     { label: "Community Events", href: "/#events" },
     { label: "Featured Pros", href: "/featured" },
+    { label: "Portraits", href: "/portraits" },
     { label: "Portfolio", href: "/portfolio" },
     { label: "Our Vision", href: "/our-vision" },
     { label: "Support", href: "/support" },
