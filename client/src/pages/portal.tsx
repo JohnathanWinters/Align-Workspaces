@@ -2191,26 +2191,7 @@ function PortalContent() {
                   )}
                 </button>
               )}
-              {(isPhotoClient || isNewUser) && (
-                <button
-                  onClick={() => setActiveTab("edits")}
-                  data-testid="tab-my-edits"
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap flex-shrink-0 ${
-                    activeTab === "edits"
-                      ? "text-gray-900"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <ImagePlus className="w-4 h-4" />
-                  Edits
-                  {activeTab === "edits" && (
-                    <motion.div
-                      layoutId="portal-tab-indicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"
-                    />
-                  )}
-                </button>
-              )}
+              {/* Edits tab hidden — accessible via Quick Actions */}
               <button
                 onClick={() => setActiveTab("settings")}
                 data-testid="tab-settings"
@@ -2435,7 +2416,13 @@ function PortalContent() {
           ) : activeTab === "spaces" ? (
             <PortalSpacesSection userId={user?.id || ""} initialTab={spacesSubTab} />
           ) : activeTab === "edits" ? (
-            <EditTokenSection />
+            <div>
+              <button onClick={() => setActiveTab("overview")} className="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg px-3 py-2 mb-4 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Overview
+              </button>
+              <EditTokenSection />
+            </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
