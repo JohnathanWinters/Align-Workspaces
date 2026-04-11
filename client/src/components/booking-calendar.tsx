@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Repeat, Clock, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Repeat, Clock, MapPin, Maximize2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BookingForCalendar {
   id: string;
@@ -95,6 +96,8 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
 
   const [weekStart, setWeekStart] = useState<Date>(initialWeekStart);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [monthViewOpen, setMonthViewOpen] = useState(false);
+  const [monthViewDate, setMonthViewDate] = useState<Date>(() => new Date());
 
   // Build the 7 days of the current week
   const weekDays = useMemo(() => {
@@ -169,6 +172,9 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
         <div className="flex items-center gap-1">
           <button onClick={goToThisWeek} className="px-2.5 py-1 rounded-md text-[11px] font-medium text-[#c4956a] hover:bg-[#c4956a]/10 transition-colors mr-1">
             This week
+          </button>
+          <button onClick={() => { setMonthViewDate(weekStart); setMonthViewOpen(true); }} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors mr-1" title="Month view">
+            <Maximize2 className="w-3.5 h-3.5 text-stone-400" />
           </button>
           <button onClick={prevWeek} className="w-7 h-7 rounded-md hover:bg-stone-100 flex items-center justify-center transition-colors">
             <ChevronLeft className="w-3.5 h-3.5 text-stone-400" />
@@ -342,6 +348,126 @@ export default function BookingCalendar({ bookings, recurringBookings, onDayClic
           ))}
         </div>
       )}
+
+      {/* Month view lightbox */}
+      <AnimatePresence>
+        {monthViewOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            onClick={() => setMonthViewOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl overflow-hidden w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl"
+            >
+              {/* Month header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+                <button onClick={() => setMonthViewDate(d => { const n = new Date(d); n.setMonth(n.getMonth() - 1); return n; })} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center">
+                  <ChevronLeft className="w-4 h-4 text-stone-500" />
+                </button>
+                <h3 className="font-serif text-lg text-stone-800">
+                  {monthViewDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </h3>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setMonthViewDate(d => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n; })} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center">
+                    <ChevronRight className="w-4 h-4 text-stone-500" />
+                  </button>
+                  <button onClick={() => setMonthViewOpen(false)} className="w-8 h-8 rounded-lg hover:bg-stone-100 flex items-center justify-center ml-2">
+                    <X className="w-4 h-4 text-stone-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Month grid */}
+              <div className="p-4 overflow-y-auto">
+                <MonthGrid
+                  year={monthViewDate.getFullYear()}
+                  month={monthViewDate.getMonth()}
+                  bookingsByDate={bookingsByDate}
+                  onDayClick={(dateStr) => {
+                    setWeekStart(getWeekStart(new Date(dateStr + "T12:00:00")));
+                    setSelectedDate(dateStr);
+                    setMonthViewOpen(false);
+                  }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MonthGrid({ year, month, bookingsByDate, onDayClick }: {
+  year: number;
+  month: number;
+  bookingsByDate: Map<string, BookingForCalendar[]>;
+  onDayClick: (dateStr: string) => void;
+}) {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const todayStr = toDateStr(today);
+
+  const firstDay = new Date(year, month, 1);
+  const startPad = firstDay.getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const DAY_HEADERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < startPad; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {DAY_HEADERS.map((d, i) => (
+          <div key={i} className="text-center text-[10px] font-semibold text-stone-400 uppercase py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((day, i) => {
+          if (day === null) return <div key={i} />;
+          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const dayBookings = bookingsByDate.get(dateStr) || [];
+          const hasBooking = dayBookings.length > 0;
+          const isToday = dateStr === todayStr;
+          const hasHost = dayBookings.some(b => b.role === "host");
+          const hasGuest = dayBookings.some(b => b.role === "guest");
+
+          return (
+            <button
+              key={i}
+              onClick={() => onDayClick(dateStr)}
+              className={`relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all ${
+                isToday ? "bg-[#c4956a] text-white font-bold" :
+                hasBooking ? "bg-stone-50 hover:bg-stone-100 font-medium text-stone-800" :
+                "text-stone-400 hover:bg-stone-50"
+              }`}
+            >
+              <span className="text-sm">{day}</span>
+              {hasBooking && (
+                <div className="flex gap-0.5 mt-0.5">
+                  {hasGuest && <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />}
+                  {hasHost && <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-stone-400">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400" /> Renting</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-400" /> Hosting</span>
+      </div>
     </div>
   );
 }
