@@ -947,16 +947,20 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      {/* Empty state: show Post CTA even with no events */}
+      {/* Empty state: Coming Soon */}
       {(!communityEvents || communityEvents.length === 0) && (
-        <section className="py-10 px-4 sm:px-6">
+        <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-community-events">
           <div className="max-w-5xl mx-auto text-center">
             <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
-            <h2 className="font-serif text-xl sm:text-2xl text-stone-900 mb-2">Community Events</h2>
-            <p className="text-stone-500 text-sm mb-5">Know of a free event for professionals? Share it with the community.</p>
+            <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 mb-2">Community Events</h2>
+            <p className="text-stone-500 text-sm max-w-md mx-auto mb-6">Coming soon — free events by professionals, for professionals.</p>
+            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-6">
+              <CalendarDays className="w-7 h-7 text-stone-400" />
+            </div>
+            <p className="text-stone-400 text-xs mb-6">Know of a free event for professionals? Be the first to share one.</p>
             <button
               onClick={() => setShowPostEventModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium bg-stone-900 text-white hover:bg-stone-800 transition-colors"
               data-testid="button-post-event-empty"
             >
               <CalendarDays className="w-4 h-4" />
