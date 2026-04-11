@@ -2227,6 +2227,8 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const [shoots, setShoots] = useState<any[]>([]);
   const [linkingReviewId, setLinkingReviewId] = useState<string | null>(null);
   const [expandedCommentId, setExpandedCommentId] = useState<string | null>(null);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ title: string; comment: string; clientName: string; rating: number }>({ title: "", comment: "", clientName: "", rating: 5 });
 
   const adminFetchLocal = useCallback(async (url: string, opts: any = {}) => {
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
@@ -2591,6 +2593,25 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     <Button
                       size="sm"
                       variant="ghost"
+                      onClick={() => {
+                        if (editingReviewId === review.id) { setEditingReviewId(null); } else {
+                          setEditingReviewId(review.id);
+                          setEditForm({
+                            title: review.title || "",
+                            comment: review.comment || "",
+                            clientName: review.clientName || review.guestName || "",
+                            rating: review.rating || 5,
+                          });
+                        }
+                      }}
+                      className="h-7 px-2 text-xs text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                      title="Edit"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => deleteReview(review.id, review._type)}
                       className="h-7 px-2 text-xs text-gray-400 hover:text-red-600 hover:bg-red-50"
                       title="Delete"
@@ -2599,6 +2620,52 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
+
+                  {/* Edit panel */}
+                  {editingReviewId === review.id && (
+                    <div className="col-span-full bg-stone-50 border border-stone-200 rounded-lg p-4 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] text-stone-500 uppercase tracking-wide mb-1 block">Title</label>
+                          <Input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} placeholder="Review title" className="h-8 text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-stone-500 uppercase tracking-wide mb-1 block">Client Name</label>
+                          <Input value={editForm.clientName} onChange={e => setEditForm(f => ({ ...f, clientName: e.target.value }))} placeholder="Name" className="h-8 text-sm" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-stone-500 uppercase tracking-wide mb-1 block">Comment</label>
+                        <Textarea value={editForm.comment} onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))} placeholder="Review comment" className="text-sm min-h-[60px]" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-stone-500 uppercase tracking-wide mb-1 block">Rating</label>
+                        <div className="flex items-center gap-1">
+                          {[1,2,3,4,5].map(s => (
+                            <button key={s} onClick={() => setEditForm(f => ({ ...f, rating: s }))} className="p-0.5">
+                              <Star className={`w-5 h-5 ${s <= editForm.rating ? "fill-amber-400 text-amber-400" : "text-stone-200"}`} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800 text-xs" onClick={async () => {
+                          try {
+                            const endpoint = review._type === "photography" ? `/api/admin/shoot-reviews/${review.id}` : `/api/admin/reviews/${review.id}`;
+                            const nameField = review._type === "photography" ? "clientName" : "guestName";
+                            await adminFetchLocal(endpoint, {
+                              method: "PATCH",
+                              body: JSON.stringify({ title: editForm.title, comment: editForm.comment, [nameField]: editForm.clientName, rating: editForm.rating }),
+                            });
+                            toast({ title: "Review updated" });
+                            setEditingReviewId(null);
+                            loadReviews();
+                          } catch { toast({ title: "Failed to update", variant: "destructive" }); }
+                        }}>Save Changes</Button>
+                        <Button size="sm" variant="outline" className="text-xs" onClick={() => setEditingReviewId(null)}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

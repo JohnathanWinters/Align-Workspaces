@@ -5058,7 +5058,7 @@ export async function registerRoutes(
   // Admin: update review status (hide/flag/publish)
   app.patch("/api/admin/reviews/:id", isAdmin, async (req: any, res) => {
     try {
-      const { status, photoUrl } = req.body;
+      const { status, photoUrl, title, comment, guestName, rating } = req.body;
       const updates: any = {};
       if (status) {
         if (!["published", "hidden", "flagged"].includes(status)) {
@@ -5067,6 +5067,10 @@ export async function registerRoutes(
         updates.status = status;
       }
       if (photoUrl !== undefined) updates.photoUrl = photoUrl;
+      if (title !== undefined) updates.title = title;
+      if (comment !== undefined) updates.comment = comment;
+      if (guestName !== undefined) updates.guestName = guestName;
+      if (rating !== undefined) updates.rating = rating;
       const updated = await storage.updateSpaceReview(req.params.id, updates);
       res.json(updated);
     } catch (err: any) {
@@ -5212,6 +5216,10 @@ export async function registerRoutes(
       }
       if (req.body.shootId !== undefined) updates.shootId = req.body.shootId;
       if (req.body.photoUrl !== undefined) updates.photoUrl = req.body.photoUrl;
+      if (req.body.title !== undefined) updates.title = req.body.title;
+      if (req.body.comment !== undefined) updates.comment = req.body.comment;
+      if (req.body.clientName !== undefined) updates.clientName = req.body.clientName;
+      if (req.body.rating !== undefined) updates.rating = req.body.rating;
       const review = await storage.updateShootReview(req.params.id as string, updates);
       res.json(review);
     } catch (err: any) {
