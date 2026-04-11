@@ -8,6 +8,7 @@ interface Review {
   comment?: string;
   guestName?: string;
   clientName?: string;
+  photoUrl?: string;
   createdAt: string;
   adminResponse?: string;
   hostResponse?: string;
@@ -92,11 +93,20 @@ export function TestimonialsSection() {
               )}
 
               {/* Author */}
-              <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">
-                  {review.clientName || review.guestName || "Client"}
-                </span>
-                <span className="text-[10px] text-gray-400">
+              <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2.5">
+                {review.photoUrl ? (
+                  <img src={review.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0 text-stone-400 text-xs font-bold">
+                    {(review.clientName || review.guestName || "C").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-gray-900 block truncate">
+                    {review.clientName || review.guestName || "Client"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-gray-400 shrink-0">
                   {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
                 </span>
               </div>

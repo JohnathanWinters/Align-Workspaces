@@ -5,6 +5,7 @@ import { Menu, X, Camera, Star, Info, Compass, User, Building2, ChevronDown, Sea
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { SiteFooter } from "@/components/site-footer";
+import { TestimonialsSection } from "@/components/testimonials-section";
 import { UserIndicator } from "@/components/user-indicator";
 import { ListSpaceModal } from "@/components/list-space-modal";
 import { PostEventModal } from "@/components/post-event-modal";
@@ -42,38 +43,6 @@ interface FeaturedPro {
   locationCount?: number | null;
 }
 
-const testimonials = [
-  {
-    quote: "Exactly what therapists in Miami needed. Booking a professional room for sessions is **finally simple and affordable**.",
-    name: "Dr. Laura M.",
-    title: "Licensed Therapist, Coral Gables",
-  },
-  {
-    quote: "The space made my clients feel comfortable from the moment they walked in. **My coaching practice grew 40% after switching to Align**.",
-    name: "Carlos R.",
-    title: "Business Coach, Brickell",
-  },
-  {
-    quote: "Having access to curated, beautiful spaces **completely changed how I work with clients**. I used to spend hours finding locations.",
-    name: "Sofia T.",
-    title: "Portrait Photographer, Wynwood",
-  },
-  {
-    quote: "I listed my office and **it was booked within the first week**. The platform handles everything, payments, scheduling, all of it.",
-    name: "James K.",
-    title: "Wellness Studio Owner, Coconut Grove",
-  },
-  {
-    quote: "As a new therapist in Miami, finding affordable session space was impossible. **Align solved that problem overnight**.",
-    name: "Andrea P.",
-    title: "Licensed Counselor, Doral",
-  },
-  {
-    quote: "The booking process is seamless. My clients love the spaces and **I love not having to manage a lease**.",
-    name: "Maria V.",
-    title: "Life Coach, Coral Gables",
-  },
-];
 
 function parseColorPalette(raw: string | null | undefined): { colors: { hex: string; name: string }[]; feel?: string; explanation?: string } | null {
   if (!raw) return null;
@@ -1049,6 +1018,7 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
+      <TestimonialsSection />
       <SiteFooter />
 
       <AnimatePresence>
