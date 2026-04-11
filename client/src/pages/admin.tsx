@@ -2466,18 +2466,22 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                     ) : (
                       <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
                     )}
-                    {review._type === "photography" && (!review.shootTitle || review.shootTitle === "Unknown Shoot") ? (
+                    {review._type === "photography" ? (
                       <button
                         onClick={() => setLinkingReviewId(linkingReviewId === review.id ? null : review.id)}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md transition-colors"
-                        title="Click to link a shoot"
+                        className={`inline-flex items-center gap-1 text-sm font-medium px-2 py-0.5 rounded-md transition-colors ${
+                          !review.shootTitle || review.shootTitle === "Unknown Shoot"
+                            ? "text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100"
+                            : "text-gray-900 hover:text-[#c4956a] hover:bg-stone-50"
+                        }`}
+                        title={review.shootTitle && review.shootTitle !== "Unknown Shoot" ? "Click to change or unlink shoot" : "Click to link a shoot"}
                       >
-                        <Link2 className="w-3 h-3" />
-                        Link Shoot
+                        <Link2 className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{review.shootTitle && review.shootTitle !== "Unknown Shoot" ? review.shootTitle : "Link Shoot"}</span>
                       </button>
                     ) : (
                       <span className="text-sm font-medium text-gray-900 truncate" data-testid={`text-review-space-${review.id}`}>
-                        {review._type === "photography" ? (review.shootTitle || "Photography") : (review.spaceName || "Workspace")}
+                        {review.spaceName || "Workspace"}
                       </span>
                     )}
                   </div>
@@ -2541,7 +2545,22 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                         ))}
                         {shoots.length === 0 && <p className="text-xs text-stone-400 italic">No shoots found</p>}
                       </div>
-                      <button onClick={() => setLinkingReviewId(null)} className="text-[10px] text-stone-400 hover:text-stone-600">Cancel</button>
+                      <div className="flex items-center gap-2 pt-1 border-t border-amber-200">
+                        {review.shootTitle && review.shootTitle !== "Unknown Shoot" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await adminFetchLocal(`/api/admin/shoot-reviews/${review.id}`, { method: "PATCH", body: JSON.stringify({ shootId: "" }) });
+                                toast({ title: "Shoot unlinked" });
+                                setLinkingReviewId(null);
+                                loadReviews();
+                              } catch { toast({ title: "Failed to unlink", variant: "destructive" }); }
+                            }}
+                            className="text-[10px] text-red-500 hover:text-red-700 font-medium"
+                          >Unlink Shoot</button>
+                        )}
+                        <button onClick={() => setLinkingReviewId(null)} className="text-[10px] text-stone-400 hover:text-stone-600 ml-auto">Cancel</button>
+                      </div>
                     </div>
                   )}
 
