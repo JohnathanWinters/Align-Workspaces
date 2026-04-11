@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Camera, Building2 } from "lucide-react";
+import { useDragScroll } from "@/hooks/use-drag-scroll";
 
 interface Review {
   id: string;
@@ -36,6 +37,7 @@ export function TestimonialsSection() {
   const photographyReviews = (data?.photography || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const workspaceReviews = (data?.workspaces || []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const reviews = activeTab === "workspaces" ? workspaceReviews : photographyReviews;
+  const drag = useDragScroll();
 
   if (photographyReviews.length === 0 && workspaceReviews.length === 0) return null;
 
@@ -78,7 +80,66 @@ export function TestimonialsSection() {
         {reviews.length === 0 ? (
           <p className="text-center text-sm text-gray-400">No reviews yet for this category.</p>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
+          <>
+          {/* Mobile: horizontal carousel */}
+          <div
+            ref={drag.ref}
+            onMouseDown={drag.onMouseDown}
+            onMouseMove={drag.onMouseMove}
+            onMouseUp={drag.onMouseUp}
+            onMouseLeave={drag.onMouseLeave}
+            onDragStart={drag.onDragStart}
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 -mx-6 px-6 sm:hidden cursor-grab select-none"
+            style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" } as any}
+          >
+            {reviews.map((review) => (
+              <div
+                key={review.id}
+                className="snap-start flex-shrink-0 w-[80%] bg-white rounded-xl border border-gray-100 p-5"
+              >
+                {/* Stars */}
+                <div className="flex items-center gap-0.5 mb-3">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={`w-3.5 h-3.5 ${s <= review.rating ? "fill-[#c4956a] text-[#c4956a]" : "text-gray-200"}`}
+                    />
+                  ))}
+                </div>
+                {review.title && (
+                  <p className="text-sm font-medium text-gray-900 mb-1">{review.title}</p>
+                )}
+                {review.comment && (
+                  <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
+                )}
+                {(review.adminResponse || review.hostResponse) && (
+                  <div className="mt-3 pl-3 border-l-2 border-[#c4956a]/20">
+                    <p className="text-xs font-medium text-gray-500">Align Team</p>
+                    <p className="text-xs text-gray-400">{review.adminResponse || review.hostResponse}</p>
+                  </div>
+                )}
+                <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2.5">
+                  {review.photoUrl ? (
+                    <img src={review.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover shrink-0 border border-gray-100" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center shrink-0 text-stone-400 text-xs font-bold">
+                      {(review.clientName || review.guestName || "C").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-900 block truncate">
+                      {review.clientName || review.guestName || "Client"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-gray-400 shrink-0">
+                    {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop: masonry columns */}
+          <div className="hidden sm:block columns-2 lg:columns-3 gap-4 space-y-4">
             {reviews.map((review) => (
               <div
                 key={review.id}
@@ -131,6 +192,7 @@ export function TestimonialsSection() {
               </div>
             ))}
           </div>
+          </>
         )}
       </div>
     </section>
