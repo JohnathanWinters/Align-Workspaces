@@ -2371,6 +2371,10 @@ function PortalContent() {
                       <span className="text-xs font-medium text-gray-700">Browse Workspaces</span>
                     </div>
                   </Link>
+                  <button onClick={() => setActiveTab("messages")} className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
+                    <MessageCircle className="w-5 h-5 text-[#c4956a]" />
+                    <span className="text-xs font-medium text-gray-700">Messages</span>
+                  </button>
                   <Link href="/portrait-builder?from=portal">
                     <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer">
                       <Camera className="w-5 h-5 text-[#c4956a]" />
@@ -2380,10 +2384,6 @@ function PortalContent() {
                   <button onClick={() => setActiveTab("edits")} className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
                     <ImagePlus className="w-5 h-5 text-[#c4956a]" />
                     <span className="text-xs font-medium text-gray-700">Request a Photo Edit</span>
-                  </button>
-                  <button onClick={() => setActiveTab("messages")} className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">
-                    <MessageCircle className="w-5 h-5 text-[#c4956a]" />
-                    <span className="text-xs font-medium text-gray-700">Messages</span>
                   </button>
                 </div>
               </div>
