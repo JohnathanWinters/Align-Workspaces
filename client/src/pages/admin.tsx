@@ -2457,7 +2457,9 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                 >
                   {/* Source */}
                   <div className="flex items-center gap-2 min-w-0">
-                    {review._type === "photography" ? (
+                    {review.photoUrl ? (
+                      <img src={review.photoUrl} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 hidden sm:block border border-stone-200" />
+                    ) : review._type === "photography" ? (
                       <Camera className="w-4 h-4 text-[#c4956a] shrink-0 hidden sm:block" />
                     ) : (
                       <Building2 className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
