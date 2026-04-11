@@ -190,7 +190,7 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
           ) : (
             c.notes
               ? <p className="text-sm text-gray-700 whitespace-pre-wrap"><LinkifiedText text={c.notes} /></p>
-              : <p className="text-sm text-gray-400 italic">No facts yet — click the pencil to add some.</p>
+              : <p className="text-sm text-gray-400 italic">No facts yet, click the pencil to add some.</p>
           )}
         </div>
 

@@ -342,7 +342,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
                       setTimeout(() => fileInputRef.current?.click(), 50);
                     }
                   }}
-                  placeholder="Other — type a custom label..."
+                  placeholder="Other, type a custom label..."
                   className="flex-1 h-9 text-xs bg-white border border-stone-200 rounded-lg px-3 outline-none focus:border-[#c4956a]/50" maxLength={60} />
                 <button type="button"
                   onClick={() => {
@@ -403,7 +403,7 @@ export function ArrivalGuideEditor({ spaceId, hideSaveButton }: { spaceId: strin
               setSteps(newSteps);
               autoSave(newSteps);
               setFlow({ phase: "idle" });
-            }} className="w-full text-center text-[10px] text-stone-400 hover:text-stone-600 mt-1">Skip — add only the first photo</button>
+            }} className="w-full text-center text-[10px] text-stone-400 hover:text-stone-600 mt-1">Skip, add only the first photo</button>
           </div>
         )}
 

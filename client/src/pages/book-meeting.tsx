@@ -166,7 +166,7 @@ export default function BookMeetingPage({ params }: { params: { slug: string } }
                 {selectedDate && (
                   <>
                     <h2 className="text-sm font-semibold text-stone-700 mb-3 flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-[#c4956a]" /> Available Times — {formatDate(selectedDate)}
+                      <Clock className="w-4 h-4 text-[#c4956a]" /> Available Times, {formatDate(selectedDate)}
                     </h2>
                     {slotsLoading ? (
                       <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-stone-400" /></div>

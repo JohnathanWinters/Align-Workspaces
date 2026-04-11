@@ -530,10 +530,10 @@ export default function AlignSpacesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
-              { icon: Building2, title: "Spaces That Understand Your Work", desc: "Therapy offices, coaching rooms, wellness studios — every listing is curated for professionals who see clients face to face. Your practice deserves a space that fits." },
+              { icon: Building2, title: "Spaces That Understand Your Work", desc: "Therapy offices, coaching rooms, wellness studios, every listing is curated for professionals who see clients face to face. Your practice deserves a space that fits." },
               { icon: Compass, title: "Find the Right Room, Fast", desc: "Spaces are organized by practice type so you're not scrolling through coworking desks. Just rooms designed for the way you actually work." },
-              { icon: Repeat, title: "A Consistent Space for Your Clients", desc: "Book a recurring weekly slot so your clients always know where to find you. Set it once and focus on what matters — your work." },
-              { icon: BadgeCheck, title: "Know What You're Walking Into", desc: "Hosts can certify their spaces by readiness tier — from Clinical Ready for therapists to Service Ready for barbers — so you can book with confidence." },
+              { icon: Repeat, title: "A Consistent Space for Your Clients", desc: "Book a recurring weekly slot so your clients always know where to find you. Set it once and focus on what matters, your work." },
+              { icon: BadgeCheck, title: "Know What You're Walking Into", desc: "Hosts can certify their spaces by readiness tier, from Clinical Ready for therapists to Service Ready for barbers, so you can book with confidence." },
               { icon: FileCheck, title: "Clear Expectations, Both Ways", desc: "Every booking includes a mutual acknowledgment between host and guest. Everyone knows what to expect, and that matters." },
               { icon: ShieldCheck, title: "Insurance You Can Count On", desc: "Every host maintains verified liability coverage. If it lapses, the listing pauses. We take your safety seriously because your clients trust you to." },
             ].map((item, i) => {
@@ -953,7 +953,7 @@ export default function AlignSpacesPage() {
           <div className="max-w-5xl mx-auto text-center">
             <span className="text-[10px] tracking-[0.3em] uppercase text-[#c4956a] font-semibold block mb-2">Community</span>
             <h2 className="font-serif text-2xl sm:text-3xl text-stone-900 mb-2">Community Events</h2>
-            <p className="text-stone-500 text-sm max-w-md mx-auto mb-6">Coming soon — free events by professionals, for professionals.</p>
+            <p className="text-stone-500 text-sm max-w-md mx-auto mb-6">Coming soon, free events by professionals, for professionals.</p>
             <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-6">
               <CalendarDays className="w-7 h-7 text-stone-400" />
             </div>

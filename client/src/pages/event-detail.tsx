@@ -82,7 +82,7 @@ export default function EventDetailPage() {
     if (!event || !navigator.share) return;
     const date = new Date(event.eventDate + "T00:00:00");
     const dateStr = date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-    await navigator.share({ title: event.title, text: `${event.title} — ${dateStr}. Free for professionals.`, url: window.location.href });
+    await navigator.share({ title: event.title, text: `${event.title}, ${dateStr}. Free for professionals.`, url: window.location.href });
   };
 
   if (isLoading) {
@@ -148,7 +148,7 @@ export default function EventDetailPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-stone-900">{fullDate}</p>
-                <p className="text-sm text-stone-500">{timeStr}{endTimeStr ? ` — ${endTimeStr}` : ""}</p>
+                <p className="text-sm text-stone-500">{timeStr}{endTimeStr ? ` to ${endTimeStr}` : ""}</p>
               </div>
             </div>
             {event.location && (

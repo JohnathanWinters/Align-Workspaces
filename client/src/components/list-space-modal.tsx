@@ -457,7 +457,7 @@ function PhotoUploadStep({
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="px-6 pt-4 pb-2 flex-shrink-0">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
+          <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps}, {globalStepLabel}</span>
         </div>
         <div className="flex gap-1">
           {allStepLabels.map((label, i) => (
@@ -809,7 +809,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col flex-1 overflow-hidden">
             <div className="px-6 pt-4 pb-2 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps}, {globalStepLabel}</span>
               </div>
               <div className="flex gap-1">
                 {allStepLabels.map((label, i) => (
@@ -854,7 +854,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
           <div className="flex flex-col flex-1 overflow-hidden">
             <div className="px-6 pt-4 pb-2 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — Insurance</span>
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps}, Insurance</span>
               </div>
               <div className="flex gap-1">
                 {allStepLabels.map((label, i) => (
@@ -916,7 +916,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                 </div>
               )}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps} — {globalStepLabel}</span>
+                <span className="text-xs font-medium text-stone-600">Step {globalStepIndex + 1} of {totalSteps}, {globalStepLabel}</span>
                 <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
               </div>
               <div className="flex gap-1">

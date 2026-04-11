@@ -709,7 +709,7 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                     <ArrowLeft className="w-4 h-4 text-stone-500" />
                   </button>
                   <p className="text-sm font-medium text-stone-600">
-                    Every <span className="text-emerald-700 font-semibold">{DAY_NAMES[dayOfWeek!]}</span> — choose your time
+                    Every <span className="text-emerald-700 font-semibold">{DAY_NAMES[dayOfWeek!]}</span>, choose your time
                   </p>
                 </div>
 
@@ -789,7 +789,7 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                   </div>
                   <div>
                     <label className="text-xs text-stone-500 mb-1 block font-medium">
-                      End date {minBookings <= 1 && <span className="text-stone-400 font-normal">(optional — leave blank for ongoing)</span>}
+                      End date {minBookings <= 1 && <span className="text-stone-400 font-normal">(optional, leave blank for ongoing)</span>}
                     </label>
                     <input type="date" value={endDate || (minBookings > 1 ? minEndDate : "")} min={minEndDate}
                       onChange={e => setEndDate(e.target.value)}

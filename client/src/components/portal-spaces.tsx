@@ -436,7 +436,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
         {/* Step indicator */}
         <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-stone-600">Step {stepIndex + 1} of {steps.length} — {stepLabels[tab]}</span>
+            <span className="text-xs font-medium text-stone-600">Step {stepIndex + 1} of {steps.length}, {stepLabels[tab]}</span>
             <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
           </div>
           <div className="flex gap-1.5">
@@ -699,9 +699,9 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Cancellation Policy</label>
                 <select value={formData.cancellationPolicy} onChange={(e) => update("cancellationPolicy", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white" data-testid={`edit-select-cancellation-${space.id}`}>
-                  <option value="flexible">Flexible — full refund up to 24 hours, 50% after</option>
-                  <option value="moderate">Moderate — full refund up to 5 days, 50% up to 24 hours</option>
-                  <option value="strict">Strict — full refund up to 7 days, none after</option>
+                  <option value="flexible">Flexible, full refund up to 24 hours, 50% after</option>
+                  <option value="moderate">Moderate, full refund up to 5 days, 50% up to 24 hours</option>
+                  <option value="strict">Strict, full refund up to 7 days, none after</option>
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">
                   {formData.cancellationPolicy === "flexible"
@@ -712,7 +712,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                 </p>
                 <div className="mt-2 p-2.5 rounded-lg bg-stone-50 border border-stone-100 space-y-1">
                   <p className="text-[10px] font-semibold text-stone-600">How fees work on cancellation:</p>
-                  <p className="text-[10px] text-stone-500 leading-relaxed"><span className="font-medium text-stone-600">Guest cancels:</span> Guest service fee (7%) is kept by Align. Your host fee (12.5%) is waived — you are not charged.</p>
+                  <p className="text-[10px] text-stone-500 leading-relaxed"><span className="font-medium text-stone-600">Guest cancels:</span> Guest service fee (7%) is kept by Align. Your host fee (12.5%) is waived, you are not charged.</p>
                   <p className="text-[10px] text-stone-500 leading-relaxed"><span className="font-medium text-stone-600">You cancel:</span> Guest receives a full refund including their service fee. Your host fee is retained by Align as a cancellation penalty.</p>
                 </div>
               </div>
@@ -905,7 +905,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
         {/* Step indicator */}
         <div className="px-6 py-3 border-b border-stone-100 bg-stone-50/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-stone-600">Step {stepIndex + 1} of {steps.length} — {stepLabels[tab]}</span>
+            <span className="text-xs font-medium text-stone-600">Step {stepIndex + 1} of {steps.length}, {stepLabels[tab]}</span>
             <span className={`text-xs font-bold ${score.percent === 100 ? "text-emerald-600" : score.percent >= 70 ? "text-amber-600" : "text-stone-400"}`}>{score.percent}%</span>
           </div>
           <div className="flex gap-1.5">
