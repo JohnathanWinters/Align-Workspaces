@@ -5252,8 +5252,8 @@ export async function registerRoutes(
         storage.getPublishedSpaceReviews(),
       ]);
       res.json({
-        photography: photography.slice(0, 10),
-        workspaces: workspaces.slice(0, 10),
+        photography: photography.filter(r => !r.id.startsWith("test-") && !r.id.startsWith("seed-")).slice(0, 10),
+        workspaces: workspaces.filter(r => !r.id.startsWith("test-") && !r.id.startsWith("seed-")).slice(0, 10),
       });
     } catch {
       res.status(500).json({ message: "Failed to fetch testimonials" });
