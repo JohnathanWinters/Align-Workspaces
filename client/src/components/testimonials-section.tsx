@@ -21,7 +21,7 @@ interface TestimonialsData {
 }
 
 export function TestimonialsSection() {
-  const [activeTab, setActiveTab] = useState<"workspaces" | "photography">("workspaces");
+  const [activeTab, setActiveTab] = useState<"workspaces" | "photography">("photography");
 
   const { data } = useQuery<TestimonialsData>({
     queryKey: ["/api/testimonials"],
