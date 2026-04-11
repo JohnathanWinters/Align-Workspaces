@@ -5061,7 +5061,7 @@ export async function registerRoutes(
       const { status, photoUrl, title, comment, guestName, rating } = req.body;
       const updates: any = {};
       if (status) {
-        if (!["published", "hidden", "flagged"].includes(status)) {
+        if (!["pending", "published", "hidden"].includes(status)) {
           return res.status(400).json({ message: "Invalid status" });
         }
         updates.status = status;
@@ -5209,7 +5209,7 @@ export async function registerRoutes(
     try {
       const updates: any = {};
       if (req.body.status) {
-        if (!["published", "hidden", "flagged"].includes(req.body.status)) {
+        if (!["pending", "published", "hidden"].includes(req.body.status)) {
           return res.status(400).json({ message: "Invalid status" });
         }
         updates.status = req.body.status;

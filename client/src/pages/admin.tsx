@@ -2218,7 +2218,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const { toast } = useToast();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "hidden" | "flagged">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "published" | "hidden">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "photography" | "workspaces">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSharePanel, setShowSharePanel] = useState(false);
@@ -2297,7 +2297,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
   const statusColor = (s: string) => {
     if (s === "published") return "bg-green-100 text-green-700";
     if (s === "hidden") return "bg-yellow-100 text-yellow-700";
-    if (s === "flagged") return "bg-red-100 text-red-700";
+    if (s === "pending") return "bg-amber-100 text-amber-700";
     return "bg-gray-100 text-gray-600";
   };
 
@@ -2416,9 +2416,9 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending Approval</SelectItem>
               <SelectItem value="published">Published</SelectItem>
               <SelectItem value="hidden">Hidden</SelectItem>
-              <SelectItem value="flagged">Flagged</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -2592,10 +2592,21 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                         variant="ghost"
                         onClick={() => updateStatus(review.id, "published", review._type)}
                         className="h-7 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
-                        title="Publish"
+                        title="Approve & Publish"
                         data-testid={`button-review-publish-${review.id}`}
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {review.status === "published" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateStatus(review.id, "hidden", review._type)}
+                        className="h-7 px-2 text-xs text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                        title="Hide"
+                      >
+                        <Compass className="w-3.5 h-3.5" />
                       </Button>
                     )}
                     <label title="Add photo" className="h-7 px-2 text-xs text-gray-400 hover:text-[#c4956a] hover:bg-[#c4956a]/10 rounded-md cursor-pointer inline-flex items-center justify-center transition-colors">

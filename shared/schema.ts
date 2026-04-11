@@ -729,7 +729,7 @@ export const spaceReviews = pgTable("space_reviews", {
   hostResponse: text("host_response"),
   hostRespondedAt: timestamp("host_responded_at"),
   photoUrl: text("photo_url"),
-  status: text("status").default("published"),            // 'published' | 'hidden' | 'flagged'
+  status: text("status").default("pending"),               // 'pending' | 'published' | 'hidden'
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -754,7 +754,7 @@ export const shootReviews = pgTable("shoot_reviews", {
   adminResponse: text("admin_response"),
   adminRespondedAt: timestamp("admin_responded_at"),
   photoUrl: text("photo_url"),
-  status: text("status").default("published"),
+  status: text("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
