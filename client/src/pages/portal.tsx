@@ -2426,8 +2426,8 @@ function PortalContent() {
             <PortalSettings />
           ) : activeTab === "messages" ? (
             <div>
-              <button onClick={() => setActiveTab("overview")} className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-600 mb-3 transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5" />
+              <button onClick={() => setActiveTab("overview")} className="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-lg px-3 py-2 mb-4 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
                 Back to Overview
               </button>
               <PortalMessagesSection userId={user?.id || ""} />
