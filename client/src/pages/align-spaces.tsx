@@ -950,6 +950,8 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
+      <TestimonialsSection />
+
       {/* ─── Community Events ─── */}
       {communityEvents && communityEvents.length > 0 && (
         <section className="py-14 sm:py-20 px-4 sm:px-6" data-testid="section-community-events">
@@ -1018,7 +1020,6 @@ export default function AlignSpacesPage() {
         </section>
       )}
 
-      <TestimonialsSection />
       <SiteFooter />
 
       <AnimatePresence>
