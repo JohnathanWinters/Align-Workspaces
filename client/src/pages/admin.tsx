@@ -2558,30 +2558,6 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
                         <CheckCircle className="w-3.5 h-3.5" />
                       </Button>
                     )}
-                    {review.status !== "hidden" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => updateStatus(review.id, "hidden", review._type)}
-                        className="h-7 px-2 text-xs text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                        title="Hide"
-                        data-testid={`button-review-hide-${review.id}`}
-                      >
-                        <Compass className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
-                    {review.status !== "flagged" && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => updateStatus(review.id, "flagged", review._type)}
-                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                        title="Flag"
-                        data-testid={`button-review-flag-${review.id}`}
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                      </Button>
-                    )}
                     <label title="Add photo" className="h-7 px-2 text-xs text-gray-400 hover:text-[#c4956a] hover:bg-[#c4956a]/10 rounded-md cursor-pointer inline-flex items-center justify-center transition-colors">
                       <ImagePlus className="w-3.5 h-3.5" />
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => {
