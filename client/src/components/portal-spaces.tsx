@@ -2423,9 +2423,6 @@ function MySpacesTab() {
 
   return (
     <div className="space-y-6">
-      <StripeConnectSection hasSpaces={mySpaces.length > 0} />
-      <CalendarSyncSection hasSpaces={mySpaces.length > 0} />
-
       {/* Host Guide — prominent button near the top */}
       {mySpaces.length > 0 && (
         <>
@@ -2480,6 +2477,9 @@ function MySpacesTab() {
           </AnimatePresence>
         </>
       )}
+
+      <StripeConnectSection hasSpaces={mySpaces.length > 0} />
+      <CalendarSyncSection hasSpaces={mySpaces.length > 0} />
 
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-gray-900 text-sm">Your Listings</h3>
