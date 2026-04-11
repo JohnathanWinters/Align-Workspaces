@@ -1969,7 +1969,7 @@ function PortalContent() {
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-      <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-10">
+      <header className="bg-background/95 backdrop-blur-sm border-b border-stone-200/60 sticky top-0 z-[100]">
         <div className="px-4 sm:px-6 py-3 flex items-center justify-between relative">
           <a
             href="/"
