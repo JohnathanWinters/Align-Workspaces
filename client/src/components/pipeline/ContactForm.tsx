@@ -23,12 +23,12 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
     <>
       {/* Backdrop */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 z-[2001]" onClick={close} />
+        className="fixed inset-0 bg-black/40 z-[10000]" onClick={close} />
       {/* Drawer */}
       <motion.div
         initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 28, stiffness: 350 }}
-        className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-[2002] flex flex-col overflow-y-auto"
+        className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-[10001] flex flex-col overflow-y-auto"
       >
         <div className="flex justify-between items-center px-6 py-4 border-b border-stone-100 flex-shrink-0">
           <h2 className="font-serif text-lg font-semibold">{editingContact ? "Edit Contact" : "Add Contact"}</h2>
