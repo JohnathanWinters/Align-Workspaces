@@ -1798,7 +1798,7 @@ export default function SpacesBrowsePage() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="pt-3 pb-1 flex flex-wrap items-end gap-x-6 gap-y-3" data-testid="filter-panel">
+              <div className="pt-3 pb-1 flex flex-wrap items-start gap-x-6 gap-y-3" data-testid="filter-panel">
                 <div className="w-full sm:w-auto">
                   <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Sort by</label>
                   <select
@@ -1815,7 +1815,7 @@ export default function SpacesBrowsePage() {
                 </div>
                 <div className="w-full sm:w-auto">
                   <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Price per hour</label>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <div className="relative">
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-foreground/30 text-sm">$</span>
                       <input
@@ -1884,7 +1884,7 @@ export default function SpacesBrowsePage() {
 
                 <div className="flex items-end gap-2">
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Your Zip Code</label>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Your Zip Code</label>
                     <div className="relative">
                       <Navigation className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
                       <input
@@ -1905,7 +1905,7 @@ export default function SpacesBrowsePage() {
 
                 <div className="flex items-end gap-2">
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Date</label>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Date</label>
                     <input
                       type="date"
                       value={availDate}
@@ -1916,7 +1916,7 @@ export default function SpacesBrowsePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Start time</label>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Start time</label>
                     <input
                       type="time"
                       value={availStartTime}
@@ -1926,7 +1926,7 @@ export default function SpacesBrowsePage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-1">Duration</label>
+                    <label className="block text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mb-2">Duration</label>
                     <select
                       value={availHours}
                       onChange={e => setAvailHours(e.target.value)}
