@@ -1159,10 +1159,11 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                           <label className="text-xs text-gray-500 mb-1 block">When does the discount start?</label>
                           <select value={formData.recurringDiscountAfter} onChange={e => update("recurringDiscountAfter", e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm bg-white">
                             <option value="0">Right away</option>
-                            <option value="1">1 week</option>
                             <option value="2">2 weeks</option>
                             <option value="3">3 weeks</option>
                             <option value="4">4 weeks</option>
+                            <option value="8">8 weeks</option>
+                            <option value="12">12 weeks</option>
                           </select>
                         </div>
                       </div>
