@@ -3105,7 +3105,7 @@ export async function registerRoutes(
 
   app.get("/api/admin/spaces/all", isAdmin, async (_req, res) => {
     try {
-      const allSpaces = (await storage.getAllSpaces()).filter(s => !s.id.startsWith("test-"));
+      const allSpaces = await storage.getAllSpaces();
       const enriched = await Promise.all(allSpaces.map(async (space) => {
         let ownerInfo = null;
         if (space.userId) {
