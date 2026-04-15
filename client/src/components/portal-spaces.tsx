@@ -861,33 +861,38 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                   <p className="text-xs text-stone-500 max-w-sm mx-auto">Your host liability coverage is on file. You're all set to accept bookings.</p>
                 </div>
                 {insuranceRecord && (
-                  <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-4 space-y-2 max-w-md mx-auto">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-stone-500">Carrier</p>
-                      <p className="text-sm font-medium text-stone-800">{insuranceRecord.carrierName}</p>
+                  <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-4 space-y-2 max-w-md mx-auto min-w-0">
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <p className="text-xs text-stone-500 flex-shrink-0">Carrier</p>
+                      <p className="text-sm font-medium text-stone-800 truncate text-right">{insuranceRecord.carrierName}</p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-stone-500">Policy #</p>
-                      <p className="text-sm font-mono text-stone-800">{insuranceRecord.policyNumber}</p>
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <p className="text-xs text-stone-500 flex-shrink-0">Policy #</p>
+                      <p className="text-sm font-mono text-stone-800 truncate text-right">{insuranceRecord.policyNumber}</p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-stone-500">Coverage</p>
-                      <p className="text-sm text-stone-800">${(insuranceRecord.coverageAmount || 0).toLocaleString()} · {insuranceRecord.coverageType.replace(/_/g, " ")}</p>
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <p className="text-xs text-stone-500 flex-shrink-0">Coverage</p>
+                      <p className="text-sm text-stone-800 truncate text-right">${(insuranceRecord.coverageAmount || 0).toLocaleString()} · {insuranceRecord.coverageType.replace(/_/g, " ")}</p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-stone-500">Expires</p>
-                      <p className="text-sm text-stone-800">{insuranceRecord.policyExpirationDate}</p>
+                    <div className="flex items-center justify-between gap-2 min-w-0">
+                      <p className="text-xs text-stone-500 flex-shrink-0">Expires</p>
+                      <p className="text-sm text-stone-800 truncate text-right">{insuranceRecord.policyExpirationDate}</p>
                     </div>
                     {insuranceRecord.documentUrl && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full mt-2"
-                        onClick={() => window.open(insuranceRecord.documentUrl, "_blank")}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        View uploaded document
-                      </Button>
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full mt-2"
+                          onClick={() => window.open(insuranceRecord.documentUrl, "_blank")}
+                        >
+                          <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
+                          View uploaded document
+                        </Button>
+                        {insuranceRecord.documentFilename && (
+                          <p className="text-[10px] text-stone-400 text-center truncate" title={insuranceRecord.documentFilename}>{insuranceRecord.documentFilename}</p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

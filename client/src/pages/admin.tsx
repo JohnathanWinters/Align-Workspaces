@@ -2524,9 +2524,10 @@ function AdminSpaceInsuranceModal({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogTitle className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4" /> Insurance — {space.name}
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogTitle className="flex items-center gap-2 min-w-0">
+          <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+          <span className="truncate">Insurance — {space.name}</span>
         </DialogTitle>
 
         {loading ? (
@@ -2536,41 +2537,46 @@ function AdminSpaceInsuranceModal({
         ) : (
           <div className="space-y-4 mt-2">
             {record ? (
-              <div className="rounded-lg border border-gray-200 p-4 space-y-2 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Carrier</p>
-                  <p className="text-sm font-medium text-gray-800">{record.carrierName}</p>
+              <div className="rounded-lg border border-gray-200 p-4 space-y-2 bg-gray-50 min-w-0">
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <p className="text-xs text-gray-500 flex-shrink-0">Carrier</p>
+                  <p className="text-sm font-medium text-gray-800 truncate text-right">{record.carrierName}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Policy #</p>
-                  <p className="text-sm font-mono text-gray-800">{record.policyNumber}</p>
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <p className="text-xs text-gray-500 flex-shrink-0">Policy #</p>
+                  <p className="text-sm font-mono text-gray-800 truncate text-right">{record.policyNumber}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Coverage</p>
-                  <p className="text-sm text-gray-800">${(record.coverageAmount || 0).toLocaleString()} · {record.coverageType.replace(/_/g, " ")}</p>
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <p className="text-xs text-gray-500 flex-shrink-0">Coverage</p>
+                  <p className="text-sm text-gray-800 truncate text-right">${(record.coverageAmount || 0).toLocaleString()} · {record.coverageType.replace(/_/g, " ")}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Expires</p>
-                  <p className="text-sm text-gray-800">{record.policyExpirationDate}</p>
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <p className="text-xs text-gray-500 flex-shrink-0">Expires</p>
+                  <p className="text-sm text-gray-800 truncate text-right">{record.policyExpirationDate}</p>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">Status</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <p className="text-xs text-gray-500 flex-shrink-0">Status</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
                     record.status === "active" ? "bg-emerald-100 text-emerald-700" :
                     record.status === "expiring_soon" ? "bg-amber-100 text-amber-700" :
                     "bg-red-100 text-red-700"
                   }`}>{record.status.replace(/_/g, " ")}</span>
                 </div>
                 {record.documentUrl && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full mt-2"
-                    onClick={() => window.open(record.documentUrl, "_blank")}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    View uploaded document{record.documentFilename ? ` (${record.documentFilename})` : ""}
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full mt-2"
+                      onClick={() => window.open(record.documentUrl, "_blank")}
+                    >
+                      <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
+                      View uploaded document
+                    </Button>
+                    {record.documentFilename && (
+                      <p className="text-[10px] text-gray-400 text-center truncate" title={record.documentFilename}>{record.documentFilename}</p>
+                    )}
+                  </>
                 )}
               </div>
             ) : (
