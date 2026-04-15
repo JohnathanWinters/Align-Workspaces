@@ -676,7 +676,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                     <Repeat className="w-3.5 h-3.5 text-emerald-600" />
                     Give a discount to weekly renters?
                   </h4>
-                  <p className="text-[11px] text-stone-500 -mt-1">If someone books your space every week, you can give them a lower rate to keep them coming back.</p>
+                  <p className="text-[11px] text-stone-500 -mt-1">If someone books your space every week, you can give them a lower rate to reward recurring bookings.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">How much off? (%)</label>
@@ -1214,7 +1214,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                     <Repeat className="w-3.5 h-3.5 text-emerald-600" />
                     Give a discount to weekly renters?
                   </h4>
-                  <p className="text-[11px] text-stone-500 -mt-1">If someone books your space every week, you can give them a lower rate to keep them coming back.</p>
+                  <p className="text-[11px] text-stone-500 -mt-1">If someone books your space every week, you can give them a lower rate to reward recurring bookings.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-gray-500 mb-1 block">How much off? (%)</label>
