@@ -82,6 +82,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatDateShort } from "@/lib/format-date";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { EmojiPickerButton } from "@/components/emoji-picker-button";
 import { ImageAttachButton, MessageImage } from "@/components/image-attach-button";
@@ -2417,12 +2418,6 @@ function AdminSpaceColorPaletteModal({
   );
 }
 
-function formatInsuranceDate(raw: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw || "");
-  if (!m) return raw || "";
-  return `${m[2]}/${m[3]}/${m[1].slice(-2)}`;
-}
-
 type InsuranceRecord = {
   id: string;
   carrierName: string;
@@ -2558,7 +2553,7 @@ function AdminSpaceInsuranceModal({
                 </div>
                 <div className="flex items-center justify-between gap-2 min-w-0">
                   <p className="text-xs text-gray-500 flex-shrink-0">Expires</p>
-                  <p className="text-sm text-gray-800 truncate text-right">{formatInsuranceDate(record.policyExpirationDate)}</p>
+                  <p className="text-sm text-gray-800 truncate text-right">{formatDateShort(record.policyExpirationDate)}</p>
                 </div>
                 <div className="flex items-center justify-between gap-2 min-w-0">
                   <p className="text-xs text-gray-500 flex-shrink-0">Status</p>
@@ -2902,7 +2897,7 @@ function AdminSpaceBookings({ spaceId, token }: { spaceId: string; token: string
                         )}
                       </div>
                       <p className="text-gray-400 mt-0.5">
-                        {b.bookingDate} · {b.bookingStartTime || "–"} · {b.bookingHours}hr
+                        {formatDateShort(b.bookingDate)} · {b.bookingStartTime || "–"} · {b.bookingHours}hr
                         {b.guestEmail && <span className="ml-2 text-gray-300">{b.guestEmail}</span>}
                       </p>
                     </div>
@@ -3228,7 +3223,7 @@ function ReviewsManager({ token, onBack }: { token: string; onBack: () => void }
 
                   {/* Date */}
                   <div className="text-xs text-gray-400" data-testid={`text-review-date-${review.id}`}>
-                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "N/A"}
+                    {review.createdAt ? formatDateShort(review.createdAt) : "N/A"}
                   </div>
 
                   {/* Actions */}
@@ -4120,7 +4115,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
                     <Badge className={`text-[10px] ${statusColor(nom.status)} shrink-0`} variant="secondary" data-testid={`badge-nomination-status-${nom.id}`}>
                       {nom.status}
                     </Badge>
-                    <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{new Date(nom.createdAt).toLocaleDateString()}</span>
+                    <span className="text-[10px] text-gray-400 shrink-0 hidden sm:inline">{formatDateShort(nom.createdAt)}</span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -4137,7 +4132,7 @@ function NominationsManager({ token, onBack }: { token: string; onBack: () => vo
                           <div className="flex flex-wrap gap-4 text-xs text-gray-400">
                             {nom.nominatorName && <span>Nominated by: <span className="text-gray-600">{nom.nominatorName}</span></span>}
                             {nom.nomineeContact && <span>Contact: <span className="text-gray-600">{nom.nomineeContact}</span></span>}
-                            <span>{new Date(nom.createdAt).toLocaleDateString()}</span>
+                            <span>{formatDateShort(nom.createdAt)}</span>
                           </div>
                           <div className="flex items-center gap-2 pt-1">
                             <Select value={nom.status} onValueChange={(val) => updateStatus(nom.id, val)}>
@@ -8110,7 +8105,7 @@ function CommunityEventsManager({ token, onBack }: { token: string; onBack: () =
                         {eventDate && (
                           <span className="flex items-center gap-1">
                             <CalendarDays className="w-3 h-3" />
-                            {eventDate.toLocaleDateString()} {event.time || ""}
+                            {formatDateShort(eventDate)} {event.time || ""}
                           </span>
                         )}
                         <span className="flex items-center gap-1">

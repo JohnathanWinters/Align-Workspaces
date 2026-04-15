@@ -1,5 +1,6 @@
 import type { PipelineContact } from "./types";
 import { stageOf, getInitials, daysAgo, overdueLabel, noActionLabel, computeHealthScore, healthColor, getRelativeFollowUpLabel } from "./utils";
+import { formatDateShort } from "@/lib/format-date";
 
 interface ContactRowProps {
   contact: PipelineContact;
@@ -79,7 +80,7 @@ export default function ContactRow({
         )}
         {variant === "default" && c.nextFollowUp && (
           <span className={`text-[11px] whitespace-nowrap ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
-            {new Date(c.nextFollowUp).toLocaleDateString()}
+            {formatDateShort(c.nextFollowUp)}
           </span>
         )}
         {variant === "default" && !c.nextFollowUp && (

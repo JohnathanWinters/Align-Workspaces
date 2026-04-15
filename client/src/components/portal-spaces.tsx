@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useDragScroll } from "@/hooks/use-drag-scroll";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { formatDateShort } from "@/lib/format-date";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -876,10 +877,7 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                     </div>
                     <div className="flex items-center justify-between gap-2 min-w-0">
                       <p className="text-xs text-stone-500 flex-shrink-0">Expires</p>
-                      <p className="text-sm text-stone-800 truncate text-right">{(() => {
-                        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(insuranceRecord.policyExpirationDate || "");
-                        return m ? `${m[2]}/${m[3]}/${m[1].slice(-2)}` : insuranceRecord.policyExpirationDate;
-                      })()}</p>
+                      <p className="text-sm text-stone-800 truncate text-right">{formatDateShort(insuranceRecord.policyExpirationDate)}</p>
                     </div>
                     {insuranceRecord.documentUrl && (
                       <>
@@ -3031,7 +3029,7 @@ function EarningsTab() {
                   <p className="text-sm font-medium text-stone-800 truncate">{p.spaceName}</p>
                   <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-0.5">
                     <CalendarDays className="w-3 h-3" />
-                    {p.bookingDate} · {p.bookingHours}hr
+                    {formatDateShort(p.bookingDate)} · {p.bookingHours}hr
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">

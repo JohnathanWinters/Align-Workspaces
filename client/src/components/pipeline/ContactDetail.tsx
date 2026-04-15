@@ -12,6 +12,7 @@ import {
 import type { UsePipelineReturn } from "./use-pipeline";
 import { PIPELINE_STAGES, ACTIVITY_TYPES, FOLLOW_UP_QUICK_OPTIONS, TEAM_MEMBERS } from "./types";
 import { stageOf, getInitials, computeHealthScore, healthColor, healthTextColor, formatFollowUpDate } from "./utils";
+import { formatDateShort } from "@/lib/format-date";
 import ContactDetailStageBar from "./ContactDetailStageBar";
 import LinkifiedText from "./LinkifiedText";
 import FunnelVisualization from "./FunnelVisualization";
@@ -142,14 +143,14 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
                 if (input) input.showPicker();
               }}>
               <CalendarDays className="w-3.5 h-3.5" />
-              {c.nextFollowUp ? `Follow-up: ${new Date(c.nextFollowUp).toLocaleDateString()}` : "Set follow-up"}
+              {c.nextFollowUp ? `Follow-up: ${formatDateShort(c.nextFollowUp)}` : "Set follow-up"}
               <input id="detail-followup-picker" type="date" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" min={new Date().toISOString().split("T")[0]}
                 value={c.nextFollowUp ? new Date(c.nextFollowUp).toISOString().split("T")[0] : ""}
                 onChange={e => setFollowUpDate(c.id, e.target.value, c.stage)}
               />
             </span>
             {c.lastContactDate && (
-              <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {new Date(c.lastContactDate).toLocaleDateString()}</span>
+              <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {formatDateShort(c.lastContactDate)}</span>
             )}
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -356,7 +357,7 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-gray-700">{at?.label || a.type}</span>
-                      <span className="text-[10px] text-gray-400">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                      <span className="text-[10px] text-gray-400">{a.createdAt ? formatDateShort(a.createdAt) + " " + new Date(a.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                       {hasEditHistory && <span className="text-[10px] text-gray-400 italic">(edited)</span>}
                       <div className="ml-auto flex items-center gap-1">
                         {!isEditing && !isConfirmingDelete && (
@@ -417,7 +418,7 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
                           <div className="mt-1.5 pl-3 border-l-2 border-gray-200 space-y-1.5">
                             {a.editHistory.map((h: { note: string; editedAt: string }, i: number) => (
                               <div key={i} className="text-xs">
-                                <span className="text-gray-400">{new Date(h.editedAt).toLocaleDateString()} {new Date(h.editedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                <span className="text-gray-400">{formatDateShort(h.editedAt)} {new Date(h.editedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                                 <p className="text-gray-500 line-through">{h.note}</p>
                               </div>
                             ))}
