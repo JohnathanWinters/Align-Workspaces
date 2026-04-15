@@ -216,7 +216,7 @@ const COVERAGE_TYPES = [
   { value: "other", label: "Other" },
 ];
 
-function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => void; onGetCovered: () => void }) {
+export function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: () => void; onGetCovered: () => void }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({

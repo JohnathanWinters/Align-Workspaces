@@ -46,6 +46,8 @@ import {
   XCircle,
   BookOpen,
   AlertCircle,
+  Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -54,6 +56,7 @@ import { ArrivalGuideEditor, ArrivalGuideViewer, ArrivalGuideInline } from "./ar
 import BookingCalendar from "./booking-calendar";
 import { CalendarSyncSettings } from "./calendar-sync-settings";
 import { AmenityInput } from "./amenity-input";
+import { InsuranceUploadStep } from "./list-space-modal";
 
 const SPACE_TYPES = [
   { value: "therapy", label: "Therapy & Counseling" },
@@ -309,7 +312,7 @@ function SpaceCard({ space, statusColors }: { space: Space; statusColors: Record
   );
 }
 
-type EditTab = "details" | "pricing" | "schedule" | "extras";
+type EditTab = "details" | "pricing" | "schedule" | "extras" | "photos" | "arrival" | "insurance";
 
 function getCompletionScore(formData: Record<string, string>, images: string[], amenitiesTags?: string[]) {
   const checks = [
@@ -397,10 +400,17 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const steps: EditTab[] = ["details", "pricing", "schedule", "extras"];
-  const stepLabels: Record<EditTab, string> = { details: "Details", pricing: "Pricing", schedule: "Schedule", extras: "Extras" };
+  const steps: EditTab[] = ["details", "pricing", "schedule", "extras", "photos", "arrival", "insurance"];
+  const stepLabels: Record<EditTab, string> = {
+    details: "Details", pricing: "Pricing", schedule: "Schedule", extras: "Extras",
+    photos: "Photos", arrival: "Arrival Guide", insurance: "Insurance",
+  };
   const stepIndex = steps.indexOf(tab);
   const isLastStep = stepIndex === steps.length - 1;
+
+  const { data: insuranceStatus } = useQuery<{ hasInsurance: boolean; status: string }>({
+    queryKey: ["/api/host/insurance/status"],
+  });
 
   const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
     ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
@@ -716,7 +726,6 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                   <p className="text-[10px] text-stone-500 leading-relaxed"><span className="font-medium text-stone-600">You cancel:</span> Guest receives a full refund including their service fee. Your host fee is retained by Align as a cancellation penalty.</p>
                 </div>
               </div>
-              <ArrivalGuideEditor spaceId={space.id} />
               <CalendarSyncSettings spaceId={space.id} />
             </div>
           )}
@@ -755,6 +764,45 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               </div>
             </div>
           )}
+
+          {tab === "photos" && (
+            <SpacePhotoManager space={space} />
+          )}
+
+          {tab === "arrival" && (
+            <div className="space-y-3">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-[#c4956a]/10 flex items-center justify-center mx-auto mb-2">
+                  <MapPin className="w-6 h-6 text-[#c4956a]" />
+                </div>
+                <h3 className="font-serif text-base font-semibold">Arrival Guide</h3>
+                <p className="text-xs text-stone-400 max-w-md mx-auto">Help your renters find your space. Add parking info, door codes, WiFi, and step-by-step directions with photos.</p>
+              </div>
+              <ArrivalGuideEditor spaceId={space.id} />
+            </div>
+          )}
+
+          {tab === "insurance" && (
+            insuranceStatus?.hasInsurance ? (
+              <div className="py-8 text-center space-y-3">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h3 className="font-serif text-base font-semibold text-stone-900">Insurance verified</h3>
+                <p className="text-xs text-stone-500 max-w-sm mx-auto">Your host liability coverage is on file. You're all set to accept bookings.</p>
+                <p className="text-[10px] text-stone-400">Need to update your policy? Contact support.</p>
+              </div>
+            ) : (
+              <InsuranceUploadStep
+                onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/host/insurance/status"] });
+                }}
+                onGetCovered={() => {
+                  window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
+                }}
+              />
+            )
+          )}
         </div>
 
         {/* Footer */}
@@ -768,32 +816,35 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
               Cancel
             </Button>
           )}
-          {isLastStep ? (
+          <div className="flex items-center gap-2">
             <Button
               onClick={() => updateMutation.mutate()}
               disabled={updateMutation.isPending || formData.bookingTypes === "none"}
               size="sm"
-              className="bg-stone-900 text-white hover:bg-stone-800"
+              variant={isLastStep ? "default" : "outline"}
+              className={isLastStep ? "bg-stone-900 text-white hover:bg-stone-800" : ""}
               data-testid={`button-save-edit-space-${space.id}`}
             >
               {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
               Save Changes
             </Button>
-          ) : (
-            (() => {
+            {!isLastStep && (() => {
               const stepValid: Record<string, boolean> = {
                 details: !!(formData.name && formData.address && formData.city && formData.state && formData.zipCode && formData.description && formData.hostName),
                 pricing: !!(formData.bookingTypes !== "none" && formData.pricePerHour),
                 schedule: true,
                 extras: true,
+                photos: true,
+                arrival: true,
+                insurance: true,
               };
               return (
                 <Button size="sm" className="bg-stone-900 text-white hover:bg-stone-800" disabled={!stepValid[tab]} onClick={() => setTab(steps[stepIndex + 1])}>
                   Continue
                 </Button>
               );
-            })()
-          )}
+            })()}
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -867,7 +918,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
   };
 
   const steps: EditTab[] = ["details", "pricing", "schedule", "extras"];
-  const stepLabels: Record<EditTab, string> = { details: "Details", pricing: "Pricing", schedule: "Schedule", extras: "Extras" };
+  const stepLabels: Partial<Record<EditTab, string>> = { details: "Details", pricing: "Pricing", schedule: "Schedule", extras: "Extras" };
   const stepIndex = steps.indexOf(tab);
   const isLastStep = stepIndex === steps.length - 1;
 
