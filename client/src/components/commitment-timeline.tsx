@@ -36,7 +36,7 @@ export function CommitmentTimeline({
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-medium text-stone-700">Here's what renters will see</p>
+        <p className="text-[11px] font-medium text-stone-700">Here's how it works, week by week</p>
         {hasAnyDiscount && (
           <span className="text-[10px] text-emerald-600 font-medium">
             -{discountPercent}% {discountAfterWeeks === 0 ? "right away" : `after week ${discountAfterWeeks}`}
