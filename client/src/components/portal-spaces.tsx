@@ -876,7 +876,10 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                     </div>
                     <div className="flex items-center justify-between gap-2 min-w-0">
                       <p className="text-xs text-stone-500 flex-shrink-0">Expires</p>
-                      <p className="text-sm text-stone-800 truncate text-right">{insuranceRecord.policyExpirationDate}</p>
+                      <p className="text-sm text-stone-800 truncate text-right">{(() => {
+                        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(insuranceRecord.policyExpirationDate || "");
+                        return m ? `${m[2]}/${m[3]}/${m[1].slice(-2)}` : insuranceRecord.policyExpirationDate;
+                      })()}</p>
                     </div>
                     {insuranceRecord.documentUrl && (
                       <>

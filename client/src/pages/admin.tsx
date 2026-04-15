@@ -2417,6 +2417,12 @@ function AdminSpaceColorPaletteModal({
   );
 }
 
+function formatInsuranceDate(raw: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw || "");
+  if (!m) return raw || "";
+  return `${m[2]}/${m[3]}/${m[1].slice(-2)}`;
+}
+
 type InsuranceRecord = {
   id: string;
   carrierName: string;
@@ -2552,7 +2558,7 @@ function AdminSpaceInsuranceModal({
                 </div>
                 <div className="flex items-center justify-between gap-2 min-w-0">
                   <p className="text-xs text-gray-500 flex-shrink-0">Expires</p>
-                  <p className="text-sm text-gray-800 truncate text-right">{record.policyExpirationDate}</p>
+                  <p className="text-sm text-gray-800 truncate text-right">{formatInsuranceDate(record.policyExpirationDate)}</p>
                 </div>
                 <div className="flex items-center justify-between gap-2 min-w-0">
                   <p className="text-xs text-gray-500 flex-shrink-0">Status</p>
