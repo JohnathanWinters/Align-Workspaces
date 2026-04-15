@@ -94,11 +94,15 @@ export async function seedTestClient() {
     await db.delete(adminConversations).where(eq(adminConversations.id, TEST_ADMIN_CONV));
   } catch {}
 
-  // Find the test user
-  const [user] = await db.select().from(users).where(eq(users.email, TEST_EMAIL));
+  // Find or create the test user
+  let [user] = await db.select().from(users).where(eq(users.email, TEST_EMAIL));
   if (!user) {
-    console.log(`Test client not found: ${TEST_EMAIL} — skipping seed`);
-    return;
+    console.log(`Test client user not found: ${TEST_EMAIL} — creating`);
+    [user] = await db.insert(users).values({
+      email: TEST_EMAIL,
+      firstName: "Test",
+      lastName: "Client",
+    }).returning();
   }
 
   const userId = user.id;
