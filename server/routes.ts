@@ -7365,17 +7365,19 @@ ${featuredSection}
   // Delete seed/test booking messages
   app.delete("/api/admin/seed-messages", isAdmin, async (_req, res) => {
     try {
-      const testBookingIds = await db.select({ id: spaceBookings.id }).from(spaceBookings)
-        .where(sql`${spaceBookings.id} LIKE 'test-%'`);
-      let deleted = 0;
-      for (const b of testBookingIds) {
-        const result = await db.delete(spaceMessages).where(eq(spaceMessages.bookingId, b.id));
-        deleted += (result as any).rowCount || 0;
-      }
-      // Also delete the test bookings themselves
+      // Delete any space messages tied to test bookings, or with a fixed
+      // test message ID (e.g. test-spm-1..5 from seed-test-client).
+      const messageResult = await db.delete(spaceMessages).where(
+        sql`${spaceMessages.spaceBookingId} LIKE 'test-%' OR ${spaceMessages.id} LIKE 'test-%'`
+      );
+      // Then delete the test bookings themselves.
       const bookingResult = await db.delete(spaceBookings).where(sql`${spaceBookings.id} LIKE 'test-%'`);
-      res.json({ deletedMessages: deleted, deletedBookings: (bookingResult as any).rowCount || 0 });
+      res.json({
+        deletedMessages: (messageResult as any).rowCount || 0,
+        deletedBookings: (bookingResult as any).rowCount || 0,
+      });
     } catch (err: any) {
+      console.error("Clear seed messages error:", err);
       res.status(500).json({ message: err.message });
     }
   });
