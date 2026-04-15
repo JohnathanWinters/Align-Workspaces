@@ -2140,15 +2140,16 @@ function AdminSpaceColorPaletteModal({
 
   const generateFromPhotos = async () => {
     const images: string[] = space?.imageUrls || [];
-    if (images.length === 0) {
-      toast({ title: "No photos to analyze", variant: "destructive" });
+    const coverImage = images[0];
+    if (!coverImage) {
+      toast({ title: "No cover photo to analyze", description: "Set a cover photo on this space first.", variant: "destructive" });
       return;
     }
     setGenerating(true);
     try {
       const buckets: { r: number; g: number; b: number; count: number }[] = [];
       let analyzed = 0;
-      for (const src of images.slice(0, 5)) {
+      for (const src of [coverImage]) {
         try {
           const img = document.createElement("img");
           img.crossOrigin = "anonymous";
@@ -2188,7 +2189,7 @@ function AdminSpaceColorPaletteModal({
         } catch {}
       }
       if (analyzed === 0) {
-        toast({ title: "Couldn't load photos", description: "Images may be blocked by CORS.", variant: "destructive" });
+        toast({ title: "Couldn't load cover photo", description: "Image may be blocked by CORS.", variant: "destructive" });
         return;
       }
       buckets.sort((a, b) => b.count - a.count);
@@ -2287,7 +2288,7 @@ function AdminSpaceColorPaletteModal({
       setColors(pickedSave);
       setFeel(copy.feel);
       setExplanation(copy.explanation);
-      toast({ title: `Generated ${pickedSave.length} colors from ${analyzed} photo${analyzed > 1 ? "s" : ""}` });
+      toast({ title: `Generated ${pickedSave.length} colors from cover photo` });
     } finally {
       setGenerating(false);
     }
@@ -2341,7 +2342,7 @@ function AdminSpaceColorPaletteModal({
             data-testid={`button-generate-palette-${space.id}`}
           >
             {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-            Generate from photos
+            Generate from cover photo
           </Button>
 
           <div className="space-y-2">
