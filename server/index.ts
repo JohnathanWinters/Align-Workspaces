@@ -8,7 +8,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupAuth, registerAuthRoutes } from "./auth";
 import { seedPortfolioIfEmpty } from "./seed-portfolio";
-import { fixPortfolioImageExtensions } from "./migrations";
+import { fixPortfolioImageExtensions, normalizeRecurringDiscountAfter } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
 import { seedTestClient } from "./seed-test-client";
 import { seedTeamMembersIfEmpty } from "./seed-team-members";
@@ -251,6 +251,7 @@ app.post("/api/stripe/webhook", async (req, res) => {
         seedTeamMembersIfEmpty().catch(err => console.warn('Team members seed error (non-fatal):', err.message)),
         seedFeaturedProfessionals().catch(err => console.warn('Featured professionals seed error (non-fatal):', err.message)),
         fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
+        normalizeRecurringDiscountAfter().catch(err => console.warn('Migration error (non-fatal):', err.message)),
       ]).then(() => {
         log('Background initialization complete');
       });
