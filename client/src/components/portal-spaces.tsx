@@ -729,12 +729,6 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       </button>
                     ))}
                   </div>
-                  {Number(formData.recurringMinBookings) > 1 && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
-                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
-                    </div>
-                  )}
                   <CommitmentTimeline
                     pricePerHour={formData.pricePerHour}
                     pricePerDay={formData.pricePerDay}
@@ -1274,12 +1268,6 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                       </button>
                     ))}
                   </div>
-                  {Number(formData.recurringMinBookings) > 1 && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
-                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
-                    </div>
-                  )}
                   <CommitmentTimeline
                     pricePerHour={formData.pricePerHour}
                     pricePerDay={formData.pricePerDay}
