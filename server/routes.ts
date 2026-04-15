@@ -7388,18 +7388,24 @@ ${featuredSection}
 
   app.get("/api/host/insurance", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const [record] = await db.select().from(hostInsuranceRecords)
-        .where(eq(hostInsuranceRecords.userId, req.user.id))
+        .where(eq(hostInsuranceRecords.userId, userId))
         .orderBy(desc(hostInsuranceRecords.createdAt))
         .limit(1);
       res.json(record || null);
-    } catch (e) {
-      res.status(500).json({ error: "Failed to fetch insurance record" });
+    } catch (e: any) {
+      console.error("Insurance fetch error:", e);
+      res.status(500).json({ error: e.message || "Failed to fetch insurance record" });
     }
   });
 
   app.post("/api/host/insurance", isAuthenticated, documentUploadSingle("document"), async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
       const { carrierName, policyNumber, coverageType, coverageAmount, policyExpirationDate } = req.body;
       if (!carrierName || !policyNumber || !coverageType || !coverageAmount || !policyExpirationDate) {
         return res.status(400).json({ error: "All fields are required" });
@@ -7417,24 +7423,25 @@ ${featuredSection}
 
       await db.update(hostInsuranceRecords)
         .set({ status: "replaced", updatedAt: new Date() })
-        .where(and(eq(hostInsuranceRecords.userId, req.user.id), eq(hostInsuranceRecords.status, "active")));
+        .where(and(eq(hostInsuranceRecords.userId, userId), eq(hostInsuranceRecords.status, "active")));
 
       const [record] = await db.insert(hostInsuranceRecords).values({
-        userId: req.user.id, carrierName, policyNumber, coverageType,
+        userId, carrierName, policyNumber, coverageType,
         coverageAmount: amount, policyExpirationDate, documentUrl,
         documentFilename: req.file.originalname, status: "active", verifiedAt: new Date(),
       }).returning();
       res.json(record);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Insurance upload error:", e);
-      res.status(500).json({ error: "Failed to save insurance record" });
+      res.status(500).json({ error: e.message || "Failed to save insurance record" });
     }
   });
 
   app.get("/api/host/insurance/status", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const [record] = await db.select().from(hostInsuranceRecords)
-        .where(and(eq(hostInsuranceRecords.userId, req.user.id), eq(hostInsuranceRecords.status, "active")))
+        .where(and(eq(hostInsuranceRecords.userId, userId), eq(hostInsuranceRecords.status, "active")))
         .limit(1);
       if (!record) return res.json({ hasInsurance: false, status: "none" });
       const expDate = new Date(record.policyExpirationDate);
@@ -7499,9 +7506,9 @@ ${featuredSection}
         documentFilename: req.file.originalname, status: "active", verifiedAt: new Date(),
       }).returning();
       res.json(record);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Admin insurance upload error:", e);
-      res.status(500).json({ error: "Failed to save insurance record" });
+      res.status(500).json({ error: e.message || "Failed to save insurance record" });
     }
   });
 
