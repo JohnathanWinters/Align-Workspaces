@@ -1964,7 +1964,15 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
   );
 }
 
-type PaletteColor = { hex: string; name: string };
+type PaletteRole = "dominant" | "secondary" | "accent";
+type PaletteColor = { hex: string; name: string; role?: PaletteRole; share?: number };
+
+const ROLE_SHARE: Record<PaletteRole, number> = { dominant: 60, secondary: 30, accent: 10 };
+const ROLE_LABEL: Record<PaletteRole, string> = {
+  dominant: "60% Dominant",
+  secondary: "30% Secondary",
+  accent: "10% Accent",
+};
 
 type PaletteColorMeta = PaletteColor & {
   family: "neutral" | "red" | "orange" | "amber" | "green" | "teal" | "blue" | "purple" | "pink";
@@ -1992,36 +2000,47 @@ function classifyColor(hue: number, sat: number, light: number): Pick<PaletteCol
 function sentenceForColor(c: PaletteColorMeta): string {
   const n = c.name;
   const key = `${c.family}-${c.tone}`;
-  const map: Record<string, string> = {
-    "neutral-light": `${n} provides an airy, uncluttered backdrop that makes the space feel open and welcoming.`,
-    "neutral-mid": `${n} brings a grounding, calm foundation that keeps attention on the work itself.`,
-    "neutral-dark": `${n} adds quiet weight and structure, giving the room a sense of focus and intention.`,
-    "red-light": `${n} introduces a soft, human warmth that invites conversation and puts guests at ease.`,
-    "red-mid": `${n} adds a confident accent that brings personality and emotional presence to the space.`,
-    "red-dark": `${n} contributes rich depth and gravitas, anchoring the palette with quiet intensity.`,
-    "orange-light": `${n} brings a welcoming, sunlit energy that makes the space feel approachable and alive.`,
-    "orange-mid": `${n} adds an earthy warmth that feels both friendly and grounded.`,
-    "orange-dark": `${n} anchors the palette with rich, toasted warmth and a lived-in character.`,
-    "amber-light": `${n} contributes a soft golden glow that radiates comfort and optimism.`,
-    "amber-mid": `${n} adds a mellow, honeyed warmth that feels settled and timeless.`,
-    "amber-dark": `${n} brings a deep, burnished warmth that communicates experience and craft.`,
-    "green-light": `${n} offers a fresh, natural quality that promotes calm and restoration.`,
-    "green-mid": `${n} introduces a balanced, organic presence that feels quietly reassuring.`,
-    "green-dark": `${n} adds an earthy, grounded weight that conveys stability and quiet confidence.`,
-    "teal-light": `${n} contributes an airy, refreshing note that keeps the space feeling clear and alert.`,
-    "teal-mid": `${n} adds a cool, balanced depth that is both calming and composed.`,
-    "teal-dark": `${n} introduces a contemplative, mineral depth that feels sophisticated and steady.`,
-    "blue-light": `${n} brings a breezy, open quality that communicates clarity and trust.`,
-    "blue-mid": `${n} adds a steady, reliable tone that grounds the space in quiet professionalism.`,
-    "blue-dark": `${n} provides a commanding foundation that conveys focus, authority, and calm.`,
-    "purple-light": `${n} softens the palette with a gentle, imaginative touch.`,
-    "purple-mid": `${n} introduces a note of refined creativity and thoughtful presence.`,
-    "purple-dark": `${n} adds a luxurious, contemplative depth that feels both private and considered.`,
-    "pink-light": `${n} softens the palette with gentle warmth, making the room feel welcoming and kind.`,
-    "pink-mid": `${n} contributes a quiet, emotional warmth that draws people in.`,
-    "pink-dark": `${n} adds a mature, rosy depth that feels intimate and grounded.`,
+  const role = c.role;
+  const descriptorMap: Record<string, string> = {
+    "neutral-light": "an airy, uncluttered quality that makes the space feel open and welcoming",
+    "neutral-mid": "a grounding, calm presence that keeps attention on the work itself",
+    "neutral-dark": "quiet weight and structure, lending the room a sense of focus and intention",
+    "red-light": "a soft, human warmth that invites conversation and puts guests at ease",
+    "red-mid": "confident personality and emotional presence",
+    "red-dark": "rich depth and gravitas with a quiet intensity",
+    "orange-light": "a welcoming, sunlit energy that makes the space feel approachable and alive",
+    "orange-mid": "an earthy warmth that feels both friendly and grounded",
+    "orange-dark": "rich, toasted warmth and a lived-in character",
+    "amber-light": "a soft golden glow that radiates comfort and optimism",
+    "amber-mid": "a mellow, honeyed warmth that feels settled and timeless",
+    "amber-dark": "a deep, burnished warmth that communicates experience and craft",
+    "green-light": "a fresh, natural quality that promotes calm and restoration",
+    "green-mid": "a balanced, organic presence that feels quietly reassuring",
+    "green-dark": "an earthy, grounded weight that conveys stability and quiet confidence",
+    "teal-light": "an airy, refreshing note that keeps the space feeling clear and alert",
+    "teal-mid": "a cool, balanced depth that is both calming and composed",
+    "teal-dark": "a contemplative, mineral depth that feels sophisticated and steady",
+    "blue-light": "a breezy, open quality that communicates clarity and trust",
+    "blue-mid": "a steady, reliable tone that grounds the space in quiet professionalism",
+    "blue-dark": "a commanding foundation that conveys focus, authority, and calm",
+    "purple-light": "a gentle, imaginative softness",
+    "purple-mid": "refined creativity and thoughtful presence",
+    "purple-dark": "a luxurious, contemplative depth that feels both private and considered",
+    "pink-light": "gentle warmth that makes the room feel welcoming and kind",
+    "pink-mid": "a quiet, emotional warmth that draws people in",
+    "pink-dark": "a mature, rosy depth that feels intimate and grounded",
   };
-  return map[key] || `${n} adds distinct character and visual interest to the space.`;
+  const descriptor = descriptorMap[key] || "distinct character and visual interest";
+  if (role === "dominant") {
+    return `${n} takes the dominant 60% role, giving the space ${descriptor}.`;
+  }
+  if (role === "secondary") {
+    return `${n} steps in as the 30% secondary layer, adding ${descriptor}.`;
+  }
+  if (role === "accent") {
+    return `${n} acts as the 10% accent, introducing ${descriptor} and punctuating the overall composition.`;
+  }
+  return `${n} contributes ${descriptor}.`;
 }
 
 function buildPaletteCopy(meta: PaletteColorMeta[]): { feel: string; explanation: string } {
@@ -2058,7 +2077,9 @@ function buildPaletteCopy(meta: PaletteColorMeta[]): { feel: string; explanation
     feel = "A balanced, versatile palette that reads as thoughtful and intentional";
   }
 
-  const perColor = meta.map(sentenceForColor).join(" ");
+  const roleOrder: Record<PaletteRole, number> = { dominant: 0, secondary: 1, accent: 2 };
+  const orderedMeta = [...meta].sort((a, b) => (roleOrder[a.role || "dominant"] ?? 3) - (roleOrder[b.role || "dominant"] ?? 3));
+  const perColor = orderedMeta.map(sentenceForColor).join(" ");
 
   let closing: string;
   if (warmLean === "warm" && toneLean !== "deep") {
@@ -2104,7 +2125,12 @@ function AdminSpaceColorPaletteModal({
         setColors(
           parsed.colors
             .filter((c: any) => c && typeof c.hex === "string" && typeof c.name === "string")
-            .map((c: any) => ({ hex: c.hex, name: c.name }))
+            .map((c: any) => ({
+              hex: c.hex,
+              name: c.name,
+              ...(c.role === "dominant" || c.role === "secondary" || c.role === "accent" ? { role: c.role as PaletteRole } : {}),
+              ...(typeof c.share === "number" ? { share: c.share } : {}),
+            }))
         );
       }
       if (typeof parsed?.feel === "string") setFeel(parsed.feel);
@@ -2166,14 +2192,26 @@ function AdminSpaceColorPaletteModal({
         return;
       }
       buckets.sort((a, b) => b.count - a.count);
-      const top3Meta: PaletteColorMeta[] = buckets.slice(0, 3).map(b => {
-        const r = Math.round(b.r / b.count), g = Math.round(b.g / b.count), bl = Math.round(b.b / b.count);
-        const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
-        const max = Math.max(r, g, bl), min = Math.min(r, g, bl);
+      type EnrichedBucket = {
+        hex: string;
+        name: string;
+        r: number; g: number; b: number;
+        hue: number; sat: number; light: number;
+        count: number;
+        family: PaletteColorMeta["family"];
+        tone: PaletteColorMeta["tone"];
+        warmth: PaletteColorMeta["warmth"];
+      };
+      const enrichBucket = (bucket: { r: number; g: number; b: number; count: number }): EnrichedBucket => {
+        const r = Math.round(bucket.r / bucket.count);
+        const g = Math.round(bucket.g / bucket.count);
+        const b = Math.round(bucket.b / bucket.count);
+        const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
         let hue = 0;
         if (max !== min) {
-          if (max === r) hue = ((g - bl) / (max - min)) * 60;
-          else if (max === g) hue = (2 + (bl - r) / (max - min)) * 60;
+          if (max === r) hue = ((g - b) / (max - min)) * 60;
+          else if (max === g) hue = (2 + (b - r) / (max - min)) * 60;
           else hue = (4 + (r - g) / (max - min)) * 60;
           if (hue < 0) hue += 360;
         }
@@ -2189,14 +2227,67 @@ function AdminSpaceColorPaletteModal({
         else if (hue < 260) name = light > 0.5 ? "Soft Blue" : "Deep Navy";
         else if (hue < 300) name = light > 0.5 ? "Soft Lavender" : "Rich Plum";
         else name = light > 0.5 ? "Dusty Rose" : "Deep Mauve";
-        return { hex, name, ...classifyColor(hue, sat, light) };
+        return { hex, name, r, g, b, count: bucket.count, hue, sat, light, ...classifyColor(hue, sat, light) };
+      };
+
+      const enriched = buckets.slice(0, 12).map(enrichBucket);
+      if (enriched.length === 0) {
+        toast({ title: "Couldn't detect any colors", variant: "destructive" });
+        return;
+      }
+
+      const colorDist = (a: EnrichedBucket, b: EnrichedBucket) =>
+        Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b);
+
+      // 60% dominant: most common color (usually walls / largest surface)
+      const dominant = enriched[0];
+
+      // 30% secondary: next most common color that's visually distinct from dominant
+      const secondary =
+        enriched.slice(1).find(c => colorDist(c, dominant) > 60) ||
+        enriched[1] ||
+        dominant;
+
+      // 10% accent: highest-saturation color distinct from both,
+      // falling back to next most common if nothing saturated stands out
+      const accentCandidates = enriched.filter(c => c !== dominant && c !== secondary);
+      const accent =
+        accentCandidates
+          .filter(c => colorDist(c, dominant) > 80 && colorDist(c, secondary) > 60)
+          .sort((a, b) => b.sat - a.sat)[0] ||
+        accentCandidates.sort((a, b) => b.sat - a.sat)[0] ||
+        enriched[2] ||
+        secondary;
+
+      const picked = [
+        { bucket: dominant, role: "dominant" as PaletteRole },
+        { bucket: secondary, role: "secondary" as PaletteRole },
+        { bucket: accent, role: "accent" as PaletteRole },
+      ];
+      // De-dupe in case the space has fewer than 3 distinct colors
+      const seenHex = new Set<string>();
+      const uniquePicked = picked.filter(p => {
+        if (seenHex.has(p.bucket.hex)) return false;
+        seenHex.add(p.bucket.hex);
+        return true;
       });
-      const top3: PaletteColor[] = top3Meta.map(({ hex, name }) => ({ hex, name }));
-      const copy = buildPaletteCopy(top3Meta);
-      setColors(top3);
+
+      const pickedMeta: PaletteColorMeta[] = uniquePicked.map(({ bucket, role }) => ({
+        hex: bucket.hex,
+        name: bucket.name,
+        role,
+        share: ROLE_SHARE[role],
+        family: bucket.family,
+        tone: bucket.tone,
+        warmth: bucket.warmth,
+      }));
+
+      const pickedSave: PaletteColor[] = pickedMeta.map(({ hex, name, role, share }) => ({ hex, name, role, share }));
+      const copy = buildPaletteCopy(pickedMeta);
+      setColors(pickedSave);
       setFeel(copy.feel);
       setExplanation(copy.explanation);
-      toast({ title: `Generated ${top3.length} colors from ${analyzed} photo${analyzed > 1 ? "s" : ""}` });
+      toast({ title: `Generated ${pickedSave.length} colors from ${analyzed} photo${analyzed > 1 ? "s" : ""}` });
     } finally {
       setGenerating(false);
     }
@@ -2254,28 +2345,36 @@ function AdminSpaceColorPaletteModal({
           </Button>
 
           <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-wider text-gray-400">60 / 30 / 10 rule</p>
             {colors.map((c, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={c.hex}
-                  onChange={(e) => updateColor(i, { hex: e.target.value })}
-                  className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
-                />
-                <Input
-                  value={c.hex}
-                  onChange={(e) => updateColor(i, { hex: e.target.value })}
-                  className="w-24 font-mono text-xs"
-                />
-                <Input
-                  value={c.name}
-                  onChange={(e) => updateColor(i, { name: e.target.value })}
-                  placeholder="Color name"
-                  className="flex-1 text-xs"
-                />
-                <Button type="button" size="sm" variant="ghost" onClick={() => removeColor(i)} className="text-red-500 h-8 w-8 p-0">
-                  <X className="w-4 h-4" />
-                </Button>
+              <div key={i} className="space-y-1">
+                {c.role && (
+                  <span className="inline-block text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {ROLE_LABEL[c.role]}
+                  </span>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={c.hex}
+                    onChange={(e) => updateColor(i, { hex: e.target.value })}
+                    className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
+                  />
+                  <Input
+                    value={c.hex}
+                    onChange={(e) => updateColor(i, { hex: e.target.value })}
+                    className="w-24 font-mono text-xs"
+                  />
+                  <Input
+                    value={c.name}
+                    onChange={(e) => updateColor(i, { name: e.target.value })}
+                    placeholder="Color name"
+                    className="flex-1 text-xs"
+                  />
+                  <Button type="button" size="sm" variant="ghost" onClick={() => removeColor(i)} className="text-red-500 h-8 w-8 p-0">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
             <Button type="button" size="sm" variant="outline" onClick={addColor} className="w-full">
