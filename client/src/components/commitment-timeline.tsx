@@ -22,7 +22,7 @@ export function CommitmentTimeline({
   const hourlyDiscounted = discountPercent > 0 ? Math.round(hourly * (1 - discountPercent / 100)) : hourly;
   const dailyDiscounted = discountPercent > 0 ? Math.round(daily * (1 - discountPercent / 100)) : daily;
 
-  const WEEKS = Math.min(12, Math.max(8, minCommitmentWeeks + 2, discountAfterWeeks + 3));
+  const WEEKS = 12;
   const weeks = Array.from({ length: WEEKS }, (_, i) => {
     const weekNum = i + 1;
     const required = minCommitmentWeeks > 1 && weekNum <= minCommitmentWeeks;
