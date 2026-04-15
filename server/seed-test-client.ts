@@ -388,11 +388,8 @@ export async function seedTestClient() {
 export async function reseedTestClient() {
   console.log("Re-seeding test client...");
 
-  const [user] = await db.select().from(users).where(eq(users.email, TEST_EMAIL));
-  if (!user) { console.log(`Test client not found: ${TEST_EMAIL}`); return; }
-  const userId = user.id;
-
-  // Delete in reverse dependency order
+  // Delete in reverse dependency order. All deletes use fixed test IDs,
+  // so it is safe to run even if the user row does not exist yet.
   await db.delete(spaceReviews).where(eq(spaceReviews.id, "test-space-review-1"));
   await db.delete(shootReviews).where(eq(shootReviews.id, "test-shoot-review-1"));
   await db.delete(adminMessages).where(eq(adminMessages.conversationId, TEST_ADMIN_CONV));

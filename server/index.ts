@@ -10,7 +10,7 @@ import { setupAuth, registerAuthRoutes } from "./auth";
 import { seedPortfolioIfEmpty } from "./seed-portfolio";
 import { fixPortfolioImageExtensions, normalizeRecurringDiscountAfter } from "./migrations";
 import { seedSpacesIfEmpty } from "./seed-spaces";
-import { seedTestClient } from "./seed-test-client";
+import { reseedTestClient } from "./seed-test-client";
 import { seedTeamMembersIfEmpty } from "./seed-team-members";
 import { seedFeaturedProfessionals } from "./seed-featured";
 import { startPayoutProcessing } from "./payouts";
@@ -247,7 +247,7 @@ app.post("/api/stripe/webhook", async (req, res) => {
       Promise.all([
         seedPortfolioIfEmpty().catch(err => console.warn('Portfolio seed error (non-fatal):', err.message)),
         seedSpacesIfEmpty().catch(err => console.warn('Spaces seed error (non-fatal):', err.message)),
-        seedTestClient().catch(err => console.warn('Test client seed error (non-fatal):', err.message)),
+        reseedTestClient().catch(err => console.warn('Test client seed error (non-fatal):', err.message)),
         seedTeamMembersIfEmpty().catch(err => console.warn('Team members seed error (non-fatal):', err.message)),
         seedFeaturedProfessionals().catch(err => console.warn('Featured professionals seed error (non-fatal):', err.message)),
         fixPortfolioImageExtensions().catch(err => console.warn('Migration error (non-fatal):', err.message)),
