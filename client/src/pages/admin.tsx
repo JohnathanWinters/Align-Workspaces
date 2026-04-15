@@ -1966,6 +1966,117 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
 
 type PaletteColor = { hex: string; name: string };
 
+type PaletteColorMeta = PaletteColor & {
+  family: "neutral" | "red" | "orange" | "amber" | "green" | "teal" | "blue" | "purple" | "pink";
+  tone: "light" | "mid" | "dark";
+  warmth: "warm" | "cool" | "neutral";
+};
+
+function classifyColor(hue: number, sat: number, light: number): Pick<PaletteColorMeta, "family" | "tone" | "warmth"> {
+  const tone: PaletteColorMeta["tone"] = light > 0.65 ? "light" : light < 0.4 ? "dark" : "mid";
+  let family: PaletteColorMeta["family"];
+  let warmth: PaletteColorMeta["warmth"] = "neutral";
+  if (sat < 0.15) {
+    family = "neutral";
+  } else if (hue < 15 || hue >= 345) { family = "red"; warmth = "warm"; }
+  else if (hue < 40) { family = "orange"; warmth = "warm"; }
+  else if (hue < 70) { family = "amber"; warmth = "warm"; }
+  else if (hue < 160) { family = "green"; warmth = "neutral"; }
+  else if (hue < 200) { family = "teal"; warmth = "cool"; }
+  else if (hue < 260) { family = "blue"; warmth = "cool"; }
+  else if (hue < 300) { family = "purple"; warmth = "cool"; }
+  else { family = "pink"; warmth = "warm"; }
+  return { family, tone, warmth };
+}
+
+function sentenceForColor(c: PaletteColorMeta): string {
+  const n = c.name;
+  const key = `${c.family}-${c.tone}`;
+  const map: Record<string, string> = {
+    "neutral-light": `${n} provides an airy, uncluttered backdrop that makes the space feel open and welcoming.`,
+    "neutral-mid": `${n} brings a grounding, calm foundation that keeps attention on the work itself.`,
+    "neutral-dark": `${n} adds quiet weight and structure, giving the room a sense of focus and intention.`,
+    "red-light": `${n} introduces a soft, human warmth that invites conversation and puts guests at ease.`,
+    "red-mid": `${n} adds a confident accent that brings personality and emotional presence to the space.`,
+    "red-dark": `${n} contributes rich depth and gravitas, anchoring the palette with quiet intensity.`,
+    "orange-light": `${n} brings a welcoming, sunlit energy that makes the space feel approachable and alive.`,
+    "orange-mid": `${n} adds an earthy warmth that feels both friendly and grounded.`,
+    "orange-dark": `${n} anchors the palette with rich, toasted warmth and a lived-in character.`,
+    "amber-light": `${n} contributes a soft golden glow that radiates comfort and optimism.`,
+    "amber-mid": `${n} adds a mellow, honeyed warmth that feels settled and timeless.`,
+    "amber-dark": `${n} brings a deep, burnished warmth that communicates experience and craft.`,
+    "green-light": `${n} offers a fresh, natural quality that promotes calm and restoration.`,
+    "green-mid": `${n} introduces a balanced, organic presence that feels quietly reassuring.`,
+    "green-dark": `${n} adds an earthy, grounded weight that conveys stability and quiet confidence.`,
+    "teal-light": `${n} contributes an airy, refreshing note that keeps the space feeling clear and alert.`,
+    "teal-mid": `${n} adds a cool, balanced depth that is both calming and composed.`,
+    "teal-dark": `${n} introduces a contemplative, mineral depth that feels sophisticated and steady.`,
+    "blue-light": `${n} brings a breezy, open quality that communicates clarity and trust.`,
+    "blue-mid": `${n} adds a steady, reliable tone that grounds the space in quiet professionalism.`,
+    "blue-dark": `${n} provides a commanding foundation that conveys focus, authority, and calm.`,
+    "purple-light": `${n} softens the palette with a gentle, imaginative touch.`,
+    "purple-mid": `${n} introduces a note of refined creativity and thoughtful presence.`,
+    "purple-dark": `${n} adds a luxurious, contemplative depth that feels both private and considered.`,
+    "pink-light": `${n} softens the palette with gentle warmth, making the room feel welcoming and kind.`,
+    "pink-mid": `${n} contributes a quiet, emotional warmth that draws people in.`,
+    "pink-dark": `${n} adds a mature, rosy depth that feels intimate and grounded.`,
+  };
+  return map[key] || `${n} adds distinct character and visual interest to the space.`;
+}
+
+function buildPaletteCopy(meta: PaletteColorMeta[]): { feel: string; explanation: string } {
+  if (meta.length === 0) return { feel: "", explanation: "" };
+  const warmCount = meta.filter(m => m.warmth === "warm").length;
+  const coolCount = meta.filter(m => m.warmth === "cool").length;
+  const darkCount = meta.filter(m => m.tone === "dark").length;
+  const lightCount = meta.filter(m => m.tone === "light").length;
+  const neutralCount = meta.filter(m => m.family === "neutral").length;
+
+  const warmLean = warmCount > coolCount ? "warm" : coolCount > warmCount ? "cool" : "balanced";
+  const toneLean = darkCount > lightCount ? "deep" : lightCount > darkCount ? "light" : "mid";
+
+  let feel: string;
+  if (neutralCount >= 2) {
+    feel = "A refined, neutral palette built for clarity and focus";
+  } else if (warmLean === "warm" && toneLean === "light") {
+    feel = "Warm, welcoming tones that feel open and inviting";
+  } else if (warmLean === "warm" && toneLean === "deep") {
+    feel = "Rich, grounded warmth with a comfortable, lived-in character";
+  } else if (warmLean === "warm") {
+    feel = "Earthy, approachable warmth that feels human and relaxed";
+  } else if (warmLean === "cool" && toneLean === "light") {
+    feel = "Cool, refreshing tones that feel clean and composed";
+  } else if (warmLean === "cool" && toneLean === "deep") {
+    feel = "Deep, contemplative tones that project focus and quiet authority";
+  } else if (warmLean === "cool") {
+    feel = "Cool, steady tones that feel composed and trustworthy";
+  } else if (toneLean === "deep") {
+    feel = "Grounded, measured tones that convey depth and quiet strength";
+  } else if (toneLean === "light") {
+    feel = "Soft, balanced tones that feel calm and approachable";
+  } else {
+    feel = "A balanced, versatile palette that reads as thoughtful and intentional";
+  }
+
+  const perColor = meta.map(sentenceForColor).join(" ");
+
+  let closing: string;
+  if (warmLean === "warm" && toneLean !== "deep") {
+    closing = "Together, these colors create a warm, human atmosphere that works well for client-facing sessions, wellness work, and conversations that benefit from a softer emotional tone.";
+  } else if (warmLean === "warm" && toneLean === "deep") {
+    closing = "Together, these colors create a rich, enveloping atmosphere that suits focused work, intimate meetings, and spaces where people want to feel held and comfortable.";
+  } else if (warmLean === "cool" && toneLean !== "deep") {
+    closing = "Together, these colors create a calm, clear atmosphere that suits professional work, strategy sessions, and settings where composure and trust matter.";
+  } else if (warmLean === "cool" && toneLean === "deep") {
+    closing = "Together, these colors create a composed, authoritative atmosphere that suits executive work, serious discussions, and environments where focus and gravitas are essential.";
+  } else {
+    closing = "Together, these colors create a grounded, versatile atmosphere that adapts to a wide range of professional sessions and client interactions.";
+  }
+
+  const explanation = [perColor, closing].join(" ").replace(/\u2014|\u2013/g, ",").replace(/\s+,/g, ",").replace(/\s+/g, " ").trim();
+  return { feel, explanation };
+}
+
 function AdminSpaceColorPaletteModal({
   space,
   token,
@@ -2055,7 +2166,7 @@ function AdminSpaceColorPaletteModal({
         return;
       }
       buckets.sort((a, b) => b.count - a.count);
-      const top3 = buckets.slice(0, 3).map(b => {
+      const top3Meta: PaletteColorMeta[] = buckets.slice(0, 3).map(b => {
         const r = Math.round(b.r / b.count), g = Math.round(b.g / b.count), bl = Math.round(b.b / b.count);
         const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
         const max = Math.max(r, g, bl), min = Math.min(r, g, bl);
@@ -2078,9 +2189,13 @@ function AdminSpaceColorPaletteModal({
         else if (hue < 260) name = light > 0.5 ? "Soft Blue" : "Deep Navy";
         else if (hue < 300) name = light > 0.5 ? "Soft Lavender" : "Rich Plum";
         else name = light > 0.5 ? "Dusty Rose" : "Deep Mauve";
-        return { hex, name };
+        return { hex, name, ...classifyColor(hue, sat, light) };
       });
+      const top3: PaletteColor[] = top3Meta.map(({ hex, name }) => ({ hex, name }));
+      const copy = buildPaletteCopy(top3Meta);
       setColors(top3);
+      setFeel(copy.feel);
+      setExplanation(copy.explanation);
       toast({ title: `Generated ${top3.length} colors from ${analyzed} photo${analyzed > 1 ? "s" : ""}` });
     } finally {
       setGenerating(false);
@@ -2173,7 +2288,7 @@ function AdminSpaceColorPaletteModal({
             <Input
               value={feel}
               onChange={(e) => setFeel(e.target.value)}
-              placeholder="e.g. Calming earth tones — ideal for wellness"
+              placeholder="e.g. Calming earth tones, ideal for wellness"
               className="text-xs"
             />
           </div>
