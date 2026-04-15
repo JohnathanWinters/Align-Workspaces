@@ -730,6 +730,9 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
   const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
     ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
     : null;
+  const recurringPriceDay = formData.pricePerDay && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
+    ? (Number(formData.pricePerDay) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
+    : null;
 
   const update = (field: string, value: string) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -1126,11 +1129,53 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     </div>
                     <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "hourly" ? "border-2 border-emerald-600 bg-emerald-50" : "border-stone-200 bg-white opacity-40"}`}>
                       <p className="text-[10px] uppercase tracking-wider text-emerald-600 font-medium mb-2">Weekly Regulars</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="text-emerald-400 text-lg">$</span>
-                        <span className="text-2xl font-bold text-emerald-600">{recurringPrice || (formData.pricePerHour || "0")}</span>
-                      </div>
-                      <p className="text-[10px] text-stone-400 mt-1">per hour for repeat renters</p>
+                      {(() => {
+                        const hasHourly = !!formData.pricePerHour && Number(formData.pricePerHour) > 0;
+                        const hasDaily = !!formData.pricePerDay && Number(formData.pricePerDay) > 0;
+                        const hourlyShown = recurringPrice || formData.pricePerHour;
+                        const dailyShown = recurringPriceDay || formData.pricePerDay;
+                        if (hasHourly && hasDaily) {
+                          return (
+                            <div className="flex items-center justify-center gap-3">
+                              <div>
+                                <div className="flex items-baseline justify-center gap-0.5">
+                                  <span className="text-emerald-400 text-sm">$</span>
+                                  <span className="text-xl font-bold text-emerald-600">{hourlyShown}</span>
+                                </div>
+                                <p className="text-[9px] text-stone-400">/hr</p>
+                              </div>
+                              <div className="w-px h-8 bg-emerald-200" />
+                              <div>
+                                <div className="flex items-baseline justify-center gap-0.5">
+                                  <span className="text-emerald-400 text-sm">$</span>
+                                  <span className="text-xl font-bold text-emerald-600">{dailyShown}</span>
+                                </div>
+                                <p className="text-[9px] text-stone-400">/day</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (hasDaily) {
+                          return (
+                            <>
+                              <div className="flex items-center justify-center gap-1">
+                                <span className="text-emerald-400 text-lg">$</span>
+                                <span className="text-2xl font-bold text-emerald-600">{dailyShown}</span>
+                              </div>
+                              <p className="text-[10px] text-stone-400 mt-1">per day for repeat renters</p>
+                            </>
+                          );
+                        }
+                        return (
+                          <>
+                            <div className="flex items-center justify-center gap-1">
+                              <span className="text-emerald-400 text-lg">$</span>
+                              <span className="text-2xl font-bold text-emerald-600">{hourlyShown || "0"}</span>
+                            </div>
+                            <p className="text-[10px] text-stone-400 mt-1">per hour for repeat renters</p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
