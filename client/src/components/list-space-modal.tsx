@@ -1070,7 +1070,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     {formData.bookingTypes === "recurring" && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
                         <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>Your space will only accept recurring weekly bookings. Single sessions will not be available.</span>
+                        <span>Your space will only accept recurring weekly bookings. Renters can still book an hourly slot or a full day, but it has to repeat every week.</span>
                       </div>
                     )}
                   </div>
