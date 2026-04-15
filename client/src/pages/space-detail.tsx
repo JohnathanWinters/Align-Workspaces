@@ -438,6 +438,59 @@ function AnimatedPrice({ value, prefix = "$" }: { value: number; prefix?: string
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DAY_KEYS: (keyof WeekSchedule)[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
+function SpaceColorPaletteBlock({ paletteData }: {
+  paletteData: { colors: { hex: string; name: string }[]; feel?: string; explanation?: string };
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasMore = !!paletteData.explanation;
+
+  return (
+    <div className="mb-6 p-4 bg-stone-50/80 rounded-xl border border-stone-100" data-testid="space-color-palette">
+      <div className="flex items-center gap-2 mb-3">
+        <Palette className="w-4 h-4 text-[#c4956a]" />
+        <h2 className="text-sm font-semibold text-stone-800">Space Color Palette</h2>
+      </div>
+      <div className="flex items-center gap-5 mb-2">
+        {paletteData.colors.slice(0, 3).map((c, i) => (
+          <div key={i} className="flex flex-col items-center gap-1.5">
+            <div className="w-10 h-10 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: c.hex }} />
+            <span className="text-[10px] text-stone-500 font-medium">{c.name}</span>
+          </div>
+        ))}
+      </div>
+      {paletteData.feel && (
+        <p className="text-xs text-stone-500 italic leading-relaxed">{paletteData.feel}</p>
+      )}
+      {hasMore && (
+        <>
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.p
+                initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+                exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="text-xs text-stone-600 leading-relaxed overflow-hidden"
+              >
+                {paletteData.explanation}
+              </motion.p>
+            )}
+          </AnimatePresence>
+          <button
+            type="button"
+            onClick={() => setExpanded(v => !v)}
+            className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-[#c4956a] hover:text-[#b8845c] transition-colors"
+            data-testid="button-palette-toggle"
+          >
+            {expanded ? "Hide details" : "Show full palette story"}
+            <ChevronDown className={`w-3 h-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function RecurringBookingPopup({ space, onClose, schedule }: {
   space: Space; onClose: () => void; schedule: WeekSchedule | null;
 }) {
@@ -2278,25 +2331,9 @@ export default function SpaceDetailPage({ params }: { params: { slug: string } }
                 </div>
               )}
 
-              {/* ── Color palette (trimmed — no explanation paragraph) ── */}
+              {/* ── Color palette (expandable) ── */}
               {paletteData && paletteData.colors?.length > 0 && (
-                <div className="mb-6 p-4 bg-stone-50/80 rounded-xl border border-stone-100" data-testid="space-color-palette">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Palette className="w-4 h-4 text-[#c4956a]" />
-                    <h2 className="text-sm font-semibold text-stone-800">Space Color Palette</h2>
-                  </div>
-                  <div className="flex items-center gap-5 mb-2">
-                    {paletteData.colors.slice(0, 3).map((c, i) => (
-                      <div key={i} className="flex flex-col items-center gap-1.5">
-                        <div className="w-10 h-10 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: c.hex }} />
-                        <span className="text-[10px] text-stone-500 font-medium">{c.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {paletteData.feel && (
-                    <p className="text-xs text-stone-500 italic leading-relaxed">{paletteData.feel}</p>
-                  )}
-                </div>
+                <SpaceColorPaletteBlock paletteData={paletteData} />
               )}
 
               {/* ── Contact CTA (replaces newsletter) ── */}
