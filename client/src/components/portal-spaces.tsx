@@ -929,7 +929,7 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
     recurringMinBookings: "1",
     recurringDiscountPercent: "0",
     recurringDiscountAfter: "0",
-    bookingTypes: "both",
+    bookingTypes: "hourly",
   });
   const [newAmenitiesTags, setNewAmenitiesTags] = useState<string[]>([]);
 

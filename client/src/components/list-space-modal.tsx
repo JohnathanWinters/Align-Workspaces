@@ -612,7 +612,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
     name: "", type: "therapy", tags: ["therapy"] as string[], description: "", shortDescription: "",
     address: "", city: "", state: "FL", zipCode: "", neighborhood: "", pricePerHour: "", pricePerDay: "",
     amenities: "", targetProfession: "", availableHours: "", hostName: "",
-    bookingTypes: "both", recurringMinBookings: "1", recurringDiscountPercent: "0", recurringDiscountAfter: "0",
+    bookingTypes: "hourly", recurringMinBookings: "1", recurringDiscountPercent: "0", recurringDiscountAfter: "0",
   });
   const [amenitiesTags, setAmenitiesTags] = useState<string[]>([]);
 
