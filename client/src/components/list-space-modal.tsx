@@ -1104,7 +1104,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
 
                   {/* Pricing cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className={`rounded-xl border-2 p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-40"}`}>
+                    <div className="rounded-xl border-2 p-4 text-center border-stone-900 bg-stone-50">
                       <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Hourly Rate</p>
                       <div className="flex items-center justify-center gap-1">
                         <span className="text-stone-400 text-lg">$</span>
@@ -1114,7 +1114,7 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                       </div>
                       <p className="text-[10px] text-stone-400 mt-1">per hour</p>
                     </div>
-                    <div className={`rounded-xl border p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-200 bg-white" : "border-stone-200 bg-white opacity-40"}`}>
+                    <div className="rounded-xl border p-4 text-center border-stone-200 bg-white">
                       <p className="text-[10px] uppercase tracking-wider text-stone-500 font-medium mb-2">Daily Rate</p>
                       <div className="flex items-center justify-center gap-1">
                         <span className="text-stone-400 text-lg">$</span>
@@ -1149,10 +1149,15 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                             <Input type="number" min="0" max="50" placeholder="e.g. 10" value={formData.recurringDiscountPercent} onChange={e => update("recurringDiscountPercent", e.target.value)} />
                             <span className="text-sm text-stone-400 flex-shrink-0">% off</span>
                           </div>
-                          {formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0 && formData.pricePerHour && (
-                            <p className="text-[10px] text-emerald-600 mt-1">
-                              They'd pay ${(Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)}/hr instead of ${formData.pricePerHour}/hr
-                            </p>
+                          {Number(formData.recurringDiscountPercent) > 0 && (formData.pricePerHour || formData.pricePerDay) && (
+                            <div className="text-[10px] text-emerald-600 mt-1 space-y-0.5">
+                              {formData.pricePerHour && (
+                                <p>Hourly: ${(Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)}/hr instead of ${formData.pricePerHour}/hr</p>
+                              )}
+                              {formData.pricePerDay && (
+                                <p>Daily: ${(Number(formData.pricePerDay) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)}/day instead of ${formData.pricePerDay}/day</p>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div>
