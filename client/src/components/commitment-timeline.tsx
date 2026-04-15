@@ -43,11 +43,11 @@ export function CommitmentTimeline({
           </span>
         )}
       </div>
-      <div className="flex gap-1 overflow-x-auto pb-1">
+      <div className="grid grid-cols-4 gap-1.5">
         {weeks.map(({ weekNum, required, discounted }) => (
           <div
             key={weekNum}
-            className={`flex-shrink-0 w-14 rounded-md p-1.5 text-center border ${
+            className={`rounded-md p-1.5 text-center border ${
               required ? "border-stone-900 border-2" : "border-stone-200 border-dashed"
             } ${discounted ? "bg-emerald-50" : "bg-white"}`}
           >
