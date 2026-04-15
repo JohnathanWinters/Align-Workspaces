@@ -1964,6 +1964,244 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
   );
 }
 
+type PaletteColor = { hex: string; name: string };
+
+function AdminSpaceColorPaletteModal({
+  space,
+  token,
+  onClose,
+  onSaved,
+}: {
+  space: any;
+  token: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const [colors, setColors] = useState<PaletteColor[]>([]);
+  const [feel, setFeel] = useState("");
+  const [explanation, setExplanation] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!space?.colorPalette) return;
+    try {
+      let parsed = JSON.parse(space.colorPalette);
+      if (Array.isArray(parsed)) parsed = { colors: parsed };
+      if (parsed && Array.isArray(parsed.colors)) {
+        setColors(
+          parsed.colors
+            .filter((c: any) => c && typeof c.hex === "string" && typeof c.name === "string")
+            .map((c: any) => ({ hex: c.hex, name: c.name }))
+        );
+      }
+      if (typeof parsed?.feel === "string") setFeel(parsed.feel);
+      if (typeof parsed?.explanation === "string") setExplanation(parsed.explanation);
+    } catch {}
+  }, [space?.id]);
+
+  const generateFromPhotos = async () => {
+    const images: string[] = space?.imageUrls || [];
+    if (images.length === 0) {
+      toast({ title: "No photos to analyze", variant: "destructive" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const buckets: { r: number; g: number; b: number; count: number }[] = [];
+      let analyzed = 0;
+      for (const src of images.slice(0, 5)) {
+        try {
+          const img = document.createElement("img");
+          img.crossOrigin = "anonymous";
+          img.src = src;
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error("load failed"));
+          });
+          const canvas = document.createElement("canvas");
+          const size = 120;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) continue;
+          ctx.drawImage(img, 0, 0, size, size);
+          const data = ctx.getImageData(0, 0, size, size).data;
+          for (let i = 0; i < data.length; i += 16) {
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const sat = max === 0 ? 0 : (max - min) / max;
+            if (sat < 0.08 && max > 200) continue;
+            if (max < 30) continue;
+            let merged = false;
+            for (const bucket of buckets) {
+              const dr = Math.abs(bucket.r / bucket.count - r);
+              const dg = Math.abs(bucket.g / bucket.count - g);
+              const db = Math.abs(bucket.b / bucket.count - b);
+              if (dr + dg + db < 80) {
+                bucket.r += r; bucket.g += g; bucket.b += b; bucket.count++;
+                merged = true;
+                break;
+              }
+            }
+            if (!merged) buckets.push({ r, g, b, count: 1 });
+          }
+          analyzed++;
+        } catch {}
+      }
+      if (analyzed === 0) {
+        toast({ title: "Couldn't load photos", description: "Images may be blocked by CORS.", variant: "destructive" });
+        return;
+      }
+      buckets.sort((a, b) => b.count - a.count);
+      const top3 = buckets.slice(0, 3).map(b => {
+        const r = Math.round(b.r / b.count), g = Math.round(b.g / b.count), bl = Math.round(b.b / b.count);
+        const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
+        const max = Math.max(r, g, bl), min = Math.min(r, g, bl);
+        let hue = 0;
+        if (max !== min) {
+          if (max === r) hue = ((g - bl) / (max - min)) * 60;
+          else if (max === g) hue = (2 + (bl - r) / (max - min)) * 60;
+          else hue = (4 + (r - g) / (max - min)) * 60;
+          if (hue < 0) hue += 360;
+        }
+        const light = (max + min) / 2 / 255;
+        const sat = max === 0 ? 0 : (max - min) / max;
+        let name = "Neutral";
+        if (sat < 0.15) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
+        else if (hue < 15 || hue >= 345) name = light > 0.5 ? "Soft Rose" : "Deep Red";
+        else if (hue < 45) name = light > 0.5 ? "Warm Sand" : "Burnt Sienna";
+        else if (hue < 70) name = light > 0.5 ? "Golden Honey" : "Rich Amber";
+        else if (hue < 150) name = light > 0.5 ? "Sage Green" : "Forest Green";
+        else if (hue < 200) name = light > 0.5 ? "Sky Blue" : "Ocean Teal";
+        else if (hue < 260) name = light > 0.5 ? "Soft Blue" : "Deep Navy";
+        else if (hue < 300) name = light > 0.5 ? "Soft Lavender" : "Rich Plum";
+        else name = light > 0.5 ? "Dusty Rose" : "Deep Mauve";
+        return { hex, name };
+      });
+      setColors(top3);
+      toast({ title: `Generated ${top3.length} colors from ${analyzed} photo${analyzed > 1 ? "s" : ""}` });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const updateColor = (i: number, patch: Partial<PaletteColor>) => {
+    setColors(prev => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  };
+
+  const addColor = () => setColors(prev => [...prev, { hex: "#8B7355", name: "New Color" }]);
+  const removeColor = (i: number) => setColors(prev => prev.filter((_, idx) => idx !== i));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const payload: { colors: PaletteColor[]; feel?: string; explanation?: string } = { colors };
+      if (feel.trim()) payload.feel = feel.trim();
+      if (explanation.trim()) payload.explanation = explanation.trim();
+      const res = await fetch(`/api/admin/spaces/${space.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ colorPalette: colors.length > 0 ? JSON.stringify(payload) : null }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Save failed");
+      }
+      toast({ title: "Palette saved" });
+      onSaved();
+      onClose();
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogTitle className="flex items-center gap-2">
+          <Palette className="w-4 h-4" /> Color Palette — {space.name}
+        </DialogTitle>
+        <div className="space-y-4 mt-2">
+          <Button
+            type="button"
+            onClick={generateFromPhotos}
+            disabled={generating}
+            variant="outline"
+            className="w-full"
+            data-testid={`button-generate-palette-${space.id}`}
+          >
+            {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+            Generate from photos
+          </Button>
+
+          <div className="space-y-2">
+            {colors.map((c, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={c.hex}
+                  onChange={(e) => updateColor(i, { hex: e.target.value })}
+                  className="w-10 h-10 rounded border border-gray-200 cursor-pointer"
+                />
+                <Input
+                  value={c.hex}
+                  onChange={(e) => updateColor(i, { hex: e.target.value })}
+                  className="w-24 font-mono text-xs"
+                />
+                <Input
+                  value={c.name}
+                  onChange={(e) => updateColor(i, { name: e.target.value })}
+                  placeholder="Color name"
+                  className="flex-1 text-xs"
+                />
+                <Button type="button" size="sm" variant="ghost" onClick={() => removeColor(i)} className="text-red-500 h-8 w-8 p-0">
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={addColor} className="w-full">
+              <Plus className="w-3.5 h-3.5 mr-1" /> Add color
+            </Button>
+          </div>
+
+          <div>
+            <Label className="text-xs text-gray-500">Feel (short tagline)</Label>
+            <Input
+              value={feel}
+              onChange={(e) => setFeel(e.target.value)}
+              placeholder="e.g. Calming earth tones — ideal for wellness"
+              className="text-xs"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs text-gray-500">Explanation</Label>
+            <Textarea
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              placeholder="Why these colors work for this space..."
+              rows={4}
+              className="text-xs"
+            />
+          </div>
+
+          <div className="flex gap-2 justify-end pt-2">
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="button" onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Save palette
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AdminTransferOwnership({ space, token, onUpdate }: { space: any; token: string; onUpdate: () => void }) {
   const { toast } = useToast();
   const [showTransfer, setShowTransfer] = useState(false);
@@ -2738,6 +2976,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [palettingSpaceId, setPalettingSpaceId] = useState<string | null>(null);
 
   const loadSpaces = async () => {
     setLoading(true);
@@ -3281,6 +3520,10 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                               <ShieldCheck className="w-3.5 h-3.5 mr-1" />
                               Insurance
                             </Button>
+                            <Button size="sm" variant="outline" onClick={() => setPalettingSpaceId(space.id)} className="border-purple-200 text-purple-600 hover:bg-purple-50" data-testid={`button-palette-space-${space.id}`}>
+                              <Palette className="w-3.5 h-3.5 mr-1" />
+                              Palette
+                            </Button>
                             <Button size="sm" variant="outline" onClick={() => handleDeleteSpace(space.id, space.name)} className="border-red-200 text-red-600 hover:bg-red-50" data-testid={`button-delete-space-${space.id}`}>
                               <Trash2 className="w-3.5 h-3.5 mr-1" />
                               Delete
@@ -3299,6 +3542,17 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
           </div>
         )}
       </main>
+      {palettingSpaceId && (() => {
+        const s = spaces.find((x: any) => x.id === palettingSpaceId);
+        return s ? (
+          <AdminSpaceColorPaletteModal
+            space={s}
+            token={token}
+            onClose={() => setPalettingSpaceId(null)}
+            onSaved={loadSpaces}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }

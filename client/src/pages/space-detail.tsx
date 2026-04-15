@@ -442,9 +442,20 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
   space: Space; onClose: () => void; schedule: WeekSchedule | null;
 }) {
   const [step, setStep] = useState<"day" | "time" | "confirm">("day");
-  const [dayOfWeek, setDayOfWeek] = useState<number | null>(null);
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startTime, setStartTime] = useState("");
   const [hours, setHours] = useState(1);
+
+  const toggleDay = (i: number) => {
+    setDaysOfWeek(prev => prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i].sort((a, b) => a - b));
+    setStartTime("");
+  };
+
+  const daysLabel = daysOfWeek.length === 0
+    ? ""
+    : daysOfWeek.length === 1
+    ? `${DAY_NAMES[daysOfWeek[0]]}s`
+    : daysOfWeek.map(d => DAY_NAMES[d]).join(" & ") + "s";
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -467,12 +478,12 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
     available: effectiveSchedule[key] !== null && effectiveSchedule[key]!.length > 0,
   }));
 
-  // Available time slots for selected day
-  const timeSlots = dayOfWeek !== null ? (() => {
-    const dayKey = DAY_KEYS[dayOfWeek];
+  // Time slots available on ALL selected days (intersection)
+  const slotsPerDay = (dayIndex: number): Set<string> => {
+    const dayKey = DAY_KEYS[dayIndex];
     const blocks = effectiveSchedule[dayKey];
-    if (!blocks || blocks.length === 0) return [];
-    const slots: string[] = [];
+    const set = new Set<string>();
+    if (!blocks || blocks.length === 0) return set;
     for (const block of blocks) {
       const [openH, openM] = block.open.split(":").map(Number);
       const [closeH, closeM] = block.close.split(":").map(Number);
@@ -481,17 +492,24 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
       for (let m = openMin; m < closeMin; m += 60) {
         const h = Math.floor(m / 60);
         const mi = m % 60;
-        slots.push(`${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`);
+        set.add(`${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`);
       }
     }
-    return slots;
+    return set;
+  };
+
+  const timeSlots = daysOfWeek.length > 0 ? (() => {
+    const sets = daysOfWeek.map(slotsPerDay);
+    if (sets.length === 0) return [];
+    const [first, ...rest] = sets;
+    return Array.from(first).filter(s => rest.every(r => r.has(s))).sort();
   })() : [];
 
-  const maxHours = startTime && dayOfWeek !== null ? (() => {
-    const dayKey = DAY_KEYS[dayOfWeek];
+  const maxHoursForDay = (dayIndex: number, time: string): number => {
+    const dayKey = DAY_KEYS[dayIndex];
     const blocks = effectiveSchedule[dayKey];
     if (!blocks || blocks.length === 0) return 1;
-    const [startH, startM] = startTime.split(":").map(Number);
+    const [startH, startM] = time.split(":").map(Number);
     const startMin = startH * 60 + startM;
     for (const block of blocks) {
       const [openH, openM] = block.open.split(":").map(Number);
@@ -501,10 +519,16 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
       }
     }
     return 1;
-  })() : 8;
+  };
+
+  const maxHours = startTime && daysOfWeek.length > 0
+    ? Math.min(...daysOfWeek.map(d => maxHoursForDay(d, startTime)))
+    : 8;
 
   const minBookings = (space as any).recurringMinBookings || 1;
-  const weeklyTotal = space.pricePerHour * hours;
+  const dayCount = Math.max(1, daysOfWeek.length);
+  const sessionTotal = space.pricePerHour * hours;
+  const weeklyTotal = sessionTotal * dayCount;
   const discountPercent = (space as any).recurringDiscountPercent || 0;
   const discountAfter = (space as any).recurringDiscountAfter || 0;
   const discountedTotal = discountPercent > 0
@@ -524,12 +548,12 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
   }, []);
 
   const submitRecurring = async () => {
-    if (dayOfWeek === null || !startTime || !startDate) return;
+    if (daysOfWeek.length === 0 || !startTime || !startDate) return;
     try {
       const effectiveEndDate = endDate || (minBookings > 1 ? minEndDate : null);
       const res = await apiRequest("POST", "/api/recurring-bookings", {
         spaceId: space.id,
-        dayOfWeek,
+        daysOfWeek,
         startTime,
         hours,
         startDate,
@@ -576,7 +600,7 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
           </motion.div>
           <h3 className="text-lg font-semibold text-stone-900 mb-1">Request Sent</h3>
           <p className="text-sm text-stone-500 mb-2">
-            Your recurring booking request for <span className="font-medium text-stone-700">{DAY_NAMES[dayOfWeek!]}s at {formatTime(startTime)}</span> has been sent to the host.
+            Your recurring booking request for <span className="font-medium text-stone-700">{daysLabel} at {formatTime(startTime)}</span> has been sent to the host.
           </p>
           <p className="text-xs text-stone-400 mb-6">You'll be notified once the host responds.</p>
           <button onClick={onClose} className="w-full py-3 rounded-xl bg-stone-900 text-white text-sm font-semibold hover:bg-stone-800 transition-colors">Done</button>
@@ -654,27 +678,28 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
           <AnimatePresence mode="wait" custom={direction}>
             {step === "day" && (
               <motion.div key="day" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.15, ease: "easeOut" }} className="space-y-4">
-                <p className="text-sm font-medium text-stone-600 text-center">Which day works best for your weekly session?</p>
+                <p className="text-sm font-medium text-stone-600 text-center">Which days work best? Pick one or more.</p>
                 <div className="grid grid-cols-1 gap-2">
                   {availableDays.filter(d => d.available).map(d => {
                     const daySchedule = effectiveSchedule[d.key];
+                    const selected = daysOfWeek.includes(d.index);
                     return (
                       <button
                         key={d.index}
-                        onClick={() => { setDayOfWeek(d.index); setStartTime(""); }}
+                        onClick={() => toggleDay(d.index)}
                         className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-left ${
-                          dayOfWeek === d.index
+                          selected
                             ? "border-emerald-600 bg-emerald-50 shadow-sm"
                             : "border-stone-200 bg-white hover:border-stone-300"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            dayOfWeek === d.index ? "border-emerald-600 bg-emerald-600" : "border-stone-300"
+                          <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${
+                            selected ? "border-emerald-600 bg-emerald-600" : "border-stone-300"
                           }`}>
-                            {dayOfWeek === d.index && <Check className="w-3 h-3 text-white" />}
+                            {selected && <Check className="w-3 h-3 text-white" />}
                           </div>
-                          <span className={`text-sm font-medium ${dayOfWeek === d.index ? "text-emerald-800" : "text-stone-700"}`}>{d.name}</span>
+                          <span className={`text-sm font-medium ${selected ? "text-emerald-800" : "text-stone-700"}`}>{d.name}</span>
                         </div>
                         {daySchedule && daySchedule.length > 0 && (
                           <span className="text-xs text-stone-400">{daySchedule.map(b => `${formatTime(b.open)} – ${formatTime(b.close)}`).join(", ")}</span>
@@ -685,17 +710,17 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                 </div>
                 <motion.button
                   onClick={() => { setDirection(1); setStep("time"); }}
-                  disabled={dayOfWeek === null}
-                  animate={dayOfWeek !== null
+                  disabled={daysOfWeek.length === 0}
+                  animate={daysOfWeek.length > 0
                     ? { backgroundColor: "#059669", color: "#ffffff", scale: [0.97, 1.02, 1] }
                     : { backgroundColor: "#e7e5e4", color: "#a8a29e", scale: 1 }
                   }
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 ${
-                    dayOfWeek !== null ? "hover:bg-emerald-700 shadow-lg shadow-emerald-600/30" : "cursor-not-allowed"
+                    daysOfWeek.length > 0 ? "hover:bg-emerald-700 shadow-lg shadow-emerald-600/30" : "cursor-not-allowed"
                   }`}
                 >
-                  {dayOfWeek === null ? "Pick a Day" : (
+                  {daysOfWeek.length === 0 ? "Pick at least one day" : (
                     <><span>Next, Pick a Time</span><ChevronRight className="w-5 h-5" /></>
                   )}
                 </motion.button>
@@ -709,7 +734,7 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                     <ArrowLeft className="w-4 h-4 text-stone-500" />
                   </button>
                   <p className="text-sm font-medium text-stone-600">
-                    Every <span className="text-emerald-700 font-semibold">{DAY_NAMES[dayOfWeek!]}</span>, choose your time
+                    Every <span className="text-emerald-700 font-semibold">{daysLabel}</span>, choose your time
                   </p>
                 </div>
 
@@ -769,14 +794,17 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Day</p>
-                      <p className="font-medium text-stone-800">{DAY_NAMES[dayOfWeek!]}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">{daysOfWeek.length > 1 ? "Days" : "Day"}</p>
+                      <p className="font-medium text-stone-800">{daysOfWeek.map(d => DAY_NAMES[d]).join(", ")}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Time</p>
                       <p className="font-medium text-stone-800">{formatTime(startTime)} · {hours} hr{hours !== 1 ? "s" : ""}</p>
                     </div>
                   </div>
+                  {daysOfWeek.length > 1 && (
+                    <p className="text-[10px] text-emerald-700/70">{daysOfWeek.length} sessions per week · {daysLabel} at {formatTime(startTime)}</p>
+                  )}
                 </div>
 
                 {/* Date range */}
@@ -803,7 +831,10 @@ function RecurringBookingPopup({ space, onClose, schedule }: {
                 {/* Pricing */}
                 <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-stone-500">${space.pricePerHour}/hr × {hours} hr{hours !== 1 ? "s" : ""}</span>
+                    <span className="text-stone-500">
+                      ${space.pricePerHour}/hr × {hours} hr{hours !== 1 ? "s" : ""}
+                      {dayCount > 1 && <> × {dayCount} days</>}
+                    </span>
                     <span className="font-medium text-stone-700">${weeklyTotal}</span>
                   </div>
                   {discountPercent > 0 && (

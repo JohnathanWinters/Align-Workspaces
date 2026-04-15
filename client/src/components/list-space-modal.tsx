@@ -247,8 +247,12 @@ export function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: 
       fd.append("document", file);
       const res = await fetch("/api/host/insurance", { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Upload failed");
+        let message = `Upload failed (${res.status})`;
+        try {
+          const data = await res.json();
+          message = data.error || data.message || message;
+        } catch {}
+        throw new Error(message);
       }
       toast({ title: "Insurance verified", description: "Your coverage has been recorded. You can now list your space." });
       queryClient.invalidateQueries({ queryKey: ["/api/host/insurance/status"] });
@@ -304,11 +308,11 @@ export function InsuranceUploadStep({ onComplete, onGetCovered }: { onComplete: 
           </div>
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">Declarations Page (PDF or image, max 10MB) *</label>
+          <label className="text-xs text-gray-500 mb-1 block">Declarations Page (PDF or image, max 25MB) *</label>
           <label className="flex items-center gap-2 px-4 py-3 rounded-lg border border-dashed border-stone-300 hover:border-[#c4956a] cursor-pointer transition-colors bg-stone-50/50">
             <Upload className="w-4 h-4 text-stone-400" />
             <span className="text-sm text-stone-500">{file ? file.name : "Choose file..."}</span>
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
           </label>
         </div>
       </div>

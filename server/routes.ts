@@ -80,9 +80,9 @@ const documentUpload = multer({
     destination: tmpUploadDir,
     filename: (_req, _file, cb) => cb(null, `${randomUUID()}`),
   }),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = /\.(jpg|jpeg|png|gif|webp|pdf)$/i;
+    const allowed = /\.(jpg|jpeg|png|gif|webp|heic|heif|pdf)$/i;
     if (allowed.test(path.extname(file.originalname))) {
       cb(null, true);
     } else {
@@ -90,6 +90,29 @@ const documentUpload = multer({
     }
   },
 });
+
+const DOCUMENT_MIME: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".heic": "image/heic",
+  ".heif": "image/heif",
+};
+
+function documentUploadSingle(field: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    documentUpload.single(field)(req, res, (err: any) => {
+      if (!err) return next();
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "File is too large. Maximum size is 25MB." });
+      }
+      return res.status(400).json({ error: err.message || "Upload failed" });
+    });
+  };
+}
 
 async function uploadBufferToObjectStorage(buffer: Buffer, contentType: string): Promise<string> {
   return uploadBuffer(buffer, contentType);
@@ -5513,21 +5536,31 @@ export async function registerRoutes(
 
   app.post("/api/recurring-bookings", isAuthenticated, async (req: any, res) => {
     try {
-      const { spaceId, dayOfWeek, startTime, hours, startDate, endDate } = req.body;
-      if (!spaceId || dayOfWeek === undefined || !startTime || !hours || !startDate) {
+      const { spaceId, dayOfWeek, daysOfWeek, startTime, hours, startDate, endDate } = req.body;
+
+      const rawDays: unknown[] = Array.isArray(daysOfWeek)
+        ? daysOfWeek
+        : dayOfWeek !== undefined
+        ? [dayOfWeek]
+        : [];
+      const parsedDays = Array.from(new Set(rawDays.map(d => Number(d)))).sort((a, b) => a - b);
+
+      if (!spaceId || parsedDays.length === 0 || !startTime || !hours || !startDate) {
         return res.status(400).json({ message: "Missing required fields" });
       }
+      for (const d of parsedDays) {
+        if (!Number.isInteger(d) || d < 0 || d > 6) {
+          return res.status(400).json({ message: "daysOfWeek must each be 0-6" });
+        }
+      }
+
       const space = await storage.getSpaceById(spaceId);
       if (!space) return res.status(404).json({ message: "Space not found" });
       if (space.approvalStatus !== "approved" || space.isActive !== 1) {
         return res.status(400).json({ message: "Space is not available for booking" });
       }
 
-      const dow = Number(dayOfWeek);
       const numHours = Number(hours);
-      if (!Number.isInteger(dow) || dow < 0 || dow > 6) {
-        return res.status(400).json({ message: "dayOfWeek must be 0-6" });
-      }
       if (!Number.isInteger(numHours) || numHours < 1 || numHours > 24) {
         return res.status(400).json({ message: "hours must be 1-24" });
       }
@@ -5535,48 +5568,53 @@ export async function registerRoutes(
         return res.status(400).json({ message: "startTime must be HH:MM format" });
       }
 
-      // Determine if requester is guest or host
       const isHost = space.userId === req.user.claims.sub;
       const requestedByRole = isHost ? "host" : "guest";
+      const targetUserId = isHost ? req.body.guestUserId || req.user.claims.sub : req.user.claims.sub;
 
-      const recurring = await storage.createRecurringBooking({
-        spaceId,
-        userId: isHost ? req.body.guestUserId || req.user.claims.sub : req.user.claims.sub,
-        userName: req.user.claims.first_name || "Guest",
-        userEmail: req.user.claims.email || "",
-        dayOfWeek: dow,
-        startTime: String(startTime),
-        hours: numHours,
-        startDate: String(startDate),
-        endDate: endDate ? String(endDate) : null,
-        status: "pending_confirmation",
-        requestedBy: req.user.claims.sub,
-        requestedByRole,
-      });
+      const created = [] as Awaited<ReturnType<typeof storage.createRecurringBooking>>[];
+      for (const dow of parsedDays) {
+        const rec = await storage.createRecurringBooking({
+          spaceId,
+          userId: targetUserId,
+          userName: req.user.claims.first_name || "Guest",
+          userEmail: req.user.claims.email || "",
+          dayOfWeek: dow,
+          startTime: String(startTime),
+          hours: numHours,
+          startDate: String(startDate),
+          endDate: endDate ? String(endDate) : null,
+          status: "pending_confirmation",
+          requestedBy: req.user.claims.sub,
+          requestedByRole,
+        });
+        created.push(rec);
+      }
 
-      // Send push notification to the other party
       const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const daysLabel = parsedDays.length === 1
+        ? `${DAY_NAMES[parsedDays[0]]}s`
+        : parsedDays.map(d => DAY_NAMES[d]).join(" & ") + "s";
+
       if (isHost) {
-        // Notify the guest
-        if (recurring.userId && recurring.userId !== req.user.claims.sub) {
-          sendPushToUser(recurring.userId, {
+        if (targetUserId && targetUserId !== req.user.claims.sub) {
+          sendPushToUser(targetUserId, {
             title: "Recurring Booking Request",
-            body: `${space.name} host wants to set up a weekly booking: ${DAY_NAMES[dow]}s at ${startTime}`,
+            body: `${space.name} host wants to set up a weekly booking: ${daysLabel} at ${startTime}`,
             url: "/portal?tab=spaces",
           }, "booking").catch(() => {});
         }
       } else {
-        // Notify the host
         if (space.userId) {
           sendPushToUser(space.userId, {
             title: "Recurring Booking Request",
-            body: `${req.user.claims.first_name || "A guest"} wants a weekly booking: ${DAY_NAMES[dow]}s at ${startTime} at ${space.name}`,
+            body: `${req.user.claims.first_name || "A guest"} wants a weekly booking: ${daysLabel} at ${startTime} at ${space.name}`,
             url: "/portal?tab=spaces",
           }, "booking").catch(() => {});
         }
       }
 
-      res.json(recurring);
+      res.json(created.length === 1 ? created[0] : { bookings: created });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
@@ -7360,7 +7398,7 @@ ${featuredSection}
     }
   });
 
-  app.post("/api/host/insurance", isAuthenticated, documentUpload.single("document"), async (req: any, res) => {
+  app.post("/api/host/insurance", isAuthenticated, documentUploadSingle("document"), async (req: any, res) => {
     try {
       const { carrierName, policyNumber, coverageType, coverageAmount, policyExpirationDate } = req.body;
       if (!carrierName || !policyNumber || !coverageType || !coverageAmount || !policyExpirationDate) {
@@ -7374,7 +7412,7 @@ ${featuredSection}
         return res.status(400).json({ error: "Insurance document upload is required" });
       }
       const ext = path.extname(req.file.originalname).toLowerCase();
-      const contentType = ext === ".pdf" ? "application/pdf" : `image/${ext.slice(1)}`;
+      const contentType = DOCUMENT_MIME[ext] || "application/octet-stream";
       const documentUrl = await uploadFile(req.file.path, contentType);
 
       await db.update(hostInsuranceRecords)
@@ -7434,7 +7472,7 @@ ${featuredSection}
     }
   });
 
-  app.post("/api/admin/insurance", isAdminOrEmployee, documentUpload.single("document"), async (req: any, res) => {
+  app.post("/api/admin/insurance", isAdminOrEmployee, documentUploadSingle("document"), async (req: any, res) => {
     try {
       const { userId, carrierName, policyNumber, coverageType, coverageAmount, policyExpirationDate } = req.body;
       if (!userId || !carrierName || !policyNumber || !coverageType || !coverageAmount || !policyExpirationDate) {
@@ -7448,7 +7486,7 @@ ${featuredSection}
         return res.status(400).json({ error: "Insurance document upload is required" });
       }
       const ext = path.extname(req.file.originalname).toLowerCase();
-      const contentType = ext === ".pdf" ? "application/pdf" : `image/${ext.slice(1)}`;
+      const contentType = DOCUMENT_MIME[ext] || "application/octet-stream";
       const documentUrl = await uploadFile(req.file.path, contentType);
 
       await db.update(hostInsuranceRecords)
