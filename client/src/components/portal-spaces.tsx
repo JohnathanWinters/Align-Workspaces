@@ -57,6 +57,7 @@ import BookingCalendar from "./booking-calendar";
 import { CalendarSyncSettings } from "./calendar-sync-settings";
 import { AmenityInput } from "./amenity-input";
 import { InsuranceUploadStep } from "./list-space-modal";
+import { CommitmentTimeline } from "./commitment-timeline";
 
 const SPACE_TYPES = [
   { value: "therapy", label: "Therapy & Counseling" },
@@ -734,6 +735,13 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
                       <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
                     </div>
                   )}
+                  <CommitmentTimeline
+                    pricePerHour={formData.pricePerHour}
+                    pricePerDay={formData.pricePerDay}
+                    minCommitmentWeeks={Number(formData.recurringMinBookings) || 1}
+                    discountPercent={Number(formData.recurringDiscountPercent) || 0}
+                    discountAfterWeeks={Number(formData.recurringDiscountAfter) || 0}
+                  />
                 </div>
               )}
             </div>
@@ -1272,6 +1280,13 @@ function NewSpaceForm({ onClose }: { onClose: () => void }) {
                       <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
                     </div>
                   )}
+                  <CommitmentTimeline
+                    pricePerHour={formData.pricePerHour}
+                    pricePerDay={formData.pricePerDay}
+                    minCommitmentWeeks={Number(formData.recurringMinBookings) || 1}
+                    discountPercent={Number(formData.recurringDiscountPercent) || 0}
+                    discountAfterWeeks={Number(formData.recurringDiscountAfter) || 0}
+                  />
                 </div>
               )}
             </div>

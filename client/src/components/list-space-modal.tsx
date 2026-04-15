@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { AmenityInput } from "./amenity-input";
+import { CommitmentTimeline } from "./commitment-timeline";
 import { AvailabilityScheduleEditor, scheduleToDisplayText, normalizeSchedule, type WeekSchedule } from "./availability-schedule-editor";
 import { ArrivalGuideEditor } from "./arrival-guide";
 
@@ -1102,6 +1103,13 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                           <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
                         </div>
                       )}
+                      <CommitmentTimeline
+                        pricePerHour={formData.pricePerHour}
+                        pricePerDay={formData.pricePerDay}
+                        minCommitmentWeeks={Number(formData.recurringMinBookings) || 1}
+                        discountPercent={Number(formData.recurringDiscountPercent) || 0}
+                        discountAfterWeeks={Number(formData.recurringDiscountAfter) || 0}
+                      />
                     </div>
                   )}
 
