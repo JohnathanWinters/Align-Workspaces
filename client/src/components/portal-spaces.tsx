@@ -48,6 +48,7 @@ import {
   AlertCircle,
   Shield,
   ShieldCheck,
+  FileText,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Space } from "@shared/schema";
@@ -412,6 +413,21 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
   const { data: insuranceStatus } = useQuery<{ hasInsurance: boolean; status: string }>({
     queryKey: ["/api/host/insurance/status"],
   });
+  const { data: insuranceRecord } = useQuery<{
+    id: string;
+    carrierName: string;
+    policyNumber: string;
+    coverageType: string;
+    coverageAmount: number;
+    policyExpirationDate: string;
+    documentUrl: string;
+    documentFilename?: string | null;
+    status: string;
+  } | null>({
+    queryKey: ["/api/host/insurance"],
+    enabled: !!insuranceStatus?.hasInsurance,
+  });
+  const [replacingInsurance, setReplacingInsurance] = useState(false);
 
   const recurringPrice = formData.pricePerHour && formData.recurringDiscountPercent && Number(formData.recurringDiscountPercent) > 0
     ? (Number(formData.pricePerHour) * (1 - Number(formData.recurringDiscountPercent) / 100)).toFixed(0)
@@ -835,24 +851,75 @@ function EditSpaceModal({ space, onClose }: { space: Space; onClose: () => void 
           )}
 
           {tab === "insurance" && (
-            insuranceStatus?.hasInsurance ? (
-              <div className="py-8 text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
-                  <ShieldCheck className="w-7 h-7 text-emerald-600" />
+            insuranceStatus?.hasInsurance && !replacingInsurance ? (
+              <div className="py-6 space-y-4">
+                <div className="text-center space-y-2">
+                  <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-7 h-7 text-emerald-600" />
+                  </div>
+                  <h3 className="font-serif text-base font-semibold text-stone-900">Insurance verified</h3>
+                  <p className="text-xs text-stone-500 max-w-sm mx-auto">Your host liability coverage is on file. You're all set to accept bookings.</p>
                 </div>
-                <h3 className="font-serif text-base font-semibold text-stone-900">Insurance verified</h3>
-                <p className="text-xs text-stone-500 max-w-sm mx-auto">Your host liability coverage is on file. You're all set to accept bookings.</p>
-                <p className="text-[10px] text-stone-400">Need to update your policy? Contact support.</p>
+                {insuranceRecord && (
+                  <div className="rounded-lg border border-stone-200 bg-stone-50/60 p-4 space-y-2 max-w-md mx-auto">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-stone-500">Carrier</p>
+                      <p className="text-sm font-medium text-stone-800">{insuranceRecord.carrierName}</p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-stone-500">Policy #</p>
+                      <p className="text-sm font-mono text-stone-800">{insuranceRecord.policyNumber}</p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-stone-500">Coverage</p>
+                      <p className="text-sm text-stone-800">${(insuranceRecord.coverageAmount || 0).toLocaleString()} · {insuranceRecord.coverageType.replace(/_/g, " ")}</p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-stone-500">Expires</p>
+                      <p className="text-sm text-stone-800">{insuranceRecord.policyExpirationDate}</p>
+                    </div>
+                    {insuranceRecord.documentUrl && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full mt-2"
+                        onClick={() => window.open(insuranceRecord.documentUrl, "_blank")}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        View uploaded document
+                      </Button>
+                    )}
+                  </div>
+                )}
+                <div className="flex justify-center">
+                  <Button type="button" variant="outline" onClick={() => setReplacingInsurance(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Replace insurance
+                  </Button>
+                </div>
               </div>
             ) : (
-              <InsuranceUploadStep
-                onComplete={() => {
-                  queryClient.invalidateQueries({ queryKey: ["/api/host/insurance/status"] });
-                }}
-                onGetCovered={() => {
-                  window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
-                }}
-              />
+              <div className="space-y-2">
+                {insuranceStatus?.hasInsurance && (
+                  <button
+                    type="button"
+                    onClick={() => setReplacingInsurance(false)}
+                    className="text-xs text-stone-500 hover:text-stone-700"
+                  >
+                    ← Back to current policy
+                  </button>
+                )}
+                <InsuranceUploadStep
+                  onComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/host/insurance/status"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/host/insurance"] });
+                    setReplacingInsurance(false);
+                  }}
+                  onGetCovered={() => {
+                    window.open("https://www.thimble.com/general-liability-insurance?utm_source=alignworkspaces", "_blank");
+                  }}
+                />
+              </div>
             )
           )}
         </div>

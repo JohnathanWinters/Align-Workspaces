@@ -2328,7 +2328,7 @@ function AdminSpaceColorPaletteModal({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogTitle className="flex items-center gap-2">
           <Palette className="w-4 h-4" /> Color Palette — {space.name}
         </DialogTitle>
@@ -2412,6 +2412,252 @@ function AdminSpaceColorPaletteModal({
             </Button>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type InsuranceRecord = {
+  id: string;
+  carrierName: string;
+  policyNumber: string;
+  coverageType: string;
+  coverageAmount: number;
+  policyExpirationDate: string;
+  documentUrl: string;
+  documentFilename?: string | null;
+  status: string;
+  createdAt?: string | null;
+};
+
+function AdminSpaceInsuranceModal({
+  space,
+  token,
+  onClose,
+  onSaved,
+}: {
+  space: any;
+  token: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [record, setRecord] = useState<InsuranceRecord | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
+  const [form, setForm] = useState({
+    carrierName: "",
+    policyNumber: "",
+    coverageType: "general_liability",
+    coverageAmount: "1000000",
+    policyExpirationDate: "",
+  });
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const loadRecord = async () => {
+    if (!space.userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/insurance/${space.userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecord(data.hasInsurance ? data.record : null);
+      }
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadRecord();
+  }, [space.userId]);
+
+  const submitUpload = async () => {
+    if (!space.userId) {
+      toast({ title: "No host linked to this space", variant: "destructive" });
+      return;
+    }
+    if (!form.carrierName || !form.policyNumber || !form.policyExpirationDate || !file) {
+      toast({ title: "All fields and a document are required", variant: "destructive" });
+      return;
+    }
+    const amount = parseInt(form.coverageAmount, 10);
+    if (isNaN(amount) || amount < 1000000) {
+      toast({ title: "Minimum coverage is $1,000,000", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("userId", space.userId);
+      fd.append("carrierName", form.carrierName);
+      fd.append("policyNumber", form.policyNumber);
+      fd.append("coverageType", form.coverageType);
+      fd.append("coverageAmount", form.coverageAmount);
+      fd.append("policyExpirationDate", form.policyExpirationDate);
+      fd.append("document", file);
+      const res = await fetch("/api/admin/insurance", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Upload failed");
+      }
+      toast({ title: "Insurance updated" });
+      setShowUpload(false);
+      setFile(null);
+      await loadRecord();
+      onSaved();
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4" /> Insurance — {space.name}
+        </DialogTitle>
+
+        {loading ? (
+          <div className="py-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+        ) : !space.userId ? (
+          <p className="text-sm text-gray-500 py-6 text-center">This space has no linked host, so no insurance can be shown.</p>
+        ) : (
+          <div className="space-y-4 mt-2">
+            {record ? (
+              <div className="rounded-lg border border-gray-200 p-4 space-y-2 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Carrier</p>
+                  <p className="text-sm font-medium text-gray-800">{record.carrierName}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Policy #</p>
+                  <p className="text-sm font-mono text-gray-800">{record.policyNumber}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Coverage</p>
+                  <p className="text-sm text-gray-800">${(record.coverageAmount || 0).toLocaleString()} · {record.coverageType.replace(/_/g, " ")}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Expires</p>
+                  <p className="text-sm text-gray-800">{record.policyExpirationDate}</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Status</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    record.status === "active" ? "bg-emerald-100 text-emerald-700" :
+                    record.status === "expiring_soon" ? "bg-amber-100 text-amber-700" :
+                    "bg-red-100 text-red-700"
+                  }`}>{record.status.replace(/_/g, " ")}</span>
+                </div>
+                {record.documentUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => window.open(record.documentUrl, "_blank")}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    View uploaded document{record.documentFilename ? ` (${record.documentFilename})` : ""}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No insurance on file for this host.</p>
+            )}
+
+            {!showUpload ? (
+              <Button
+                type="button"
+                variant={record ? "outline" : "default"}
+                className="w-full"
+                onClick={() => {
+                  if (record) {
+                    setForm({
+                      carrierName: record.carrierName,
+                      policyNumber: record.policyNumber,
+                      coverageType: record.coverageType,
+                      coverageAmount: String(record.coverageAmount),
+                      policyExpirationDate: record.policyExpirationDate,
+                    });
+                  }
+                  setShowUpload(true);
+                }}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {record ? "Re-upload insurance" : "Upload insurance"}
+              </Button>
+            ) : (
+              <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+                <p className="text-xs font-medium text-gray-600">{record ? "Replace policy" : "New policy"}</p>
+                <div>
+                  <Label className="text-xs text-gray-500">Carrier</Label>
+                  <Input value={form.carrierName} onChange={e => setForm(f => ({ ...f, carrierName: e.target.value }))} placeholder="e.g. State Farm" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-500">Policy #</Label>
+                    <Input value={form.policyNumber} onChange={e => setForm(f => ({ ...f, policyNumber: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Type</Label>
+                    <select
+                      value={form.coverageType}
+                      onChange={e => setForm(f => ({ ...f, coverageType: e.target.value }))}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="general_liability">General Liability</option>
+                      <option value="professional_liability">Professional Liability</option>
+                      <option value="property">Property</option>
+                      <option value="bop">Business Owner Policy</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-500">Coverage Amount ($)</Label>
+                    <Input type="number" min="1000000" value={form.coverageAmount} onChange={e => setForm(f => ({ ...f, coverageAmount: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Expires</Label>
+                    <Input type="date" value={form.policyExpirationDate} onChange={e => setForm(f => ({ ...f, policyExpirationDate: e.target.value }))} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-500">Declarations page (PDF or image, max 25MB)</Label>
+                  <label className="flex items-center gap-2 px-3 py-2.5 rounded-md border border-dashed border-gray-300 cursor-pointer hover:border-gray-400 bg-gray-50">
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs text-gray-500">{file ? file.name : "Choose file..."}</span>
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+                  </label>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setShowUpload(false); setFile(null); }}>Cancel</Button>
+                  <Button type="button" size="sm" onClick={submitUpload} disabled={uploading}>
+                    {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -3192,6 +3438,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [palettingSpaceId, setPalettingSpaceId] = useState<string | null>(null);
+  const [insuranceSpaceId, setInsuranceSpaceId] = useState<string | null>(null);
 
   const loadSpaces = async () => {
     setLoading(true);
@@ -3718,20 +3965,7 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
                                 Geocode
                               </Button>
                             )}
-                            <Button size="sm" variant="outline" onClick={async () => {
-                              if (!space.userId) { toast({ title: "No host linked", variant: "destructive" }); return; }
-                              try {
-                                const res = await fetch(`/api/admin/insurance/${space.userId}`, { headers: { Authorization: `Bearer ${token}` } });
-                                if (res.ok) {
-                                  const data = await res.json();
-                                  if (data.hasInsurance) {
-                                    toast({ title: `Insurance: ${data.record.carrierName}`, description: `Policy: ${data.record.policyNumber} · $${(data.record.coverageAmount || 0).toLocaleString()} · Expires: ${data.record.policyExpirationDate} · Status: ${data.record.status}` });
-                                  } else {
-                                    toast({ title: "No insurance on file", description: "This host has not uploaded insurance.", variant: "destructive" });
-                                  }
-                                }
-                              } catch { toast({ title: "Failed to check insurance", variant: "destructive" }); }
-                            }} className="border-amber-200 text-amber-600 hover:bg-amber-50" data-testid={`button-insurance-space-${space.id}`}>
+                            <Button size="sm" variant="outline" onClick={() => setInsuranceSpaceId(space.id)} className="border-amber-200 text-amber-600 hover:bg-amber-50" data-testid={`button-insurance-space-${space.id}`}>
                               <ShieldCheck className="w-3.5 h-3.5 mr-1" />
                               Insurance
                             </Button>
@@ -3764,6 +3998,17 @@ function AdminSpacesManager({ token, onBack }: { token: string; onBack: () => vo
             space={s}
             token={token}
             onClose={() => setPalettingSpaceId(null)}
+            onSaved={loadSpaces}
+          />
+        ) : null;
+      })()}
+      {insuranceSpaceId && (() => {
+        const s = spaces.find((x: any) => x.id === insuranceSpaceId);
+        return s ? (
+          <AdminSpaceInsuranceModal
+            space={s}
+            token={token}
+            onClose={() => setInsuranceSpaceId(null)}
             onSaved={loadSpaces}
           />
         ) : null;
