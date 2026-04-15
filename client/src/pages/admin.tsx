@@ -2160,25 +2160,25 @@ function AdminSpaceColorPaletteModal({
             img.onerror = () => reject(new Error("load failed"));
           });
           const canvas = document.createElement("canvas");
-          const size = 120;
+          const size = 180;
           canvas.width = size;
           canvas.height = size;
           const ctx = canvas.getContext("2d");
           if (!ctx) continue;
           ctx.drawImage(img, 0, 0, size, size);
           const data = ctx.getImageData(0, 0, size, size).data;
-          for (let i = 0; i < data.length; i += 16) {
+          for (let i = 0; i < data.length; i += 8) {
             const r = data[i], g = data[i + 1], b = data[i + 2];
             const max = Math.max(r, g, b), min = Math.min(r, g, b);
             const sat = max === 0 ? 0 : (max - min) / max;
-            if (sat < 0.08 && max > 200) continue;
-            if (max < 30) continue;
+            if (sat < 0.06 && max > 220) continue;
+            if (max < 25) continue;
             let merged = false;
             for (const bucket of buckets) {
               const dr = Math.abs(bucket.r / bucket.count - r);
               const dg = Math.abs(bucket.g / bucket.count - g);
               const db = Math.abs(bucket.b / bucket.count - b);
-              if (dr + dg + db < 80) {
+              if (dr + dg + db < 55) {
                 bucket.r += r; bucket.g += g; bucket.b += b; bucket.count++;
                 merged = true;
                 break;
@@ -2232,49 +2232,84 @@ function AdminSpaceColorPaletteModal({
         return { hex, name, r, g, b, count: bucket.count, hue, sat, light, ...classifyColor(hue, sat, light) };
       };
 
-      const enriched = buckets.slice(0, 12).map(enrichBucket);
+      const enriched = buckets.slice(0, 24).map(enrichBucket);
       if (enriched.length === 0) {
         toast({ title: "Couldn't detect any colors", variant: "destructive" });
         return;
       }
 
-      const colorDist = (a: EnrichedBucket, b: EnrichedBucket) =>
-        Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b);
+      // Group by hue family so we prefer distinct hues over same-hue variants.
+      const byFamily = new Map<PaletteColorMeta["family"], EnrichedBucket[]>();
+      for (const bucket of enriched) {
+        const arr = byFamily.get(bucket.family) || [];
+        arr.push(bucket);
+        byFamily.set(bucket.family, arr);
+      }
+      const families = Array.from(byFamily.entries()).map(([family, list]) => {
+        const sorted = list.sort((a, b) => b.count - a.count);
+        return {
+          family,
+          top: sorted[0],
+          totalCount: list.reduce((sum, b) => sum + b.count, 0),
+        };
+      }).sort((a, b) => b.totalCount - a.totalCount);
 
-      // 60% dominant: most common color (usually walls / largest surface)
-      const dominant = enriched[0];
-
-      // 30% secondary: next most common color that's visually distinct from dominant
-      const secondary =
-        enriched.slice(1).find(c => colorDist(c, dominant) > 60) ||
-        enriched[1] ||
-        dominant;
-
-      // 10% accent: highest-saturation color distinct from both,
-      // falling back to next most common if nothing saturated stands out
-      const accentCandidates = enriched.filter(c => c !== dominant && c !== secondary);
-      const accent =
-        accentCandidates
-          .filter(c => colorDist(c, dominant) > 80 && colorDist(c, secondary) > 60)
-          .sort((a, b) => b.sat - a.sat)[0] ||
-        accentCandidates.sort((a, b) => b.sat - a.sat)[0] ||
-        enriched[2] ||
-        secondary;
-
-      const picked = [
-        { bucket: dominant, role: "dominant" as PaletteRole },
-        { bucket: secondary, role: "secondary" as PaletteRole },
-        { bucket: accent, role: "accent" as PaletteRole },
-      ];
-      // De-dupe in case the space has fewer than 3 distinct colors
-      const seenHex = new Set<string>();
-      const uniquePicked = picked.filter(p => {
-        if (seenHex.has(p.bucket.hex)) return false;
-        seenHex.add(p.bucket.hex);
+      const picks: { bucket: EnrichedBucket; role: PaletteRole }[] = [];
+      const usedHex = new Set<string>();
+      const pushPick = (bucket: EnrichedBucket, role: PaletteRole) => {
+        if (usedHex.has(bucket.hex)) return false;
+        usedHex.add(bucket.hex);
+        picks.push({ bucket, role });
         return true;
-      });
+      };
 
-      const pickedMeta: PaletteColorMeta[] = uniquePicked.map(({ bucket, role }) => ({
+      // 60% dominant: the biggest family's top bucket (usually walls / main surface).
+      if (families[0]) pushPick(families[0].top, "dominant");
+
+      // 30% secondary: next family that is not the same as dominant. If there is
+      // only one family present, fall back to the second-most-common bucket so
+      // the secondary is at least a different shade of the dominant hue.
+      if (families.length >= 2) {
+        pushPick(families[1].top, "secondary");
+      } else if (enriched[1]) {
+        pushPick(enriched[1], "secondary");
+      }
+
+      // 10% accent: prefer the most saturated bucket in a family not already
+      // used; otherwise fall back to the most saturated remaining bucket.
+      const usedFamilies = new Set(picks.map(p => p.bucket.family));
+      const saturatedCandidates = enriched
+        .filter(b => !usedHex.has(b.hex))
+        .filter(b => b.sat >= 0.15)
+        .sort((a, b) => {
+          const aNewFamily = !usedFamilies.has(a.family) ? 1 : 0;
+          const bNewFamily = !usedFamilies.has(b.family) ? 1 : 0;
+          if (aNewFamily !== bNewFamily) return bNewFamily - aNewFamily;
+          return b.sat - a.sat;
+        });
+      if (saturatedCandidates[0]) {
+        pushPick(saturatedCandidates[0], "accent");
+      } else {
+        // No saturated option left — grab the next distinct bucket.
+        for (const bucket of enriched) {
+          if (pushPick(bucket, "accent")) break;
+        }
+      }
+
+      // Dedupe names by appending a lightness modifier on collisions so
+      // every swatch has a readable, distinct label.
+      const nameSeen = new Map<string, number>();
+      for (const p of picks) {
+        const base = p.bucket.name;
+        const count = nameSeen.get(base) || 0;
+        nameSeen.set(base, count + 1);
+        if (count > 0) {
+          const modifier = p.bucket.light > 0.6 ? "Light" : p.bucket.light < 0.35 ? "Deep" : "Muted";
+          p.bucket = { ...p.bucket, name: `${modifier} ${base}` };
+        }
+      }
+
+      const pickedMeta: PaletteColorMeta[] = picks.map(({ bucket, role }) => ({
         hex: bucket.hex,
         name: bucket.name,
         role,
