@@ -1075,6 +1075,33 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     )}
                   </div>
 
+                  {/* How long must they book for */}
+                  {formData.bookingTypes !== "hourly" && (
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
+                        How long should they commit?
+                      </h4>
+                      <p className="text-[11px] text-stone-500 -mt-1">When someone books a weekly spot, how many weeks should they sign up for at minimum? Pick "No minimum" if you're flexible.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 8, 12].map(n => (
+                          <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                              String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
+                            }`}>
+                            {n === 1 ? "No minimum" : `${n} weeks`}
+                          </button>
+                        ))}
+                      </div>
+                      {Number(formData.recurringMinBookings) > 1 && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
+                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Pricing cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className={`rounded-xl border-2 p-4 text-center ${formData.bookingTypes !== "recurring" ? "border-stone-900 bg-stone-50" : "border-stone-200 bg-white opacity-40"}`}>
@@ -1142,32 +1169,6 @@ export function ListSpaceModal({ onClose }: { onClose: () => void }) {
                     </div>
                   )}
 
-                  {/* How long must they book for */}
-                  {formData.bookingTypes !== "hourly" && (
-                    <div className="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
-                      <h4 className="text-sm font-medium text-stone-700 flex items-center gap-1.5">
-                        <CalendarDays className="w-3.5 h-3.5 text-stone-500" />
-                        How long should they commit?
-                      </h4>
-                      <p className="text-[11px] text-stone-500 -mt-1">When someone books a weekly spot, how many weeks should they sign up for at minimum? Pick "No minimum" if you're flexible.</p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 8, 12].map(n => (
-                          <button key={n} type="button" onClick={() => update("recurringMinBookings", String(n))}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                              String(n) === formData.recurringMinBookings ? "border-stone-900 bg-stone-900 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-400"
-                            }`}>
-                            {n === 1 ? "No minimum" : `${n} weeks`}
-                          </button>
-                        ))}
-                      </div>
-                      {Number(formData.recurringMinBookings) > 1 && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-100 text-xs text-amber-700">
-                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span>This means renters will not be able to book unless they commit to {formData.recurringMinBookings} weeks straight.</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
 
