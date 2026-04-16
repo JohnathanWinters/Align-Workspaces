@@ -2241,15 +2241,15 @@ function buildPaletteCopy(meta: PaletteColorMeta[]): { feel: string; explanation
     // Same family, different tones
     closing = `Drawn from the same color family but spread across different depths, this palette creates a layered, dimensional feel that stays harmonious while adding visual movement.`;
   } else if (warmLean === "warm" && toneLean !== "deep") {
-    closing = "As a composition, these tones create a warm, human atmosphere well suited for client-facing sessions, wellness work, and conversations that benefit from a softer emotional register.";
+    closing = "As a composition, these tones produce a warm, approachable atmosphere with a soft emotional register.";
   } else if (warmLean === "warm" && toneLean === "deep") {
-    closing = "As a composition, these tones create a rich, enveloping atmosphere ideal for focused work, intimate meetings, and spaces where people want to feel held and comfortable.";
+    closing = "As a composition, these tones produce a rich, enveloping atmosphere with a grounded, intimate character.";
   } else if (warmLean === "cool" && toneLean !== "deep") {
-    closing = "As a composition, these tones create a calm, clear atmosphere suited for professional work, strategy sessions, and settings where composure and trust matter.";
+    closing = "As a composition, these tones produce a calm, clear atmosphere with a composed, even-keeled character.";
   } else if (warmLean === "cool" && toneLean === "deep") {
-    closing = "As a composition, these tones create a composed, authoritative atmosphere suited for executive work, serious discussions, and environments where focus and gravitas are essential.";
+    closing = "As a composition, these tones produce a deep, authoritative atmosphere with a focused, deliberate presence.";
   } else {
-    closing = "As a composition, these tones create a grounded, versatile atmosphere that adapts to a wide range of professional sessions and client interactions.";
+    closing = "As a composition, these tones produce a grounded, versatile atmosphere that reads as thoughtful and intentional.";
   }
 
   const explanation = [perColor, closing].join(" ").replace(/\u2014|\u2013/g, ",").replace(/\s+,/g, ",").replace(/\s+/g, " ").trim();
