@@ -1997,54 +1997,157 @@ function classifyColor(hue: number, sat: number, light: number): Pick<PaletteCol
   return { family, tone, warmth };
 }
 
-function sentenceForColor(c: PaletteColorMeta): string {
-  const n = c.name;
-  const key = `${c.family}-${c.tone}`;
-  const role = c.role;
-  const descriptorMap: Record<string, string> = {
-    "neutral-light": "an airy, uncluttered quality that makes the space feel open and welcoming",
-    "neutral-mid": "a grounding, calm presence that keeps attention on the work itself",
-    "neutral-dark": "quiet weight and structure, lending the room a sense of focus and intention",
-    "red-light": "a soft, human warmth that invites conversation and puts guests at ease",
-    "red-mid": "confident personality and emotional presence",
-    "red-dark": "rich depth and gravitas with a quiet intensity",
-    "orange-light": "a welcoming, sunlit energy that makes the space feel approachable and alive",
-    "orange-mid": "an earthy warmth that feels both friendly and grounded",
-    "orange-dark": "rich, toasted warmth and a lived-in character",
-    "amber-light": "a soft golden glow that radiates comfort and optimism",
-    "amber-mid": "a mellow, honeyed warmth that feels settled and timeless",
-    "amber-dark": "a deep, burnished warmth that communicates experience and craft",
-    "green-light": "a fresh, natural quality that promotes calm and restoration",
-    "green-mid": "a balanced, organic presence that feels quietly reassuring",
-    "green-dark": "an earthy, grounded weight that conveys stability and quiet confidence",
-    "teal-light": "an airy, refreshing note that keeps the space feeling clear and alert",
-    "teal-mid": "a cool, balanced depth that is both calming and composed",
-    "teal-dark": "a contemplative, mineral depth that feels sophisticated and steady",
-    "blue-light": "a breezy, open quality that communicates clarity and trust",
-    "blue-mid": "a steady, reliable tone that grounds the space in quiet professionalism",
-    "blue-dark": "a commanding foundation that conveys focus, authority, and calm",
-    "purple-light": "a gentle, imaginative softness",
-    "purple-mid": "refined creativity and thoughtful presence",
-    "purple-dark": "a luxurious, contemplative depth that feels both private and considered",
-    "pink-light": "gentle warmth that makes the room feel welcoming and kind",
-    "pink-mid": "a quiet, emotional warmth that draws people in",
-    "pink-dark": "a mature, rosy depth that feels intimate and grounded",
-  };
-  const descriptor = descriptorMap[key] || "distinct character and visual interest";
-  if (role === "dominant") {
-    return `${n} takes the dominant role, giving the space ${descriptor}.`;
-  }
-  if (role === "secondary") {
-    return `${n} steps in as the secondary layer, adding ${descriptor}.`;
-  }
-  if (role === "accent") {
-    return `${n} acts as the accent, introducing ${descriptor} and punctuating the overall composition.`;
-  }
-  return `${n} contributes ${descriptor}.`;
-}
-
 function buildPaletteCopy(meta: PaletteColorMeta[]): { feel: string; explanation: string } {
   if (meta.length === 0) return { feel: "", explanation: "" };
+
+  // --- per-color descriptors, keyed by family-tone --------------------------
+  // Each entry is [dominant sentence, secondary sentence, accent sentence]
+  // so the three colors never share a sentence structure or vocabulary.
+  const copy: Record<string, [string, string, string]> = {
+    "neutral-light": [
+      "{n} opens the palette with an uncluttered softness that lets the room breathe.",
+      "{n} supports the palette with a quiet lightness that keeps the eye relaxed.",
+      "{n} rounds out the palette with a clean, open note that prevents visual clutter.",
+    ],
+    "neutral-mid": [
+      "{n} anchors the space in a calm, grounding mid-tone that directs focus inward.",
+      "{n} provides a steady backdrop that lets other elements take the spotlight.",
+      "{n} closes the palette with understated composure, keeping the overall feel collected.",
+    ],
+    "neutral-dark": [
+      "{n} sets a deliberate, structured foundation that signals focus and intention.",
+      "{n} deepens the palette with a sense of weight that reinforces seriousness.",
+      "{n} finishes the palette with a decisive edge that sharpens the room's character.",
+    ],
+    "red-light": [
+      "{n} fills the room with a gentle, human warmth that encourages conversation.",
+      "{n} layers in a rosy softness that makes the environment feel approachable.",
+      "{n} adds a blush of warmth that quietly puts people at ease.",
+    ],
+    "red-mid": [
+      "{n} brings confident, spirited energy that gives the space personality.",
+      "{n} contributes an emotional pulse that keeps the room from feeling sterile.",
+      "{n} punctuates the palette with a bold, heartfelt note.",
+    ],
+    "red-dark": [
+      "{n} grounds the space with a rich, decisive depth that conveys authority.",
+      "{n} introduces a layer of intensity that adds gravitas to the room.",
+      "{n} seals the palette with an intimate, powerful undertone.",
+    ],
+    "orange-light": [
+      "{n} radiates a sunlit friendliness that makes the space feel instantly approachable.",
+      "{n} lifts the palette with a cheerful glow that counters any formality.",
+      "{n} lends a playful, optimistic spark to the overall mix.",
+    ],
+    "orange-mid": [
+      "{n} establishes an earthy, lived-in warmth that feels familiar from the moment you enter.",
+      "{n} reinforces the palette with a toasted, comfortable mid-tone.",
+      "{n} brings a spiced, tactile quality that keeps the space feeling real.",
+    ],
+    "orange-dark": [
+      "{n} sets a deeply rooted, amber-tinged foundation that speaks to craft and character.",
+      "{n} adds a smoldering richness that gives the room a sense of history.",
+      "{n} caps the palette with a burnished depth that feels both strong and inviting.",
+    ],
+    "amber-light": [
+      "{n} bathes the space in a honeyed glow that radiates comfort and optimism.",
+      "{n} layers in a luminous, golden softness that warms the atmosphere.",
+      "{n} offers a sun-kissed highlight that keeps the palette feeling bright.",
+    ],
+    "amber-mid": [
+      "{n} sets a mellow, harvest-toned foundation that feels settled and timeless.",
+      "{n} supports the palette with a buttery mid-tone that balances energy and ease.",
+      "{n} contributes an ochre warmth that gives the composition staying power.",
+    ],
+    "amber-dark": [
+      "{n} grounds everything in a deep, resinous warmth that signals experience.",
+      "{n} provides a caramelized depth that makes the palette feel substantial.",
+      "{n} finishes the palette with a molten richness that resonates with quiet strength.",
+    ],
+    "green-light": [
+      "{n} opens the palette with a fresh, botanical quality that promotes restoration.",
+      "{n} introduces a leafy lightness that connects the space to the natural world.",
+      "{n} adds a crisp, verdant note that keeps the environment feeling renewed.",
+    ],
+    "green-mid": [
+      "{n} grounds the space in an organic, mossy calm that feels quietly reassuring.",
+      "{n} layers in a garden-like balance between vitality and tranquility.",
+      "{n} brings a herbal, rooted quality that deepens the palette's natural feel.",
+    ],
+    "green-dark": [
+      "{n} establishes a forest-floor depth that conveys stability and quiet confidence.",
+      "{n} reinforces the palette with an evergreen solidity that reads as dependable.",
+      "{n} closes the palette with a shadowed, woodland richness.",
+    ],
+    "teal-light": [
+      "{n} opens with a mineral, shore-like clarity that keeps the space feeling alert.",
+      "{n} adds a sea-glass transparency that lets light move through the palette.",
+      "{n} brings a coastal brightness that lifts the overall composition.",
+    ],
+    "teal-mid": [
+      "{n} sets a current of cool composure that steadies the room's energy.",
+      "{n} contributes a lagoon-like depth that is both calming and focused.",
+      "{n} balances the palette with a ceramic coolness that feels polished.",
+    ],
+    "teal-dark": [
+      "{n} grounds the space in a deep, mineral tone that feels sophisticated and deliberate.",
+      "{n} layers in a slate-water depth that projects seriousness without severity.",
+      "{n} seals the palette with a moody, oceanic undertone.",
+    ],
+    "blue-light": [
+      "{n} opens the palette with a sky-like clarity that communicates trust and openness.",
+      "{n} introduces a breezy, atmospheric layer that keeps the room feeling spacious.",
+      "{n} adds a crystalline highlight that sharpens the palette's sense of transparency.",
+    ],
+    "blue-mid": [
+      "{n} anchors the space in a dependable, mid-blue that reads as professional and composed.",
+      "{n} reinforces the palette with a denim-like reliability that feels familiar.",
+      "{n} contributes a measured, maritime note that adds character without distraction.",
+    ],
+    "blue-dark": [
+      "{n} commands the space with a deep, authoritative tone that centers attention.",
+      "{n} provides an ink-like depth that lends the palette intellectual weight.",
+      "{n} finishes the palette with a midnight intensity that conveys focus and conviction.",
+    ],
+    "purple-light": [
+      "{n} fills the room with a gentle, imaginative softness that invites creative thinking.",
+      "{n} layers in a lilac haze that keeps the atmosphere dreamy yet intentional.",
+      "{n} adds a whisper of violet that gives the palette a subtle, original edge.",
+    ],
+    "purple-mid": [
+      "{n} brings a cultured, thoughtful presence that elevates the room's character.",
+      "{n} supports the palette with a plum-toned refinement that feels considered.",
+      "{n} contributes an artful mid-tone that bridges warmth and coolness.",
+    ],
+    "purple-dark": [
+      "{n} establishes a luxurious, contemplative depth that feels private and intentional.",
+      "{n} deepens the palette with a velvety, nocturnal richness.",
+      "{n} seals the composition with a regal undertone that lingers in the mind.",
+    ],
+    "pink-light": [
+      "{n} warms the space with a gentle, nurturing softness that puts visitors at ease.",
+      "{n} layers in a petal-like tenderness that softens the room's harder edges.",
+      "{n} adds a blush accent that keeps the palette feeling human and kind.",
+    ],
+    "pink-mid": [
+      "{n} brings a quiet, emotional warmth that draws people closer.",
+      "{n} contributes a rose-toned intimacy that makes the space feel personal.",
+      "{n} adds a heartfelt mid-tone that connects the palette on an emotional level.",
+    ],
+    "pink-dark": [
+      "{n} grounds the palette in a mature, berry-toned depth that feels intimate.",
+      "{n} introduces a wine-like richness that adds complexity to the atmosphere.",
+      "{n} finishes the palette with a dusky, romantic weight.",
+    ],
+  };
+  const fallback: [string, string, string] = [
+    "{n} sets the foundation with distinct character and visual interest.",
+    "{n} supports the palette with a complementary presence.",
+    "{n} rounds out the composition with a finishing touch.",
+  ];
+  const roleIndex: Record<PaletteRole, number> = { dominant: 0, secondary: 1, accent: 2 };
+
+  // --- overall feel tagline --------------------------------------------------
   const warmCount = meta.filter(m => m.warmth === "warm").length;
   const coolCount = meta.filter(m => m.warmth === "cool").length;
   const darkCount = meta.filter(m => m.tone === "dark").length;
@@ -2077,21 +2180,76 @@ function buildPaletteCopy(meta: PaletteColorMeta[]): { feel: string; explanation
     feel = "A balanced, versatile palette that reads as thoughtful and intentional";
   }
 
+  // --- per-color sentences ---------------------------------------------------
   const roleOrder: Record<PaletteRole, number> = { dominant: 0, secondary: 1, accent: 2 };
   const orderedMeta = [...meta].sort((a, b) => (roleOrder[a.role || "dominant"] ?? 3) - (roleOrder[b.role || "dominant"] ?? 3));
-  const perColor = orderedMeta.map(sentenceForColor).join(" ");
+  const perColor = orderedMeta.map((c) => {
+    const key = `${c.family}-${c.tone}`;
+    const templates = copy[key] || fallback;
+    const idx = roleIndex[c.role || "dominant"] ?? 0;
+    return templates[idx].replace("{n}", c.name);
+  }).join(" ");
+
+  // --- composition closing: describe how the families interact ----------------
+  const families = new Set(meta.map(m => m.family));
+  const tones = new Set(meta.map(m => m.tone));
+  const allSameTone = tones.size === 1;
+  const hasWarmAndCool = meta.some(m => m.warmth === "warm") && meta.some(m => m.warmth === "cool");
+
+  // Pair-level interaction phrases keyed by sorted family pair
+  const pairEffects: Record<string, string> = {
+    "amber,neutral": "the amber warms what the neutral steadies, creating a space that feels both polished and approachable",
+    "blue,neutral": "the blue brings clarity while the neutral keeps things grounded, projecting professionalism without coldness",
+    "green,neutral": "the green introduces life while the neutral holds the room together, striking a balance between nature and order",
+    "neutral,teal": "the teal energizes what the neutral calms, giving the space a modern edge without sacrificing composure",
+    "amber,green": "the amber's warmth pairs with the green's freshness to create an environment that feels both nurturing and alive",
+    "blue,green": "the blue and green reinforce each other's calm, building an environment that feels clear-headed and restorative",
+    "amber,blue": "the amber's warmth plays against the blue's composure, creating a productive tension between comfort and focus",
+    "amber,teal": "the amber grounds the teal's sharpness, balancing energy with ease",
+    "blue,pink": "the blue's professionalism softens into the pink's warmth, making the space feel both trustworthy and caring",
+    "green,pink": "the green's natural calm meets the pink's emotional warmth, creating a space that feels both restoring and welcoming",
+    "orange,green": "the orange's friendliness and the green's serenity work together, making the room feel energetic yet peaceful",
+    "orange,blue": "the orange injects sociability into the blue's composure, keeping the space professional without feeling distant",
+    "purple,neutral": "the purple's creativity plays off the neutral's restraint, giving the space an artistic quality that stays grounded",
+    "blue,purple": "the blue's stability anchors the purple's imagination, creating a space that feels both inspired and trustworthy",
+    "pink,purple": "the pink and purple create a layered emotional richness, making the space feel deeply personal and thoughtful",
+    "orange,neutral": "the orange adds vitality while the neutral keeps it from overwhelming, producing a space that's lively but collected",
+    "red,neutral": "the red brings emotional presence while the neutral provides breathing room, creating bold warmth without intensity",
+    "blue,red": "the red's passion meets the blue's steadiness, producing a space with both heart and backbone",
+    "green,teal": "the green and teal create a tonal dialogue rooted in nature, making the space feel like a retreat",
+    "red,green": "the red's boldness against the green's calm creates a dynamic balance between energy and peace",
+  };
 
   let closing: string;
-  if (warmLean === "warm" && toneLean !== "deep") {
-    closing = "Together, these colors create a warm, human atmosphere that works well for client-facing sessions, wellness work, and conversations that benefit from a softer emotional tone.";
+  // Try to find a specific pair interaction
+  const allFamilies = Array.from(families).sort();
+  const pairKey = allFamilies.length >= 2 ? `${allFamilies[0]},${allFamilies[1]}` : "";
+  const pairPhrase = pairEffects[pairKey];
+
+  if (pairPhrase && meta.length >= 2) {
+    // Compose from the specific pair interaction
+    const toneNote = allSameTone
+      ? ` Kept in the same tonal register, the palette feels cohesive and intentional.`
+      : hasWarmAndCool
+        ? ` The warm-cool interplay adds dimension, preventing the palette from feeling flat.`
+        : "";
+    closing = `As a composition, ${pairPhrase}.${toneNote}`;
+  } else if (families.size === 1 && allSameTone) {
+    // Monochromatic
+    closing = `As a monochromatic set, these colors create a seamless, immersive atmosphere where nothing competes for attention, letting the space itself do the talking.`;
+  } else if (families.size === 1) {
+    // Same family, different tones
+    closing = `Drawn from the same color family but spread across different depths, this palette creates a layered, dimensional feel that stays harmonious while adding visual movement.`;
+  } else if (warmLean === "warm" && toneLean !== "deep") {
+    closing = "As a composition, these tones create a warm, human atmosphere well suited for client-facing sessions, wellness work, and conversations that benefit from a softer emotional register.";
   } else if (warmLean === "warm" && toneLean === "deep") {
-    closing = "Together, these colors create a rich, enveloping atmosphere that suits focused work, intimate meetings, and spaces where people want to feel held and comfortable.";
+    closing = "As a composition, these tones create a rich, enveloping atmosphere ideal for focused work, intimate meetings, and spaces where people want to feel held and comfortable.";
   } else if (warmLean === "cool" && toneLean !== "deep") {
-    closing = "Together, these colors create a calm, clear atmosphere that suits professional work, strategy sessions, and settings where composure and trust matter.";
+    closing = "As a composition, these tones create a calm, clear atmosphere suited for professional work, strategy sessions, and settings where composure and trust matter.";
   } else if (warmLean === "cool" && toneLean === "deep") {
-    closing = "Together, these colors create a composed, authoritative atmosphere that suits executive work, serious discussions, and environments where focus and gravitas are essential.";
+    closing = "As a composition, these tones create a composed, authoritative atmosphere suited for executive work, serious discussions, and environments where focus and gravitas are essential.";
   } else {
-    closing = "Together, these colors create a grounded, versatile atmosphere that adapts to a wide range of professional sessions and client interactions.";
+    closing = "As a composition, these tones create a grounded, versatile atmosphere that adapts to a wide range of professional sessions and client interactions.";
   }
 
   const explanation = [perColor, closing].join(" ").replace(/\u2014|\u2013/g, ",").replace(/\s+,/g, ",").replace(/\s+/g, " ").trim();
