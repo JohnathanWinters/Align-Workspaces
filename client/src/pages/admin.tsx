@@ -1968,11 +1968,10 @@ function AdminSpacePhotos({ space, token, onUpdate }: { space: any; token: strin
 type PaletteRole = "dominant" | "secondary" | "accent";
 type PaletteColor = { hex: string; name: string; role?: PaletteRole; share?: number };
 
-const ROLE_SHARE: Record<PaletteRole, number> = { dominant: 60, secondary: 30, accent: 10 };
 const ROLE_LABEL: Record<PaletteRole, string> = {
-  dominant: "60% Dominant",
-  secondary: "30% Secondary",
-  accent: "10% Accent",
+  dominant: "Dominant",
+  secondary: "Secondary",
+  accent: "Accent",
 };
 
 type PaletteColorMeta = PaletteColor & {
@@ -2033,13 +2032,13 @@ function sentenceForColor(c: PaletteColorMeta): string {
   };
   const descriptor = descriptorMap[key] || "distinct character and visual interest";
   if (role === "dominant") {
-    return `${n} takes the dominant 60% role, giving the space ${descriptor}.`;
+    return `${n} takes the dominant role, giving the space ${descriptor}.`;
   }
   if (role === "secondary") {
-    return `${n} steps in as the 30% secondary layer, adding ${descriptor}.`;
+    return `${n} steps in as the secondary layer, adding ${descriptor}.`;
   }
   if (role === "accent") {
-    return `${n} acts as the 10% accent, introducing ${descriptor} and punctuating the overall composition.`;
+    return `${n} acts as the accent, introducing ${descriptor} and punctuating the overall composition.`;
   }
   return `${n} contributes ${descriptor}.`;
 }
@@ -2266,35 +2265,48 @@ function AdminSpaceColorPaletteModal({
         return true;
       };
 
-      // 60% dominant: the biggest family's top bucket (usually walls / main surface).
+      // Score candidates by tonal similarity to the dominant color and hue variety.
+      // Keeps pastels with pastels, deep tones with deep tones, etc.
+      const scoreCandidates = (candidates: EnrichedBucket[], refBucket: EnrichedBucket, usedFams: Set<PaletteColorMeta["family"]>) => {
+        return candidates
+          .filter(b => !usedHex.has(b.hex))
+          .map(b => {
+            const lightDist = Math.abs(b.light - refBucket.light);
+            const satDist = Math.abs(b.sat - refBucket.sat);
+            const toneSimilarity = 1 - (lightDist + satDist) / 2;
+            const newFamily = !usedFams.has(b.family) ? 1 : 0;
+            // Weighted score: hue variety most important, then tone match, then pixel count
+            const countNorm = b.count / (enriched[0]?.count || 1);
+            const score = newFamily * 3 + toneSimilarity * 2 + countNorm;
+            return { bucket: b, score };
+          })
+          .sort((a, b) => b.score - a.score);
+      };
+
+      // Dominant: the biggest family's top bucket (most present color).
       if (families[0]) pushPick(families[0].top, "dominant");
 
-      // 30% secondary: next family that is not the same as dominant. If there is
-      // only one family present, fall back to the second-most-common bucket so
-      // the secondary is at least a different shade of the dominant hue.
-      if (families.length >= 2) {
-        pushPick(families[1].top, "secondary");
+      // Secondary: prefer a different hue family that stays in the same
+      // tonal bracket (lightness + saturation) as the dominant.
+      const domBucket = picks[0]?.bucket;
+      if (domBucket) {
+        const usedFams = new Set(picks.map(p => p.bucket.family));
+        const ranked = scoreCandidates(enriched, domBucket, usedFams);
+        if (ranked[0]) pushPick(ranked[0].bucket, "secondary");
       } else if (enriched[1]) {
         pushPick(enriched[1], "secondary");
       }
 
-      // 10% accent: prefer the most prominent bucket (by pixel count) from a
-      // family not already used, so the accent reflects a visually present
-      // colour rather than a tiny saturated detail like a plant pot.
-      const usedFamilies = new Set(picks.map(p => p.bucket.family));
-      const accentCandidates = enriched
-        .filter(b => !usedHex.has(b.hex))
-        .sort((a, b) => {
-          const aNewFamily = !usedFamilies.has(a.family) ? 1 : 0;
-          const bNewFamily = !usedFamilies.has(b.family) ? 1 : 0;
-          if (aNewFamily !== bNewFamily) return bNewFamily - aNewFamily;
-          return b.count - a.count;
-        });
-      if (accentCandidates[0]) {
-        pushPick(accentCandidates[0], "accent");
-      } else {
-        for (const bucket of enriched) {
-          if (pushPick(bucket, "accent")) break;
+      // Accent: same logic — prefer an unused family, matching tonal character.
+      if (domBucket) {
+        const usedFams = new Set(picks.map(p => p.bucket.family));
+        const ranked = scoreCandidates(enriched, domBucket, usedFams);
+        if (ranked[0]) {
+          pushPick(ranked[0].bucket, "accent");
+        } else {
+          for (const bucket of enriched) {
+            if (pushPick(bucket, "accent")) break;
+          }
         }
       }
 
@@ -2311,11 +2323,13 @@ function AdminSpaceColorPaletteModal({
         }
       }
 
+      // Compute shares from actual pixel counts instead of fixed ratios.
+      const totalPickedCount = picks.reduce((sum, p) => sum + p.bucket.count, 0) || 1;
       const pickedMeta: PaletteColorMeta[] = picks.map(({ bucket, role }) => ({
         hex: bucket.hex,
         name: bucket.name,
         role,
-        share: ROLE_SHARE[role],
+        share: Math.round((bucket.count / totalPickedCount) * 100),
         family: bucket.family,
         tone: bucket.tone,
         warmth: bucket.warmth,
@@ -2448,7 +2462,7 @@ function AdminSpaceColorPaletteModal({
           }
           const l = (mx + mn) / 2 / 255;
           const s = mx === 0 ? 0 : (mx - mn) / mx;
-          return { hex: c.hex, name: c.name, role: c.role || "dominant" as PaletteRole, share: c.share || ROLE_SHARE[c.role || "dominant"], ...classifyColor(h, s, l) };
+          return { hex: c.hex, name: c.name, role: c.role || "dominant" as PaletteRole, share: c.share || 0, ...classifyColor(h, s, l) };
         });
         const copy = buildPaletteCopy(meta);
         finalFeel = copy.feel;
@@ -2498,7 +2512,7 @@ function AdminSpaceColorPaletteModal({
           </Button>
 
           <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-wider text-gray-400">60 / 30 / 10 rule</p>
+            <p className="text-[10px] uppercase tracking-wider text-gray-400">Color Palette</p>
             {colors.map((c, i) => (
               <div key={i} className="space-y-1">
                 {c.role && (
