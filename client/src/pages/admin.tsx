@@ -2113,7 +2113,6 @@ function AdminSpaceColorPaletteModal({
   const [colors, setColors] = useState<PaletteColor[]>([]);
   const [feel, setFeel] = useState("");
   const [explanation, setExplanation] = useState("");
-  const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [picking, setPicking] = useState(false);
   const [pickHover, setPickHover] = useState<string | null>(null);
@@ -2141,209 +2140,36 @@ function AdminSpaceColorPaletteModal({
     } catch {}
   }, [space?.id]);
 
-  const generateFromPhotos = async () => {
-    const images: string[] = space?.imageUrls || [];
-    const coverImage = images[0];
-    if (!coverImage) {
-      toast({ title: "No cover photo to analyze", description: "Set a cover photo on this space first.", variant: "destructive" });
+  const colorsToMeta = (src: PaletteColor[]): PaletteColorMeta[] => {
+    const roles: PaletteRole[] = ["dominant", "secondary", "accent"];
+    return src.map((c, i) => {
+      const r = parseInt(c.hex.slice(1, 3), 16) || 0;
+      const g = parseInt(c.hex.slice(3, 5), 16) || 0;
+      const b = parseInt(c.hex.slice(5, 7), 16) || 0;
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+      let h = 0;
+      if (mx !== mn) {
+        if (mx === r) h = ((g - b) / (mx - mn)) * 60;
+        else if (mx === g) h = (2 + (b - r) / (mx - mn)) * 60;
+        else h = (4 + (r - g) / (mx - mn)) * 60;
+        if (h < 0) h += 360;
+      }
+      const l = (mx + mn) / 2 / 255;
+      const s = mx === 0 ? 0 : (mx - mn) / mx;
+      return { hex: c.hex, name: c.name, role: c.role || roles[i] || "dominant" as PaletteRole, share: c.share || 0, ...classifyColor(h, s, l) };
+    });
+  };
+
+  const generateDescription = () => {
+    if (colors.length === 0) {
+      toast({ title: "Add colors first", description: "Pick at least one color before generating a description.", variant: "destructive" });
       return;
     }
-    setGenerating(true);
-    try {
-      const buckets: { r: number; g: number; b: number; count: number }[] = [];
-      let analyzed = 0;
-      for (const src of [coverImage]) {
-        try {
-          const img = document.createElement("img");
-          img.crossOrigin = "anonymous";
-          img.src = src;
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject(new Error("load failed"));
-          });
-          const canvas = document.createElement("canvas");
-          const size = 180;
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) continue;
-          ctx.drawImage(img, 0, 0, size, size);
-          const data = ctx.getImageData(0, 0, size, size).data;
-          for (let i = 0; i < data.length; i += 8) {
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            const sat = max === 0 ? 0 : (max - min) / max;
-            if (sat < 0.06 && max > 220) continue;
-            if (max < 35) continue;
-            let merged = false;
-            for (const bucket of buckets) {
-              const dr = Math.abs(bucket.r / bucket.count - r);
-              const dg = Math.abs(bucket.g / bucket.count - g);
-              const db = Math.abs(bucket.b / bucket.count - b);
-              if (dr + dg + db < 55) {
-                bucket.r += r; bucket.g += g; bucket.b += b; bucket.count++;
-                merged = true;
-                break;
-              }
-            }
-            if (!merged) buckets.push({ r, g, b, count: 1 });
-          }
-          analyzed++;
-        } catch {}
-      }
-      if (analyzed === 0) {
-        toast({ title: "Couldn't load cover photo", description: "Image may be blocked by CORS.", variant: "destructive" });
-        return;
-      }
-      buckets.sort((a, b) => b.count - a.count);
-      type EnrichedBucket = {
-        hex: string;
-        name: string;
-        r: number; g: number; b: number;
-        hue: number; sat: number; light: number;
-        count: number;
-        family: PaletteColorMeta["family"];
-        tone: PaletteColorMeta["tone"];
-        warmth: PaletteColorMeta["warmth"];
-      };
-      const enrichBucket = (bucket: { r: number; g: number; b: number; count: number }): EnrichedBucket => {
-        const r = Math.round(bucket.r / bucket.count);
-        const g = Math.round(bucket.g / bucket.count);
-        const b = Math.round(bucket.b / bucket.count);
-        const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        let hue = 0;
-        if (max !== min) {
-          if (max === r) hue = ((g - b) / (max - min)) * 60;
-          else if (max === g) hue = (2 + (b - r) / (max - min)) * 60;
-          else hue = (4 + (r - g) / (max - min)) * 60;
-          if (hue < 0) hue += 360;
-        }
-        const light = (max + min) / 2 / 255;
-        const sat = max === 0 ? 0 : (max - min) / max;
-        let name = "Neutral";
-        if (sat < 0.08) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
-        else if (hue < 15 || hue >= 345) name = light > 0.6 ? "Blush" : light > 0.4 ? "Soft Rose" : "Deep Red";
-        else if (hue < 45) name = light > 0.6 ? "Warm Sand" : light > 0.35 ? "Clay" : "Burnt Sienna";
-        else if (hue < 70) name = light > 0.6 ? "Golden Honey" : light > 0.35 ? "Autumn Gold" : "Rich Amber";
-        else if (hue < 150) name = light > 0.6 ? "Sage Green" : light > 0.35 ? "Moss Green" : "Forest Green";
-        else if (hue < 200) name = light > 0.6 ? "Sky Blue" : light > 0.35 ? "Ocean Teal" : "Deep Teal";
-        else if (hue < 260) name = light > 0.6 ? "Soft Blue" : light > 0.35 ? "Steel Blue" : "Deep Navy";
-        else if (hue < 300) name = light > 0.6 ? "Soft Lavender" : light > 0.35 ? "Plum" : "Rich Plum";
-        else name = light > 0.6 ? "Dusty Rose" : light > 0.35 ? "Mauve" : "Deep Mauve";
-        return { hex, name, r, g, b, count: bucket.count, hue, sat, light, ...classifyColor(hue, sat, light) };
-      };
-
-      const enriched = buckets.slice(0, 24).map(enrichBucket);
-      if (enriched.length === 0) {
-        toast({ title: "Couldn't detect any colors", variant: "destructive" });
-        return;
-      }
-
-      // Group by hue family so we prefer distinct hues over same-hue variants.
-      const byFamily = new Map<PaletteColorMeta["family"], EnrichedBucket[]>();
-      for (const bucket of enriched) {
-        const arr = byFamily.get(bucket.family) || [];
-        arr.push(bucket);
-        byFamily.set(bucket.family, arr);
-      }
-      const families = Array.from(byFamily.entries()).map(([family, list]) => {
-        const sorted = list.sort((a, b) => b.count - a.count);
-        return {
-          family,
-          top: sorted[0],
-          totalCount: list.reduce((sum, b) => sum + b.count, 0),
-        };
-      }).sort((a, b) => b.totalCount - a.totalCount);
-
-      const picks: { bucket: EnrichedBucket; role: PaletteRole }[] = [];
-      const usedHex = new Set<string>();
-      const pushPick = (bucket: EnrichedBucket, role: PaletteRole) => {
-        if (usedHex.has(bucket.hex)) return false;
-        usedHex.add(bucket.hex);
-        picks.push({ bucket, role });
-        return true;
-      };
-
-      // Score candidates by tonal similarity to the dominant color and hue variety.
-      // Keeps pastels with pastels, deep tones with deep tones, etc.
-      const scoreCandidates = (candidates: EnrichedBucket[], refBucket: EnrichedBucket, usedFams: Set<PaletteColorMeta["family"]>) => {
-        return candidates
-          .filter(b => !usedHex.has(b.hex))
-          .map(b => {
-            const lightDist = Math.abs(b.light - refBucket.light);
-            const satDist = Math.abs(b.sat - refBucket.sat);
-            const toneSimilarity = 1 - (lightDist + satDist) / 2;
-            const newFamily = !usedFams.has(b.family) ? 1 : 0;
-            // Weighted score: hue variety most important, then tone match, then pixel count
-            const countNorm = b.count / (enriched[0]?.count || 1);
-            const score = newFamily * 3 + toneSimilarity * 2 + countNorm;
-            return { bucket: b, score };
-          })
-          .sort((a, b) => b.score - a.score);
-      };
-
-      // Dominant: the biggest family's top bucket (most present color).
-      if (families[0]) pushPick(families[0].top, "dominant");
-
-      // Secondary: prefer a different hue family that stays in the same
-      // tonal bracket (lightness + saturation) as the dominant.
-      const domBucket = picks[0]?.bucket;
-      if (domBucket) {
-        const usedFams = new Set(picks.map(p => p.bucket.family));
-        const ranked = scoreCandidates(enriched, domBucket, usedFams);
-        if (ranked[0]) pushPick(ranked[0].bucket, "secondary");
-      } else if (enriched[1]) {
-        pushPick(enriched[1], "secondary");
-      }
-
-      // Accent: same logic — prefer an unused family, matching tonal character.
-      if (domBucket) {
-        const usedFams = new Set(picks.map(p => p.bucket.family));
-        const ranked = scoreCandidates(enriched, domBucket, usedFams);
-        if (ranked[0]) {
-          pushPick(ranked[0].bucket, "accent");
-        } else {
-          for (const bucket of enriched) {
-            if (pushPick(bucket, "accent")) break;
-          }
-        }
-      }
-
-      // Dedupe names by appending a lightness modifier on collisions so
-      // every swatch has a readable, distinct label.
-      const nameSeen = new Map<string, number>();
-      for (const p of picks) {
-        const base = p.bucket.name;
-        const count = nameSeen.get(base) || 0;
-        nameSeen.set(base, count + 1);
-        if (count > 0) {
-          const modifier = p.bucket.light > 0.6 ? "Light" : p.bucket.light < 0.35 ? "Deep" : "Muted";
-          p.bucket = { ...p.bucket, name: `${modifier} ${base}` };
-        }
-      }
-
-      // Compute shares from actual pixel counts instead of fixed ratios.
-      const totalPickedCount = picks.reduce((sum, p) => sum + p.bucket.count, 0) || 1;
-      const pickedMeta: PaletteColorMeta[] = picks.map(({ bucket, role }) => ({
-        hex: bucket.hex,
-        name: bucket.name,
-        role,
-        share: Math.round((bucket.count / totalPickedCount) * 100),
-        family: bucket.family,
-        tone: bucket.tone,
-        warmth: bucket.warmth,
-      }));
-
-      const pickedSave: PaletteColor[] = pickedMeta.map(({ hex, name, role, share }) => ({ hex, name, role, share }));
-      const copy = buildPaletteCopy(pickedMeta);
-      setColors(pickedSave);
-      setFeel(copy.feel);
-      setExplanation(copy.explanation);
-      toast({ title: `Generated ${pickedSave.length} colors from cover photo` });
-    } finally {
-      setGenerating(false);
-    }
+    const meta = colorsToMeta(colors);
+    const copy = buildPaletteCopy(meta);
+    setFeel(copy.feel);
+    setExplanation(copy.explanation);
+    toast({ title: "Description generated" });
   };
 
   const updateColor = (i: number, patch: Partial<PaletteColor>) => {
@@ -2444,27 +2270,11 @@ function AdminSpaceColorPaletteModal({
   const save = async () => {
     setSaving(true);
     try {
-      // Auto-generate feel & explanation for manually built palettes
+      // Auto-generate feel & explanation if not already set
       let finalFeel = feel.trim();
       let finalExplanation = explanation.trim();
       if (colors.length > 0 && !finalFeel && !finalExplanation) {
-        const meta: PaletteColorMeta[] = colors.map((c) => {
-          const r = parseInt(c.hex.slice(1, 3), 16) || 0;
-          const g = parseInt(c.hex.slice(3, 5), 16) || 0;
-          const b = parseInt(c.hex.slice(5, 7), 16) || 0;
-          const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-          let h = 0;
-          if (mx !== mn) {
-            if (mx === r) h = ((g - b) / (mx - mn)) * 60;
-            else if (mx === g) h = (2 + (b - r) / (mx - mn)) * 60;
-            else h = (4 + (r - g) / (mx - mn)) * 60;
-            if (h < 0) h += 360;
-          }
-          const l = (mx + mn) / 2 / 255;
-          const s = mx === 0 ? 0 : (mx - mn) / mx;
-          return { hex: c.hex, name: c.name, role: c.role || "dominant" as PaletteRole, share: c.share || 0, ...classifyColor(h, s, l) };
-        });
-        const copy = buildPaletteCopy(meta);
+        const copy = buildPaletteCopy(colorsToMeta(colors));
         finalFeel = copy.feel;
         finalExplanation = copy.explanation;
         setFeel(finalFeel);
@@ -2499,18 +2309,6 @@ function AdminSpaceColorPaletteModal({
           <Palette className="w-4 h-4" /> Color Palette — {space.name}
         </DialogTitle>
         <div className="space-y-4 mt-2">
-          <Button
-            type="button"
-            onClick={generateFromPhotos}
-            disabled={generating}
-            variant="outline"
-            className="w-full"
-            data-testid={`button-generate-palette-${space.id}`}
-          >
-            {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-            Generate from cover photo
-          </Button>
-
           <div className="space-y-2">
             <p className="text-[10px] uppercase tracking-wider text-gray-400">Color Palette</p>
             {colors.map((c, i) => (
@@ -2574,6 +2372,18 @@ function AdminSpaceColorPaletteModal({
               </Button>
             )}
           </div>
+
+          <Button
+            type="button"
+            onClick={generateDescription}
+            disabled={colors.length === 0}
+            variant="outline"
+            className="w-full"
+            data-testid={`button-generate-description-${space.id}`}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generate description
+          </Button>
 
           <div>
             <Label className="text-xs text-gray-500">Feel (short tagline)</Label>
