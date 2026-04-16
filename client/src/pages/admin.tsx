@@ -2116,6 +2116,9 @@ function AdminSpaceColorPaletteModal({
   const [explanation, setExplanation] = useState("");
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [pickHover, setPickHover] = useState<string | null>(null);
+  const pickCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!space?.colorPalette) return;
@@ -2333,17 +2336,95 @@ function AdminSpaceColorPaletteModal({
     setColors(prev => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
   };
 
-  const addColor = () => {
-    setColors(prev => {
-      const roleSeq: { role: PaletteRole; share: number }[] = [
-        { role: "dominant", share: 60 },
-        { role: "secondary", share: 30 },
-        { role: "accent", share: 10 },
-      ];
-      const idx = prev.length;
-      return [...prev, { hex: "#8B7355", name: "New Color", ...(idx < roleSeq.length ? roleSeq[idx] : {}) }];
+  const openPicker = () => {
+    const images: string[] = space?.imageUrls || [];
+    if (!images[0]) {
+      toast({ title: "No cover photo", description: "Set a cover photo on this space first.", variant: "destructive" });
+      return;
+    }
+    setPicking(true);
+    setPickHover(null);
+    // Load the cover image into the canvas once it's rendered
+    requestAnimationFrame(() => {
+      const img = document.createElement("img");
+      img.crossOrigin = "anonymous";
+      img.src = images[0];
+      img.onload = () => {
+        const canvas = pickCanvasRef.current;
+        if (!canvas) return;
+        const maxW = canvas.parentElement?.clientWidth || 480;
+        const aspect = img.naturalHeight / img.naturalWidth;
+        canvas.width = maxW;
+        canvas.height = Math.round(maxW * aspect);
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.onerror = () => {
+        toast({ title: "Couldn't load cover photo", variant: "destructive" });
+        setPicking(false);
+      };
     });
   };
+
+  const nameFromRGB = (r: number, g: number, b: number): string => {
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    let hue = 0;
+    if (mx !== mn) {
+      if (mx === r) hue = ((g - b) / (mx - mn)) * 60;
+      else if (mx === g) hue = (2 + (b - r) / (mx - mn)) * 60;
+      else hue = (4 + (r - g) / (mx - mn)) * 60;
+      if (hue < 0) hue += 360;
+    }
+    const light = (mx + mn) / 2 / 255;
+    const sat = mx === 0 ? 0 : (mx - mn) / mx;
+    if (sat < 0.08) return light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
+    if (hue < 15 || hue >= 345) return light > 0.6 ? "Blush" : light > 0.4 ? "Soft Rose" : "Deep Red";
+    if (hue < 45) return light > 0.6 ? "Warm Sand" : light > 0.35 ? "Clay" : "Burnt Sienna";
+    if (hue < 70) return light > 0.6 ? "Golden Honey" : light > 0.35 ? "Autumn Gold" : "Rich Amber";
+    if (hue < 150) return light > 0.6 ? "Sage Green" : light > 0.35 ? "Moss Green" : "Forest Green";
+    if (hue < 200) return light > 0.6 ? "Sky Blue" : light > 0.35 ? "Ocean Teal" : "Deep Teal";
+    if (hue < 260) return light > 0.6 ? "Soft Blue" : light > 0.35 ? "Steel Blue" : "Deep Navy";
+    if (hue < 300) return light > 0.6 ? "Soft Lavender" : light > 0.35 ? "Plum" : "Rich Plum";
+    return light > 0.6 ? "Dusty Rose" : light > 0.35 ? "Mauve" : "Deep Mauve";
+  };
+
+  const handlePickClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = pickCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round((e.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.round((e.clientY - rect.top) * (canvas.height / rect.height));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    const r = pixel[0], g = pixel[1], b = pixel[2];
+    const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+    const name = nameFromRGB(r, g, b);
+    const roleSeq: { role: PaletteRole; share: number }[] = [
+      { role: "dominant", share: 60 },
+      { role: "secondary", share: 30 },
+      { role: "accent", share: 10 },
+    ];
+    setColors(prev => {
+      const idx = prev.length;
+      return [...prev, { hex, name, ...(idx < roleSeq.length ? roleSeq[idx] : {}) }];
+    });
+    setPicking(false);
+    setPickHover(null);
+  };
+
+  const handlePickMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = pickCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round((e.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.round((e.clientY - rect.top) * (canvas.height / rect.height));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    setPickHover(`#${pixel[0].toString(16).padStart(2, "0")}${pixel[1].toString(16).padStart(2, "0")}${pixel[2].toString(16).padStart(2, "0")}`);
+  };
+
   const removeColor = (i: number) => setColors(prev => prev.filter((_, idx) => idx !== i));
 
   const save = async () => {
@@ -2449,9 +2530,35 @@ function AdminSpaceColorPaletteModal({
                 </div>
               </div>
             ))}
-            <Button type="button" size="sm" variant="outline" onClick={addColor} className="w-full">
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add color
-            </Button>
+            {picking ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Click on the photo to pick a color</p>
+                  <div className="flex items-center gap-2">
+                    {pickHover && (
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded border border-gray-300" style={{ backgroundColor: pickHover }} />
+                        <span className="text-[10px] font-mono text-gray-500">{pickHover}</span>
+                      </div>
+                    )}
+                    <Button type="button" size="sm" variant="ghost" onClick={() => { setPicking(false); setPickHover(null); }} className="h-7 text-xs">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+                <canvas
+                  ref={pickCanvasRef}
+                  onClick={handlePickClick}
+                  onMouseMove={handlePickMove}
+                  onMouseLeave={() => setPickHover(null)}
+                  className="w-full rounded-lg border border-gray-200 cursor-crosshair"
+                />
+              </div>
+            ) : (
+              <Button type="button" size="sm" variant="outline" onClick={openPicker} className="w-full">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add color
+              </Button>
+            )}
           </div>
 
           <div>
