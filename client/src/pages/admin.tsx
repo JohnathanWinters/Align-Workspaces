@@ -1985,7 +1985,7 @@ function classifyColor(hue: number, sat: number, light: number): Pick<PaletteCol
   const tone: PaletteColorMeta["tone"] = light > 0.65 ? "light" : light < 0.4 ? "dark" : "mid";
   let family: PaletteColorMeta["family"];
   let warmth: PaletteColorMeta["warmth"] = "neutral";
-  if (sat < 0.15) {
+  if (sat < 0.08) {
     family = "neutral";
   } else if (hue < 15 || hue >= 345) { family = "red"; warmth = "warm"; }
   else if (hue < 40) { family = "orange"; warmth = "warm"; }
@@ -2172,7 +2172,7 @@ function AdminSpaceColorPaletteModal({
             const max = Math.max(r, g, b), min = Math.min(r, g, b);
             const sat = max === 0 ? 0 : (max - min) / max;
             if (sat < 0.06 && max > 220) continue;
-            if (max < 25) continue;
+            if (max < 35) continue;
             let merged = false;
             for (const bucket of buckets) {
               const dr = Math.abs(bucket.r / bucket.count - r);
@@ -2220,15 +2220,15 @@ function AdminSpaceColorPaletteModal({
         const light = (max + min) / 2 / 255;
         const sat = max === 0 ? 0 : (max - min) / max;
         let name = "Neutral";
-        if (sat < 0.15) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
-        else if (hue < 15 || hue >= 345) name = light > 0.5 ? "Soft Rose" : "Deep Red";
-        else if (hue < 45) name = light > 0.5 ? "Warm Sand" : "Burnt Sienna";
-        else if (hue < 70) name = light > 0.5 ? "Golden Honey" : "Rich Amber";
-        else if (hue < 150) name = light > 0.5 ? "Sage Green" : "Forest Green";
-        else if (hue < 200) name = light > 0.5 ? "Sky Blue" : "Ocean Teal";
-        else if (hue < 260) name = light > 0.5 ? "Soft Blue" : "Deep Navy";
-        else if (hue < 300) name = light > 0.5 ? "Soft Lavender" : "Rich Plum";
-        else name = light > 0.5 ? "Dusty Rose" : "Deep Mauve";
+        if (sat < 0.08) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
+        else if (hue < 15 || hue >= 345) name = light > 0.6 ? "Blush" : light > 0.4 ? "Soft Rose" : "Deep Red";
+        else if (hue < 45) name = light > 0.6 ? "Warm Sand" : light > 0.35 ? "Clay" : "Burnt Sienna";
+        else if (hue < 70) name = light > 0.6 ? "Golden Honey" : light > 0.35 ? "Autumn Gold" : "Rich Amber";
+        else if (hue < 150) name = light > 0.6 ? "Sage Green" : light > 0.35 ? "Moss Green" : "Forest Green";
+        else if (hue < 200) name = light > 0.6 ? "Sky Blue" : light > 0.35 ? "Ocean Teal" : "Deep Teal";
+        else if (hue < 260) name = light > 0.6 ? "Soft Blue" : light > 0.35 ? "Steel Blue" : "Deep Navy";
+        else if (hue < 300) name = light > 0.6 ? "Soft Lavender" : light > 0.35 ? "Plum" : "Rich Plum";
+        else name = light > 0.6 ? "Dusty Rose" : light > 0.35 ? "Mauve" : "Deep Mauve";
         return { hex, name, r, g, b, count: bucket.count, hue, sat, light, ...classifyColor(hue, sat, light) };
       };
 
@@ -2275,22 +2275,21 @@ function AdminSpaceColorPaletteModal({
         pushPick(enriched[1], "secondary");
       }
 
-      // 10% accent: prefer the most saturated bucket in a family not already
-      // used; otherwise fall back to the most saturated remaining bucket.
+      // 10% accent: prefer the most prominent bucket (by pixel count) from a
+      // family not already used, so the accent reflects a visually present
+      // colour rather than a tiny saturated detail like a plant pot.
       const usedFamilies = new Set(picks.map(p => p.bucket.family));
-      const saturatedCandidates = enriched
+      const accentCandidates = enriched
         .filter(b => !usedHex.has(b.hex))
-        .filter(b => b.sat >= 0.15)
         .sort((a, b) => {
           const aNewFamily = !usedFamilies.has(a.family) ? 1 : 0;
           const bNewFamily = !usedFamilies.has(b.family) ? 1 : 0;
           if (aNewFamily !== bNewFamily) return bNewFamily - aNewFamily;
-          return b.sat - a.sat;
+          return b.count - a.count;
         });
-      if (saturatedCandidates[0]) {
-        pushPick(saturatedCandidates[0], "accent");
+      if (accentCandidates[0]) {
+        pushPick(accentCandidates[0], "accent");
       } else {
-        // No saturated option left — grab the next distinct bucket.
         for (const bucket of enriched) {
           if (pushPick(bucket, "accent")) break;
         }
@@ -2334,15 +2333,51 @@ function AdminSpaceColorPaletteModal({
     setColors(prev => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
   };
 
-  const addColor = () => setColors(prev => [...prev, { hex: "#8B7355", name: "New Color" }]);
+  const addColor = () => {
+    setColors(prev => {
+      const roleSeq: { role: PaletteRole; share: number }[] = [
+        { role: "dominant", share: 60 },
+        { role: "secondary", share: 30 },
+        { role: "accent", share: 10 },
+      ];
+      const idx = prev.length;
+      return [...prev, { hex: "#8B7355", name: "New Color", ...(idx < roleSeq.length ? roleSeq[idx] : {}) }];
+    });
+  };
   const removeColor = (i: number) => setColors(prev => prev.filter((_, idx) => idx !== i));
 
   const save = async () => {
     setSaving(true);
     try {
+      // Auto-generate feel & explanation for manually built palettes
+      let finalFeel = feel.trim();
+      let finalExplanation = explanation.trim();
+      if (colors.length > 0 && !finalFeel && !finalExplanation) {
+        const meta: PaletteColorMeta[] = colors.map((c) => {
+          const r = parseInt(c.hex.slice(1, 3), 16) || 0;
+          const g = parseInt(c.hex.slice(3, 5), 16) || 0;
+          const b = parseInt(c.hex.slice(5, 7), 16) || 0;
+          const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+          let h = 0;
+          if (mx !== mn) {
+            if (mx === r) h = ((g - b) / (mx - mn)) * 60;
+            else if (mx === g) h = (2 + (b - r) / (mx - mn)) * 60;
+            else h = (4 + (r - g) / (mx - mn)) * 60;
+            if (h < 0) h += 360;
+          }
+          const l = (mx + mn) / 2 / 255;
+          const s = mx === 0 ? 0 : (mx - mn) / mx;
+          return { hex: c.hex, name: c.name, role: c.role || "dominant" as PaletteRole, share: c.share || ROLE_SHARE[c.role || "dominant"], ...classifyColor(h, s, l) };
+        });
+        const copy = buildPaletteCopy(meta);
+        finalFeel = copy.feel;
+        finalExplanation = copy.explanation;
+        setFeel(finalFeel);
+        setExplanation(finalExplanation);
+      }
       const payload: { colors: PaletteColor[]; feel?: string; explanation?: string } = { colors };
-      if (feel.trim()) payload.feel = feel.trim();
-      if (explanation.trim()) payload.explanation = explanation.trim();
+      if (finalFeel) payload.feel = finalFeel;
+      if (finalExplanation) payload.explanation = finalExplanation;
       const res = await fetch(`/api/admin/spaces/${space.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -4410,15 +4445,15 @@ function PortfolioManager({ token, onBack }: { token: string; onBack: () => void
         const light = (max + min) / 2 / 255;
         const sat = max === 0 ? 0 : (max - min) / max;
         let name = "Neutral";
-        if (sat < 0.15) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
-        else if (hue < 15 || hue >= 345) name = light > 0.5 ? "Soft Rose" : "Deep Red";
-        else if (hue < 45) name = light > 0.5 ? "Warm Sand" : "Burnt Sienna";
-        else if (hue < 70) name = light > 0.5 ? "Golden Honey" : "Rich Amber";
-        else if (hue < 150) name = light > 0.5 ? "Sage Green" : "Forest Green";
-        else if (hue < 200) name = light > 0.5 ? "Sky Blue" : "Ocean Teal";
-        else if (hue < 260) name = light > 0.5 ? "Soft Blue" : "Deep Navy";
-        else if (hue < 300) name = light > 0.5 ? "Soft Lavender" : "Rich Plum";
-        else name = light > 0.5 ? "Dusty Rose" : "Deep Mauve";
+        if (sat < 0.08) name = light > 0.7 ? "Soft Ivory" : light > 0.4 ? "Warm Gray" : "Deep Charcoal";
+        else if (hue < 15 || hue >= 345) name = light > 0.6 ? "Blush" : light > 0.4 ? "Soft Rose" : "Deep Red";
+        else if (hue < 45) name = light > 0.6 ? "Warm Sand" : light > 0.35 ? "Clay" : "Burnt Sienna";
+        else if (hue < 70) name = light > 0.6 ? "Golden Honey" : light > 0.35 ? "Autumn Gold" : "Rich Amber";
+        else if (hue < 150) name = light > 0.6 ? "Sage Green" : light > 0.35 ? "Moss Green" : "Forest Green";
+        else if (hue < 200) name = light > 0.6 ? "Sky Blue" : light > 0.35 ? "Ocean Teal" : "Deep Teal";
+        else if (hue < 260) name = light > 0.6 ? "Soft Blue" : light > 0.35 ? "Steel Blue" : "Deep Navy";
+        else if (hue < 300) name = light > 0.6 ? "Soft Lavender" : light > 0.35 ? "Plum" : "Rich Plum";
+        else name = light > 0.6 ? "Dusty Rose" : light > 0.35 ? "Mauve" : "Deep Mauve";
         return { hex, keyword: name };
       });
       setTagForm(prev => ({ ...prev, colorPalette: top3 }));
