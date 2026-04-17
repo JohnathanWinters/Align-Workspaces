@@ -309,13 +309,23 @@ export default function AlignSpacesPage() {
   const allSpaces = (spaces || []).sort((a, b) => a.name.localeCompare(b.name));
 
   useEffect(() => {
-    if (spacesLoading || allSpaces.length < 2) return;
+    if (spacesLoading || allSpaces.length < 3) return;
     const el = spacesCarousel.ref.current;
     if (!el) return;
     if (!window.matchMedia("(min-width: 640px)").matches) return;
-    const firstCard = el.firstElementChild as HTMLElement | null;
-    if (!firstCard) return;
-    el.scrollLeft = firstCard.offsetWidth * 0.92;
+    requestAnimationFrame(() => {
+      const firstCard = el.firstElementChild as HTMLElement | null;
+      if (!firstCard) return;
+      const style = window.getComputedStyle(el);
+      const gap = parseFloat(style.columnGap || "0");
+      const paddingLeft = parseFloat(style.paddingLeft || "0");
+      const V = el.clientWidth;
+      const cardW = firstCard.offsetWidth;
+      const peek3 = (V - 3 * cardW - 4 * gap) / 2;
+      const peek2 = (V - 2 * cardW - 3 * gap) / 2;
+      const peek = peek3 >= 20 ? peek3 : Math.max(0, peek2);
+      if (peek > 0) el.scrollLeft = paddingLeft + cardW - peek;
+    });
   }, [spacesLoading, allSpaces.length]);
 
   return (
@@ -492,7 +502,7 @@ export default function AlignSpacesPage() {
           >
             {spacesLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
+                <div key={i} className="flex-shrink-0 w-[82%] sm:w-[42%] lg:w-[27%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
                   <div className="aspect-[4/3] bg-stone-200" />
                   <div className="p-4 space-y-3">
                     <div className="h-5 bg-stone-200 rounded w-3/4" />
@@ -501,7 +511,7 @@ export default function AlignSpacesPage() {
                 </div>
               ))
             ) : allSpaces.map((space) => (
-              <div key={space.id} className="flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%]">
+              <div key={space.id} className="flex-shrink-0 w-[82%] sm:w-[42%] lg:w-[27%]">
                 <SpaceCard space={space} />
               </div>
             ))}
