@@ -38,6 +38,8 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
   } = pipeline;
 
   const [stageMenuOpen, setStageMenuOpen] = useState(false);
+  const [followUpMenuOpen, setFollowUpMenuOpen] = useState(false);
+  const [activityFollowUpMenuOpen, setActivityFollowUpMenuOpen] = useState(false);
 
   // If no contact selected, show empty state with stats
   if (!selectedContact) {
@@ -165,37 +167,57 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
 
         {/* Follow-up (hidden for Not Interested) */}
         {c.stage !== "lost" ? (
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-3 text-sm">
-              <span className={`flex items-center gap-1.5 cursor-pointer hover:opacity-80 relative ${
-                c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : c.nextFollowUp ? "text-gray-500" : "text-gray-400"
-              }`}
-                onClick={() => {
-                  const input = document.getElementById("detail-followup-picker") as HTMLInputElement;
-                  if (input) input.showPicker();
-                }}>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <div className="relative">
+              <button
+                onClick={() => setFollowUpMenuOpen(o => !o)}
+                className={`flex items-center gap-1.5 hover:opacity-80 ${
+                  c.nextFollowUp && new Date(c.nextFollowUp) <= new Date() ? "text-red-600 font-medium" : c.nextFollowUp ? "text-gray-500" : "text-gray-400"
+                }`}
+                data-testid="followup-button"
+              >
                 <CalendarDays className="w-3.5 h-3.5" />
                 {c.nextFollowUp ? `Follow-up: ${formatDateShort(c.nextFollowUp)}` : "Set follow-up"}
-                <input id="detail-followup-picker" type="date" className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" min={new Date().toISOString().split("T")[0]}
-                  value={c.nextFollowUp ? new Date(c.nextFollowUp).toISOString().split("T")[0] : ""}
-                  onChange={e => setFollowUpDate(c.id, e.target.value, c.stage)}
-                />
-              </span>
-              {c.lastContactDate && (
-                <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {formatDateShort(c.lastContactDate)}</span>
+                <ChevronDown className="w-3 h-3 opacity-70" />
+              </button>
+              {followUpMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setFollowUpMenuOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[180px] z-[9999]">
+                    {FOLLOW_UP_QUICK_OPTIONS.map(opt => {
+                      const dateStr = formatFollowUpDate(opt.days);
+                      return (
+                        <button key={opt.label}
+                          onClick={() => { setFollowUpDate(c.id, dateStr, c.stage); setFollowUpMenuOpen(false); }}
+                          className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50">
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                    <div className="my-1 border-t border-gray-100" />
+                    <label className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center justify-between cursor-pointer">
+                      <span>Custom date</span>
+                      <input type="date" className="text-xs bg-transparent outline-none" min={new Date().toISOString().split("T")[0]}
+                        value={c.nextFollowUp ? new Date(c.nextFollowUp).toISOString().split("T")[0] : ""}
+                        onChange={e => { setFollowUpDate(c.id, e.target.value, c.stage); setFollowUpMenuOpen(false); }}
+                      />
+                    </label>
+                    {c.nextFollowUp && (
+                      <>
+                        <div className="my-1 border-t border-gray-100" />
+                        <button onClick={() => { updateContact(c.id, { nextFollowUp: null }); setFollowUpMenuOpen(false); }}
+                          className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50">
+                          Clear follow-up
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {FOLLOW_UP_QUICK_OPTIONS.map(opt => {
-                const dateStr = formatFollowUpDate(opt.days);
-                return (
-                  <button key={opt.label} onClick={() => setFollowUpDate(c.id, dateStr, c.stage)}
-                    className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors">
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
+            {c.lastContactDate && (
+              <span className="flex items-center gap-1.5 text-gray-400"><Clock className="w-3.5 h-3.5" /> Last: {formatDateShort(c.lastContactDate)}</span>
+            )}
           </div>
         ) : (
           c.lastContactDate && (
@@ -340,50 +362,57 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
           <Textarea value={newActivity.note} onChange={e => setNewActivity(p => ({ ...p, note: e.target.value }))}
             placeholder={newActivity.type === "referral" ? "e.g. Beatriz advised me to reach out to Prince..." : "What happened? Quick notes..."}
             className="h-16 text-sm bg-white" />
-          <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
             {c.stage !== "lost" ? (
-              <>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 flex items-center gap-2">
-                    <CalendarDays className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    <input type="date" value={newActivity.followUpDate}
-                      onChange={e => setNewActivity(p => ({ ...p, followUpDate: e.target.value }))}
-                      className="h-8 text-xs bg-white border border-gray-200 rounded-md px-2 flex-1 text-gray-700"
-                      min={new Date().toISOString().split("T")[0]} />
-                    {newActivity.followUpDate && (
-                      <button onClick={() => setNewActivity(p => ({ ...p, followUpDate: "" }))} className="text-gray-400 hover:text-gray-600">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                  <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white">
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Log
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="text-[10px] text-gray-400 self-center mr-0.5">Next follow-up:</span>
-                  {FOLLOW_UP_QUICK_OPTIONS.map(opt => {
-                    const dateStr = formatFollowUpDate(opt.days);
-                    return (
-                      <button key={opt.label} onClick={() => setNewActivity(p => ({ ...p, followUpDate: dateStr }))}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition-colors ${
-                          newActivity.followUpDate === dateStr
-                            ? "border-stone-900 bg-stone-900 text-white"
-                            : "border-stone-200 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
-                        }`}>
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div className="flex justify-end">
-                <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white">
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Log
-                </Button>
+              <div className="relative">
+                <button
+                  onClick={() => setActivityFollowUpMenuOpen(o => !o)}
+                  className={`flex items-center gap-1.5 text-xs ${newActivity.followUpDate ? "text-stone-700 font-medium" : "text-gray-400"} hover:opacity-80`}
+                  data-testid="activity-followup-button"
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  {newActivity.followUpDate ? `Next: ${formatDateShort(newActivity.followUpDate)}` : "Add follow-up"}
+                  <ChevronDown className="w-3 h-3 opacity-70" />
+                </button>
+                {activityFollowUpMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setActivityFollowUpMenuOpen(false)} />
+                    <div className="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[180px] z-[9999]">
+                      {FOLLOW_UP_QUICK_OPTIONS.map(opt => {
+                        const dateStr = formatFollowUpDate(opt.days);
+                        return (
+                          <button key={opt.label}
+                            onClick={() => { setNewActivity(p => ({ ...p, followUpDate: dateStr })); setActivityFollowUpMenuOpen(false); }}
+                            className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 ${newActivity.followUpDate === dateStr ? "bg-gray-50 font-medium" : ""}`}>
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                      <div className="my-1 border-t border-gray-100" />
+                      <label className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center justify-between cursor-pointer">
+                        <span>Custom date</span>
+                        <input type="date" className="text-xs bg-transparent outline-none" min={new Date().toISOString().split("T")[0]}
+                          value={newActivity.followUpDate}
+                          onChange={e => { setNewActivity(p => ({ ...p, followUpDate: e.target.value })); setActivityFollowUpMenuOpen(false); }}
+                        />
+                      </label>
+                      {newActivity.followUpDate && (
+                        <>
+                          <div className="my-1 border-t border-gray-100" />
+                          <button onClick={() => { setNewActivity(p => ({ ...p, followUpDate: "" })); setActivityFollowUpMenuOpen(false); }}
+                            className="w-full text-left px-3 py-1.5 text-xs text-red-500 hover:bg-red-50">
+                            Clear
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            )}
+            ) : <div />}
+            <Button size="sm" onClick={logActivity} className="bg-stone-900 hover:bg-stone-800 text-white">
+              <Plus className="w-3.5 h-3.5 mr-1" /> Log
+            </Button>
           </div>
         </div>
 
