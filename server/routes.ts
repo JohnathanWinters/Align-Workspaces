@@ -1405,7 +1405,20 @@ export async function registerRoutes(
   app.get("/api/admin/shoots", isAdminOrEmployee, requirePermission("view_shoots"), async (_req, res) => {
     try {
       const allShoots = await storage.getAllShoots();
-      res.json(allShoots.filter(s => !s.id.startsWith("test-")));
+      const filtered = allShoots.filter(s => !s.id.startsWith("test-"));
+      const enriched = await Promise.all(filtered.map(async (shoot) => {
+        let ownerInfo = null;
+        if (shoot.userId) {
+          try {
+            const user = await authStorage.getUser(shoot.userId);
+            if (user) {
+              ownerInfo = { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName };
+            }
+          } catch {}
+        }
+        return { ...shoot, ownerInfo };
+      }));
+      res.json(enriched);
     } catch {
       res.status(500).json({ message: "Failed to fetch shoots" });
     }

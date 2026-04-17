@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { X, Save } from "lucide-react";
 import { PIPELINE_STAGES } from "./types";
+import SearchSelect, { type SearchItem } from "./SearchSelect";
 import type { UsePipelineReturn } from "./use-pipeline";
 
 interface ContactFormProps {
@@ -14,6 +16,26 @@ interface ContactFormProps {
 
 export default function ContactForm({ pipeline }: ContactFormProps) {
   const { form, setForm, editingContact, showForm, setShowForm, setEditingContact, handleSave, allSpaces, allShoots } = pipeline;
+
+  const spaceItems = useMemo<SearchItem[]>(() => {
+    return allSpaces.filter((s: any) => s.id).map((s: any) => {
+      const owner = s.ownerInfo;
+      const ownerName = owner ? [owner.firstName, owner.lastName].filter(Boolean).join(" ").trim() : "";
+      const secondary = [ownerName, owner?.email].filter(Boolean).join(" · ") || undefined;
+      const searchText = [s.name, ownerName, owner?.email].filter(Boolean).join(" ");
+      return { id: s.id, primary: s.name, secondary, searchText };
+    });
+  }, [allSpaces]);
+
+  const shootItems = useMemo<SearchItem[]>(() => {
+    return allShoots.filter((s: any) => s.id).map((s: any) => {
+      const owner = s.ownerInfo;
+      const ownerName = owner ? [owner.firstName, owner.lastName].filter(Boolean).join(" ").trim() : "";
+      const secondary = [ownerName, owner?.email].filter(Boolean).join(" · ") || undefined;
+      const searchText = [s.title, ownerName, owner?.email].filter(Boolean).join(" ");
+      return { id: s.id, primary: s.title, secondary, searchText };
+    });
+  }, [allShoots]);
 
   if (!showForm) return null;
 
@@ -85,27 +107,25 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs text-gray-500">Linked Workspace</Label>
-              <Select value={form.spaceId || "__none__"} onValueChange={v => setForm(p => ({ ...p, spaceId: v === "__none__" ? "" : v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 10002 }}>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {allSpaces.filter((s: any) => s.id).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-gray-500">Linked Photoshoot</Label>
-              <Select value={form.shootId || "__none__"} onValueChange={v => setForm(p => ({ ...p, shootId: v === "__none__" ? "" : v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
-                <SelectContent style={{ zIndex: 10002 }}>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {allShoots.filter((s: any) => s.id).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label className="text-xs text-gray-500">Linked Workspace</Label>
+            <SearchSelect
+              value={form.spaceId}
+              onChange={v => setForm(p => ({ ...p, spaceId: v }))}
+              items={spaceItems}
+              placeholder="None — search by name, email, or workspace"
+              searchPlaceholder="Search by name, email, or workspace…"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500">Linked Photoshoot</Label>
+            <SearchSelect
+              value={form.shootId}
+              onChange={v => setForm(p => ({ ...p, shootId: v }))}
+              items={shootItems}
+              placeholder="None — search by name, email, or shoot title"
+              searchPlaceholder="Search by name, email, or shoot title…"
+            />
           </div>
           <div>
             <Label className="text-xs text-gray-500">Important Facts</Label>
