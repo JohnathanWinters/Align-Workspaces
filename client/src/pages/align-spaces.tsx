@@ -315,7 +315,7 @@ export default function AlignSpacesPage() {
     if (!window.matchMedia("(min-width: 640px)").matches) return;
     const firstCard = el.firstElementChild as HTMLElement | null;
     if (!firstCard) return;
-    el.scrollLeft = firstCard.offsetWidth * 0.45;
+    el.scrollLeft = firstCard.offsetWidth * 0.92;
   }, [spacesLoading, allSpaces.length]);
 
   return (
@@ -488,11 +488,11 @@ export default function AlignSpacesPage() {
             onMouseUp={spacesCarousel.onMouseUp}
             onMouseLeave={spacesCarousel.onMouseLeave}
             onClickCapture={spacesCarousel.preventClickIfDragged}
-            className="flex gap-4 sm:gap-5 lg:gap-6 overflow-x-auto snap-x snap-proximity scroll-smooth px-4 sm:px-6 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+            className="flex gap-4 sm:gap-5 lg:gap-6 overflow-x-auto scroll-smooth px-4 sm:px-6 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
           >
             {spacesLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="snap-center flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
+                <div key={i} className="flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
                   <div className="aspect-[4/3] bg-stone-200" />
                   <div className="p-4 space-y-3">
                     <div className="h-5 bg-stone-200 rounded w-3/4" />
@@ -501,7 +501,7 @@ export default function AlignSpacesPage() {
                 </div>
               ))
             ) : allSpaces.map((space) => (
-              <div key={space.id} className="snap-center flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%]">
+              <div key={space.id} className="flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%]">
                 <SpaceCard space={space} />
               </div>
             ))}
