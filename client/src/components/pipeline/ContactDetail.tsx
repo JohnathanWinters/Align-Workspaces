@@ -14,7 +14,6 @@ import type { UsePipelineReturn } from "./use-pipeline";
 import { PIPELINE_STAGES, ACTIVITY_TYPES, FOLLOW_UP_QUICK_OPTIONS, TEAM_MEMBERS } from "./types";
 import { stageOf, getInitials, computeHealthScore, healthColor, healthTextColor, formatFollowUpDate } from "./utils";
 import { formatDateShort } from "@/lib/format-date";
-import ContactDetailStageBar from "./ContactDetailStageBar";
 import LinkifiedText from "./LinkifiedText";
 import FunnelVisualization from "./FunnelVisualization";
 
@@ -107,9 +106,6 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        {/* Stage bar */}
-        <ContactDetailStageBar currentStage={c.stage} onMove={handleMoveStage} />
-
         {/* Contact info */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-gray-600">
           {c.email && <span className="flex items-center gap-1.5"><Send className="w-3.5 h-3.5 text-gray-400" /> {c.email}</span>}
