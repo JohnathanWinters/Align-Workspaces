@@ -470,55 +470,35 @@ export default function AlignSpacesPage() {
 
       <section className="pb-12 sm:pb-16" data-testid="section-spaces-grid">
         <div className="max-w-6xl mx-auto">
-          {/* Mobile: horizontal scroll carousel */}
-          <div className="sm:hidden">
-            <div
-              ref={spacesCarousel.ref}
-              onDragStart={spacesCarousel.onDragStart}
-              onMouseDown={spacesCarousel.onMouseDown}
-              onMouseMove={spacesCarousel.onMouseMove}
-              onMouseUp={spacesCarousel.onMouseUp}
-              onMouseLeave={spacesCarousel.onMouseLeave}
-              onClickCapture={spacesCarousel.preventClickIfDragged}
-              className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 -mx-0 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
-            >
-              {spacesLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="snap-start flex-shrink-0 w-[85%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
-                    <div className="aspect-[4/3] bg-stone-200" />
-                    <div className="p-4 space-y-3">
-                      <div className="h-5 bg-stone-200 rounded w-3/4" />
-                      <div className="h-4 bg-stone-200 rounded w-1/2" />
-                    </div>
-                  </div>
-                ))
-              ) : allSpaces.map((space) => (
-                <div key={space.id} className="snap-start flex-shrink-0 w-[85%]">
-                  <SpaceCard space={space} />
-                </div>
-              ))}
-            </div>
-            {!spacesLoading && allSpaces.length > 2 && (
-              <p className="text-center text-[11px] text-stone-400 mt-1 px-4">Swipe to see more</p>
-            )}
-          </div>
-          {/* Desktop: grid */}
-          <div className="hidden sm:grid grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 px-4 sm:px-6">
+          <div
+            ref={spacesCarousel.ref}
+            onDragStart={spacesCarousel.onDragStart}
+            onMouseDown={spacesCarousel.onMouseDown}
+            onMouseMove={spacesCarousel.onMouseMove}
+            onMouseUp={spacesCarousel.onMouseUp}
+            onMouseLeave={spacesCarousel.onMouseLeave}
+            onClickCapture={spacesCarousel.preventClickIfDragged}
+            className="flex gap-4 sm:gap-5 lg:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 sm:px-6 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+          >
             {spacesLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="snap-start flex-shrink-0 w-[85%] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3rem)/3)] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
                   <div className="aspect-[4/3] bg-stone-200" />
-                  <div className="p-5 space-y-3">
+                  <div className="p-4 space-y-3">
                     <div className="h-5 bg-stone-200 rounded w-3/4" />
                     <div className="h-4 bg-stone-200 rounded w-1/2" />
-                    <div className="h-4 bg-stone-200 rounded w-1/3" />
                   </div>
                 </div>
               ))
             ) : allSpaces.map((space) => (
-              <SpaceCard key={space.id} space={space} />
+              <div key={space.id} className="snap-start flex-shrink-0 w-[85%] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3rem)/3)]">
+                <SpaceCard space={space} />
+              </div>
             ))}
           </div>
+          {!spacesLoading && allSpaces.length > 3 && (
+            <p className="text-center text-[11px] text-stone-400 mt-1 px-4">Swipe or drag to see more</p>
+          )}
         </div>
       </section>
 
