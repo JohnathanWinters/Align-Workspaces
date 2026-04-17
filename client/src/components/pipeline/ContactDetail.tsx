@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Send, Phone, CalendarDays, Clock, Instagram, Globe, Camera, Home, Star,
   Edit, Pencil, X, Plus, Trash2, Check, CheckCircle, UserPlus, Users,
-  MessageCircle, History, ChevronLeft,
+  MessageCircle, History, ChevronLeft, ChevronDown,
 } from "lucide-react";
 import type { UsePipelineReturn } from "./use-pipeline";
 import { PIPELINE_STAGES, ACTIVITY_TYPES, FOLLOW_UP_QUICK_OPTIONS, TEAM_MEMBERS } from "./types";
@@ -36,6 +36,8 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
     editingFacts, setEditingFacts, factsText, setFactsText, savingFacts, saveFacts,
     allSpaces, allShoots, activitiesMap, stageCounts,
   } = pipeline;
+
+  const [stageMenuOpen, setStageMenuOpen] = useState(false);
 
   // If no contact selected, show empty state with stats
   if (!selectedContact) {
@@ -84,9 +86,34 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
           <div className="min-w-0">
             <h2 className="font-serif text-lg font-bold text-stone-900 truncate">{c.name}</h2>
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${stageOf(c.stage)?.color || "bg-gray-100"}`}>
-                {stageOf(c.stage)?.label}
-              </span>
+              <div className="relative">
+                <button
+                  onClick={() => setStageMenuOpen(o => !o)}
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1 ${stageOf(c.stage)?.color || "bg-gray-100"} hover:ring-1 hover:ring-black/10 transition`}
+                  data-testid="stage-badge-button"
+                >
+                  {stageOf(c.stage)?.label}
+                  <ChevronDown className="w-3 h-3 opacity-70" />
+                </button>
+                {stageMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[9998]" onClick={() => setStageMenuOpen(false)} />
+                    <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg py-1 min-w-[140px] z-[9999]">
+                      {PIPELINE_STAGES.map(s => (
+                        <button
+                          key={s.key}
+                          onClick={() => { handleMoveStage(s.key); setStageMenuOpen(false); }}
+                          className={`w-full text-left px-2.5 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${s.key === c.stage ? "bg-gray-50" : ""}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${s.color.split(" ")[0]}`} />
+                          <span className="flex-1">{s.label}</span>
+                          {s.key === c.stage && <Check className="w-3 h-3 text-gray-400" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
               <span className={`text-[10px] font-semibold ${healthTextColor(healthScore)}`}>{healthScore}</span>
               <div className={`w-2 h-2 rounded-full ${healthColor(healthScore)}`} />
             </div>
