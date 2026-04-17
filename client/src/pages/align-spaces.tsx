@@ -308,6 +308,16 @@ export default function AlignSpacesPage() {
 
   const allSpaces = (spaces || []).sort((a, b) => a.name.localeCompare(b.name));
 
+  useEffect(() => {
+    if (spacesLoading || allSpaces.length < 2) return;
+    const el = spacesCarousel.ref.current;
+    if (!el) return;
+    if (!window.matchMedia("(min-width: 640px)").matches) return;
+    const firstCard = el.firstElementChild as HTMLElement | null;
+    if (!firstCard) return;
+    el.scrollLeft = firstCard.offsetWidth * 0.45;
+  }, [spacesLoading, allSpaces.length]);
+
   return (
     <div className="bg-[#f5f0e8] min-h-screen" data-testid="page-landing">
       <nav className="sticky top-0 z-50 bg-stone-900/95 backdrop-blur-sm border-b border-stone-800/50">
@@ -478,7 +488,7 @@ export default function AlignSpacesPage() {
             onMouseUp={spacesCarousel.onMouseUp}
             onMouseLeave={spacesCarousel.onMouseLeave}
             onClickCapture={spacesCarousel.preventClickIfDragged}
-            className="flex gap-4 sm:gap-5 lg:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 sm:px-6 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
+            className="flex gap-4 sm:gap-5 lg:gap-6 overflow-x-auto snap-x snap-proximity scroll-smooth px-4 sm:px-6 pb-4 scrollbar-none cursor-grab select-none [&_img]:pointer-events-none [&_img]:select-none" style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}
           >
             {spacesLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
