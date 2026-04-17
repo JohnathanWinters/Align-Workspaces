@@ -8356,6 +8356,7 @@ function AdminDashboard({ token }: { token: string }) {
   const [savingUser, setSavingUser] = useState(false);
   const [uploadingUserPhoto, setUploadingUserPhoto] = useState<string | null>(null);
   const [pendingSpacesCount, setPendingSpacesCount] = useState(0);
+  const [allSpaces, setAllSpaces] = useState<any[]>([]);
   const userPhotoInputRef = useRef<HTMLInputElement>(null);
   const [deletingUser, setDeletingUser] = useState<UserType | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
@@ -8443,7 +8444,7 @@ function AdminDashboard({ token }: { token: string }) {
         return shoots.some((s) => s.userId === u.id);
       }
       if (clientFilter === "workspaces") {
-        return bookingUserIds.has(u.id);
+        return bookingUserIds.has(u.id) || allSpaces.some((s: any) => s.userId === u.id);
       }
       return true;
     });
@@ -8467,7 +8468,7 @@ function AdminDashboard({ token }: { token: string }) {
     });
 
     return result;
-  }, [users, searchQuery, clientFilter, clientSort, shoots, bookingUserIds]);
+  }, [users, searchQuery, clientFilter, clientSort, shoots, bookingUserIds, allSpaces]);
 
   const totalClientPages = Math.max(1, Math.ceil(filteredUsers.length / CLIENTS_PER_PAGE));
   const paginatedUsers = useMemo(() => {
@@ -8514,11 +8515,15 @@ function AdminDashboard({ token }: { token: string }) {
   // Fetch pending spaces count for sidebar badge
   useEffect(() => {
     adminFetch("/api/admin/spaces/all", token).then(r => r.ok ? r.json() : []).then(data => {
-      if (Array.isArray(data)) setPendingSpacesCount(data.filter((s: any) => s.approvalStatus === "pending" || s.approvalStatus === "draft").length);
+      if (Array.isArray(data)) {
+        setAllSpaces(data);
+        setPendingSpacesCount(data.filter((s: any) => s.approvalStatus === "pending" || s.approvalStatus === "draft").length);
+      }
     }).catch(() => {});
   }, [token, view]);
 
   const getUserShoots = (userId: string) => shoots.filter((s) => s.userId === userId);
+  const getUserSpaces = (userId: string) => allSpaces.filter((s: any) => s.userId === userId);
 
   const handleCreateShoot = async () => {
     if (!selectedUser || !form.title) return;
@@ -9140,6 +9145,7 @@ function AdminDashboard({ token }: { token: string }) {
               <div className="space-y-1">
                 {paginatedUsers.map((user) => {
                   const userShoots = getUserShoots(user.id);
+                  const userSpaces = getUserSpaces(user.id);
                   const isExpanded = expandedClient === user.id;
                   const displayName = user.firstName || user.lastName
                     ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
@@ -9161,10 +9167,15 @@ function AdminDashboard({ token }: { token: string }) {
                           <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
                           <p className="text-xs text-gray-400 truncate">{user.email || "No email"}</p>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {userShoots.length > 0 && (
                             <span className="text-[11px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
                               {userShoots.length} shoot{userShoots.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {userSpaces.length > 0 && (
+                            <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                              {userSpaces.length} workspace{userSpaces.length !== 1 ? "s" : ""}
                             </span>
                           )}
                           <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
@@ -9331,6 +9342,7 @@ function AdminDashboard({ token }: { token: string }) {
                                   </div>
 
                                   <div className="pt-3">
+                                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Photoshoots</p>
                                     {userShoots.length === 0 ? (
                                       <p className="text-sm text-gray-400 italic py-1">No photoshoots assigned</p>
                                     ) : (
@@ -9423,6 +9435,48 @@ function AdminDashboard({ token }: { token: string }) {
                                                     <Trash2 className="w-3 h-3 mr-1" />
                                                     Delete
                                                   </Button>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="pt-4">
+                                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Workspaces</p>
+                                    {userSpaces.length === 0 ? (
+                                      <p className="text-sm text-gray-400 italic py-1">No workspaces owned</p>
+                                    ) : (
+                                      <div className="space-y-2">
+                                        {userSpaces.map((space: any) => (
+                                          <div key={space.id} className="p-3 rounded-lg bg-amber-50/60" data-testid={`space-row-${space.id}`}>
+                                            <div className="flex items-start gap-3">
+                                              <Home className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                  {space.slug ? (
+                                                    <a href={`/spaces/${space.slug}`} target="_blank" rel="noopener noreferrer"
+                                                      className="text-sm font-medium text-gray-900 hover:underline truncate">
+                                                      {space.name}
+                                                    </a>
+                                                  ) : (
+                                                    <p className="text-sm font-medium text-gray-900 truncate">{space.name}</p>
+                                                  )}
+                                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                                    space.approvalStatus === "approved" ? "bg-emerald-100 text-emerald-700"
+                                                      : space.approvalStatus === "pending" ? "bg-amber-100 text-amber-700"
+                                                      : space.approvalStatus === "rejected" ? "bg-red-100 text-red-700"
+                                                      : "bg-gray-100 text-gray-600"
+                                                  }`}>
+                                                    {space.approvalStatus || "draft"}
+                                                  </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                                  {space.type && <span className="capitalize">{space.type}</span>}
+                                                  {space.neighborhood && (<><span>·</span><span>{space.neighborhood}</span></>)}
+                                                  {typeof space.pricePerHour === "number" && (<><span>·</span><span>${space.pricePerHour}/hr</span></>)}
                                                 </div>
                                               </div>
                                             </div>
