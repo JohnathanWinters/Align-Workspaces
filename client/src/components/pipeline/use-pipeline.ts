@@ -232,8 +232,15 @@ export function usePipeline(token: string) {
   const logActivity = useCallback(async () => {
     if (!selectedContactId) return;
     try {
+      const currentContact = contacts.find(c => c.id === selectedContactId);
       const payload: any = { type: newActivity.type, note: newActivity.note };
-      if (newActivity.followUpDate) payload.followUpDate = new Date(newActivity.followUpDate + "T00:00:00").toISOString();
+      if (newActivity.followUpDate) {
+        payload.followUpDate = new Date(newActivity.followUpDate + "T00:00:00").toISOString();
+      } else if (currentContact && currentContact.stage !== "lost") {
+        const def = new Date();
+        def.setDate(def.getDate() + 2);
+        payload.followUpDate = def.toISOString();
+      }
       if (newActivity.referredContactId) payload.referredContactId = newActivity.referredContactId;
       await adminFetch(`/api/admin/pipeline/${selectedContactId}/activities`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -247,7 +254,7 @@ export function usePipeline(token: string) {
       await loadActivities(selectedContactId);
       await loadContacts();
       onActivityLoggedRef.current();
-      toast({ title: `Activity logged${newActivity.followUpDate ? " · Follow-up set" : ""}` });
+      toast({ title: `Activity logged${payload.followUpDate ? " · Follow-up set" : ""}` });
       // Stage suggestion
       const contact = contacts.find(c => c.id === selectedContactId);
       if (contact) {
