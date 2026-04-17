@@ -129,6 +129,7 @@ export function sortByStageAndOverdue(a: PipelineContact, b: PipelineContact): n
 
 /** Check if contact needs attention */
 export function needsAttention(c: PipelineContact): boolean {
+  if (c.stage === "lost") return false;
   return (
     (!!c.nextFollowUp && !isNaN(new Date(c.nextFollowUp).getTime()) && new Date(c.nextFollowUp) <= new Date()) ||
     (c.stage === "new" && !!c.createdAt && (Date.now() - new Date(c.createdAt).getTime()) > 2 * 24 * 60 * 60 * 1000)
@@ -137,6 +138,7 @@ export function needsAttention(c: PipelineContact): boolean {
 
 /** Check if contact has upcoming follow-up (next 7 days, not overdue) */
 export function hasUpcomingFollowUp(c: PipelineContact): boolean {
+  if (c.stage === "lost") return false;
   if (!c.nextFollowUp || isNaN(new Date(c.nextFollowUp).getTime())) return false;
   const fuDate = new Date(c.nextFollowUp);
   const now = new Date();

@@ -39,7 +39,7 @@ export default function FunnelVisualization({ stageCounts }: FunnelVisualization
         })}
         {(stageCounts["lost"] || 0) > 0 && (
           <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-stone-200 text-stone-500 w-20 text-center">Inactive</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-stone-200 text-stone-500 w-24 text-center">Not Interested</span>
             <div className="flex-1" />
             <span className="text-xs font-medium text-gray-400 w-8 text-right">{stageCounts["lost"]}</span>
           </div>

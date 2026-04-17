@@ -78,12 +78,12 @@ export default function ContactRow({
         {variant === "upcoming" && c.nextFollowUp && (
           <span className="text-[11px] text-blue-600 font-medium whitespace-nowrap">{getRelativeFollowUpLabel(new Date(c.nextFollowUp))}</span>
         )}
-        {variant === "default" && c.nextFollowUp && (
+        {variant === "default" && c.stage !== "lost" && c.nextFollowUp && (
           <span className={`text-[11px] whitespace-nowrap ${new Date(c.nextFollowUp) <= new Date() ? "text-red-500 font-medium" : "text-gray-400"}`}>
             {formatDateShort(c.nextFollowUp)}
           </span>
         )}
-        {variant === "default" && !c.nextFollowUp && (
+        {variant === "default" && (c.stage === "lost" || !c.nextFollowUp) && (
           <span className="text-[11px] text-gray-300">—</span>
         )}
         <div className={`w-2 h-2 rounded-full shrink-0 ${healthColor(healthScore)} opacity-70`} title={`Health: ${healthScore}`} />

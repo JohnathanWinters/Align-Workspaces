@@ -8,7 +8,7 @@ export const PIPELINE_STAGES = [
   { key: "contacted", label: "Contact", color: "bg-purple-100 text-purple-700" },
   { key: "booked", label: "Scheduled", color: "bg-yellow-100 text-yellow-700" },
   { key: "completed", label: "Active", color: "bg-emerald-100 text-emerald-700" },
-  { key: "lost", label: "Inactive", color: "bg-stone-200 text-stone-500" },
+  { key: "lost", label: "Not Interested", color: "bg-stone-200 text-stone-500" },
 ] as const;
 
 export const ACTIVITY_TYPES = [

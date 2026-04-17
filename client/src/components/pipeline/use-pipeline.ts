@@ -177,9 +177,11 @@ export function usePipeline(token: string) {
 
   const moveStage = useCallback(async (contactId: string, newStage: string) => {
     try {
+      const patch: any = { stage: newStage };
+      if (newStage === "lost") patch.nextFollowUp = null;
       await adminFetch(`/api/admin/pipeline/${contactId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: newStage }),
+        body: JSON.stringify(patch),
       });
       await loadContacts();
     } catch {}
