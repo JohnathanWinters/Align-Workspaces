@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus, ArrowRight, Upload, FileSpreadsheet, Flame } from "lucide-react";
+import { ChevronLeft, Plus, ArrowRight, Upload, FileSpreadsheet, Flame, Home } from "lucide-react";
 import type { UsePipelineReturn } from "./use-pipeline";
 
 interface PipelineHeaderProps {
@@ -11,7 +11,7 @@ interface PipelineHeaderProps {
 }
 
 export default function PipelineHeader({ pipeline, onBack, streak }: PipelineHeaderProps) {
-  const { openAddForm, importLeads, exportCsv, setShowImportCsv } = pipeline;
+  const { openAddForm, importLeads, syncSpaceContacts, exportCsv, setShowImportCsv } = pipeline;
   const [showActions, setShowActions] = useState(false);
 
   return (
@@ -45,6 +45,9 @@ export default function PipelineHeader({ pipeline, onBack, streak }: PipelineHea
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={importLeads}>
             <ArrowRight className="w-3 h-3 mr-1" /> Import Leads
           </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={syncSpaceContacts}>
+            <Home className="w-3 h-3 mr-1" /> Sync Workspaces
+          </Button>
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowImportCsv(true)}>
             <Upload className="w-3 h-3 mr-1" /> Import CSV
           </Button>
@@ -63,6 +66,9 @@ export default function PipelineHeader({ pipeline, onBack, streak }: PipelineHea
                 className="absolute right-0 top-10 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-40 w-48">
                 <button onClick={() => { importLeads(); setShowActions(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2">
                   <ArrowRight className="w-3.5 h-3.5 text-gray-400" /> Import Leads
+                </button>
+                <button onClick={() => { syncSpaceContacts(); setShowActions(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2">
+                  <Home className="w-3.5 h-3.5 text-gray-400" /> Sync Workspaces
                 </button>
                 <button onClick={() => { setShowImportCsv(true); setShowActions(false); }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2">
                   <Upload className="w-3.5 h-3.5 text-gray-400" /> Import CSV

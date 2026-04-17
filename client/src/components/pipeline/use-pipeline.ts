@@ -399,6 +399,17 @@ export function usePipeline(token: string) {
     } catch { toast({ title: "Import failed", variant: "destructive" }); }
   }, [adminFetch, loadContacts, toast]);
 
+  const syncSpaceContacts = useCallback(async () => {
+    try {
+      const res = await adminFetch("/api/admin/pipeline/sync-space-contacts", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        toast({ title: `Synced ${data.total} workspaces · ${data.created} new contact${data.created === 1 ? "" : "s"}` });
+        await loadContacts();
+      }
+    } catch { toast({ title: "Sync failed", variant: "destructive" }); }
+  }, [adminFetch, loadContacts, toast]);
+
   const exportCsv = useCallback(async () => {
     try {
       const res = await adminFetch("/api/admin/pipeline/export");
@@ -467,7 +478,7 @@ export function usePipeline(token: string) {
     logActivity, quickLogInline, deleteActivity, saveEditActivity,
     handleSave, handleDelete, updateContact, saveFacts,
     openEdit, openAddForm, loadContacts, loadActivities,
-    importLeads, exportCsv, importCsv, handleFileUpload,
+    importLeads, syncSpaceContacts, exportCsv, importCsv, handleFileUpload,
 
     // Form state
     showForm, setShowForm, editingContact, setEditingContact, form, setForm,

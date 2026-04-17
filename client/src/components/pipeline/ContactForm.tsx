@@ -53,7 +53,7 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
             <Label className="text-xs text-gray-500">Source</Label>
             <Select value={form.source} onValueChange={v => setForm(p => ({ ...p, source: v }))}>
               <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[10002]">
                 <SelectItem value="website">Website</SelectItem>
                 <SelectItem value="referral">Referral</SelectItem>
                 <SelectItem value="social">Social Media</SelectItem>
@@ -69,7 +69,7 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
               <Label className="text-xs text-gray-500">Category</Label>
               <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v }))}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10002]">
                   <SelectItem value="portraits">Portraits</SelectItem>
                   <SelectItem value="spaces">Workspaces</SelectItem>
                 </SelectContent>
@@ -79,7 +79,7 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
               <Label className="text-xs text-gray-500">Stage</Label>
               <Select value={form.stage} onValueChange={v => setForm(p => ({ ...p, stage: v }))}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10002]">
                   {PIPELINE_STAGES.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -90,9 +90,9 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
               <Label className="text-xs text-gray-500">Linked Workspace</Label>
               <Select value={form.spaceId || "__none__"} onValueChange={v => setForm(p => ({ ...p, spaceId: v === "__none__" ? "" : v }))}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10002]">
                   <SelectItem value="__none__">None</SelectItem>
-                  {allSpaces.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  {allSpaces.filter((s: any) => s.id).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -100,9 +100,9 @@ export default function ContactForm({ pipeline }: ContactFormProps) {
               <Label className="text-xs text-gray-500">Linked Photoshoot</Label>
               <Select value={form.shootId || "__none__"} onValueChange={v => setForm(p => ({ ...p, shootId: v === "__none__" ? "" : v }))}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="None" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10002]">
                   <SelectItem value="__none__">None</SelectItem>
-                  {allShoots.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                  {allShoots.filter((s: any) => s.id).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

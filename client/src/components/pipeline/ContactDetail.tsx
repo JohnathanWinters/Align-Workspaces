@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,7 +124,14 @@ export default function ContactDetail({ pipeline, isMobile, onCelebrate }: Conta
           <div className="flex flex-wrap gap-2 text-sm">
             {(c as any).spaceId && (() => {
               const space = allSpaces.find((s: any) => s.id === (c as any).spaceId);
-              return space ? <span className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium"><Home className="w-3 h-3" /> {space.name}</span> : null;
+              if (!space) return null;
+              return space.slug ? (
+                <Link href={`/spaces/${space.slug}`} target="_blank" className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-full text-xs font-medium transition-colors">
+                  <Home className="w-3 h-3" /> {space.name}
+                </Link>
+              ) : (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium"><Home className="w-3 h-3" /> {space.name}</span>
+              );
             })()}
             {(c as any).shootId && (() => {
               const shoot = allShoots.find((s: any) => s.id === (c as any).shootId);

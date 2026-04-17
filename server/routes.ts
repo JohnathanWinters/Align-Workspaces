@@ -55,6 +55,55 @@ async function geocodeAddress(address: string): Promise<{ lat: string; lng: stri
   }
 }
 
+async function getSpaceOwnerContactInfo(spaceId: string | null | undefined): Promise<{ email: string | null; name: string | null } | null> {
+  if (!spaceId) return null;
+  try {
+    const space = await storage.getSpaceById(spaceId);
+    if (!space?.userId) return null;
+    const owner = await authStorage.getUser(space.userId);
+    if (!owner) return null;
+    const name = [owner.firstName, owner.lastName].filter(Boolean).join(" ").trim();
+    return { email: owner.email || null, name: name || null };
+  } catch {
+    return null;
+  }
+}
+
+async function ensurePipelineContactForSpaceOwner(spaceId: string): Promise<void> {
+  try {
+    const owner = await getSpaceOwnerContactInfo(spaceId);
+    if (!owner?.email) return;
+    const ownerName = owner.name || owner.email;
+    const all = await storage.getPipelineContacts();
+
+    const bySpace = all.find(c => c.spaceId === spaceId);
+    if (bySpace) {
+      const patch: Record<string, any> = {};
+      if (!bySpace.email && owner.email) patch.email = owner.email;
+      if ((!bySpace.name || !bySpace.name.trim()) && ownerName) patch.name = ownerName;
+      if (Object.keys(patch).length) await storage.updatePipelineContact(bySpace.id, patch);
+      return;
+    }
+
+    const byEmail = all.find(c => c.email && c.email.toLowerCase() === owner.email!.toLowerCase());
+    if (byEmail) {
+      await storage.updatePipelineContact(byEmail.id, { spaceId });
+      return;
+    }
+
+    await storage.createPipelineContact({
+      name: ownerName,
+      email: owner.email,
+      category: "spaces",
+      stage: "new",
+      source: "import",
+      spaceId,
+    });
+  } catch (err) {
+    console.error("ensurePipelineContactForSpaceOwner failed:", err);
+  }
+}
+
 const uploadDir = path.join(process.cwd(), "uploads");
 const tmpUploadDir = path.join(process.cwd(), "tmp_uploads");
 if (!fs.existsSync(tmpUploadDir)) fs.mkdirSync(tmpUploadDir, { recursive: true });
@@ -2666,6 +2715,7 @@ export async function registerRoutes(
   app.post("/api/admin/spaces", isAdmin, async (req, res) => {
     try {
       const space = await storage.createSpace(req.body);
+      ensurePipelineContactForSpaceOwner(space.id);
       res.json(space);
     } catch (err: any) {
       res.status(500).json({ message: err.message });
@@ -2881,6 +2931,8 @@ export async function registerRoutes(
       } catch (emailErr) {
         console.error("Failed to send space submission email:", emailErr);
       }
+
+      ensurePipelineContactForSpaceOwner(space.id);
 
       res.json(space);
     } catch (err: any) {
@@ -6993,6 +7045,13 @@ ${featuredSection}
       const body = { ...req.body };
       if (body.nextFollowUp && typeof body.nextFollowUp === "string") body.nextFollowUp = new Date(body.nextFollowUp);
       if (body.lastContactDate && typeof body.lastContactDate === "string") body.lastContactDate = new Date(body.lastContactDate);
+      if (body.spaceId) {
+        const owner = await getSpaceOwnerContactInfo(body.spaceId);
+        if (owner) {
+          if (!body.email && owner.email) body.email = owner.email;
+          if ((!body.name || !String(body.name).trim()) && owner.name) body.name = owner.name;
+        }
+      }
       const contact = await storage.createPipelineContact(body);
       if (req.body.notes) {
         await storage.createPipelineActivity({ contactId: contact.id, type: "note", note: req.body.notes });
@@ -7009,6 +7068,14 @@ ${featuredSection}
       if (body.nextFollowUp && typeof body.nextFollowUp === "string") body.nextFollowUp = new Date(body.nextFollowUp);
       if (body.nextFollowUp === null) body.nextFollowUp = null;
       if (body.lastContactDate && typeof body.lastContactDate === "string") body.lastContactDate = new Date(body.lastContactDate);
+      if (body.spaceId) {
+        const existing = await storage.getPipelineContact(req.params.id);
+        const owner = await getSpaceOwnerContactInfo(body.spaceId);
+        if (owner && existing) {
+          if (!existing.email && !body.email && owner.email) body.email = owner.email;
+          if ((!existing.name || !existing.name.trim()) && (!body.name || !String(body.name).trim()) && owner.name) body.name = owner.name;
+        }
+      }
       const contact = await storage.updatePipelineContact(req.params.id, body);
       res.json(contact);
     } catch (err: any) {
@@ -7089,6 +7156,22 @@ ${featuredSection}
     try {
       await storage.deletePipelineActivity(req.params.activityId);
       res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/admin/pipeline/sync-space-contacts", isAdmin, async (_req, res) => {
+    try {
+      const allSpaces = await storage.getAllSpaces();
+      const before = await storage.getPipelineContacts();
+      const beforeCount = before.length;
+      for (const space of allSpaces) {
+        if (!space.userId) continue;
+        await ensurePipelineContactForSpaceOwner(space.id);
+      }
+      const after = await storage.getPipelineContacts();
+      res.json({ created: Math.max(0, after.length - beforeCount), total: allSpaces.length });
     } catch (err: any) {
       res.status(500).json({ message: err.message });
     }
