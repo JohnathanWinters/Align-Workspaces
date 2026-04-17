@@ -482,7 +482,7 @@ export default function AlignSpacesPage() {
           >
             {spacesLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="snap-start flex-shrink-0 w-[85%] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3rem)/3)] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
+                <div key={i} className="snap-center flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%] rounded-xl overflow-hidden bg-white border border-stone-100 animate-pulse">
                   <div className="aspect-[4/3] bg-stone-200" />
                   <div className="p-4 space-y-3">
                     <div className="h-5 bg-stone-200 rounded w-3/4" />
@@ -491,7 +491,7 @@ export default function AlignSpacesPage() {
                 </div>
               ))
             ) : allSpaces.map((space) => (
-              <div key={space.id} className="snap-start flex-shrink-0 w-[85%] sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3rem)/3)]">
+              <div key={space.id} className="snap-center flex-shrink-0 w-[82%] sm:w-[45%] lg:w-[30%]">
                 <SpaceCard space={space} />
               </div>
             ))}
