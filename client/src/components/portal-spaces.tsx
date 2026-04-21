@@ -61,6 +61,7 @@ import { AmenityInput } from "./amenity-input";
 import { InsuranceUploadStep } from "./list-space-modal";
 import { CommitmentTimeline } from "./commitment-timeline";
 import HostSubscriptionCard from "./host-subscription-card";
+import HostOnboardingChecklist from "./host-onboarding-checklist";
 import WorkspacePrivacyToggle from "./workspace-privacy-toggle";
 import WorkspaceBrandingEditor from "./workspace-branding-editor";
 
@@ -2658,6 +2659,7 @@ function MySpacesTab() {
     <div className="space-y-6">
       {/* SaaS subscription status — surfaces trial state, billing, and upgrade CTA */}
       {mySpaces.length > 0 && <HostSubscriptionCard />}
+      {mySpaces.length > 0 && <HostOnboardingChecklist />}
 
       {/* Host Guide — prominent button near the top */}
       {mySpaces.length > 0 && (

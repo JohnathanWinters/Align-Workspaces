@@ -75,6 +75,12 @@ export default function PricingPage() {
                         Workspaces
                       </button>
                     </Link>
+                    <Link href="/for-studios">
+                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
+                        <Building2 className="w-4 h-4" />
+                        For Studios
+                      </button>
+                    </Link>
                     {/* Photography */}
                     <div className="border-t border-stone-100 my-1" />
                     <Link href="/portraits">

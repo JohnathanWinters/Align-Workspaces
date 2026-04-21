@@ -3080,6 +3080,21 @@ export async function registerRoutes(
       if (body.availabilitySchedule !== undefined) {
         updates.availabilitySchedule = String(body.availabilitySchedule);
       }
+      const brandFieldRequested =
+        body.brandLogoUrl !== undefined ||
+        body.brandPrimaryColor !== undefined ||
+        body.brandButtonColor !== undefined;
+      if (brandFieldRequested) {
+        const { getActiveSubscription } = await import("./saas");
+        const sub = await getActiveSubscription(space.userId || "");
+        if (!sub) {
+          return res.status(402).json({
+            message: "Custom branding requires an active Align for Studios subscription.",
+            code: "NO_SUBSCRIPTION",
+          });
+        }
+      }
+
       if (body.brandLogoUrl !== undefined) {
         updates.brandLogoUrl = body.brandLogoUrl === null ? null : String(body.brandLogoUrl).trim();
       }

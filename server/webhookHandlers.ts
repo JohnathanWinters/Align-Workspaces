@@ -1,9 +1,12 @@
 import { getUncachableStripeClient } from './stripeClient';
 import { storage } from './storage';
-import { sendSpaceBookingNotification } from './gmail';
+import { sendSpaceBookingNotification, sendMagicLinkEmail } from './gmail';
 import { createBookingCalendarEvent } from './googleCalendar';
 import { sendPushToUser } from './pushNotifications';
 import { handleSaasWebhookEvent } from './saas';
+import { db } from './db';
+import { magicTokens } from '@shared/models/auth';
+import { randomBytes } from 'crypto';
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -136,6 +139,25 @@ export class WebhookHandlers {
             }
           } catch (pushErr) {
             console.error("Failed to send booking push:", pushErr);
+          }
+
+          // SaaS guest-booking: send magic link so the guest can log in and manage their booking
+          if (session.metadata?.feeTier === "saas_private" && session.metadata?.guestEmail) {
+            try {
+              const token = randomBytes(32).toString("hex");
+              const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+              await db.insert(magicTokens).values({
+                email: String(session.metadata.guestEmail).toLowerCase(),
+                token,
+                expiresAt,
+              });
+              const baseUrl = process.env.SITE_URL || "https://alignworkspaces.com";
+              const returnTo = `/portal?tab=spaces`;
+              const magicUrl = `${baseUrl}/api/auth/magic-verify?token=${token}&returnTo=${encodeURIComponent(returnTo)}`;
+              await sendMagicLinkEmail(String(session.metadata.guestEmail).toLowerCase(), magicUrl);
+            } catch (mlErr) {
+              console.error("Failed to send guest magic link:", mlErr);
+            }
           }
 
           console.log(`Space booking ${bookingId} paid & confirmed, host notified`);
