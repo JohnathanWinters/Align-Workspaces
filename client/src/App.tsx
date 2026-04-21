@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
 import PricingPage from "@/pages/host-pricing";
+import StudiosPricingPage from "@/pages/studios-pricing";
+import PrivateSpacePage from "@/pages/private-space";
 import HomePage from "@/pages/home";
 import PortfolioPage from "@/pages/portfolio";
 import AboutPage from "@/pages/photographers";
@@ -60,6 +62,9 @@ function Router() {
       <Route path="/admin" component={AdminPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/host-pricing">{() => { window.location.replace("/pricing"); return null; }}</Route>
+      <Route path="/for-studios" component={StudiosPricingPage} />
+      <Route path="/studios" component={StudiosPricingPage} />
+      <Route path="/w/:slug" component={PrivateSpacePage} />
       <Route path="/team" component={EmployeePage} />
       <Route path="/auth-success">{() => {
         if (window.opener) { window.close(); }

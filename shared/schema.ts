@@ -415,6 +415,12 @@ export const spaces = pgTable("spaces", {
   isFoundingHost: integer("is_founding_host").default(0), // 1 = founding host (0% host fee), first 20 spaces, one per account
   isSample: integer("is_sample").default(0),
   isActive: integer("is_active").default(1),
+  isPrivate: integer("is_private").default(0), // 1 = SaaS-only, hidden from public marketplace, accessed via direct URL
+  // Private-workspace branding (Growth tier+)
+  brandLogoUrl: text("brand_logo_url"),
+  brandPrimaryColor: text("brand_primary_color"),
+  brandButtonColor: text("brand_button_color"),
+  hideAlignBranding: integer("hide_align_branding").default(0), // Studio tier white label
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -488,6 +494,30 @@ export const insertSpaceBookingSchema = createInsertSchema(spaceBookings).omit({
 
 export type InsertSpaceBooking = z.infer<typeof insertSpaceBookingSchema>;
 export type SpaceBooking = typeof spaceBookings.$inferSelect;
+
+export const hostSubscriptions = pgTable("host_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  tier: text("tier").notNull(),                   // 'starter' | 'growth' | 'studio' | 'plus'
+  status: text("status").notNull().default("incomplete"), // 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'unpaid'
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  trialEndsAt: timestamp("trial_ends_at"),
+  cancelAtPeriodEnd: integer("cancel_at_period_end").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertHostSubscriptionSchema = createInsertSchema(hostSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertHostSubscription = z.infer<typeof insertHostSubscriptionSchema>;
+export type HostSubscription = typeof hostSubscriptions.$inferSelect;
 
 export const referralLinks = pgTable("referral_links", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

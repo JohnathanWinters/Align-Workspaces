@@ -3080,6 +3080,35 @@ export async function registerRoutes(
       if (body.availabilitySchedule !== undefined) {
         updates.availabilitySchedule = String(body.availabilitySchedule);
       }
+      if (body.brandLogoUrl !== undefined) {
+        updates.brandLogoUrl = body.brandLogoUrl === null ? null : String(body.brandLogoUrl).trim();
+      }
+      if (body.brandPrimaryColor !== undefined) {
+        const v = body.brandPrimaryColor === null ? null : String(body.brandPrimaryColor).trim();
+        if (v !== null && !/^#[0-9a-fA-F]{6}$/.test(v)) {
+          return res.status(400).json({ message: "brandPrimaryColor must be a 6-digit hex color" });
+        }
+        updates.brandPrimaryColor = v;
+      }
+      if (body.brandButtonColor !== undefined) {
+        const v = body.brandButtonColor === null ? null : String(body.brandButtonColor).trim();
+        if (v !== null && !/^#[0-9a-fA-F]{6}$/.test(v)) {
+          return res.status(400).json({ message: "brandButtonColor must be a 6-digit hex color" });
+        }
+        updates.brandButtonColor = v;
+      }
+      if (body.hideAlignBranding !== undefined) {
+        const want = body.hideAlignBranding ? 1 : 0;
+        if (want === 1) {
+          // Gate white-label behind Studio tier
+          const { getActiveSubscription } = await import("./saas");
+          const sub = await getActiveSubscription(space.userId || "");
+          if (!sub || sub.tier !== "studio") {
+            return res.status(402).json({ message: "White label requires the Studio plan.", code: "TIER_REQUIRED" });
+          }
+        }
+        updates.hideAlignBranding = want;
+      }
 
       if (Object.keys(updates).length === 0) return res.status(400).json({ message: "No valid fields to update" });
 
@@ -8185,6 +8214,258 @@ ${featuredSection}
       await storage.updateMeetingBooking(booking.id, { status: "cancelled" });
       res.json({ success: true });
     } catch (err: any) { res.status(500).json({ message: err.message }); }
+  });
+
+  // ------------------------------------------------------------
+  // SaaS Subscription Routes (private-mode host tier)
+  // ------------------------------------------------------------
+  const { createSubscriptionCheckout, createCustomerPortalSession, TIER_LIMITS, assertCanSetPrivate } = await import("./saas");
+
+  // Public booking endpoint for private (SaaS) workspaces — no Align login required.
+  // Money flows 100% to host via Stripe Connect; Align takes zero cut.
+  app.post("/api/spaces/:id/guest-book", async (req, res) => {
+    try {
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Workspace not found" });
+      if (space.isPrivate !== 1) {
+        return res.status(400).json({ message: "This workspace is not available for guest booking" });
+      }
+      if (space.isActive !== 1) {
+        return res.status(404).json({ message: "Workspace not found" });
+      }
+
+      if (!space.userId) {
+        return res.status(500).json({ message: "Workspace is misconfigured" });
+      }
+      const host = await storage.getUserById(space.userId);
+      if (!host?.stripeAccountId || host.stripeOnboardingComplete !== "true") {
+        return res.status(400).json({ message: "Host has not completed payment setup." });
+      }
+
+      const { name, email, phone, bookingDate, bookingStartTime, bookingHours, message } = req.body as {
+        name?: string; email?: string; phone?: string;
+        bookingDate?: string; bookingStartTime?: string; bookingHours?: number;
+        message?: string;
+      };
+
+      if (!name || typeof name !== "string" || !name.trim()) {
+        return res.status(400).json({ message: "Name is required" });
+      }
+      if (!email || typeof email !== "string" || !email.includes("@")) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+      if (!bookingDate) return res.status(400).json({ message: "Booking date is required" });
+
+      const hours = Math.max(1, Math.min(24, parseInt(String(bookingHours)) || 1));
+      const normalizedEmail = email.trim().toLowerCase();
+      const trimmedName = name.trim();
+      const [firstName, ...rest] = trimmedName.split(" ");
+      const lastName = rest.join(" ") || null;
+
+      // Upsert the guest user (passwordless). If they ever want to log in, magic link awaits.
+      let guestUser = await storage.getUserByEmail(normalizedEmail);
+      if (!guestUser) {
+        const [created] = await db.insert(users).values({
+          email: normalizedEmail,
+          firstName: firstName || null,
+          lastName,
+        }).returning();
+        guestUser = created;
+      }
+      if (!guestUser) {
+        return res.status(500).json({ message: "Could not create guest user" });
+      }
+      const guestUserId = guestUser.id;
+
+      const basePriceCents = space.pricePerHour * 100 * hours;
+
+      const spaceId = space.id;
+      const booking = await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${spaceId}))`);
+
+        if (bookingStartTime) {
+          const existingBookings = await storage.getSpaceBookingsBySpace(spaceId);
+          const bufferMinutes = space.bufferMinutes ?? 15;
+
+          const [startH, startM] = bookingStartTime.split(":").map(Number);
+          const requestedStart = startH * 60 + startM;
+          const requestedEnd = requestedStart + hours * 60;
+
+          const hasConflict = existingBookings.some(b => {
+            if (b.bookingDate !== bookingDate) return false;
+            if (b.status === "cancelled" || b.status === "rejected") return false;
+            if (!b.bookingStartTime) return false;
+            const [bH, bM] = b.bookingStartTime.split(":").map(Number);
+            const bStart = bH * 60 + bM;
+            const bEnd = bStart + (b.bookingHours || 1) * 60 + bufferMinutes;
+            return requestedStart < bEnd && requestedEnd + bufferMinutes > bStart;
+          });
+
+          if (hasConflict) throw new Error("TIME_SLOT_CONFLICT");
+        }
+
+        // SaaS booking — no Align fees. 100% of payment goes to host (minus Stripe processing).
+        return storage.createSpaceBooking({
+          spaceId,
+          userId: guestUserId,
+          userName: trimmedName,
+          userEmail: normalizedEmail,
+          status: "awaiting_payment",
+          bookingDate,
+          bookingStartTime: bookingStartTime || null,
+          bookingHours: hours,
+          message: message?.trim() || null,
+          paymentAmount: basePriceCents,
+          renterFeeAmount: 0,
+          hostFeeAmount: 0,
+          hostEarnings: basePriceCents,
+          feeTier: "saas_private",
+          hostFeePercent: "0",
+          guestFeePercent: "0",
+          guestFeeAmount: 0,
+          taxRate: "0",
+          taxAmount: 0,
+          totalGuestCharged: basePriceCents,
+          hostPayoutAmount: basePriceCents,
+          platformRevenue: 0,
+          payoutStatus: "paid",
+          paymentStatus: "pending",
+        });
+      });
+
+      const stripe = await getUncachableStripeClient();
+      const baseUrl = process.env.SITE_URL || `${req.protocol}://${req.get("host")}`;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${space.name} — ${bookingDate}`,
+              description: `${hours} hour${hours > 1 ? "s" : ""} at $${space.pricePerHour}/hr`,
+            },
+            unit_amount: basePriceCents,
+          },
+          quantity: 1,
+        }],
+        customer_email: normalizedEmail,
+        success_url: `${baseUrl}/w/${space.slug}?booked=1`,
+        cancel_url: `${baseUrl}/w/${space.slug}?cancelled=1`,
+        payment_intent_data: {
+          transfer_data: {
+            destination: host.stripeAccountId,
+          },
+        },
+        metadata: {
+          type: "space_booking",
+          bookingId: booking.id,
+          spaceId: space.id,
+          userId: guestUserId,
+          guestName: trimmedName,
+          guestEmail: normalizedEmail,
+          spaceName: space.name,
+          hostEmail: space.contactEmail || host.email || "",
+          bookingDate,
+          bookingStartTime: bookingStartTime || "",
+          bookingHours: String(hours),
+          feeTier: "saas_private",
+        },
+      });
+
+      await storage.updateSpaceBooking(booking.id, { stripeSessionId: session.id });
+      res.json({ checkoutUrl: session.url });
+    } catch (err: any) {
+      if (err.message === "TIME_SLOT_CONFLICT") {
+        return res.status(409).json({ message: "This time slot is already booked." });
+      }
+      console.error("Guest booking error:", err);
+      res.status(500).json({ message: err.message || "Booking failed" });
+    }
+  });
+
+  app.patch("/api/spaces/:id/privacy", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Not authenticated" });
+      const space = await storage.getSpaceById(req.params.id);
+      if (!space) return res.status(404).json({ message: "Workspace not found" });
+      if (space.userId !== userId) return res.status(403).json({ message: "Not authorized" });
+
+      const { isPrivate } = req.body as { isPrivate?: boolean };
+      if (typeof isPrivate !== "boolean") {
+        return res.status(400).json({ message: "isPrivate must be a boolean" });
+      }
+
+      if (isPrivate) {
+        try {
+          await assertCanSetPrivate(userId, space.id);
+        } catch (err: any) {
+          return res.status(err.statusCode || 402).json({
+            message: err.message,
+            code: err.code || "SUBSCRIPTION_REQUIRED",
+          });
+        }
+      }
+
+      const updated = await storage.updateSpace(space.id, { isPrivate: isPrivate ? 1 : 0 });
+      res.json(updated);
+    } catch (err: any) {
+      console.error("Privacy toggle error:", err);
+      res.status(500).json({ message: err.message || "Failed to update privacy" });
+    }
+  });
+
+  app.get("/api/saas/subscription", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Not authenticated" });
+      const sub = await storage.getHostSubscriptionByUserId(userId);
+      if (!sub) return res.json({ subscription: null });
+      const limits = TIER_LIMITS[sub.tier as keyof typeof TIER_LIMITS] ?? null;
+      res.json({ subscription: sub, limits });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+  app.post("/api/saas/checkout", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Not authenticated" });
+      const { tier } = req.body as { tier?: string };
+      if (!tier || !["starter", "growth", "studio"].includes(tier)) {
+        return res.status(400).json({ message: "Invalid tier" });
+      }
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const origin = process.env.SITE_URL || `${req.protocol}://${req.get("host")}`;
+      const url = await createSubscriptionCheckout(user, tier as "starter" | "growth" | "studio", {
+        successUrl: `${origin}/portal?saas_signup=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${origin}/pricing?canceled=true`,
+      });
+      res.json({ url });
+    } catch (err: any) {
+      console.error("SaaS checkout error:", err);
+      res.status(500).json({ message: err.message || "Checkout failed" });
+    }
+  });
+
+  app.post("/api/saas/portal", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Not authenticated" });
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const origin = process.env.SITE_URL || `${req.protocol}://${req.get("host")}`;
+      const url = await createCustomerPortalSession(user, `${origin}/portal`);
+      res.json({ url });
+    } catch (err: any) {
+      console.error("SaaS portal error:", err);
+      res.status(500).json({ message: err.message || "Portal failed" });
+    }
   });
 
   return httpServer;

@@ -1,4 +1,4 @@
-import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks, type CommunityEvent, type InsertCommunityEvent, communityEvents, type EventRsvp, eventRsvps, type AdminSchedule, adminSchedules, type AdminScheduleOverride, adminScheduleOverrides, type AdminMeetingBooking, adminMeetingBookings } from "@shared/schema";
+import { type Lead, type InsertLead, leads, type PortfolioPhoto, type InsertPortfolioPhoto, portfolioPhotos, type Shoot, type InsertShoot, shoots, type GalleryImage, type InsertGalleryImage, galleryImages, type GalleryFolder, type InsertGalleryFolder, galleryFolders, type User, users, imageFavorites, type ImageFavorite, type EditToken, type InsertEditToken, editTokens, type TokenTransaction, type InsertTokenTransaction, tokenTransactions, type EditRequest, type InsertEditRequest, editRequests, type EditRequestPhoto, type InsertEditRequestPhoto, editRequestPhotos, type EditRequestMessage, type InsertEditRequestMessage, editRequestMessages, type PushSubscription, type InsertPushSubscription, pushSubscriptions, type Employee, type InsertEmployee, employees, type FeaturedProfessional, type InsertFeaturedProfessional, featuredProfessionals, type Nomination, type InsertNomination, nominations, type NewsletterSubscriber, type InsertNewsletterSubscriber, newsletterSubscribers, type Space, type InsertSpace, spaces, type SpaceBooking, type InsertSpaceBooking, spaceBookings, type SpaceMessage, type InsertSpaceMessage, spaceMessages, type PipelineContact, type InsertPipelineContact, pipelineContacts, type PipelineActivity, type InsertPipelineActivity, pipelineActivities, type SpaceFavorite, spaceFavorites, type DirectConversation, type InsertDirectConversation, directConversations, type DirectMessage, type InsertDirectMessage, directMessages, type AdminConversation, type InsertAdminConversation, adminConversations, type AdminMessage, type InsertAdminMessage, adminMessages, type ReferralLink, type InsertReferralLink, referralLinks, type FeeAuditLog, feeAuditLog, type SpaceReview, type InsertSpaceReview, spaceReviews, type WishlistCollection, type InsertWishlistCollection, wishlistCollections, type WishlistItem, type InsertWishlistItem, wishlistItems, type RecurringBooking, type InsertRecurringBooking, recurringBookings, type ShootMessage, type InsertShootMessage, shootMessages, type ShootReview, type InsertShootReview, shootReviews, type HostCalendarConnection, type InsertHostCalendarConnection, hostCalendarConnections, type IcalFeed, type InsertIcalFeed, icalFeeds, type ExternalCalendarBlock, type InsertExternalCalendarBlock, externalCalendarBlocks, type CommunityEvent, type InsertCommunityEvent, communityEvents, type EventRsvp, eventRsvps, type AdminSchedule, adminSchedules, type AdminScheduleOverride, adminScheduleOverrides, type AdminMeetingBooking, adminMeetingBookings, type HostSubscription, type InsertHostSubscription, hostSubscriptions } from "@shared/schema";
 import { db } from "./db";
 import { sql, eq, desc, asc, and, or, isNull, ne, ilike } from "drizzle-orm";
 
@@ -85,7 +85,7 @@ export interface IStorage {
   getNewsletterSubscriberByEmail(email: string): Promise<NewsletterSubscriber | undefined>;
   updateNewsletterSubscriber(id: string, data: Partial<InsertNewsletterSubscriber>): Promise<NewsletterSubscriber>;
   deleteNewsletterSubscriber(id: string): Promise<void>;
-  getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]>;
+  getSpaces(opts?: { type?: string; includeSamples?: boolean; includePrivate?: boolean }): Promise<Space[]>;
   getSpaceBySlug(slug: string): Promise<Space | undefined>;
   getSpaceById(id: string): Promise<Space | undefined>;
   getSpacesByUser(userId: string): Promise<Space[]>;
@@ -229,6 +229,13 @@ export interface IStorage {
   getRsvpByUserAndEvent(userId: string, eventId: string): Promise<EventRsvp | undefined>;
   createEventRsvp(eventId: string, userId: string, userName: string, userEmail: string): Promise<EventRsvp>;
   deleteEventRsvp(eventId: string, userId: string): Promise<void>;
+
+  // Host SaaS Subscriptions
+  getHostSubscriptionByUserId(userId: string): Promise<HostSubscription | undefined>;
+  getHostSubscriptionByStripeCustomerId(stripeCustomerId: string): Promise<HostSubscription | undefined>;
+  getHostSubscriptionByStripeSubscriptionId(stripeSubscriptionId: string): Promise<HostSubscription | undefined>;
+  createHostSubscription(data: InsertHostSubscription): Promise<HostSubscription>;
+  updateHostSubscription(id: string, data: Partial<InsertHostSubscription>): Promise<HostSubscription>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -797,10 +804,13 @@ export class DatabaseStorage implements IStorage {
     await db.delete(newsletterSubscribers).where(eq(newsletterSubscribers.id, id));
   }
 
-  async getSpaces(opts?: { type?: string; includeSamples?: boolean }): Promise<Space[]> {
+  async getSpaces(opts?: { type?: string; includeSamples?: boolean; includePrivate?: boolean }): Promise<Space[]> {
     const conditions = [eq(spaces.isActive, 1), eq(spaces.approvalStatus, "approved")];
     if (opts?.includeSamples === false) {
       conditions.push(eq(spaces.isSample, 0));
+    }
+    if (!opts?.includePrivate) {
+      conditions.push(eq(spaces.isPrivate, 0));
     }
     if (opts?.type) {
       conditions.push(eq(spaces.type, opts.type));
@@ -1620,6 +1630,32 @@ export class DatabaseStorage implements IStorage {
 
   async updateMeetingBooking(id: string, data: any): Promise<AdminMeetingBooking> {
     const [result] = await db.update(adminMeetingBookings).set(data).where(eq(adminMeetingBookings.id, id)).returning();
+    return result;
+  }
+
+  // Host SaaS Subscriptions
+  async getHostSubscriptionByUserId(userId: string): Promise<HostSubscription | undefined> {
+    const [result] = await db.select().from(hostSubscriptions).where(eq(hostSubscriptions.userId, userId)).orderBy(desc(hostSubscriptions.createdAt));
+    return result;
+  }
+
+  async getHostSubscriptionByStripeCustomerId(stripeCustomerId: string): Promise<HostSubscription | undefined> {
+    const [result] = await db.select().from(hostSubscriptions).where(eq(hostSubscriptions.stripeCustomerId, stripeCustomerId));
+    return result;
+  }
+
+  async getHostSubscriptionByStripeSubscriptionId(stripeSubscriptionId: string): Promise<HostSubscription | undefined> {
+    const [result] = await db.select().from(hostSubscriptions).where(eq(hostSubscriptions.stripeSubscriptionId, stripeSubscriptionId));
+    return result;
+  }
+
+  async createHostSubscription(data: InsertHostSubscription): Promise<HostSubscription> {
+    const [result] = await db.insert(hostSubscriptions).values(data).returning();
+    return result;
+  }
+
+  async updateHostSubscription(id: string, data: Partial<InsertHostSubscription>): Promise<HostSubscription> {
+    const [result] = await db.update(hostSubscriptions).set({ ...data, updatedAt: new Date() }).where(eq(hostSubscriptions.id, id)).returning();
     return result;
   }
 }

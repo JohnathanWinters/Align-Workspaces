@@ -3,6 +3,7 @@ import { storage } from './storage';
 import { sendSpaceBookingNotification } from './gmail';
 import { createBookingCalendarEvent } from './googleCalendar';
 import { sendPushToUser } from './pushNotifications';
+import { handleSaasWebhookEvent } from './saas';
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -21,6 +22,14 @@ export class WebhookHandlers {
         throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
       }
       const event = stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET);
+
+      // SaaS subscription events — handled first, short-circuit when matched
+      const handledBySaas = await handleSaasWebhookEvent(event);
+      if (handledBySaas) {
+        console.log(`SaaS webhook handled: ${event.type} (${event.id})`);
+        return;
+      }
+
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as any;
         if (session.metadata?.type === 'edit_tokens' && session.metadata?.userId) {
