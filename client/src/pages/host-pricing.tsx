@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, DollarSign, Users, TrendingUp, Shield, Building2, Heart, Menu, X, Camera, Images, Compass, HelpCircle, User, CalendarDays,
-} from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { DollarSign, Users, TrendingUp, Shield, Building2, Heart } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
-import { UserIndicator } from "@/components/user-indicator";
+import { SiteHeader } from "@/components/site-header";
 
 export default function PricingPage() {
   const [hourlyRate, setHourlyRate] = useState(35);
   const [hoursPerWeek, setHoursPerWeek] = useState(20);
   const [isReferred, setIsReferred] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Pricing | Align Workspaces";
@@ -36,104 +33,8 @@ export default function PricingPage() {
   const yearlyNet = weeklyNet * 50;
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <header className="sticky top-0 z-50 bg-[#faf9f7]/95 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between relative">
-          <Link href="/" className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Home</span>
-          </Link>
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">Pricing</span>
-          <div className="flex items-center gap-3 z-10">
-            <UserIndicator />
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-1.5 text-[10px] tracking-[0.2em] uppercase text-foreground/50 hover:text-foreground transition-colors"
-              >
-                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-                <span className="hidden sm:inline">Menu</span>
-              </button>
-              <AnimatePresence>
-                {menuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-3 bg-white border border-stone-200 rounded-xl shadow-lg py-2 min-w-[200px] z-[9999]"
-                  >
-                    <Link href="/">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Building2 className="w-4 h-4" />
-                        Align Workspaces
-                      </button>
-                    </Link>
-                    <Link href="/workspaces">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Building2 className="w-4 h-4" />
-                        Workspaces
-                      </button>
-                    </Link>
-                    <Link href="/for-studios">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Building2 className="w-4 h-4" />
-                        For Studios
-                      </button>
-                    </Link>
-                    {/* Photography */}
-                    <div className="border-t border-stone-100 my-1" />
-                    <Link href="/portraits">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Camera className="w-4 h-4" />
-                        Portraits
-                      </button>
-                    </Link>
-                    <Link href="/portfolio">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Images className="w-4 h-4" />
-                        Portfolio
-                      </button>
-                    </Link>
-                    {/* Community */}
-                    <div className="border-t border-stone-100 my-1" />
-                    <Link href="/#events" className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                      <CalendarDays className="w-4 h-4" />
-                      Community Events
-                    </Link>
-                    <Link href="/featured">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Heart className="w-4 h-4" />
-                        Featured Pros
-                      </button>
-                    </Link>
-                    {/* About & Account */}
-                    <div className="border-t border-stone-100 my-1" />
-                    <Link href="/our-vision">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <Compass className="w-4 h-4" />
-                        Our Vision
-                      </button>
-                    </Link>
-                    <Link href="/support">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <HelpCircle className="w-4 h-4" />
-                        Support
-                      </button>
-                    </Link>
-                    <Link href="/portal">
-                      <button onClick={() => setMenuOpen(false)} className="w-full text-left px-4 py-3 text-sm text-foreground/70 hover:text-foreground hover:bg-stone-50 transition-colors flex items-center gap-3">
-                        <User className="w-4 h-4" />
-                        Client Portal
-                      </button>
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-surface-warm">
+      <SiteHeader title="Pricing" />
 
       <main className="max-w-4xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
         <div className="text-center mb-12">

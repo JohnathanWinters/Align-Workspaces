@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Check, Calendar, FileSignature, Wallet, MessageSquare, RefreshCw, BellRing, ShieldAlert, BarChart3, UserCheck, Sparkles } from "lucide-react";
+import { Check, Calendar, FileSignature, Wallet, MessageSquare, RefreshCw, BellRing, ShieldAlert, BarChart3, UserCheck, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { SiteFooter } from "@/components/site-footer";
-import { UserIndicator } from "@/components/user-indicator";
+import { SiteHeader } from "@/components/site-header";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -120,19 +120,8 @@ export default function StudiosPricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
-      <header className="sticky top-0 z-50 bg-[#faf9f7]/95 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between relative">
-          <Link href="/" className="flex items-center gap-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors z-10">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Home</span>
-          </Link>
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-[0.25em] text-[#c4956a] font-semibold pointer-events-none">
-            For Studios
-          </span>
-          <UserIndicator />
-        </div>
-      </header>
+    <div className="min-h-screen bg-surface-warm">
+      <SiteHeader title="For Studios" />
 
       <main>
         {/* Hero */}

@@ -81,6 +81,15 @@ export default {
           busy: "rgb(239 68 68)",
           offline: "rgb(156 163 175)",
         },
+        // Brand palette (warm neutral + caramel accent)
+        brand: {
+          primary: "#c4956a",       // Caramel accent used for labels, icons, tan CTAs
+          "primary-hover": "#b3845d",
+          ink: "#1c1917",           // stone-900 equivalent — used for primary text
+        },
+        surface: {
+          warm: "#faf9f7",          // Primary background — warm off-white
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
