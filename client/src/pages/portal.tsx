@@ -57,6 +57,7 @@ import type { Shoot, GalleryImage, GalleryFolder } from "@shared/schema";
 import PortalSpacesSection from "@/components/portal-spaces";
 import PortalMessagesSection, { useUnreadCount } from "@/components/portal-messages";
 import PortalSettings from "@/components/portal-settings";
+import LoyaltyBadge from "@/components/loyalty-badge";
 import ShootProgressBar, { getShootProgressStage } from "@/components/shoot-progress-bar";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1894,6 +1895,25 @@ function PortalContent() {
     const params = new URLSearchParams(window.location.search);
     return !!params.get("tab");
   });
+
+  // SaaS signup success toast + auto-navigate to Spaces tab
+  const { toast: _saasToast } = useToast();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("saas_signup") === "success") {
+      _saasToast({
+        title: "Welcome to Align for Studios",
+        description: "Your 7-day free trial has started. Mark a workspace as private to begin.",
+      });
+      setActiveTabState("spaces");
+      // Clean the URL so refresh doesn't re-trigger
+      const url = new URL(window.location.href);
+      url.searchParams.delete("saas_signup");
+      url.searchParams.delete("session_id");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [_saasToast]);
+
   const unreadCount = useUnreadCount();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -2274,6 +2294,7 @@ function PortalContent() {
 
           {activeTab === "overview" ? (
             <div className="space-y-6">
+              <LoyaltyBadge />
               {/* Week calendar */}
               {(() => {
                 const allCal = [

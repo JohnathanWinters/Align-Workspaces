@@ -3787,39 +3787,8 @@ export default function PortalSpacesSection({ userId, initialTab }: { userId: st
     { key: "saved" as const, label: "Saved", icon: Heart },
   ];
 
-  const { data: loyaltyData } = useQuery<{
-    isRepeatGuest: boolean;
-    completedBookings: number;
-    lifetimeSavings: number;
-  }>({
-    queryKey: ["/api/guest/loyalty"],
-    queryFn: async () => {
-      const res = await fetch("/api/guest/loyalty", { credentials: "include" });
-      if (!res.ok) return { isRepeatGuest: false, completedBookings: 0, lifetimeSavings: 0 };
-      return res.json();
-    },
-  });
-
   return (
     <div className="space-y-6">
-      {/* Repeat guest loyalty badge */}
-      {loyaltyData?.isRepeatGuest && (
-        <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-xl px-4 py-3" data-testid="loyalty-badge">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-            <Star className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-stone-800">Repeat Guest</p>
-            <p className="text-xs text-stone-500">
-              You get a lower service fee on every booking
-              {loyaltyData.lifetimeSavings > 0 && (
-                <>, you've saved <strong>${(loyaltyData.lifetimeSavings / 100).toFixed(2)}</strong> so far</>
-              )}
-            </p>
-          </div>
-        </div>
-      )}
-
       <div
         ref={subtabsDrag.ref}
         onMouseDown={subtabsDrag.onMouseDown}
