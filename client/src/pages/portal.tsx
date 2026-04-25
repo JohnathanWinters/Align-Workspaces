@@ -2732,11 +2732,6 @@ function PortalLogin() {
         {step === "email" && (
           <form onSubmit={(e) => {
             e.preventDefault();
-            if (!agreedToTerms) {
-              setTermsShake(true);
-              setTimeout(() => setTermsShake(false), 600);
-              return;
-            }
             if (email.trim()) sendMagicLink(email.trim());
           }} className="space-y-3">
             <input
@@ -2746,6 +2741,61 @@ function PortalLogin() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
               autoFocus
+              required
+            />
+            <label className="flex items-center justify-center gap-3 cursor-pointer select-none rounded-xl px-4 py-3 transition-all border border-white/10 hover:border-white/20">
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                rememberDevice ? "bg-white border-white" : "border-white/30"
+              }`}>
+                {rememberDevice && (
+                  <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </div>
+              <input
+                type="checkbox"
+                checked={rememberDevice}
+                onChange={(e) => setRememberDevice(e.target.checked)}
+                className="sr-only"
+                data-testid="checkbox-remember-device"
+              />
+              <span className="text-[11px] leading-relaxed text-white/50">
+                Remember me on this device for 30 days
+              </span>
+            </label>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <Button type="submit" disabled={loading || !email.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : <><Mail className="w-4 h-4 mr-2" /> Send Sign-In Link</>}
+            </Button>
+          </form>
+        )}
+
+        {step === "name" && (
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!agreedToTerms) {
+              setTermsShake(true);
+              setTimeout(() => setTermsShake(false), 600);
+              return;
+            }
+            if (firstName.trim() && lastName.trim()) sendMagicLink(email.trim(), firstName.trim(), lastName.trim());
+          }} className="space-y-3">
+            <h2 className="font-serif text-2xl text-white mb-2">Sign Up</h2>
+            <p className="text-white/60 text-sm mb-2">Welcome! Enter your name to create an account.</p>
+            <input
+              type="text"
+              placeholder="First name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
+              autoFocus
+              required
+            />
+            <input
+              type="text"
+              placeholder="Last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
               required
             />
             <label
@@ -2774,53 +2824,6 @@ function PortalLogin() {
                 <a href="/privacy" target="_blank" className="text-white/70 hover:text-white underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
               </span>
             </label>
-            <label className="flex items-center justify-center gap-3 cursor-pointer select-none rounded-xl px-4 py-3 transition-all border border-white/10 hover:border-white/20">
-              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                rememberDevice ? "bg-white border-white" : "border-white/30"
-              }`}>
-                {rememberDevice && (
-                  <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                )}
-              </div>
-              <input
-                type="checkbox"
-                checked={rememberDevice}
-                onChange={(e) => setRememberDevice(e.target.checked)}
-                className="sr-only"
-                data-testid="checkbox-remember-device"
-              />
-              <span className="text-[11px] leading-relaxed text-white/50">
-                Remember me on this device for 30 days
-              </span>
-            </label>
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            <Button type="submit" disabled={loading || !email.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : <><Mail className="w-4 h-4 mr-2" /> Send Sign-In Link</>}
-            </Button>
-          </form>
-        )}
-
-        {step === "name" && (
-          <form onSubmit={(e) => { e.preventDefault(); if (firstName.trim() && lastName.trim()) sendMagicLink(email.trim(), firstName.trim(), lastName.trim()); }} className="space-y-3">
-            <h2 className="font-serif text-2xl text-white mb-2">Sign Up</h2>
-            <p className="text-white/60 text-sm mb-2">Welcome! Enter your name to create an account.</p>
-            <input
-              type="text"
-              placeholder="First name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
-              autoFocus
-              required
-            />
-            <input
-              type="text"
-              placeholder="Last name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-sm placeholder-white/40 focus:border-white/50 focus:ring-1 focus:ring-white/30 outline-none"
-              required
-            />
             {error && <p className="text-xs text-red-400">{error}</p>}
             <Button type="submit" disabled={loading || !firstName.trim() || !lastName.trim()} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
               {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : "Continue"}
