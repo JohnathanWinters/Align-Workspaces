@@ -2676,6 +2676,7 @@ function PortalLogin() {
   const [error, setError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsShake, setTermsShake] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(false);
 
   const sendMagicLink = async (e?: string, fName?: string, lName?: string) => {
     setLoading(true);
@@ -2689,10 +2690,15 @@ function PortalLogin() {
 
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: e || email, firstName: fName, lastName: lName, returnTo }),
+        body: JSON.stringify({ email: e || email, firstName: fName, lastName: lName, returnTo, rememberDevice }),
       });
       const data = await res.json();
+      if (data.signedIn) {
+        window.location.href = returnTo;
+        return;
+      }
       if (data.needsName) {
         setStep("name");
       } else if (data.sent) {
@@ -2766,6 +2772,25 @@ function PortalLogin() {
                 <a href="/terms" target="_blank" className="text-white/70 hover:text-white underline" onClick={(e) => e.stopPropagation()}>Terms of Service</a>
                 {" "}and{" "}
                 <a href="/privacy" target="_blank" className="text-white/70 hover:text-white underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>
+              </span>
+            </label>
+            <label className="flex items-center justify-center gap-3 cursor-pointer select-none rounded-xl px-4 py-3 transition-all border border-white/10 hover:border-white/20">
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                rememberDevice ? "bg-white border-white" : "border-white/30"
+              }`}>
+                {rememberDevice && (
+                  <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </div>
+              <input
+                type="checkbox"
+                checked={rememberDevice}
+                onChange={(e) => setRememberDevice(e.target.checked)}
+                className="sr-only"
+                data-testid="checkbox-remember-device"
+              />
+              <span className="text-[11px] leading-relaxed text-white/50">
+                Remember me on this device for 30 days
               </span>
             </label>
             {error && <p className="text-xs text-red-400">{error}</p>}

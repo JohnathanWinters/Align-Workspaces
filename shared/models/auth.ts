@@ -45,5 +45,15 @@ export const magicTokens = pgTable("magic_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const userDevices = pgTable("user_devices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  tokenHash: varchar("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  userAgent: varchar("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;

@@ -2,10 +2,27 @@ import type { Express, Request, Response } from "express";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./auth";
 import { db } from "../db";
-import { users, magicTokens, type User } from "@shared/models/auth";
+import { users, magicTokens, userDevices, type User } from "@shared/models/auth";
 import { eq, and, gt } from "drizzle-orm";
-import { randomBytes } from "crypto";
+import { randomBytes, createHash } from "crypto";
 import { sendMagicLinkEmail, sendEmailChangeConfirmation } from "../gmail";
+
+const DEVICE_COOKIE_NAME = "align_device";
+const DEVICE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function hashDeviceToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function setDeviceCookie(res: Response, token: string) {
+  res.cookie(DEVICE_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: DEVICE_TTL_MS,
+    path: "/",
+  });
+}
 function sanitizeUser(user: User) {
   const { password, pendingEmail, pendingEmailToken, pendingEmailExpiresAt, ...safe } = user;
   return safe;
@@ -28,9 +45,9 @@ export function registerAuthRoutes(app: Express): void {
     return res.status(401).json({ message: "Unauthorized" });
   });
 
-  app.post("/api/auth/magic-link", async (req: Request, res: Response) => {
+  app.post("/api/auth/magic-link", async (req: any, res: Response) => {
     try {
-      const { email, firstName, lastName, returnTo } = req.body;
+      const { email, firstName, lastName, returnTo, rememberDevice } = req.body;
       if (!email || typeof email !== "string") {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -39,6 +56,33 @@ export function registerAuthRoutes(app: Express): void {
 
       const [existingUser] = await db.select().from(users).where(eq(users.email, normalizedEmail));
       const isNewUser = !existingUser;
+
+      if (existingUser) {
+        const deviceToken = req.cookies?.[DEVICE_COOKIE_NAME];
+        if (deviceToken && typeof deviceToken === "string") {
+          const tokenHash = hashDeviceToken(deviceToken);
+          const [device] = await db.select().from(userDevices).where(
+            and(
+              eq(userDevices.userId, existingUser.id),
+              eq(userDevices.tokenHash, tokenHash),
+              gt(userDevices.expiresAt, new Date())
+            )
+          );
+          if (device) {
+            (req.session as any).magicUserId = existingUser.id;
+            await db.update(userDevices)
+              .set({ lastUsedAt: new Date() })
+              .where(eq(userDevices.id, device.id));
+            return new Promise<void>((resolve) => {
+              req.session.save((err: any) => {
+                if (err) console.error("Session save error:", err);
+                res.json({ signedIn: true });
+                resolve();
+              });
+            });
+          }
+        }
+      }
 
       if (isNewUser && (!firstName || typeof firstName !== "string" || !firstName.trim())) {
         return res.json({ needsName: true });
@@ -58,6 +102,7 @@ export function registerAuthRoutes(app: Express): void {
       if (returnTo) magicUrl += `&returnTo=${encodeURIComponent(returnTo)}`;
       if (isNewUser && firstName) magicUrl += `&firstName=${encodeURIComponent(firstName.trim())}`;
       if (isNewUser && lastName) magicUrl += `&lastName=${encodeURIComponent(lastName.trim())}`;
+      if (rememberDevice) magicUrl += `&remember=1`;
 
       await sendMagicLinkEmail(normalizedEmail, magicUrl);
 
@@ -70,7 +115,7 @@ export function registerAuthRoutes(app: Express): void {
 
   app.get("/api/auth/magic-verify", async (req: Request, res: Response) => {
     try {
-      const { token, returnTo, firstName, lastName } = req.query;
+      const { token, returnTo, firstName, lastName, remember } = req.query;
       if (!token || typeof token !== "string") {
         return res.redirect("/?auth=invalid");
       }
@@ -113,6 +158,21 @@ export function registerAuthRoutes(app: Express): void {
       }
 
       (req.session as any).magicUserId = user.id;
+
+      if (remember === "1" && user) {
+        try {
+          const deviceToken = randomBytes(32).toString("hex");
+          await db.insert(userDevices).values({
+            userId: user.id,
+            tokenHash: hashDeviceToken(deviceToken),
+            expiresAt: new Date(Date.now() + DEVICE_TTL_MS),
+            userAgent: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"].slice(0, 255) : null,
+          });
+          setDeviceCookie(res, deviceToken);
+        } catch (err) {
+          console.error("Device token creation failed (non-fatal):", err);
+        }
+      }
 
       req.session.save((err) => {
         if (err) console.error("Session save error:", err);
