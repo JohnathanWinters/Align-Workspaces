@@ -73,6 +73,8 @@ const INCLUDED_EVERYWHERE = [
   { icon: UserCheck, label: "Guest booking without Align account" },
 ];
 
+const VALID_TIERS: Tier[] = ["starter", "growth", "studio"];
+
 export default function StudiosPricingPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -89,8 +91,8 @@ export default function StudiosPricingPage() {
         title: "Sign in to start your trial",
         description: "Create an Align account or sign in first, then return here to pick a plan.",
       });
-      // Take them to portal, which handles magic-link signin
-      window.location.href = `/portal?redirect=${encodeURIComponent("/for-studios")}`;
+      const returnPath = `/for-studios?autostart=${tier}`;
+      window.location.href = `/portal?redirect=${encodeURIComponent(returnPath)}`;
       return;
     }
 
@@ -118,6 +120,20 @@ export default function StudiosPricingPage() {
       setLoadingTier(null);
     }
   };
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const params = new URLSearchParams(window.location.search);
+    const autostart = params.get("autostart");
+    if (!autostart || !VALID_TIERS.includes(autostart as Tier)) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("autostart");
+    window.history.replaceState({}, "", url.toString());
+
+    handleSubscribe(autostart as Tier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]);
 
   return (
     <div className="min-h-screen bg-surface-warm">

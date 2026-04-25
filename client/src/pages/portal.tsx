@@ -2681,10 +2681,16 @@ function PortalLogin() {
     setLoading(true);
     setError("");
     try {
+      const params = new URLSearchParams(window.location.search);
+      const redirectParam = params.get("redirect");
+      const returnTo = redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+        ? redirectParam
+        : "/portal";
+
       const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: e || email, firstName: fName, lastName: lName, returnTo: "/portal" }),
+        body: JSON.stringify({ email: e || email, firstName: fName, lastName: lName, returnTo }),
       });
       const data = await res.json();
       if (data.needsName) {
