@@ -114,10 +114,76 @@ async function brandStripeSvg(): Promise<Buffer> {
   return Buffer.from(svg);
 }
 
+interface CenteredOverlay {
+  badge: string;
+  headlineLines: string[];
+  subhead: string;
+  url: string;
+  badgeBg: string;
+}
+
+function centeredOverlaySvg({ badge, headlineLines, subhead, url, badgeBg }: CenteredOverlay): Buffer {
+  const headlineFontSize = 70;
+  const lineHeight = headlineFontSize * 1.05;
+  const subheadFontSize = 26;
+  const urlFontSize = 18;
+  const badgeHeight = 44;
+  const gapAboveHeadline = 28;
+  const gapBelowHeadline = 28;
+  const gapBeforeUrl = 28;
+
+  const blockHeight =
+    badgeHeight +
+    gapAboveHeadline +
+    headlineLines.length * lineHeight +
+    gapBelowHeadline +
+    subheadFontSize +
+    gapBeforeUrl +
+    urlFontSize;
+
+  const blockTop = (SIZE - blockHeight) / 2;
+
+  const badgeText = badge.toUpperCase();
+  const badgeWidth = badgeText.length * 13 + 64;
+  const badgeY = blockTop;
+
+  const firstHeadlineBaselineY = badgeY + badgeHeight + gapAboveHeadline + headlineFontSize * 0.85;
+  const headlineTspans = headlineLines
+    .map((line, i) =>
+      `<tspan x="${SIZE / 2}" text-anchor="middle" ${i === 0 ? "" : `dy="${lineHeight}"`}>${escapeXml(line)}</tspan>`
+    )
+    .join("");
+
+  const subheadY = firstHeadlineBaselineY + (headlineLines.length - 1) * lineHeight + gapBelowHeadline + subheadFontSize;
+  const urlY = subheadY + gapBeforeUrl + urlFontSize;
+
+  return Buffer.from(`
+<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="${SIZE}" height="${SIZE}" fill="rgba(0,0,0,0.5)" />
+  <rect x="${(SIZE - badgeWidth) / 2}" y="${badgeY}" width="${badgeWidth}" height="${badgeHeight}" rx="22" fill="${badgeBg}" />
+  <text x="${SIZE / 2}" y="${badgeY + 30}"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="18" font-weight="700" letter-spacing="3"
+        fill="#ffffff" text-anchor="middle">${escapeXml(badgeText)}</text>
+  <text y="${firstHeadlineBaselineY}"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="${headlineFontSize}" font-weight="500" letter-spacing="-1"
+        fill="#ffffff">${headlineTspans}</text>
+  <text x="${SIZE / 2}" y="${subheadY}"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="${subheadFontSize}" font-weight="400"
+        fill="rgba(255,255,255,0.9)" text-anchor="middle">${escapeXml(subhead)}</text>
+  <text x="${SIZE / 2}" y="${urlY}"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="${urlFontSize}" font-weight="600" letter-spacing="2"
+        fill="${BRAND}" text-anchor="middle">${escapeXml(url)}</text>
+</svg>`.trim());
+}
+
 async function makeSlide(
   sourcePath: string,
   outPath: string,
-  overlay: Overlay | null,
+  overlay: Buffer | null,
   includeBrandStripe: boolean
 ): Promise<void> {
   const composites: sharp.OverlayOptions[] = [];
@@ -127,7 +193,7 @@ async function makeSlide(
   }
 
   if (overlay) {
-    composites.push({ input: overlaySvg(overlay), top: 0, left: 0 });
+    composites.push({ input: overlay, top: 0, left: 0 });
   }
 
   await sharp(sourcePath)
@@ -146,39 +212,39 @@ async function main() {
   await makeSlide(
     IMG("space-therapy-2.png"),
     resolve(OUT_DIR, "slide-1.jpg"),
-    {
+    centeredOverlaySvg({
       badge: "For Miami space owners",
       headlineLines: ["Two ways your", "space can earn."],
       subhead: "Pick the model that fits your business.",
+      url: "ALIGNWORKSPACES.COM/HOST",
       badgeBg: BRAND,
-      accentBar: BRAND,
-    },
-    true
+    }),
+    false
   );
 
   await makeSlide(
     IMG("space-therapy-1.png"),
     resolve(OUT_DIR, "slide-2.jpg"),
-    {
+    overlaySvg({
       badge: "Marketplace",
       headlineLines: ["List free.", "We bring clients."],
       subhead: "Pay 12.5% only when you actually get booked.",
       badgeBg: "#047857",
       accentBar: "#047857",
-    },
+    }),
     false
   );
 
   await makeSlide(
     IMG("space-meeting-2.png"),
     resolve(OUT_DIR, "slide-3.jpg"),
-    {
+    overlaySvg({
       badge: "Studio Software",
       headlineLines: ["$29/mo.", "Keep 100%."],
       subhead: "Already have clients? Run them under your brand.",
       badgeBg: BRAND,
       accentBar: BRAND,
-    },
+    }),
     false
   );
 
