@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
 import PricingPage from "@/pages/host-pricing";
 import StudiosPricingPage from "@/pages/studios-pricing";
+import HostLandingPage from "@/pages/host-landing";
 import PrivateSpacePage from "@/pages/private-space";
 import HomePage from "@/pages/home";
 import PortfolioPage from "@/pages/portfolio";
@@ -64,6 +65,8 @@ function Router() {
       <Route path="/host-pricing">{() => { window.location.replace("/pricing"); return null; }}</Route>
       <Route path="/for-studios" component={StudiosPricingPage} />
       <Route path="/studios" component={StudiosPricingPage} />
+      <Route path="/host" component={HostLandingPage} />
+      <Route path="/for-hosts" component={HostLandingPage} />
       <Route path="/w/:slug" component={PrivateSpacePage} />
       <Route path="/team" component={EmployeePage} />
       <Route path="/auth-success">{() => {

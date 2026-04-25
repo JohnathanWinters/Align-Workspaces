@@ -1903,7 +1903,7 @@ function PortalContent() {
     if (params.get("saas_signup") === "success") {
       _saasToast({
         title: "Welcome to Align for Studios",
-        description: "Your 7-day free trial has started. Mark a workspace as private to begin.",
+        description: "Your 14-day free trial has started. Mark a workspace as private to begin.",
       });
       setActiveTabState("spaces");
       // Clean the URL so refresh doesn't re-trigger

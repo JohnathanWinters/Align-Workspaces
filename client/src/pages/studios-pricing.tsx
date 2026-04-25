@@ -145,7 +145,7 @@ export default function StudiosPricingPage() {
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 text-sm text-stone-500">
               <span className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600" />
-                7-day free trial
+                14-day free trial
               </span>
               <span className="hidden sm:inline text-stone-300">·</span>
               <span className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function StudiosPricingPage() {
                     <span className="text-5xl font-serif text-stone-900">${tier.price}</span>
                     <span className="text-stone-500 text-sm">/ month</span>
                   </div>
-                  <p className="text-xs text-stone-400 mt-1">Billed monthly after 7-day trial</p>
+                  <p className="text-xs text-stone-400 mt-1">Billed monthly after 14-day trial</p>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {tier.highlights.map((h) => (
@@ -209,7 +209,7 @@ export default function StudiosPricingPage() {
                       : "bg-stone-100 text-stone-900 hover:bg-stone-200"
                   }`}
                 >
-                  {loadingTier === tier.id ? "Starting trial..." : "Start 7-day free trial"}
+                  {loadingTier === tier.id ? "Starting trial..." : "Start 14-day free trial"}
                 </button>
               </motion.div>
             ))}
@@ -254,8 +254,8 @@ export default function StudiosPricingPage() {
             <Faq q="Do I need my own Stripe account?">
               Yes. During onboarding you'll connect your own Stripe account via Stripe Connect. Every booking payment flows directly to you — Align never touches the money.
             </Faq>
-            <Faq q="What happens after the 7-day trial?">
-              You'll be charged your plan's monthly price automatically. Cancel anytime before day 7 and you won't be charged. After the trial you can cancel anytime from your portal and keep access until the end of the billing period.
+            <Faq q="What happens after the 14-day trial?">
+              You'll be charged your plan's monthly price automatically. Cancel anytime before day 14 and you won't be charged. After the trial you can cancel anytime from your portal and keep access until the end of the billing period.
             </Faq>
             <Faq q="Can my renters bring their own clients?">
               Yes. That's the whole point. Each renter manages their own bookings and their own client relationships. You just provide the space and the infrastructure.
@@ -274,7 +274,7 @@ export default function StudiosPricingPage() {
           <div className="max-w-3xl mx-auto px-5 sm:px-8 py-16 sm:py-24 text-center">
             <h2 className="font-serif text-3xl sm:text-4xl mb-4">Stop running your studio from a group text.</h2>
             <p className="text-stone-400 text-base sm:text-lg mb-8 max-w-xl mx-auto">
-              Seven days free. No credit surprises. Your renters and clients will notice the difference within a week.
+              Two weeks free. No credit surprises. Your renters and clients will notice the difference in days.
             </p>
             <button
               onClick={() => handleSubscribe("growth")}

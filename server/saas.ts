@@ -43,7 +43,7 @@ export const TIER_LIMITS: Record<SaasTier, {
   },
 };
 
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 14;
 
 function getPriceIdForTier(tier: SaasTier): string {
   const envKey = `STRIPE_PRICE_SAAS_${tier.toUpperCase()}`;
@@ -98,14 +98,20 @@ export async function createSubscriptionCheckout(
   const priceId = getPriceIdForTier(tier);
   const customerId = await getOrCreateSaasCustomer(stripe, user);
 
+  const hasUsedTrial = await hasEverHadSaasSubscription(user.id, customerId, stripe);
+
+  const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
+    metadata: { userId: user.id, tier, context: 'saas' },
+  };
+  if (!hasUsedTrial) {
+    subscriptionData.trial_period_days = TRIAL_DAYS;
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
-    subscription_data: {
-      trial_period_days: TRIAL_DAYS,
-      metadata: { userId: user.id, tier, context: 'saas' },
-    },
+    subscription_data: subscriptionData,
     payment_method_collection: 'always',
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
@@ -117,6 +123,42 @@ export async function createSubscriptionCheckout(
     throw new Error('Stripe did not return a checkout URL');
   }
   return session.url;
+}
+
+/**
+ * Returns true if this user (by app userId OR Stripe customer email) has ever held
+ * a SaaS subscription. Used to prevent trial-abuse via cancel-and-resubscribe.
+ *
+ * Checks both:
+ *   1. Our DB — any host_subscriptions row for this userId, regardless of status.
+ *   2. Stripe — any prior subscription on the customer with our SaaS context.
+ *      Catches edge cases where the DB row was deleted but Stripe still remembers.
+ */
+async function hasEverHadSaasSubscription(
+  userId: string,
+  stripeCustomerId: string,
+  stripe: Stripe
+): Promise<boolean> {
+  const dbSub = await storage.getHostSubscriptionByUserId(userId);
+  if (dbSub) return true;
+
+  try {
+    const subs = await stripe.subscriptions.list({
+      customer: stripeCustomerId,
+      status: 'all',
+      limit: 20,
+    });
+    return subs.data.some(s => s.metadata?.context === 'saas');
+  } catch (err) {
+    console.warn('Trial eligibility check (Stripe lookup) failed; defaulting to allow trial.', err);
+    return false;
+  }
+}
+
+export async function isUserTrialEligible(user: User): Promise<boolean> {
+  const stripe = await getUncachableStripeClient();
+  const customerId = await getOrCreateSaasCustomer(stripe, user);
+  return !(await hasEverHadSaasSubscription(user.id, customerId, stripe));
 }
 
 export async function createCustomerPortalSession(
@@ -229,10 +271,17 @@ export async function assertCanSetPrivate(userId: string, excludeSpaceId?: strin
 export async function handleSaasWebhookEvent(event: Stripe.Event): Promise<boolean> {
   switch (event.type) {
     case 'customer.subscription.created':
-    case 'customer.subscription.updated':
+    case 'customer.subscription.updated': {
+      const sub = event.data.object as Stripe.Subscription;
+      if (sub.metadata?.context !== 'saas') return false;
+      await upsertSubscriptionRecord(sub);
+      return true;
+    }
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription;
       if (sub.metadata?.context !== 'saas') return false;
+      const existing = await storage.getHostSubscriptionByStripeSubscriptionId(sub.id);
+      if (!existing) return true;
       await upsertSubscriptionRecord(sub);
       return true;
     }

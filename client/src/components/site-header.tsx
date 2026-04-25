@@ -15,7 +15,7 @@ interface SiteHeaderProps {
 
 const MENU_ITEMS: { href: string; icon: React.ComponentType<{ className?: string }>; label: string; group?: "services" | "photography" | "community" | "about" }[] = [
   { href: "/workspaces", icon: Building2, label: "Workspaces", group: "services" },
-  { href: "/pricing", icon: DollarSign, label: "Pricing", group: "services" },
+  { href: "/host", icon: DollarSign, label: "List Your Space", group: "services" },
   { href: "/for-studios", icon: Sparkles, label: "For Studios", group: "services" },
   { href: "/portraits", icon: Camera, label: "Portraits", group: "photography" },
   { href: "/portfolio", icon: Images, label: "Portfolio", group: "photography" },
