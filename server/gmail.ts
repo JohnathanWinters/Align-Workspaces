@@ -107,6 +107,18 @@ function sectionHeading(text: string): string {
   return `<p style="margin:24px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#c4956a;font-weight:600;">${text}</p>`;
 }
 
+function goldOrnament(): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border-collapse:collapse;">
+    <tr>
+      <td style="width:48px;height:1px;background-color:#c4956a;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+      <td style="width:20px;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+      <td style="width:6px;height:6px;background-color:#c4956a;border-radius:50%;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+      <td style="width:20px;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+      <td style="width:48px;height:1px;background-color:#c4956a;font-size:0;line-height:0;mso-line-height-rule:exactly;">&nbsp;</td>
+    </tr>
+  </table>`;
+}
+
 function mimeEncodeSubject(subject: string) {
   if (/^[\x20-\x7E]*$/.test(subject)) return subject;
   return '=?UTF-8?B?' + Buffer.from(subject, 'utf-8').toString('base64') + '?=';
@@ -142,12 +154,8 @@ export async function sendMagicLinkEmail(email: string, magicUrl: string) {
 
   const html = emailLayout(`
     <div style="text-align:center;">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
-        <tr><td style="width:56px;height:56px;border-radius:50%;background-color:#1a1a1a;text-align:center;vertical-align:middle;">
-          <img src="https://img.icons8.com/ios-filled/28/ffffff/key--v1.png" alt="" width="28" height="28" style="display:inline-block;vertical-align:middle;" />
-        </td></tr>
-      </table>
-      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Sign in to Align</h1>
+      ${goldOrnament()}
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:500;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;letter-spacing:0.3px;">Sign in to Align</h1>
       <p style="margin:0 0 28px;font-size:14px;color:#6b6560;line-height:1.5;">
         Tap the button below to securely sign in. No password needed.
       </p>
@@ -169,12 +177,8 @@ export async function sendEmailChangeConfirmation(currentEmail: string, confirmU
 
   const html = emailLayout(`
     <div style="text-align:center;">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
-        <tr><td style="width:56px;height:56px;border-radius:50%;background-color:#1a1a1a;text-align:center;vertical-align:middle;">
-          <img src="https://img.icons8.com/ios-filled/28/ffffff/email-sign.png" alt="" width="28" height="28" style="display:inline-block;vertical-align:middle;" />
-        </td></tr>
-      </table>
-      <h1 style="margin:0 0 8px;font-size:20px;font-weight:600;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;">Confirm Email Change</h1>
+      ${goldOrnament()}
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:500;color:#1a1a1a;font-family:Georgia,'Times New Roman',serif;letter-spacing:0.3px;">Confirm Email Change</h1>
       <p style="margin:0 0 8px;font-size:14px;color:#6b6560;line-height:1.5;">
         You requested to change your email to:
       </p>

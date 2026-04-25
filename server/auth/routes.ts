@@ -42,37 +42,6 @@ export function registerAuthRoutes(app: Express): void {
       } catch {}
     }
 
-    const deviceToken = req.cookies?.[DEVICE_COOKIE_NAME];
-    if (deviceToken && typeof deviceToken === "string") {
-      try {
-        const tokenHash = hashDeviceToken(deviceToken);
-        const [device] = await db.select().from(userDevices).where(
-          and(
-            eq(userDevices.tokenHash, tokenHash),
-            gt(userDevices.expiresAt, new Date())
-          )
-        );
-        if (device) {
-          const [user] = await db.select().from(users).where(eq(users.id, device.userId));
-          if (user) {
-            (req.session as any).magicUserId = user.id;
-            await db.update(userDevices)
-              .set({ lastUsedAt: new Date() })
-              .where(eq(userDevices.id, device.id));
-            return new Promise<void>((resolve) => {
-              req.session.save((err: any) => {
-                if (err) console.error("Session save error during device auto-signin:", err);
-                res.json(sanitizeUser(user));
-                resolve();
-              });
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Device cookie auto-signin check failed:", err);
-      }
-    }
-
     return res.status(401).json({ message: "Unauthorized" });
   });
 
@@ -422,17 +391,7 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/auth/logout", async (req: any, res) => {
-    const deviceToken = req.cookies?.[DEVICE_COOKIE_NAME];
-    if (deviceToken && typeof deviceToken === "string") {
-      try {
-        await db.delete(userDevices).where(eq(userDevices.tokenHash, hashDeviceToken(deviceToken)));
-      } catch (err) {
-        console.error("Logout: failed to delete device token:", err);
-      }
-    }
-    res.clearCookie(DEVICE_COOKIE_NAME, { path: "/" });
-
+  app.post("/api/auth/logout", (req: any, res) => {
     req.session?.destroy?.((err: any) => {
       if (err) console.error("Logout error:", err);
       res.json({ ok: true });
