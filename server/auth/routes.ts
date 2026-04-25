@@ -422,7 +422,17 @@ export function registerAuthRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/auth/logout", (req: any, res) => {
+  app.post("/api/auth/logout", async (req: any, res) => {
+    const deviceToken = req.cookies?.[DEVICE_COOKIE_NAME];
+    if (deviceToken && typeof deviceToken === "string") {
+      try {
+        await db.delete(userDevices).where(eq(userDevices.tokenHash, hashDeviceToken(deviceToken)));
+      } catch (err) {
+        console.error("Logout: failed to delete device token:", err);
+      }
+    }
+    res.clearCookie(DEVICE_COOKIE_NAME, { path: "/" });
+
     req.session?.destroy?.((err: any) => {
       if (err) console.error("Logout error:", err);
       res.json({ ok: true });
