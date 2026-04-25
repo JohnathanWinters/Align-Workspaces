@@ -170,7 +170,7 @@ async function main() {
   );
 
   await makeSlide(
-    IMG("space-photo-studio.png"),
+    IMG("space-meeting-2.png"),
     resolve(OUT_DIR, "slide-3.jpg"),
     {
       badge: "Studio Software",
