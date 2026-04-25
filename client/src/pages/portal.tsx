@@ -2667,6 +2667,22 @@ function PortalContent() {
   );
 }
 
+const REMEMBER_PREF_COOKIE = "align_remember_pref";
+
+function readRememberPref(): boolean {
+  if (typeof document === "undefined") return true;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${REMEMBER_PREF_COOKIE}=([^;]+)`));
+  if (!match) return true;
+  return match[1] === "1";
+}
+
+function writeRememberPref(value: boolean): void {
+  if (typeof document === "undefined") return;
+  const oneYear = 365 * 24 * 60 * 60;
+  const isHttps = window.location.protocol === "https:";
+  document.cookie = `${REMEMBER_PREF_COOKIE}=${value ? "1" : "0"}; max-age=${oneYear}; path=/; samesite=lax${isHttps ? "; secure" : ""}`;
+}
+
 function PortalLogin() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -2676,7 +2692,12 @@ function PortalLogin() {
   const [error, setError] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsShake, setTermsShake] = useState(false);
-  const [rememberDevice, setRememberDevice] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState<boolean>(() => readRememberPref());
+
+  const handleRememberToggle = (checked: boolean) => {
+    setRememberDevice(checked);
+    writeRememberPref(checked);
+  };
 
   const sendMagicLink = async (e?: string, fName?: string, lName?: string) => {
     setLoading(true);
@@ -2754,7 +2775,7 @@ function PortalLogin() {
               <input
                 type="checkbox"
                 checked={rememberDevice}
-                onChange={(e) => setRememberDevice(e.target.checked)}
+                onChange={(e) => handleRememberToggle(e.target.checked)}
                 className="sr-only"
                 data-testid="checkbox-remember-device"
               />
