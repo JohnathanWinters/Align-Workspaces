@@ -41,7 +41,7 @@ export default function HostLandingPage() {
               <span className="text-stone-400">Two ways.</span>
             </h1>
             <p className="text-stone-600 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-              Whether you want clients brought to your door, or you already have them and just need the software to run things — pick the path that fits.
+              Whether you want clients brought to your door, or you already have them and just need the software to run things, pick the path that fits.
             </p>
           </motion.div>
         </section>
@@ -97,7 +97,7 @@ export default function HostLandingPage() {
               <ul className="space-y-3 mb-6 flex-1">
                 <li className="flex items-start gap-3 text-sm text-stone-700">
                   <Check className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                  <span>Free to list — no monthly fees, ever</span>
+                  <span>Free to list, no monthly fees, ever</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm text-stone-700">
                   <Check className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
@@ -171,7 +171,7 @@ export default function HostLandingPage() {
                 </li>
                 <li className="flex items-start gap-3 text-sm text-stone-700">
                   <Check className="w-4 h-4 text-[#c4956a] mt-0.5 flex-shrink-0" />
-                  <span>Direct Stripe payouts — Align never touches the money</span>
+                  <span>Direct Stripe payouts, Align never touches the money</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm text-stone-700">
                   <Check className="w-4 h-4 text-[#c4956a] mt-0.5 flex-shrink-0" />
@@ -179,7 +179,7 @@ export default function HostLandingPage() {
                 </li>
                 <li className="flex items-start gap-3 text-sm text-stone-700">
                   <Check className="w-4 h-4 text-[#c4956a] mt-0.5 flex-shrink-0" />
-                  <span>14-day free trial — cancel anytime</span>
+                  <span>14-day free trial, cancel anytime</span>
                 </li>
               </ul>
 
@@ -229,7 +229,7 @@ export default function HostLandingPage() {
           </div>
           <div className="space-y-6">
             <Faq q="Can I do both?">
-              Yes. You can list one workspace publicly on the marketplace and run another privately on Studio Software — or even toggle a single workspace between public and private from your portal.
+              Yes. You can list one workspace publicly on the marketplace and run another privately on Studio Software, or even toggle a single workspace between public and private from your portal.
             </Faq>
             <Faq q="If I'm on the Marketplace, will Align take a cut of my own clients?">
               Only if they book through your public listing. Use your personal referral link to send your own clients through Align and the host fee drops from 12.5% to 10.5%. Or skip the marketplace entirely and use Studio Software for 0% on every booking.
@@ -238,7 +238,7 @@ export default function HostLandingPage() {
               Nothing. No listing fees, no monthly subscription, no setup costs. You only pay a commission when you actually get a booking.
             </Faq>
             <Faq q="What does Studio Software cost?">
-              $29/month for solo operators, up to $299/month for multi-location studios. There's a 14-day free trial — cancel before day 14 and you won't be charged.
+              $29/month for solo operators, up to $299/month for multi-location studios. There's a 14-day free trial, cancel before day 14 and you won't be charged.
             </Faq>
             <Faq q="Can I switch later?">
               Anytime. Start on the Marketplace to test demand, then switch to Studio Software once you have your own clients. Or vice versa.
