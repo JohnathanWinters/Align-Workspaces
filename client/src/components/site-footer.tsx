@@ -1,5 +1,6 @@
 import { Link } from "wouter";
-import { Mail, MapPin, Facebook, Linkedin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
+import { SiFacebook, SiLinkedin } from "react-icons/si";
 import { NewsletterSignup } from "./newsletter-signup";
 
 interface SiteFooterProps {
@@ -75,7 +76,7 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
             data-testid="link-footer-facebook"
             aria-label="Align Workspaces on Facebook"
           >
-            <Facebook className="w-3 h-3" />
+            <SiFacebook className="w-3 h-3" />
             Facebook
           </a>
           <a
@@ -86,7 +87,7 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
             data-testid="link-footer-linkedin"
             aria-label="Align Workspaces on LinkedIn"
           >
-            <Linkedin className="w-3 h-3" />
+            <SiLinkedin className="w-3 h-3" />
             LinkedIn
           </a>
         </div>
