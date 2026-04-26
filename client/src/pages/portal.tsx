@@ -2693,10 +2693,38 @@ function PortalLogin() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsShake, setTermsShake] = useState(false);
   const [rememberDevice, setRememberDevice] = useState<boolean>(() => readRememberPref());
+  const [trustedDevice, setTrustedDevice] = useState<{ email: string; firstName: string | null } | null>(null);
+  const [trustedCheckDone, setTrustedCheckDone] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/trusted-device", { credentials: "include" });
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          if (data.trusted && data.email) {
+            setTrustedDevice({ email: data.email, firstName: data.firstName ?? null });
+            setEmail(data.email);
+          }
+        }
+      } catch {
+        // Silent — fall through to normal flow
+      } finally {
+        if (!cancelled) setTrustedCheckDone(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleRememberToggle = (checked: boolean) => {
     setRememberDevice(checked);
     writeRememberPref(checked);
+  };
+
+  const useDifferentAccount = () => {
+    setTrustedDevice(null);
+    setEmail("");
   };
 
   const sendMagicLink = async (e?: string, fName?: string, lName?: string) => {
@@ -2745,12 +2773,45 @@ function PortalLogin() {
         <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6">
           <Camera className="w-8 h-8 text-white/80" />
         </div>
-        <h1 className="font-serif text-3xl text-white mb-3">Client Portal</h1>
-        <p className="text-white/60 text-sm mb-8 leading-relaxed">
-          Enter your email to sign in below. If you do not have an account, enter the email you wish to sign up with.
-        </p>
+        <h1 className="font-serif text-3xl text-white mb-3">
+          {trustedDevice
+            ? `Welcome back${trustedDevice.firstName ? `, ${trustedDevice.firstName}` : ""}`
+            : "Client Portal"}
+        </h1>
+        {!trustedDevice && (
+          <p className="text-white/60 text-sm mb-8 leading-relaxed">
+            Enter your email to sign in below. If you do not have an account, enter the email you wish to sign up with.
+          </p>
+        )}
+        {trustedDevice && (
+          <p className="text-white/60 text-sm mb-8 leading-relaxed">
+            This device is trusted. Sign in instantly, no email needed.
+          </p>
+        )}
 
-        {step === "email" && (
+        {step === "email" && trustedDevice && (
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (email.trim()) sendMagicLink(email.trim());
+          }} className="space-y-3">
+            <div className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/80 text-sm text-left">
+              {trustedDevice.email}
+            </div>
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <Button type="submit" disabled={loading} size="lg" className="w-full bg-white text-black hover:bg-white/90 text-base">
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Signing in...</> : "Sign In"}
+            </Button>
+            <button
+              type="button"
+              onClick={useDifferentAccount}
+              className="text-[11px] text-white/40 hover:text-white/70 transition-colors mt-2"
+            >
+              Use a different account
+            </button>
+          </form>
+        )}
+
+        {step === "email" && !trustedDevice && trustedCheckDone && (
           <form onSubmit={(e) => {
             e.preventDefault();
             if (email.trim()) sendMagicLink(email.trim());
@@ -2788,6 +2849,12 @@ function PortalLogin() {
               {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Sending...</> : <><Mail className="w-4 h-4 mr-2" /> Send Sign-In Link</>}
             </Button>
           </form>
+        )}
+
+        {step === "email" && !trustedCheckDone && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+          </div>
         )}
 
         {step === "name" && (

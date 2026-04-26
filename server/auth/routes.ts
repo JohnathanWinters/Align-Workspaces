@@ -45,6 +45,35 @@ export function registerAuthRoutes(app: Express): void {
     return res.status(401).json({ message: "Unauthorized" });
   });
 
+  app.get("/api/auth/trusted-device", async (req: any, res) => {
+    const deviceToken = req.cookies?.[DEVICE_COOKIE_NAME];
+    if (!deviceToken || typeof deviceToken !== "string") {
+      return res.status(404).json({ trusted: false });
+    }
+    try {
+      const tokenHash = hashDeviceToken(deviceToken);
+      const [device] = await db.select().from(userDevices).where(
+        and(
+          eq(userDevices.tokenHash, tokenHash),
+          gt(userDevices.expiresAt, new Date())
+        )
+      );
+      if (!device) return res.status(404).json({ trusted: false });
+
+      const [user] = await db.select().from(users).where(eq(users.id, device.userId));
+      if (!user || !user.email) return res.status(404).json({ trusted: false });
+
+      return res.json({
+        trusted: true,
+        email: user.email,
+        firstName: user.firstName ?? null,
+      });
+    } catch (err) {
+      console.error("Trusted device check failed:", err);
+      return res.status(404).json({ trusted: false });
+    }
+  });
+
   app.post("/api/auth/magic-link", async (req: any, res: Response) => {
     try {
       const { email, firstName, lastName, returnTo, rememberDevice } = req.body;
