@@ -291,7 +291,7 @@ export function generateHostCalendarAuthUrl(hostUserId: string): string {
   const oauth2Client = getHostOAuth2Client();
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
-    prompt: 'consent',
+    prompt: 'select_account consent',
     scope: [
       'https://www.googleapis.com/auth/calendar.readonly',
       'https://www.googleapis.com/auth/calendar.events',
