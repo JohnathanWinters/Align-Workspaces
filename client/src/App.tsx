@@ -66,6 +66,7 @@ function Router() {
       <Route path="/for-studios" component={StudiosPricingPage} />
       <Route path="/studios" component={StudiosPricingPage} />
       <Route path="/host" component={HostLandingPage} />
+      <Route path="/hosts" component={HostLandingPage} />
       <Route path="/for-hosts" component={HostLandingPage} />
       <Route path="/w/:slug" component={PrivateSpacePage} />
       <Route path="/team" component={EmployeePage} />
