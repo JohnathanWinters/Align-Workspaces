@@ -289,6 +289,7 @@ function getHostOAuth2Client() {
 
 export function generateHostCalendarAuthUrl(hostUserId: string): string {
   const oauth2Client = getHostOAuth2Client();
+  console.log(`[Google Calendar OAuth] Redirect URI being sent to Google: ${SITE_URL}/api/calendar/google/callback`);
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'select_account consent',

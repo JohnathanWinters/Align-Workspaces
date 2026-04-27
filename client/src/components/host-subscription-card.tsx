@@ -114,55 +114,91 @@ export default function HostSubscriptionCard() {
 
   const tierInfo = TIER_LABELS[sub.tier] ?? { name: sub.tier, price: 0 };
   const isTrial = sub.status === "trialing";
+  const isActive = sub.status === "active";
   const isPastDue = sub.status === "past_due";
+  const isCanceled = sub.status === "canceled";
+  const isIncomplete = sub.status === "incomplete" || sub.status === "incomplete_expired";
+  const isUnpaid = sub.status === "unpaid";
+  const willCancel = sub.cancelAtPeriodEnd === 1;
+
   const trialDays = isTrial ? daysUntil(sub.trialEndsAt) : null;
-  const nextBillingDate = isTrial ? formatDate(sub.trialEndsAt) : formatDate(sub.currentPeriodEnd);
+  const periodEnd = formatDate(sub.currentPeriodEnd);
+  const trialEnd = formatDate(sub.trialEndsAt);
+
+  // Status badge config
+  const statusBadge = isTrial
+    ? { label: "Free Trial", classes: "bg-emerald-50 text-emerald-700" }
+    : isActive && willCancel
+    ? { label: "Cancels Soon", classes: "bg-amber-50 text-amber-700" }
+    : isActive
+    ? { label: "Active", classes: "bg-emerald-50 text-emerald-700" }
+    : isPastDue
+    ? { label: "Payment Failed", classes: "bg-red-50 text-red-700" }
+    : isCanceled
+    ? { label: "Canceled", classes: "bg-stone-100 text-stone-700" }
+    : isUnpaid
+    ? { label: "Unpaid", classes: "bg-red-50 text-red-700" }
+    : isIncomplete
+    ? { label: "Incomplete", classes: "bg-amber-50 text-amber-700" }
+    : { label: sub.status, classes: "bg-stone-100 text-stone-700" };
+
+  // Status line (always renders something)
+  let statusLine: React.ReactNode = null;
+  if (isTrial && trialDays !== null) {
+    statusLine = (
+      <>
+        <Clock className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+        Trial ends in {trialDays} {trialDays === 1 ? "day" : "days"}
+        {trialEnd && <span className="text-stone-400"> · First charge ${tierInfo.price} on {trialEnd}</span>}
+      </>
+    );
+  } else if (isActive && willCancel && periodEnd) {
+    statusLine = <>Cancels on {periodEnd}, no further charges after that date</>;
+  } else if (isActive && periodEnd) {
+    statusLine = <>Next charge: ${tierInfo.price} on {periodEnd}</>;
+  } else if (isPastDue) {
+    statusLine = <>Last payment failed. Update your card to keep your subscription active{periodEnd ? ` (current period ends ${periodEnd})` : ""}.</>;
+  } else if (isCanceled) {
+    statusLine = periodEnd
+      ? <>Canceled. Access ends {periodEnd}.</>
+      : <>Subscription canceled.</>;
+  } else if (isUnpaid) {
+    statusLine = <>Subscription unpaid. Update payment in the billing portal to restore access.</>;
+  } else if (isIncomplete) {
+    statusLine = <>Subscription setup incomplete. Open the billing portal to finish.</>;
+  } else if (periodEnd) {
+    statusLine = <>Current period ends {periodEnd}</>;
+  } else {
+    statusLine = <>Status: {sub.status}</>;
+  }
+
+  const iconClasses = isPastDue || isUnpaid
+    ? "bg-red-50"
+    : isCanceled || isIncomplete
+    ? "bg-stone-100"
+    : "bg-[#c4956a]/10";
+  const Icon = isPastDue || isUnpaid ? AlertCircle : CheckCircle2;
+  const iconColor = isPastDue || isUnpaid
+    ? "text-red-500"
+    : isCanceled || isIncomplete
+    ? "text-stone-500"
+    : "text-[#c4956a]";
 
   return (
     <div className="bg-white rounded-2xl border border-stone-200/60 p-5 sm:p-6 mb-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4 min-w-0 flex-1">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-            isPastDue ? "bg-red-50" : "bg-[#c4956a]/10"
-          }`}>
-            {isPastDue ? (
-              <AlertCircle className="w-5 h-5 text-red-500" />
-            ) : (
-              <CheckCircle2 className="w-5 h-5 text-[#c4956a]" />
-            )}
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${iconClasses}`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex items-center flex-wrap gap-2 mb-1">
               <h3 className="font-serif text-lg text-stone-900">Align {tierInfo.name}</h3>
-              {isTrial && (
-                <span className="text-[10px] tracking-wider uppercase font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                  Free Trial
-                </span>
-              )}
-              {isPastDue && (
-                <span className="text-[10px] tracking-wider uppercase font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
-                  Payment Failed
-                </span>
-              )}
-              {sub.cancelAtPeriodEnd === 1 && (
-                <span className="text-[10px] tracking-wider uppercase font-semibold px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
-                  Cancels Soon
-                </span>
-              )}
+              <span className={`text-[10px] tracking-wider uppercase font-semibold px-2 py-0.5 rounded-full ${statusBadge.classes}`}>
+                {statusBadge.label}
+              </span>
             </div>
-            <p className="text-sm text-stone-500">
-              {isTrial && trialDays !== null && (
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  Trial ends in {trialDays} {trialDays === 1 ? "day" : "days"}
-                  {nextBillingDate && <span className="text-stone-400"> · First charge {nextBillingDate}</span>}
-                </span>
-              )}
-              {!isTrial && !isPastDue && nextBillingDate && (
-                <span>Next charge: ${tierInfo.price} on {nextBillingDate}</span>
-              )}
-              {isPastDue && <span>Your last payment failed. Update your card to keep your subscription active.</span>}
-            </p>
+            <p className="text-sm text-stone-500 leading-relaxed">{statusLine}</p>
           </div>
         </div>
         <button
