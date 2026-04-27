@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Mail, MapPin } from "lucide-react";
-import { SiFacebook, SiLinkedin } from "react-icons/si";
+import { SiFacebook, SiLinkedin, SiYoutube } from "react-icons/si";
 import { NewsletterSignup } from "./newsletter-signup";
 
 interface SiteFooterProps {
@@ -89,6 +89,17 @@ export function SiteFooter({ variant = "light", hideNewsletter = false }: SiteFo
           >
             <SiLinkedin className="w-3 h-3" />
             LinkedIn
+          </a>
+          <a
+            href="https://www.youtube.com/@AlignWorkspaces"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-1.5 text-xs ${textColor} ${hoverColor} transition-colors duration-200`}
+            data-testid="link-footer-youtube"
+            aria-label="Align Workspaces on YouTube"
+          >
+            <SiYoutube className="w-3 h-3" />
+            YouTube
           </a>
         </div>
 
